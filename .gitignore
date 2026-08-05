@@ -1,0 +1,37 @@
+# Entorno
+.env
+.venv/
+venv/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.ruff_cache/
+
+# Datos locales (documentos fuente y respuestas del Google Forms no van al repo).
+# Se usa data/* y no data/ porque git no permite re-incluir un archivo cuyo
+# directorio padre está excluido: con data/ el .gitkeep nunca se versionaría.
+data/*
+!data/.gitkeep
+*.pdf
+*.pptx
+*.docx
+respuestas_vark*.csv
+
+# Editor / SO
+# .vscode/ NO se ignora completo: settings.json y extensions.json se comparten para que
+# cualquiera que clone el repo herede el intérprete de Python, ruff y pytest ya configurados.
+# Solo se ignoran los archivos de estado personal (breakpoints, historial, etc.).
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+.idea/
+Thumbs.db
+desktop.ini
+
+# Config local de Claude Code (permisos de esta sesión/máquina, no se comparte con el equipo)
+.claude/settings.local.json

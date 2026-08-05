@@ -1,0 +1,22 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: studify-db
+    environment:
+      POSTGRES_USER: studify
+      POSTGRES_PASSWORD: studify
+      POSTGRES_DB: studify
+      # Necesario para que to_tsvector('spanish', ...) ordene correctamente
+      LANG: es_ES.utf8
+    ports:
+      - "5432:5432"
+    volumes:
+      - studify_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U studify -d studify"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  studify_pgdata:
