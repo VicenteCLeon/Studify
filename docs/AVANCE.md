@@ -30,9 +30,10 @@ quedó pendiente y qué decisiones se tomaron sobre la marcha.
 
 ## 1. Estado actual en una frase
 
-**Semana 0 (Setup) completa y verificada. Nada commiteado todavía — todo está en el working
-tree, pendiente de un primer commit.** La Fase 1 (modelos de datos + scoring VARK) no ha
-comenzado.
+**Semana 0 (Setup) completa, verificada, commiteada y pusheada** (`fbf4b3f`, 27 archivos, rama
+`main`, sincronizada con `origin` — https://github.com/VicenteCLeon/Studify.git). El compañero
+de equipo ya puede clonar y seguir `README.md`. La Fase 1 (modelos de datos + scoring VARK) no
+ha comenzado.
 
 ---
 
@@ -138,9 +139,7 @@ Semana 0, no implementación. No asumir que hay lógica ahí.
 
 ## 5. Pendiente inmediato
 
-1. **Commit de la Semana 0.** El working tree tiene todo listo pero no se ha hecho `git add` /
-   `git commit` de nada salvo el `Initial commit` original (que solo trae `.gitattributes`).
-2. **Fase 1 — Núcleo de datos y VARK** (siguiente paso de `PLAN_DESARROLLO.md`, sección 4):
+1. **Fase 1 — Núcleo de datos y VARK** (siguiente paso de `PLAN_DESARROLLO.md`, sección 4):
    - `src/studify/db/models.py`: las 8 entidades del cap. 17 del informe (`estudiante`,
      `diagnostico_vark`, `respuesta_vark`, `configuracion_contenido`, `objetivo_aprendizaje`,
      `documento_fuente`, `fragmento`, `microcapsula_generada`). El diccionario de datos
