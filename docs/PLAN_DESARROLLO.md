@@ -152,7 +152,27 @@ Jinja + HTMX: cuestionario VARK (16 ítems, selección múltiple y opción de de
 
 ### Fase 5 — Evaluación y resultados (28 sep – 09 oct)
 - Batería técnica (`eval_runner.py`): 20–30 consultas controladas → fidelidad, exactitud factual, relevancia, trazabilidad; rúbrica 1–5 con doble evaluador.
-- A/B pedagógico: cápsula genérica vs. adaptada, mismo objetivo, orden aleatorizado.
+- **A/B pedagógico (decidido 06-ago-2026, reemplaza el diseño del cap. 8.2 del informe):**
+  dos grupos estudian la **misma materia**; el grupo experimental **accede a la app** y la
+  recibe como microcápsula personalizada a su perfil VARK, el grupo de control la estudia de
+  forma tradicional (apuntes/guías/clase normal) **sin tocar el sistema**. Se comparan
+  calificaciones entre ambos grupos.
+  - El cap. 8.2 del informe describe otro diseño (control = cápsula genérica vía la app,
+    experimental = cápsula adaptada vía la app, ambos usando el sistema) — **queda
+    reemplazado**, hay que actualizar el capítulo 8 para el informe final.
+  - Implicación para el código: `generation/` **no necesita un modo de generación no
+    personalizada** — toda cápsula que el sistema genere está siempre adaptada a un perfil
+    real. Simplifica el contrato de `generation/schemas.py` frente a lo que se había previsto.
+  - Pendiente de definir: cómo se registran las calificaciones de ambos grupos (es dato
+    académico externo, no algo que la BD actual capture) y qué material exacto ve el grupo de
+    control para que sea comparable en cobertura y tiempo de estudio al de la app.
+- **Validación de la adaptación VARK, con el profesor (aclarado 06-ago-2026).** El informe
+  separa en la Tabla 8.1 "adaptabilidad pedagógica" (método: comparar cápsulas de distintos
+  perfiles, sin decir quién compara) de "validación docente" (criterios: coherencia académica,
+  pertinencia, carga operativa — sin mencionar VARK). En la práctica es una sola actividad: el
+  profesor revisa, para un mismo objetivo, las cápsulas generadas para los distintos perfiles y
+  valida si la adaptación (estructura, tono, ejemplos, actividad) corresponde a cada perfil.
+  Ajustar la rúbrica docente del cap. 8.5 para incluir explícitamente ese criterio.
 - Encuesta TAM a estudiantes + rúbrica a docentes (cap. 8.5).
 - Estadística descriptiva + redacción del capítulo de resultados.
 

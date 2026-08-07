@@ -6,6 +6,7 @@ Arranque:  uvicorn studify.main:app --reload --app-dir src
 from fastapi import FastAPI
 from sqlalchemy import text
 
+from studify.api.routers import diagnostics
 from studify.config import get_settings
 from studify.db.session import engine
 
@@ -19,6 +20,8 @@ app = FastAPI(
     ),
     version="0.1.0",
 )
+
+app.include_router(diagnostics.router)
 
 
 @app.get("/health", tags=["infra"])

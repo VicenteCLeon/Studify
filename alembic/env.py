@@ -10,10 +10,11 @@ from sqlalchemy import engine_from_config, pool
 
 from alembic import context
 from studify.config import get_settings
-from studify.db.base import Base
 
-# Importar aquí los modelos para que autogenerate los detecte.
-# En la Fase 1 se agrega: from studify.db import models  # noqa: F401
+# `models` se importa por efecto colateral: registra las 8 entidades en
+# Base.metadata para que autogenerate las detecte.
+from studify.db import models  # noqa: F401
+from studify.db.base import Base
 
 config = context.config
 
