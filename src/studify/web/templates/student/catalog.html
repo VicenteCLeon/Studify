@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Catálogo de Temas - Studify{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <h1 class="mb-2">Catálogo de Temas</h1>
+    <p class="text-muted">Explora y selecciona lo que deseas estudiar hoy.</p>
+</div>
+
+<div class="card">
+    {% for subject in subjects %}
+    <details class="mb-4">
+        <summary class="text-lg">
+            {{ subject.name }}
+        </summary>
+        <div>
+            <ul class="unit-list">
+                {% for unit in subject.units %}
+                <li>
+                    <details>
+                        <summary>Unidad {{ loop.index }}: {{ unit.name }}</summary>
+                        <div class="bg-gray-50">
+                            <ul class="oa-list">
+                                {% for oa in unit.learning_objectives %}
+                                <li class="oa-card mb-2">
+                                    <span><strong>OA {{ loop.index }}:</strong> {{ oa.title }}</span>
+                                    <a href="/student/viewer/{{ oa.id }}" class="btn btn-primary text-sm" style="padding: 0.5rem 1rem;">Estudiar</a>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </details>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </details>
+    {% endfor %}
+</div>
+{% endblock %}

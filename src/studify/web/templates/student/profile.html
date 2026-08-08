@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}Tu Perfil de Aprendizaje - Studify{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 800px; margin: 0 auto;">
+    <div class="text-center mb-6">
+        <h1 class="mb-2">Tu Perfil: <span class="text-primary">{{ main_style_name }}</span></h1>
+        <p class="text-muted">Así es como procesas mejor la información.</p>
+    </div>
+
+    <div class="flex flex-col gap-4 mb-8">
+        <!-- Visual -->
+        <div>
+            <div class="flex justify-between mb-1">
+                <span class="font-medium">Visual</span>
+                <span class="text-muted">{{ scores.V }}%</span>
+            </div>
+            <div class="progress-container">
+                <div class="progress-bar" style="width: {{ scores.V }}%; background-color: #3b82f6;"></div>
+            </div>
+        </div>
+        
+        <!-- Aural / Auditivo -->
+        <div>
+            <div class="flex justify-between mb-1">
+                <span class="font-medium">Auditivo</span>
+                <span class="text-muted">{{ scores.A }}%</span>
+            </div>
+            <div class="progress-container">
+                <div class="progress-bar" style="width: {{ scores.A }}%; background-color: #f59e0b;"></div>
+            </div>
+        </div>
+
+        <!-- Read/Write -->
+        <div>
+            <div class="flex justify-between mb-1">
+                <span class="font-medium">Lectura / Escritura</span>
+                <span class="text-muted">{{ scores.R }}%</span>
+            </div>
+            <div class="progress-container">
+                <div class="progress-bar" style="width: {{ scores.R }}%; background-color: #10b981;"></div>
+            </div>
+        </div>
+
+        <!-- Kinesthetic -->
+        <div>
+            <div class="flex justify-between mb-1">
+                <span class="font-medium">Kinestésico</span>
+                <span class="text-muted">{{ scores.K }}%</span>
+            </div>
+            <div class="progress-container">
+                <div class="progress-bar" style="width: {{ scores.K }}%; background-color: #ef4444;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="capsule-activity mb-8">
+        <h3 class="mb-2">¿Qué significa esto para ti?</h3>
+        <p>{{ explanation }}</p>
+    </div>
+
+    <div class="flex justify-center">
+        <a href="/student/catalog" class="btn btn-primary">Ir al Catálogo de Temas</a>
+    </div>
+</div>
+{% endblock %}

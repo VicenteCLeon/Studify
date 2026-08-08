@@ -4,9 +4,13 @@ Arranque:  uvicorn studify.main:app --reload --app-dir src
 """
 
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import RedirectResponse
+import os
 from sqlalchemy import text
 
 from studify.api.routers import diagnostics
+from studify.web.routers import student, teacher
 from studify.config import get_settings
 from studify.db.session import engine
 
@@ -22,7 +26,16 @@ app = FastAPI(
 )
 
 app.include_router(diagnostics.router)
+app.include_router(student.router)
+app.include_router(teacher.router)
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+STATIC_DIR = os.path.join(BASE_DIR, "web", "static")
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+
+@app.get("/", include_in_schema=False)
+def index():
+    return RedirectResponse(url="/student/vark")
 
 @app.get("/health", tags=["infra"])
 def health() -> dict:

@@ -2,7 +2,7 @@
 
 > Documento vivo. Se actualiza al cierre de cada fase para que cualquier sesión de trabajo
 > (o cualquier persona) pueda retomar el proyecto sin releer todo el hilo de conversación.
-> Última actualización: **06-ago-2026**, avance parcial de Fase 1 (modelo de datos + motor VARK).
+> Última actualización: **07-ago-2026**, avance parcial de Fase 1 (modelo de datos + motor VARK) y andamiaje de Fase 4 (UI mínima).
 
 ---
 
@@ -32,11 +32,10 @@ quedó pendiente y qué decisiones se tomaron sobre la marcha.
 
 **Semana 0 completa** (`fbf4b3f`, pusheada a `origin/main` —
 https://github.com/VicenteCLeon/Studify.git) y **Fase 1 cerrada**: las 8 entidades del cap. 17
-migradas sobre Postgres, el motor VARK completo (scoring → pesos → jerarquía → reglas), los 43
-diagnósticos reales cargados y `POST /api/diagnosticos` devolviendo la `configuracion_contenido`
-completa. **59 tests en verde**, `ruff` limpio. Queda una discrepancia abierta: las tablas
-16.2/16.3 del informe no se reproducen desde el CSV (sección 5 ter) — es un problema del
-informe, no del código.
+migradas sobre Postgres, el motor VARK completo (scoring → pesos → jerarquía → reglas) y los 43
+diagnósticos reales cargados. **59 tests en verde**, `ruff` limpio. 
+Además, se construyó el **andamiaje inicial de la UI (Fase 4)** utilizando Jinja2, HTMX y Vanilla CSS, con 5 vistas principales (flujo estudiante y docente) conectadas.
+Queda una discrepancia abierta: las tablas 16.2/16.3 del informe no se reproducen desde el CSV (sección 5 ter) — es un problema del informe, no del código.
 
 ---
 
@@ -176,7 +175,7 @@ Studify/
 │  ├─ rag/               # paquete vacío (solo __init__.py) — Fase 3
 │  │  └─ prompts/        # NO EXISTE AÚN
 │  ├─ generation/        # paquete vacío (solo __init__.py) — Fase 3
-│  └─ web/               # NO EXISTE AÚN (templates/ + static/) — Fase 4
+│  └─ web/               # ✅ UI mínima con HTMX + Jinja2 (templates/ + static/ + routers/)
 ├─ tests/
 │  ├─ test_health.py     # smoke test de Semana 0
 │  ├─ test_vark.py       # ✅ 44 tests del motor VARK, contrastados contra el informe
@@ -327,6 +326,16 @@ Verificado contra el servidor real (no solo con `TestClient`): un perfil `{A=40,
 
 Los tests que tocan la base **se saltan solos si Postgres no está levantado**, mismo criterio que
 `test_health.py`, para que `pytest` siga verde en una máquina recién clonada.
+
+---
+
+## 5 sexies. UI Mínima Funcional (07-ago-2026)
+
+Se adelantó el desarrollo de un andamiaje visual para la Fase 4 creando una maqueta UI funcional para interactuar con el motor.
+- **Tecnologías:** FastAPI (servidor), Jinja2 (plantillas renderizadas en servidor), HTMX (interactividad, reemplazo de fragmentos sin SPA) y Vanilla CSS (diseño limpio, premium, sin frameworks pesados).
+- **Flujo Estudiante:** Vistas creadas y enrutadas (con datos *mock*) para el Cuestionario VARK (`vark.html`), Resultados del Perfil (`profile.html`), Catálogo de Temas en cascada (`catalog.html`) y el Visor de Microcápsulas (`viewer.html` con quiz interactivo).
+- **Flujo Docente:** Panel de Curación (`curation.html`) preparado para subir documentos (PDF/PPTX) y una bandeja interactiva para revisar/aprobar/rechazar fragmentos extraídos de la base de conocimiento.
+- **Infraestructura Web:** Configurado el montaje estático (`/static`), directrices en `deps.py`, endpoints en `student.py` y `teacher.py`, resolviendo problemas de firmas con `TemplateResponse` de las versiones recientes de FastAPI/Starlette.
 
 ---
 

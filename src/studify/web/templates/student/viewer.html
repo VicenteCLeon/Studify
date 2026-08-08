@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}Microcápsula - Studify{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="/student/catalog" class="text-muted">← Volver al catálogo</a>
+</div>
+
+<div class="card" style="max-width: 900px; margin: 0 auto;">
+    
+    <!-- Bloque Superior: Contenido Adaptado -->
+    <div class="capsule-header">
+        <h1 class="mb-2">{{ capsule.title }}</h1>
+        <div class="flex gap-2">
+            <span class="badge badge-primary">Modo: {{ capsule.learning_style }}</span>
+            <span class="badge badge-success">OA {{ capsule.oa_id }}</span>
+        </div>
+    </div>
+
+    <div class="capsule-content">
+        <!-- Renderizado dinámico del contenido adaptado -->
+        {{ capsule.content | safe }}
+    </div>
+
+    <!-- Bloque Inferior: Actividad de Cierre (Quiz) -->
+    <div class="capsule-activity" id="activity-container">
+        <h3 class="mb-4">Actividad de Cierre</h3>
+        <p class="mb-4">{{ capsule.activity.question }}</p>
+        
+        <form hx-post="/student/viewer/{{ capsule.id }}/submit" hx-target="#feedback-result" hx-swap="innerHTML">
+            <div class="radio-group mb-6">
+                {% for option in capsule.activity.options %}
+                <label class="radio-option" style="background-color: var(--bg-surface);">
+                    <input type="radio" name="answer" value="{{ loop.index0 }}" required>
+                    <span>{{ option.text }}</span>
+                </label>
+                {% endfor %}
+            </div>
+            
+            <div class="flex items-center gap-4">
+                <button type="submit" class="btn btn-primary">
+                    Revisar Respuesta
+                    <span class="htmx-indicator ml-2">...</span>
+                </button>
+            </div>
+        </form>
+
+        <div id="feedback-result" class="mt-4">
+            <!-- HTMX inyectará la retroalimentación aquí -->
+        </div>
+    </div>
+</div>
+{% endblock %}

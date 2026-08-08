@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}Cuestionario VARK - Studify{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 800px; margin: 0 auto;">
+    <div class="text-center mb-6">
+        <h1 class="mb-2">Descubre tu Estilo de Aprendizaje</h1>
+        <p class="text-muted">Responde las siguientes preguntas para personalizar tu experiencia. <br><strong>Puedes dejar en blanco</strong> las preguntas en las que no estés seguro para evitar sesgos.</p>
+    </div>
+
+    <form hx-post="/student/vark" hx-target="body" hx-push-url="true">
+        <!-- Pregunta 1 -->
+        <div class="form-group mb-8">
+            <label class="form-label text-lg mb-4">1. Estás ayudando a alguien a llegar al aeropuerto. ¿Qué haces?</label>
+            <div class="radio-group">
+                <label class="radio-option">
+                    <input type="radio" name="q1" value="V">
+                    <span>Le dibujo un mapa.</span>
+                </label>
+                <label class="radio-option">
+                    <input type="radio" name="q1" value="A">
+                    <span>Le explico las direcciones verbalmente.</span>
+                </label>
+                <label class="radio-option">
+                    <input type="radio" name="q1" value="R">
+                    <span>Le escribo las instrucciones detalladas.</span>
+                </label>
+                <label class="radio-option">
+                    <input type="radio" name="q1" value="K">
+                    <span>Voy con ellos, o les indico usando puntos de referencia mientras conduzco.</span>
+                </label>
+            </div>
+        </div>
+
+        <!-- Pregunta 2 -->
+        <div class="form-group mb-8">
+            <label class="form-label text-lg mb-4">2. Para aprender a usar un nuevo programa de computadora, prefiero:</label>
+            <div class="radio-group">
+                <label class="radio-option">
+                    <input type="radio" name="q2" value="K">
+                    <span>Usarlo inmediatamente y aprender por ensayo y error.</span>
+                </label>
+                <label class="radio-option">
+                    <input type="radio" name="q2" value="R">
+                    <span>Leer el manual o las instrucciones escritas.</span>
+                </label>
+                <label class="radio-option">
+                    <input type="radio" name="q2" value="A">
+                    <span>Llamar a un amigo y preguntarle cómo funciona.</span>
+                </label>
+                <label class="radio-option">
+                    <input type="radio" name="q2" value="V">
+                    <span>Ver un diagrama o imágenes de las pantallas.</span>
+                </label>
+            </div>
+        </div>
+
+        <div class="flex justify-center mt-8">
+            <button type="submit" class="btn btn-primary">
+                Descubrir mi Perfil
+                <span class="htmx-indicator ml-2">...</span>
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
