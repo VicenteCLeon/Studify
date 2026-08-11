@@ -2,7 +2,7 @@
 
 > Documento vivo. Se actualiza al cierre de cada fase para que cualquier sesión de trabajo
 > (o cualquier persona) pueda retomar el proyecto sin releer todo el hilo de conversación.
-> Última actualización: **10-ago-2026**, cierre del núcleo de la Fase 2 (ingesta, curación y retriever determinista).
+> Última actualización: **10-ago-2026**, cierre del núcleo de la Fase 2 (ingesta, curación y retriever determinista) y carga de los 43 diagnósticos VARK reales en la Máquina 1.
 
 ---
 
@@ -139,6 +139,26 @@ computador.
 1) y sin él no se puede escribir ni el modelo de datos ni el motor VARK. Se subió a
 `docs/seminario_titulo.md` el 06-ago-2026 y el enlace de la sección 0 se corrigió en
 consecuencia. No volver a sacarlo del repo.
+
+### 3 ter. Los 43 diagnósticos reales cargados en la Máquina 1 (10-ago-2026)
+
+`data/data_cuestionarios_43.csv` (no versionado — está en `.gitignore`) llegó a esta máquina y se
+cargó con `python scripts/import_vark_csv.py data/data_cuestionarios_43.csv --reset`. El
+`--dry-run` previo reprodujo exactamente los promedios ya documentados en la sección 5 ter
+(V=5,44 A=7,37 R=7,23 K=7,91), confirmando que es el mismo dataset que en la máquina de Patricio.
+`--reset` solo toca `estudiante` (con CASCADE a diagnóstico/respuestas/configuración) — no afecta
+`objetivo_aprendizaje`, `documento_fuente` ni `fragmento`. Reemplazó 28 diagnósticos que eran
+ruido de `test_api_diagnosticos.py` (crea diagnósticos y no los limpia) por los 43 reales.
+Verificado: `estudiante`, `diagnostico_vark` y `configuracion_contenido` quedaron en 43 cada una.
+
+**Distinción importante para no confundir en sesiones futuras:** este CSV son las **respuestas
+del cuestionario VARK** (dato de estudiantes). No es el **catálogo de objetivos de aprendizaje**
+que la Fase 3 necesita (`codigo_objetivo, asignatura, unidad, tema, descripcion,
+nivel_taxonomico`, cargado con `scripts/cargar_objetivos.py`) — son dos CSV distintos con
+propósitos distintos. Ese sigue sin existir en ninguna máquina.
+
+De paso se eliminó un documento huérfano (`documento_fuente` id 46, `'otro_nombre'`) que había
+quedado de una corrida end-to-end fallida durante la verificación de la Fase 2.
 
 ---
 
@@ -428,10 +448,12 @@ retriever. Mitigarlo pide comparar el texto extraído y no los bytes.
 
 ## 6. Pendiente inmediato
 
-1. **Cargar material real.** El pipeline está probado con documentos sintéticos; falta la unidad
-   real de una asignatura. Techo duro del plan: **una unidad, 40–60 fragmentos**. El catálogo se
-   carga con `python scripts/cargar_objetivos.py data/objetivos.csv` y los documentos por
-   `POST /api/documentos`.
+1. **Cargar material real de la base de conocimiento** (distinto de los diagnósticos VARK, que
+   ya están cargados — ver sección 3 ter). El pipeline está probado con documentos sintéticos;
+   falta la unidad real de una asignatura. Techo duro del plan: **una unidad, 40–60 fragmentos**.
+   El catálogo se carga con `python scripts/cargar_objetivos.py data/objetivos.csv` (ese CSV
+   todavía no existe) y los documentos por `POST /api/documentos`.
+   Sin esto la Fase 3 no tiene nada real que recuperar: 0 objetivos, 0 fragmentos validados.
 2. **Conectar la UI de Patricio a los endpoints reales.** `web/routers/teacher.py` y
    `student.py` siguen con `MOCK_FRAGMENTS` en memoria; ya existen `/api/documentos`,
    `/api/fragmentos`, `/api/catalogo` y `/api/recuperar` para reemplazarlos.
