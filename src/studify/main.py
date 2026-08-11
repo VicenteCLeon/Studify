@@ -10,7 +10,7 @@ from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
 
-from studify.api.routers import diagnostics, knowledge
+from studify.api.routers import capsules, diagnostics, knowledge
 from studify.config import get_settings
 from studify.db.session import engine
 from studify.web.routers import student, teacher
@@ -28,6 +28,7 @@ app = FastAPI(
 
 app.include_router(diagnostics.router)
 app.include_router(knowledge.router)
+app.include_router(capsules.router)
 app.include_router(student.router)
 app.include_router(teacher.router)
 

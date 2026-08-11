@@ -393,6 +393,20 @@ class MicrocapsulaGenerada(Base):
         TS, server_default=func.now(), nullable=False
     )
 
+    # --- Añadidos en la Fase 3, no están en la tabla 17.8 del informe --------
+    #
+    # `huella_generacion` es la clave de caché que calcula
+    # `rag/orchestrator.huella()`: resume todo lo que determina la cápsula
+    # (objetivo, tramo del perfil, fragmentos disponibles y modelo). Va como
+    # columna y no dentro de `contenido_json` porque es lo que se consulta en
+    # cada petición, y un `->>` sobre JSONB no aprovecha índice.
+    #
+    # `modelo_llm` hace legible una cápsula guardada: el bake-off de la Fase 3
+    # deja en la misma tabla las cápsulas de los tres modelos candidatos, y sin
+    # esta columna no hay forma de saber cuál produjo cada una.
+    huella_generacion: Mapped[str | None] = mapped_column(String(64), index=True)
+    modelo_llm: Mapped[str | None] = mapped_column(String(60))
+
     estudiante: Mapped["Estudiante"] = relationship(back_populates="capsulas")
     objetivo: Mapped["ObjetivoAprendizaje"] = relationship(back_populates="capsulas")
     configuracion: Mapped["ConfiguracionContenido | None"] = relationship(

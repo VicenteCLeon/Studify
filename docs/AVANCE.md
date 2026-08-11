@@ -2,7 +2,7 @@
 
 > Documento vivo. Se actualiza al cierre de cada fase para que cualquier sesión de trabajo
 > (o cualquier persona) pueda retomar el proyecto sin releer todo el hilo de conversación.
-> Última actualización: **10-ago-2026**, cierre del núcleo de la Fase 2 (ingesta, curación y retriever determinista) y carga de los 43 diagnósticos VARK reales en la Máquina 1.
+> Última actualización: **11-ago-2026**, cierre del motor de generación de la Fase 3 (contrato, validador de seis reglas, prompt maestro, bucle de reparación y `POST /api/capsulas`).
 
 ---
 
@@ -38,7 +38,17 @@ Además, se construyó el **andamiaje inicial de la UI (Fase 4)** utilizando Jin
 
 **Núcleo de la Fase 2 cerrado** (sección 5 septies): ingesta de PDF/PPTX con trazabilidad de
 página, curación humana con estados reales y **retriever determinista sin embeddings**.
-**104 tests en verde**; `ruff` limpio salvo 21 avisos preexistentes en los routers mock de la UI.
+
+**Motor de generación de la Fase 3 cerrado** (sección 5 octies): contrato Pydantic de la
+microcápsula, validador con las seis reglas de rechazo, prompt maestro en cuatro bloques,
+bucle de reparación y `POST /api/capsulas` con caché y versionado.
+**198 tests en verde**; `ruff` limpio salvo 21 avisos preexistentes en los routers mock de la UI.
+
+Dos cosas que faltan y **no son código**: `LLM_API_KEY` sigue vacío en el `.env`, y no hay
+material curricular real cargado. El motor completo está escrito y probado con un LLM falso;
+lo que falta para el criterio de término de la Fase 3 (≥95% de cápsulas válidas, prueba de
+diferenciación entre los cuatro perfiles, bake-off de modelos) son **mediciones**, y esas
+exigen la credencial y una unidad real.
 
 Queda una discrepancia abierta: las tablas 16.2/16.3 del informe no se reproducen desde el CSV (sección 5 ter) — es un problema del informe, no del código.
 
@@ -178,7 +188,10 @@ Studify/
 │  ├─ env.py             # lee DATABASE_URL desde studify.config; importa models para autogenerate
 │  ├─ script.py.mako
 │  └─ versions/
-│     └─ ec6446cc3c52_*.py  # Fase 1: las 8 entidades. Aplicada y verificada reversible.
+│     ├─ ec6446cc3c52_*.py  # Fase 1: las 8 entidades. Aplicada y verificada reversible.
+│     ├─ 8eb6f0399fee_*.py  # Fase 1: estudiante.genero a VARCHAR(50)
+│     └─ 8010505ef66e_*.py  # Fase 3: huella_generacion + modelo_llm. ⚠️ corregida a mano:
+│                           #   autogenerate quería borrar el índice GIN de FTS
 ├─ src/studify/
 │  ├─ main.py            # app FastAPI + endpoint /health
 │  ├─ config.py          # Settings (pydantic-settings, lee .env)
@@ -195,18 +208,26 @@ Studify/
 │  ├─ api/
 │  │  ├─ schemas.py      # ✅ contratos Pydantic del perfilamiento
 │  │  ├─ schemas_knowledge.py  # ✅ contratos de la base de conocimiento (Fase 2)
+│  │  ├─ schemas_capsulas.py   # ✅ contratos de la generación (Fase 3)
 │  │  └─ routers/
 │  │     ├─ diagnostics.py  # ✅ POST /api/diagnosticos, GET /api/diagnosticos/{id}
-│  │     └─ knowledge.py    # ✅ documentos, fragmentos, curación, catálogo, recuperar
+│  │     ├─ knowledge.py    # ✅ documentos, fragmentos, curación, catálogo, recuperar
+│  │     └─ capsules.py     # ✅ POST /api/capsulas (+ caché, ?regenerar, historial)
 │  ├─ knowledge/         # ✅ ingesta y curación (Fase 2)
 │  │  ├─ extract.py      #    PDF/PPTX → bloques con página y detección de encabezados
 │  │  ├─ chunker.py      #    bloques → fragmentos recuperables (fronteras duras)
 │  │  ├─ ingest.py       #    persistencia + dedup por SHA-256 + almacén de archivos
 │  │  └─ curation.py     #    validar / descartar / asignar objetivo / editar texto
-│  ├─ rag/               # ✅ recuperación determinista (Fase 2)
+│  ├─ rag/               # ✅ recuperación determinista (Fase 2) + prompt (Fase 3)
 │  │  ├─ retriever.py    #    SQL por id_objetivo + FTS español + orden por canal VARK
-│  │  └─ prompts/        #    NO EXISTE AÚN — Fase 3
-│  ├─ generation/        # paquete vacío (solo __init__.py) — Fase 3
+│  │  ├─ orchestrator.py #    ✅ ensamblado del prompt maestro + huella de caché
+│  │  └─ prompts/
+│  │     └─ maestro.py   #    ✅ plantillas + directiva VARK → instrucción estructural
+│  ├─ generation/        # ✅ motor de generación (Fase 3)
+│  │  ├─ schemas.py      #    contrato de la microcápsula (reglas 1, 3 y 4)
+│  │  ├─ idioma.py       #    detección de deriva de idioma (regla 6)
+│  │  ├─ validator.py    #    parser tolerante + reglas 2, 5 y 6 + realimentación
+│  │  └─ generator.py    #    cliente LLM (inyectable) + bucle de reparación
 │  └─ web/               # ✅ UI mínima con HTMX + Jinja2 (templates/ + static/ + routers/)
 ├─ tests/
 │  ├─ conftest.py        # ✅ fixtures compartidas (necesita_bd, db, almacen_temporal)
@@ -215,7 +236,12 @@ Studify/
 │  ├─ test_api_diagnosticos.py   # ✅ 15 tests del endpoint (se saltan sin Postgres)
 │  ├─ test_knowledge_ingesta.py  # ✅ 22 tests de extracción y chunking (sin BD)
 │  ├─ test_knowledge_persistencia.py  # ✅ 6 tests de ingesta contra Postgres
-│  └─ test_curacion_retriever.py      # ✅ 17 tests de curación y determinismo
+│  ├─ test_curacion_retriever.py      # ✅ 17 tests de curación y determinismo
+│  ├─ material.py                # ✅ material de prueba compartido de la Fase 3 (no es un test)
+│  ├─ test_generacion_contrato.py     # ✅ 42 tests del contrato y las 6 reglas (sin BD ni LLM)
+│  ├─ test_prompt_maestro.py          # ✅ 23 tests del prompt y la huella (sin BD ni LLM)
+│  ├─ test_generador.py               # ✅ 15 tests del bucle de reparación (LLM falso)
+│  └─ test_api_capsulas.py            # ✅ 14 tests del endpoint (Postgres, LLM falso)
 ├─ scripts/
 │  ├─ import_vark_csv.py   # ✅ carga los 43 diagnósticos reales (--dry-run, --reset)
 │  └─ cargar_objetivos.py  # ✅ carga el catálogo curricular desde CSV (--dry-run)
@@ -226,8 +252,9 @@ Studify/
    └─ AVANCE.md           # este archivo
 ```
 
-**Nota importante:** el único paquete que sigue vacío es `generation/` (Fase 3). `db/`, `vark/`,
-`knowledge/`, `rag/` y `api/` tienen lógica real y tests.
+**Nota importante:** ya no queda ningún paquete vacío. `db/`, `vark/`, `knowledge/`, `rag/`,
+`generation/` y `api/` tienen lógica real y tests. Lo que falta es material real y credencial,
+no código.
 
 ---
 
@@ -446,8 +473,118 @@ retriever. Mitigarlo pide comparar el texto extraído y no los bytes.
 
 ---
 
+## 5 octies. Fase 3 — Motor de generación (11-ago-2026)
+
+Cierra el motor completo: entra un `(id_estudiante, id_objetivo)` y sale una microcápsula
+validada, en español, con quiz y con fuentes verificables contra el material curado.
+
+### Módulos nuevos
+
+| Módulo | Responsabilidad | Necesita LLM |
+|---|---|---|
+| `generation/schemas.py` | Contrato Pydantic de la microcápsula (reglas 1, 3 y 4 del plan §3) | No |
+| `generation/idioma.py` | Detección de deriva de idioma (regla 6) | No |
+| `generation/validator.py` | Parser tolerante + reglas 2, 5 y 6 + realimentación | No |
+| `rag/prompts/maestro.py` | Plantillas y traducción de directivas VARK a instrucciones | No |
+| `rag/orchestrator.py` | Ensamblado del prompt y huella de caché | No |
+| `generation/generator.py` | Llamada al modelo y bucle de reparación | Solo el cliente real |
+| `api/routers/capsules.py` | `POST /api/capsulas`, historial y consulta por id | Solo al generar |
+
+**Solo una línea del motor habla con el modelo.** Todo lo demás —contrato, validación, prompt,
+bucle de reparación, caché— se ejerce con un cliente falso, sin red y sin costo. Por eso los
+94 tests nuevos corren en una máquina sin `LLM_API_KEY`.
+
+### Decisiones tomadas en la Fase 3
+
+| Decisión | Alternativa descartada | Motivo |
+|---|---|---|
+| **Detección de idioma por conteo de palabras funcionales**, escrita a mano | `langdetect` u otra librería | `langdetect` es probabilístico y, sin fijarle la semilla, **devuelve resultados distintos entre corridas sobre el mismo texto**. Meter no-determinismo dentro del validador contradice el argumento del cap. 13 y haría que un mismo JSON se acepte o rechace según la corrida. El problema real es acotado —distinguir español de inglés y de chino— y con listas de marcadores es exacto y explicable. |
+| **Las palabras clave de SQL quedan fuera de la lista de marcadores del inglés** (`from`, `where`, `select`, `in`, `on`, `as`, `not`, `all`, `and`, `or`, `by`, `if`) | Usar una lista de stopwords estándar | Una cápsula legítima en español sobre bases de datos contiene todas esas palabras. Con la lista estándar, el validador rechazaría por «deriva al inglés» justo el contenido de la asignatura que se está usando de piloto. Hay un test que cubre ese caso. |
+| **Escape por ortografía española** (tildes, ñ, ¿, ¡) cuando el ratio de palabras funcionales es bajo | Solo el umbral de ratio | Un perfil visual puede recibir una cápsula casi toda de tabla y glosario, donde apenas hay palabras funcionales. Sin el escape sería un falso rechazo sistemático contra los perfiles V. |
+| **`documento` y `pagina` de las fuentes se reescriben con los valores de la base** | Confiar en lo que redactó el modelo | Si la cápsula cita el fragmento 161, la procedencia la afirma el sistema consultando `fragmento`/`documento_fuente`. Así la trazabilidad del cap. 13 es verdadera por construcción y no depende de que el modelo copie bien un número de página. Cuántas veces la corrigió queda como métrica. |
+| **`PromptMaestro` acarrea los fragmentos que embebió** | Que el llamador se los pase por separado al validador | Si fueran dos listas distintas, la regla 5 podría rechazar una cita legítima o —peor— dejar pasar una inventada. Toda la tesis se apoya en que esa comprobación sea exacta. |
+| **El bloque de perfil pide bloques concretos, no adjetivos de tono** | «Redacta de forma visual / práctica» | Es la mitigación que el propio plan §5 fija para el riesgo de que las cuatro cápsulas salgan indistinguibles. Cada directiva de `vark/rules.py` se traduce a una instrucción que nombra un `tipo` del contrato y una cantidad, de modo que la diferencia es comprobable en la cápsula resultante. |
+| **El prompt nunca nombra el canal ni la etiqueta del perfil** | Decirle «este estudiante es kinestésico» | El cap. 17.2 prohíbe persistir la etiqueta, y además nombrarla invita al modelo a comentar el estilo de aprendizaje en vez de aplicarlo. Hay un test que lo verifica. |
+| **`palabras_texto` se redondea a tramos de 10 antes de entrar al prompt** | Usar el valor exacto | La huella de caché se calcula sobre lo que entra al prompt. Sin redondear, casi cada estudiante tendría su propio tramo y el caché no serviría: en una cohorte de 43 se pagarían 43 generaciones del mismo tema. Pedir «aproximadamente 247» y «aproximadamente 250» da cápsulas indistinguibles. |
+| **La huella incluye los fragmentos y el modelo**, no solo objetivo y configuración | La definición literal del plan §4 | Ambos cambian la salida: si el docente valida material nuevo, la cápsula cacheada dejó de reflejar el material disponible; y el bake-off corre la misma configuración contra tres modelos, que sin esto se pisarían en el caché. |
+| **Caché compartido entre estudiantes del mismo tramo, copiando la fila** | Compartir la misma fila, o cachear solo por estudiante | Se ahorra la llamada al modelo, que es lo caro, pero cada estudiante conserva su propia fila: la tabla 17.8 vincula cada cápsula a un estudiante y el A/B de la Fase 5 necesita saber qué vio cada uno. |
+| **`get_cliente_llm` devuelve `None` si falta la credencial**, en vez de abortar con 503 | Levantar 503 dentro de la dependencia | Las dependencias de FastAPI se resuelven **antes** del handler: abortar ahí dejaría sin servir también las cápsulas que ya estaban en caché y no necesitan al modelo. El 503 se levanta recién cuando se comprueba que hay que generar. Con el `.env` actual (sin key) la demo puede seguir mostrando lo ya generado. |
+| **La actividad se guarda en `mini_quiz_json`, aparte de `contenido_json`** | Meter la cápsula entera en `contenido_json` | La tabla 17.8 declara las dos columnas por separado; dejar una en NULL apartaría el modelo físico del diccionario de datos del informe sin ninguna ganancia. |
+| **Dos columnas nuevas en `microcapsula_generada`** (`huella_generacion`, `modelo_llm`) | Guardar la huella dentro de `contenido_json` | La huella se consulta en cada petición y un `->>` sobre JSONB no aprovecha índice. `modelo_llm` hace legible una cápsula guardada: el bake-off deja en la misma tabla las cápsulas de los tres modelos y sin la columna no hay forma de saber cuál produjo cada una. **Son un añadido a la tabla 17.8 del informe** y hay que declararlo en el capítulo 17. |
+
+### Decisión de regeneración: se versiona, no se sobrescribe
+
+Cierra la decisión 5 de la sección 7, que estaba marcada como «se decide en la Fase 3».
+
+`POST /api/capsulas` devuelve por defecto la cápsula ya generada para la misma huella;
+`?regenerar=true` produce una versión nueva y **conserva la anterior**. Se descartó sobrescribir
+porque el bake-off de la Fase 3 (mismo prompt × 3 modelos × 4 perfiles) y la validación docente
+de la Fase 5 comparan varias cápsulas del mismo objetivo, y sobrescribir las haría desaparecer.
+
+### Dos cosas que encontró la inspección, no los tests
+
+1. **El autogenerate de Alembic volvió a proponer borrar el índice GIN de full-text search.**
+   La migración `8010505ef66e` salió con un `drop_index('ix_fragmento_contenido_fts')` en el
+   `upgrade` y su `create_index` en el `downgrade` — o sea, destruir el índice del retriever al
+   migrar hacia adelante. Es el mismo defecto ya advertido en la sección 5 (autogenerate no ve
+   los índices definidos por expresión), y esta vez se cumplió. Ambas líneas se quitaron a mano
+   y la migración quedó verificada reversible: `head → downgrade -1 → upgrade head` deja las dos
+   columnas nuevas y el índice FTS intacto en los tres estados. **Si alguien regenera esta
+   migración, hay que volver a quitarlas.**
+
+2. **El prompt le pedía al modelo un bloque que no existe.** Imprimiendo el prompt ensamblado
+   para un perfil K se vio la línea «Componentes prácticos (bloques `ejemplo_resuelto` o
+   `lista_pasos`): 3» junto a solo **dos** instrucciones de bloque. La causa: con `p_K ≥ 40%` la
+   tabla 11.1 cuenta tres componentes —ejemplo aplicado, secuencia paso a paso y actividad
+   «inténtalo tú»— pero el tercero es la **actividad de cierre**, que no es un bloque de
+   `contenido`. Tal como estaba, el modelo tenía que inventarse un tercer bloque para cuadrar la
+   cuenta. Corregido en la redacción del bloque de perfil, con test de regresión. Los tests no
+   lo veían porque cada pieza era correcta por separado.
+
+### Qué cubren los 94 tests nuevos
+
+- `test_generacion_contrato.py` (42): las seis reglas de rechazo, el parser tolerante
+  (cercas Markdown, preámbulo del modelo, coma colgante, llave dentro de una cadena, respuesta
+  truncada) y los casos límite del detector de idioma.
+- `test_prompt_maestro.py` (23): sincronía entre módulos —toda directiva de `vark/rules.py`
+  tiene instrucción, todo campo del contrato aparece en el prompt—, diferenciación entre los
+  cuatro perfiles y las propiedades de la huella de caché.
+- `test_generador.py` (15): el bucle de reparación completo con cliente falso, incluidos los
+  cuatro modos de fallo que tiene que poder reparar.
+- `test_api_capsulas.py` (14, requieren Postgres): lo que el endpoint rechaza, el caché en sus
+  dos niveles, el versionado y el comportamiento sin credencial.
+
+Dos de ellos existen para detectar **desincronización entre módulos**, que es el fallo que no
+produce ningún error y sí cápsulas peores: si alguien agrega una regla a `vark/rules.py` sin
+traducirla en `rag/prompts/maestro.py`, ese elemento del perfil desaparecería de la cápsula sin
+dejar rastro; y si el contrato cambia sin que cambie el prompt, se gastarían los dos reintentos
+en cada llamada. Ambos casos fallan la suite ahora.
+
+### Lo que falta para cerrar la Fase 3 según su criterio de término
+
+El criterio del plan es «`POST /api/capsulas` devuelve una cápsula válida ≥95% de las veces» más
+la prueba de diferenciación entre las cuatro cápsulas VARK. Nada de eso se puede **medir**
+todavía: falta `LLM_API_KEY` y falta material real. El motor está completo y el prompt está
+construido para que la diferenciación ocurra —hay tests que prueban que los cuatro perfiles
+producen prompts distintos y estructuralmente distintos—, pero que las **cápsulas** resulten
+distinguibles es una observación empírica pendiente.
+
+---
+
 ## 6. Pendiente inmediato
 
+Los dos primeros son ahora los que bloquean todo lo demás: el motor está escrito y probado,
+pero **no se ha ejecutado nunca contra un modelo real ni sobre material real**.
+
+0. **Conseguir la credencial del LLM y ponerla en `LLM_API_KEY`.** Con el `.env` actual
+   (`llm_api_key` vacío) `POST /api/capsulas` responde 503 y no se puede medir nada del criterio
+   de término de la Fase 3. Con la key, la primera corrida real es directa: el endpoint ya está
+   montado y el bake-off solo necesita cambiar `LLM_MODEL`/`LLM_BASE_URL` entre las tres
+   candidatas. **Primera cosa que hay que mirar en esa corrida:** si las cuatro cápsulas VARK
+   del mismo objetivo se distinguen entre sí. Si no, el plan §5 ya fija la mitigación —
+   instrucciones estructurales, no adjetivos de tono— y el prompt ya está construido así, de
+   modo que lo que habría que ajustar son las instrucciones de
+   `rag/prompts/maestro.py::INSTRUCCION_POR_DIRECTIVA`, no el motor.
 1. **Cargar material real de la base de conocimiento** (distinto de los diagnósticos VARK, que
    ya están cargados — ver sección 3 ter). El pipeline está probado con documentos sintéticos;
    falta la unidad real de una asignatura. Techo duro del plan: **una unidad, 40–60 fragmentos**.
@@ -456,7 +593,10 @@ retriever. Mitigarlo pide comparar el texto extraído y no los bytes.
    Sin esto la Fase 3 no tiene nada real que recuperar: 0 objetivos, 0 fragmentos validados.
 2. **Conectar la UI de Patricio a los endpoints reales.** `web/routers/teacher.py` y
    `student.py` siguen con `MOCK_FRAGMENTS` en memoria; ya existen `/api/documentos`,
-   `/api/fragmentos`, `/api/catalogo` y `/api/recuperar` para reemplazarlos.
+   `/api/fragmentos`, `/api/catalogo`, `/api/recuperar` y ahora `/api/capsulas` para
+   reemplazarlos. `viewer.html` es el que más trabajo pide: hoy renderiza un HTML fijo y tiene
+   que pasar a recorrer los bloques de `contenido` según su `tipo` (párrafo, tabla, esquema,
+   glosario…) y a mostrar las dos formas de actividad (`quiz_mc` e `intentalo_tu`).
 3. **`tagger.py` (etiquetado asistido por LLM)** quedó fuera de esta entrega porque
    `LLM_API_KEY` está vacío. Hoy el curador asigna el objetivo a mano: funciona, pero es lento.
    Cuando exista la key, el tagger solo debe **proponer**, nunca decidir.
@@ -498,8 +638,11 @@ tener que saltar de archivo:
 4. ~~**Selección de tema por el estudiante**~~ ✅ **Cerrada en la Fase 2:** `GET /api/catalogo`
    devuelve el árbol asignatura → unidad → tema, ocultando por defecto los objetivos sin
    material validado (parámetro `solo_con_material`).
-5. **Regeneración de cápsulas** — ¿se versiona o se sobreescribe si el estudiante pide otra
-   cápsula del mismo objetivo? Sin definir. Se decide en la Fase 3.
+5. ~~**Regeneración de cápsulas**~~ ✅ **Cerrada en la Fase 3 (11-ago-2026): se versiona.**
+   `POST /api/capsulas` devuelve por defecto la cápsula cacheada para la misma huella; con
+   `?regenerar=true` genera una versión nueva y conserva la anterior. El motivo está en la
+   sección 5 octies: el bake-off de la Fase 3 y la validación docente de la Fase 5 comparan
+   varias cápsulas del mismo objetivo, y sobrescribir las haría desaparecer.
 
 ---
 
@@ -540,6 +683,16 @@ Estas no bloquean código, pero quedaron identificadas para el informe final (ve
   alternativa **"No Binario / otra identidad"**, de 27 caracteres, que no cabe. Corregido en el
   modelo con `VARCHAR(50)` (migración `8eb6f0399fee`); falta corregir el diccionario de datos
   del informe.
+- **(Nueva, Fase 3)** La tabla 17.8 se amplió con dos columnas que el informe no declara:
+  `huella_generacion VARCHAR(64)` (clave de caché, indexada) y `modelo_llm VARCHAR(60)`. La
+  primera es lo que permite no volver a pagarle al LLM por una cápsula ya generada; la segunda
+  es lo que hace legible una cápsula guardada cuando el bake-off deja en la misma tabla las de
+  los tres modelos candidatos. Hay que agregarlas al diccionario de datos del capítulo 17.
+- **(Nueva, Fase 3)** El cap. 11.1 no distingue entre los componentes prácticos que son
+  **bloques de contenido** y el que es la **actividad de cierre**. Con `p_K ≥ 40%` la tabla 11.1
+  cuenta tres —ejemplo aplicado, secuencia paso a paso y actividad «inténtalo tú»— pero el
+  tercero no es un bloque del cuerpo de la cápsula. Conviene que el informe lo diga
+  explícitamente, porque leído al pie de la letra pide tres bloques donde solo corresponden dos.
 - **(Nueva)** La tabla 17.1 define `ano_ingreso INT` ("año de ingreso a la universidad"), pero
   el formulario preguntó el **año de carrera** ("4° año o superior (semestres 7+)"). No son el
   mismo dato y uno no se deriva del otro, así que la columna se carga en `NULL`. Hay que decidir

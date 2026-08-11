@@ -24,6 +24,15 @@ class Settings(BaseSettings):
     llm_temperature: float = 0.4
     llm_timeout: int = 90
     llm_max_repair_attempts: int = 2
+    # Una cápsula de 300 palabras más la estructura JSON ronda los 1.200 tokens.
+    # El margen cubre los perfiles largos sin dejar que una respuesta desbocada
+    # se corte a la mitad: el validador detecta el truncamiento, pero cuesta una
+    # llamada completa.
+    llm_max_tokens: int = 2000
+    # `response_format={"type": "json_object"}`. DeepSeek lo soporta; se deja
+    # como variable porque el bake-off de la Fase 3 compara tres proveedores y
+    # no todos lo implementan igual.
+    llm_json_mode: bool = True
 
     # Restricciones estructurales de la microcápsula (cap. 11.1 del informe).
     capsula_min_palabras: int = 150
