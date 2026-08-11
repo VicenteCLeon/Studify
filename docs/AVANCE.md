@@ -355,7 +355,7 @@ interpolación lineal sobre C_texto tal como está implementada.
 
 ---
 
-## 6. Decisiones de diseño aún abiertas (no bloquean la Semana 0, sí bloquean partes de la Fase 1/3)
+## 7. Decisiones de diseño aún abiertas (no bloquean la Semana 0, sí bloquean partes de la Fase 1/3)
 
 Copiadas y mantenidas en sincronía con `PLAN_DESARROLLO.md` sección 6 — resumen aquí para no
 tener que saltar de archivo:
@@ -379,7 +379,7 @@ tener que saltar de archivo:
 
 ---
 
-## 7. Correcciones detectadas en el informe (`seminario_titulo.md`), no aplicadas aún
+## 8. Correcciones detectadas en el informe (`seminario_titulo.md`), no aplicadas aún
 
 Estas no bloquean código, pero quedaron identificadas para el informe final (ver
 `PLAN_DESARROLLO.md` sección 7 para el detalle completo):
@@ -424,7 +424,7 @@ Estas no bloquean código, pero quedaron identificadas para el informe final (ve
 
 ---
 
-## 8. Cómo retomar el trabajo (para una sesión nueva)
+## 9. Cómo retomar el trabajo (para una sesión nueva)
 
 ```powershell
 # Máquina 1: e:\code\Studify\Studify
