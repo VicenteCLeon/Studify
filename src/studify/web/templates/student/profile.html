@@ -3,65 +3,71 @@
 {% block title %}Tu Perfil de Aprendizaje - Studify{% endblock %}
 
 {% block content %}
-<div class="card" style="max-width: 800px; margin: 0 auto;">
+<div class="card" style="max-width: 860px; margin: 0 auto;">
     <div class="text-center mb-6">
-        <h1 class="mb-2">Tu Perfil: <span class="text-primary">{{ main_style_name }}</span></h1>
+        <h1 class="mb-2">Tu Perfil: <span class="text-primary">{{ canal_principal }}</span></h1>
         <p class="text-muted">Así es como procesas mejor la información.</p>
+        <div class="flex justify-center gap-2 mt-4">
+            <span class="badge badge-primary">{{ modalidad }}</span>
+            <span class="badge badge-success">Jerarquía {{ jerarquia.jerarquia }}</span>
+            <span class="badge badge-warning">Diagnóstico #{{ id_diagnostico }}</span>
+        </div>
     </div>
 
     <div class="flex flex-col gap-4 mb-8">
-        <!-- Visual -->
+        {% for canal in canales %}
         <div>
             <div class="flex justify-between mb-1">
-                <span class="font-medium">Visual</span>
-                <span class="text-muted">{{ scores.V }}%</span>
+                <span class="font-medium">{{ canal.nombre }}</span>
+                <span class="text-muted">{{ canal.texto }}%</span>
             </div>
             <div class="progress-container">
-                <div class="progress-bar" style="width: {{ scores.V }}%; background-color: #3b82f6;"></div>
+                <div class="progress-bar"
+                     style="width: {{ canal.ancho }}%; background-color: {{ canal.color }};"></div>
             </div>
         </div>
-        
-        <!-- Aural / Auditivo -->
-        <div>
-            <div class="flex justify-between mb-1">
-                <span class="font-medium">Auditivo</span>
-                <span class="text-muted">{{ scores.A }}%</span>
-            </div>
-            <div class="progress-container">
-                <div class="progress-bar" style="width: {{ scores.A }}%; background-color: #f59e0b;"></div>
-            </div>
-        </div>
-
-        <!-- Read/Write -->
-        <div>
-            <div class="flex justify-between mb-1">
-                <span class="font-medium">Lectura / Escritura</span>
-                <span class="text-muted">{{ scores.R }}%</span>
-            </div>
-            <div class="progress-container">
-                <div class="progress-bar" style="width: {{ scores.R }}%; background-color: #10b981;"></div>
-            </div>
-        </div>
-
-        <!-- Kinesthetic -->
-        <div>
-            <div class="flex justify-between mb-1">
-                <span class="font-medium">Kinestésico</span>
-                <span class="text-muted">{{ scores.K }}%</span>
-            </div>
-            <div class="progress-container">
-                <div class="progress-bar" style="width: {{ scores.K }}%; background-color: #ef4444;"></div>
-            </div>
-        </div>
+        {% endfor %}
     </div>
 
     <div class="capsule-activity mb-8">
         <h3 class="mb-2">¿Qué significa esto para ti?</h3>
-        <p>{{ explanation }}</p>
+        <p>{{ explicacion }}</p>
     </div>
 
-    <div class="flex justify-center">
+    <h3 class="mb-2">Cómo se construirán tus microcápsulas</h3>
+    <p class="text-muted text-sm mb-4">
+        Estos parámetros los derivó el sistema desde tu vector y son los que recibe el
+        generador. No son una descripción de tu personalidad: son instrucciones de armado.
+    </p>
+
+    <div class="grid-config mb-6">
+        <div class="dato">
+            <span class="dato-valor">{{ config.palabras_texto }}</span>
+            <span class="dato-etiqueta">palabras de contenido</span>
+        </div>
+        <div class="dato">
+            <span class="dato-valor">{{ config.recursos_visuales }}</span>
+            <span class="dato-etiqueta">recursos visuales</span>
+        </div>
+        <div class="dato">
+            <span class="dato-valor">{{ config.componentes_practicos }}</span>
+            <span class="dato-etiqueta">componentes prácticos</span>
+        </div>
+        <div class="dato">
+            <span class="dato-valor dato-texto">{{ config.tono }}</span>
+            <span class="dato-etiqueta">registro de redacción</span>
+        </div>
+    </div>
+
+    <ul class="lista-directivas mb-8">
+        {% for directiva in directivas %}
+        <li>{{ directiva }}</li>
+        {% endfor %}
+    </ul>
+
+    <div class="flex justify-center gap-4">
         <a href="/student/catalog" class="btn btn-primary">Ir al Catálogo de Temas</a>
+        <a href="/student/vark" class="btn btn-outline">Volver a responder</a>
     </div>
 </div>
 {% endblock %}

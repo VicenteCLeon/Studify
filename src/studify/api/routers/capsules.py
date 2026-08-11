@@ -208,7 +208,7 @@ def crear_capsula(
             detail=f"no existe el objetivo de aprendizaje {payload.id_objetivo}",
         )
 
-    diagnostico = _mas_reciente_diagnostico(db, payload.id_estudiante)
+    diagnostico = diagnostico_vigente(db, payload.id_estudiante)
     if diagnostico is None:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
@@ -354,12 +354,16 @@ def obtener_capsula(id_capsula: int, db: Session = Depends(get_db)) -> CapsulaOu
 # --- Auxiliares ---------------------------------------------------------------
 
 
-def _mas_reciente_diagnostico(db: Session, id_estudiante: int) -> DiagnosticoVark | None:
+def diagnostico_vigente(db: Session, id_estudiante: int) -> DiagnosticoVark | None:
     """El diagnóstico vigente del estudiante.
 
     Se toma el más reciente y no "el" diagnóstico porque un estudiante puede
     responder el cuestionario más de una vez (la tabla 17.2 no lo impide), y la
     cápsula tiene que reflejar su perfil actual.
+
+    Es público porque la UI de la Fase 4 necesita exactamente el mismo criterio:
+    si la pantalla de perfil mostrara un diagnóstico distinto del que usa la
+    generación, el estudiante vería un vector y recibiría cápsulas de otro.
     """
     return db.scalars(
         select(DiagnosticoVark)

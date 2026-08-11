@@ -1,0 +1,25 @@
+{# Bandeja de fragmentos pendientes. Se renderiza en la carga de la página y la
+   vuelve a pedir HTMX tras cada ingesta (evento `fragmentos-actualizados`). #}
+<div class="table-container">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Origen</th>
+                <th>Fragmento</th>
+                <th>Objetivo de aprendizaje</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="fragments-list">
+            {% for fragmento in fragmentos %}
+                {% include "teacher/_fila.html" %}
+            {% else %}
+            <tr>
+                <td colspan="4" class="text-center text-muted py-8">
+                    No hay fragmentos pendientes de revisión.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

@@ -1,0 +1,63 @@
+{# Una fila de la bandeja. Se usa en dos sitios: dentro del bucle de
+   `_bandeja.html` y como respuesta suelta de aprobar/rechazar, que HTMX
+   intercambia por la fila anterior (`hx-swap="outerHTML"`). #}
+<tr id="fragment-{{ fragmento.id }}">
+    <td>
+        <div class="font-medium">{{ fragmento.documento }}</div>
+        <div class="text-sm text-muted">
+            {% if fragmento.pagina_inicio %}
+                Pág. {{ fragmento.pagina_inicio }}{% if fragmento.pagina_fin and fragmento.pagina_fin != fragmento.pagina_inicio %}–{{ fragmento.pagina_fin }}{% endif %}
+                ·
+            {% endif %}
+            {{ fragmento.tipo }} · {{ fragmento.palabras }} palabras
+        </div>
+    </td>
+    <td>
+        <div class="text-sm texto-fragmento">{{ fragmento.texto }}</div>
+        {% if error %}
+        <div class="alerta alerta-error mt-2 text-sm">{{ error }}</div>
+        {% endif %}
+    </td>
+    <td>
+        {% if fragmento.estado == 'validado' %}
+        <span class="badge badge-success">validado</span>
+        {% elif fragmento.estado == 'descartado' %}
+        <span class="badge badge-danger">descartado</span>
+        {% else %}
+        <select name="id_objetivo" class="form-control text-sm" style="min-width: 220px;">
+            <option value="">— sin asignar —</option>
+            {% for objetivo in objetivos %}
+            <option value="{{ objetivo.id_objetivo }}"
+                    {% if objetivo.id_objetivo == fragmento.id_objetivo %}selected{% endif %}>
+                {{ objetivo.codigo_objetivo }} · {{ objetivo.tema }}
+            </option>
+            {% endfor %}
+        </select>
+        {% endif %}
+    </td>
+    <td>
+        {% if fragmento.estado == 'pendiente' %}
+        <div class="flex gap-2">
+            {# `hx-include="closest tr"` manda el objetivo elegido junto al POST:
+               validar sin objetivo dejaría el fragmento inalcanzable. #}
+            <button hx-post="/teacher/curation/{{ fragmento.id }}/approve"
+                    hx-include="closest tr"
+                    hx-target="closest tr"
+                    hx-swap="outerHTML"
+                    class="btn btn-outline text-sm"
+                    style="padding: 0.25rem 0.75rem; border-color: var(--success); color: var(--success);">
+                Validar
+            </button>
+            <button hx-post="/teacher/curation/{{ fragmento.id }}/reject"
+                    hx-target="closest tr"
+                    hx-swap="outerHTML"
+                    class="btn btn-outline text-sm"
+                    style="padding: 0.25rem 0.75rem; border-color: var(--danger); color: var(--danger);">
+                Descartar
+            </button>
+        </div>
+        {% else %}
+        <span class="text-sm text-muted">Revisado</span>
+        {% endif %}
+    </td>
+</tr>

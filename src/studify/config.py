@@ -16,6 +16,12 @@ class Settings(BaseSettings):
 
     database_url: str = "postgresql+psycopg://studify:studify@localhost:5432/studify"
 
+    # Clave con la que se firma la cookie de sesión de la UI (Fase 4). Si queda
+    # vacía, `web/sesion.py` genera una efímera al arrancar: la app funciona
+    # igual, pero las sesiones no sobreviven a un reinicio (ni a cada recarga de
+    # `uvicorn --reload`). Fijarla en el `.env` es lo que hace cómoda la demo.
+    session_secret: str = ""
+
     # Proveedor LLM con API compatible con OpenAI (DeepSeek / Qwen / GLM).
     # El modelo se decide con datos en el bake-off de la Fase 3.
     llm_base_url: str = "https://api.deepseek.com/v1"

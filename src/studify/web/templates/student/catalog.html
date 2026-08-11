@@ -5,27 +5,40 @@
 {% block content %}
 <div class="mb-8">
     <h1 class="mb-2">Catálogo de Temas</h1>
-    <p class="text-muted">Explora y selecciona lo que deseas estudiar hoy.</p>
+    <p class="text-muted">
+        Explora y selecciona lo que deseas estudiar hoy. Solo aparecen los temas que
+        tienen material institucional ya revisado por un docente.
+    </p>
 </div>
 
 <div class="card">
-    {% for subject in subjects %}
-    <details class="mb-4">
-        <summary class="text-lg">
-            {{ subject.name }}
-        </summary>
+    {% for asignatura in asignaturas %}
+    <details class="mb-4" {% if loop.first %}open{% endif %}>
+        <summary class="text-lg">{{ asignatura.asignatura }}</summary>
         <div>
             <ul class="unit-list">
-                {% for unit in subject.units %}
+                {% for unidad in asignatura.unidades %}
                 <li>
-                    <details>
-                        <summary>Unidad {{ loop.index }}: {{ unit.name }}</summary>
-                        <div class="bg-gray-50">
+                    <details {% if loop.first %}open{% endif %}>
+                        <summary>{{ unidad.unidad }}</summary>
+                        <div>
                             <ul class="oa-list">
-                                {% for oa in unit.learning_objectives %}
+                                {% for tema in unidad.temas %}
                                 <li class="oa-card mb-2">
-                                    <span><strong>OA {{ loop.index }}:</strong> {{ oa.title }}</span>
-                                    <a href="/student/viewer/{{ oa.id }}" class="btn btn-primary text-sm" style="padding: 0.5rem 1rem;">Estudiar</a>
+                                    <span>
+                                        <strong>{{ tema.codigo_objetivo }}</strong> — {{ tema.tema }}
+                                        {% if tema.descripcion %}
+                                        <br><span class="text-sm text-muted">{{ tema.descripcion }}</span>
+                                        {% endif %}
+                                        <br><span class="text-sm text-muted">
+                                            {{ tema.fragmentos_disponibles }}
+                                            fragmento{{ '' if tema.fragmentos_disponibles == 1 else 's' }}
+                                            de material validado
+                                        </span>
+                                    </span>
+                                    <a href="/student/viewer/{{ tema.id_objetivo }}"
+                                       class="btn btn-primary text-sm"
+                                       style="padding: 0.5rem 1rem; white-space: nowrap;">Estudiar</a>
                                 </li>
                                 {% endfor %}
                             </ul>
@@ -36,6 +49,21 @@
             </ul>
         </div>
     </details>
+    {% else %}
+    <div class="text-center py-8">
+        <h3 class="mb-2">Todavía no hay temas disponibles</h3>
+        <p class="text-muted mb-4">
+            Un tema aparece acá cuando tiene material curado: el docente sube el
+            documento oficial y valida los fragmentos que lo respaldan. Sin eso el
+            sistema no puede generar una cápsula fundamentada, así que prefiere no
+            ofrecer el tema antes que inventar el contenido.
+        </p>
+        <a href="/teacher/curation" class="btn btn-outline">Ir al panel de curación</a>
+    </div>
     {% endfor %}
+</div>
+
+<div class="flex justify-center mt-8">
+    <a href="/student/profile" class="text-muted">← Ver mi perfil de aprendizaje</a>
 </div>
 {% endblock %}

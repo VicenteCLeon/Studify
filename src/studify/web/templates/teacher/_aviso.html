@@ -1,0 +1,5 @@
+{# Resultado de la ingesta. Va por plantilla porque el mensaje incluye el nombre
+   del archivo que subió el docente, y Jinja lo escapa solo. #}
+<div class="alerta alerta-{{ 'ok' if estado == 'ok' else 'error' }}" role="status">
+    {{ mensaje }}
+</div>

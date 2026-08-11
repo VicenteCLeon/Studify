@@ -3,63 +3,78 @@
 {% block title %}Cuestionario VARK - Studify{% endblock %}
 
 {% block content %}
-<div class="card" style="max-width: 800px; margin: 0 auto;">
+<div class="card" style="max-width: 860px; margin: 0 auto;">
     <div class="text-center mb-6">
         <h1 class="mb-2">Descubre tu Estilo de Aprendizaje</h1>
-        <p class="text-muted">Responde las siguientes preguntas para personalizar tu experiencia. <br><strong>Puedes dejar en blanco</strong> las preguntas en las que no estés seguro para evitar sesgos.</p>
+        <p class="text-muted">
+            {{ items | length }} situaciones cotidianas. <strong>Puedes marcar más de una
+            alternativa</strong> en cada una, y <strong>dejar en blanco</strong> las que no
+            te representen: ambas cosas son parte del instrumento y no afectan la validez
+            de tu perfil.
+        </p>
     </div>
 
-    <form hx-post="/student/vark" hx-target="body" hx-push-url="true">
-        <!-- Pregunta 1 -->
-        <div class="form-group mb-8">
-            <label class="form-label text-lg mb-4">1. Estás ayudando a alguien a llegar al aeropuerto. ¿Qué haces?</label>
-            <div class="radio-group">
-                <label class="radio-option">
-                    <input type="radio" name="q1" value="V">
-                    <span>Le dibujo un mapa.</span>
-                </label>
-                <label class="radio-option">
-                    <input type="radio" name="q1" value="A">
-                    <span>Le explico las direcciones verbalmente.</span>
-                </label>
-                <label class="radio-option">
-                    <input type="radio" name="q1" value="R">
-                    <span>Le escribo las instrucciones detalladas.</span>
-                </label>
-                <label class="radio-option">
-                    <input type="radio" name="q1" value="K">
-                    <span>Voy con ellos, o les indico usando puntos de referencia mientras conduzco.</span>
-                </label>
-            </div>
-        </div>
+    <form hx-post="/student/vark"
+          hx-target="#form-error"
+          hx-swap="innerHTML"
+          hx-indicator="#enviando">
 
-        <!-- Pregunta 2 -->
+        <fieldset class="bloque-datos mb-8">
+            <legend class="form-label">Antes de empezar (opcional)</legend>
+            <p class="text-sm text-muted mb-4">
+                Solo se usa para el análisis agregado de resultados. Nunca interviene en
+                cómo se genera tu contenido.
+            </p>
+            <div class="grid-datos">
+                <div class="form-group">
+                    <label class="form-label text-sm" for="rango_etario">Rango etario</label>
+                    <select class="form-control" name="rango_etario" id="rango_etario">
+                        <option value="">Prefiero no decirlo</option>
+                        <option>18 - 20 años</option>
+                        <option>21 - 23 años</option>
+                        <option>24 - 26 años</option>
+                        <option>27 años o más</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label text-sm" for="genero">Género</label>
+                    <select class="form-control" name="genero" id="genero">
+                        <option value="">Prefiero no decirlo</option>
+                        <option>Femenino</option>
+                        <option>Masculino</option>
+                        <option>No Binario / otra identidad</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label text-sm" for="carrera">Carrera</label>
+                    <input class="form-control" type="text" name="carrera" id="carrera"
+                           maxlength="80" placeholder="Ej.: Ingeniería Civil Informática">
+                </div>
+            </div>
+        </fieldset>
+
+        {% for item in items %}
         <div class="form-group mb-8">
-            <label class="form-label text-lg mb-4">2. Para aprender a usar un nuevo programa de computadora, prefiero:</label>
+            <label class="form-label text-lg mb-4">
+                <span class="numero-item">{{ item.numero }}</span> {{ item.enunciado }}
+            </label>
             <div class="radio-group">
+                {% for letra, texto in item.alternativas %}
                 <label class="radio-option">
-                    <input type="radio" name="q2" value="K">
-                    <span>Usarlo inmediatamente y aprender por ensayo y error.</span>
+                    <input type="checkbox" name="q{{ item.numero }}" value="{{ letra }}">
+                    <span>{{ texto }}</span>
                 </label>
-                <label class="radio-option">
-                    <input type="radio" name="q2" value="R">
-                    <span>Leer el manual o las instrucciones escritas.</span>
-                </label>
-                <label class="radio-option">
-                    <input type="radio" name="q2" value="A">
-                    <span>Llamar a un amigo y preguntarle cómo funciona.</span>
-                </label>
-                <label class="radio-option">
-                    <input type="radio" name="q2" value="V">
-                    <span>Ver un diagrama o imágenes de las pantallas.</span>
-                </label>
+                {% endfor %}
             </div>
         </div>
+        {% endfor %}
+
+        <div id="form-error" class="mb-4"></div>
 
         <div class="flex justify-center mt-8">
             <button type="submit" class="btn btn-primary">
                 Descubrir mi Perfil
-                <span class="htmx-indicator ml-2">...</span>
+                <span id="enviando" class="htmx-indicator ml-2">…</span>
             </button>
         </div>
     </form>

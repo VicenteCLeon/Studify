@@ -1,4 +1,5 @@
 import os
+
 from fastapi.templating import Jinja2Templates
 
 # Obtener ruta absoluta para evitar problemas al ejecutar desde distintos directorios

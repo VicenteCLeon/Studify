@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}{{ titulo }} - Studify{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="/student/catalog" class="text-muted">← Volver al catálogo</a>
+</div>
+
+<div class="card text-center" style="max-width: 640px; margin: 0 auto;">
+    <h1 class="mb-4">{{ titulo }}</h1>
+    {% if objetivo %}
+    <p class="mb-4">
+        <span class="badge badge-primary">{{ objetivo.codigo_objetivo }}</span>
+        <span class="badge badge-success">{{ objetivo.tema }}</span>
+    </p>
+    {% endif %}
+    <p class="text-muted mb-8">{{ mensaje }}</p>
+    <div class="flex justify-center gap-4">
+        <a href="/student/catalog" class="btn btn-primary">Elegir otro tema</a>
+        <a href="/teacher/curation" class="btn btn-outline">Panel de curación</a>
+    </div>
+</div>
+{% endblock %}

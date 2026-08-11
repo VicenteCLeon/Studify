@@ -2,7 +2,7 @@
 
 > Documento vivo. Se actualiza al cierre de cada fase para que cualquier sesión de trabajo
 > (o cualquier persona) pueda retomar el proyecto sin releer todo el hilo de conversación.
-> Última actualización: **11-ago-2026**, cierre del motor de generación de la Fase 3 (contrato, validador de seis reglas, prompt maestro, bucle de reparación y `POST /api/capsulas`).
+> Última actualización: **11-ago-2026**, cierre de la Fase 4 (la UI dejó de usar datos *mock*: cuestionario, sesión, perfil, catálogo, visor de cápsulas y panel de curación conectados al motor real).
 
 ---
 
@@ -34,7 +34,7 @@ quedó pendiente y qué decisiones se tomaron sobre la marcha.
 https://github.com/VicenteCLeon/Studify.git) y **Fase 1 cerrada**: las 8 entidades del cap. 17
 migradas sobre Postgres, el motor VARK completo (scoring → pesos → jerarquía → reglas) y los 43
 diagnósticos reales cargados.
-Además, se construyó el **andamiaje inicial de la UI (Fase 4)** utilizando Jinja2, HTMX y Vanilla CSS, con 5 vistas principales (flujo estudiante y docente) conectadas — todavía con datos *mock*.
+Además, se construyó el **andamiaje inicial de la UI (Fase 4)** utilizando Jinja2, HTMX y Vanilla CSS, con 5 vistas principales (flujo estudiante y docente) — que en su momento usaban datos *mock* y hoy están conectadas al motor real (sección 5 nonies).
 
 **Núcleo de la Fase 2 cerrado** (sección 5 septies): ingesta de PDF/PPTX con trazabilidad de
 página, curación humana con estados reales y **retriever determinista sin embeddings**.
@@ -42,7 +42,15 @@ página, curación humana con estados reales y **retriever determinista sin embe
 **Motor de generación de la Fase 3 cerrado** (sección 5 octies): contrato Pydantic de la
 microcápsula, validador con las seis reglas de rechazo, prompt maestro en cuatro bloques,
 bucle de reparación y `POST /api/capsulas` con caché y versionado.
-**198 tests en verde**; `ruff` limpio salvo 21 avisos preexistentes en los routers mock de la UI.
+
+**Fase 4 cerrada** (sección 5 nonies): la UI dejó de usar datos *mock*. El cuestionario
+muestra los 16 ítems reales del instrumento, el diagnóstico se guarda de verdad, hay sesión
+por cookie firmada, el perfil lee el vector y la configuración persistidos, el catálogo
+consulta `objetivo_aprendizaje` ocultando lo que no tiene material curado, el visor invoca el
+motor de generación y renderiza los siete tipos de bloque del contrato, el quiz se corrige
+contra `mini_quiz_json`, y el panel del docente ingiere y cura material real.
+**229 tests en verde y `ruff` limpio en todo el repositorio** (desaparecieron los 21 avisos
+que arrastraban los routers mock).
 
 Dos cosas que faltan y **no son código**: `LLM_API_KEY` sigue vacío en el `.env`, y no hay
 material curricular real cargado. El motor completo está escrito y probado con un LLM falso;
@@ -64,7 +72,7 @@ Queda una discrepancia abierta: las tablas 16.2/16.3 del informe no se reproduce
 | **LlamaIndex acotado** a `BaseRetriever` custom + `PromptTemplate` + conector LLM | `VectorStoreIndex` (el uso "por defecto" de LlamaIndex) | Usar el índice vectorial estándar contradiría la tesis central del proyecto (RAG estructurado, no semántico). LlamaIndex se usa solo como capa de orquestación de prompt, no de recuperación. |
 | **Cliente LLM único vía interfaz OpenAI-compatible** (`llama-index-llms-openai-like`) | SDKs nativos de cada proveedor | DeepSeek, Qwen y GLM (los "LLMs chinos" que el equipo decidió usar) exponen todos una API compatible con OpenAI. Un solo cliente, modelo intercambiable por variable de entorno (`LLM_BASE_URL`, `LLM_MODEL`), sin tocar código. La elección final entre los tres se hace con datos en un bake-off programado para la Fase 3. |
 | **`/health` reporta la BD caída en vez de fallar (500)** | Que el endpoint dependa de la BD para responder | Permite distinguir "la app no levanta" de "falta Postgres" al diagnosticar. Los tests (`tests/test_health.py`) corren sin necesidad de una base de datos activa. |
-| **UI mínima con Jinja2 + HTMX** servida por el mismo FastAPI (aún no implementada) | Streamlit / SPA React desde el inicio | Cero build step, todo pasa por `/api/*`, así que una UI más completa después no obliga a rediseñar el backend. Streamlit habría sido un callejón sin salida para la UI final. React queda para una fase posterior si el tiempo lo permite. |
+| **UI mínima con Jinja2 + HTMX** servida por el mismo FastAPI | Streamlit / SPA React desde el inicio | Cero build step, todo pasa por `/api/*`, así que una UI más completa después no obliga a rediseñar el backend. Streamlit habría sido un callejón sin salida para la UI final. React queda para una fase posterior si el tiempo lo permite. |
 | **`data/*` en `.gitignore`, no `data/`** | `.gitignore` con solo `data/` | Git no permite re-incluir un archivo (`!data/.gitkeep`) cuyo directorio padre está excluido por completo. Con `data/*` + `!data/.gitkeep` el directorio sí se versiona vacío. |
 
 ---
@@ -228,7 +236,15 @@ Studify/
 │  │  ├─ idioma.py       #    detección de deriva de idioma (regla 6)
 │  │  ├─ validator.py    #    parser tolerante + reglas 2, 5 y 6 + realimentación
 │  │  └─ generator.py    #    cliente LLM (inyectable) + bucle de reparación
-│  └─ web/               # ✅ UI mínima con HTMX + Jinja2 (templates/ + static/ + routers/)
+│  └─ web/               # ✅ UI mínima con HTMX + Jinja2 (Fase 4, conectada al motor)
+│     ├─ deps.py         #    entorno Jinja2 compartido
+│     ├─ sesion.py       #    ✅ cookie `id_estudiante` firmada con HMAC
+│     ├─ textos.py       #    ⚠️ copy de la UI + enunciados PROVISIONALES de los 16 ítems
+│     ├─ routers/
+│     │  ├─ student.py   #    ✅ cuestionario, perfil, catálogo, visor y quiz
+│     │  └─ teacher.py   #    ✅ subida de documentos y bandeja de curación
+│     ├─ templates/      #    student/ (+ parciales `_feedback`) y teacher/ (`_bandeja`, `_fila`)
+│     └─ static/css/
 ├─ tests/
 │  ├─ conftest.py        # ✅ fixtures compartidas (necesita_bd, db, almacen_temporal)
 │  ├─ test_health.py     # smoke test de Semana 0
@@ -241,7 +257,9 @@ Studify/
 │  ├─ test_generacion_contrato.py     # ✅ 42 tests del contrato y las 6 reglas (sin BD ni LLM)
 │  ├─ test_prompt_maestro.py          # ✅ 23 tests del prompt y la huella (sin BD ni LLM)
 │  ├─ test_generador.py               # ✅ 15 tests del bucle de reparación (LLM falso)
-│  └─ test_api_capsulas.py            # ✅ 14 tests del endpoint (Postgres, LLM falso)
+│  ├─ test_api_capsulas.py            # ✅ 14 tests del endpoint (Postgres, LLM falso)
+│  ├─ test_web_estudiante.py          # ✅ 24 tests del flujo web del estudiante (Fase 4)
+│  └─ test_web_docente.py             # ✅ 7 tests del panel de curación (Fase 4)
 ├─ scripts/
 │  ├─ import_vark_csv.py   # ✅ carga los 43 diagnósticos reales (--dry-run, --reset)
 │  └─ cargar_objetivos.py  # ✅ carga el catálogo curricular desde CSV (--dry-run)
@@ -571,6 +589,81 @@ distinguibles es una observación empírica pendiente.
 
 ---
 
+## 5 nonies. Fase 4 — UI mínima funcional conectada al motor (11-ago-2026)
+
+Cierra el pendiente n.º 2 de la sección 6: `web/routers/student.py` y `teacher.py` ya no
+tienen `MOCK_FRAGMENTS` ni cápsulas escritas a mano. Cada vista llama al **mismo handler**
+que expone `/api/*` en vez de reimplementarlo, de modo que la demo y la API no pueden
+contradecirse: si cambia el cálculo del perfil, cambian las dos a la vez.
+
+| Vista | Con qué se conectó |
+|---|---|
+| `GET /student/vark` | `vark/instrumento.py` — los 16 ítems y sus 64 alternativas reales |
+| `POST /student/vark` | `crear_diagnostico`, el handler de `POST /api/diagnosticos` |
+| `GET /student/profile` | `diagnostico_vigente` + `vark/rules.aplicar_reglas` + la fila de `configuracion_contenido` |
+| `GET /student/catalog` | `catalogo`, el handler de `GET /api/catalogo` |
+| `GET /student/viewer/{id_objetivo}` | `crear_capsula`, el handler de `POST /api/capsulas` |
+| `POST /student/viewer/{id_capsula}/submit` | `mini_quiz_json.indice_correcta` de la fila persistida |
+| `POST /teacher/curation/upload` | `subir_documento` → `knowledge/ingest.ingerir` |
+| `POST /teacher/curation/{id}/approve` \| `/reject` | `knowledge/curation.validar` \| `descartar` |
+
+### Decisiones tomadas en la Fase 4
+
+| Decisión | Alternativa descartada | Motivo |
+|---|---|---|
+| **Casillas de verificación en el cuestionario**, no botones de radio | Un radio por ítem, como tenía la maqueta | El cap. 10 permite marcar **varias** alternativas por ítem y dejar ítems en blanco. Con radios ninguna de las dos cosas es expresable, y el instrumento aplicado por la web dejaría de ser el mismo que se aplicó por Google Forms a los 43 estudiantes ya cargados: los perfiles no serían comparables. |
+| **Cookie `id_estudiante` firmada con HMAC** (stdlib) | Cookie con el id en claro; o `itsdangerous`; o sesión en servidor | Un entero en una cookie lo edita cualquiera: escribir `id_estudiante=7` bastaba para ver el perfil y las cápsulas de otra persona. La firma lo cierra sin agregar dependencia ni tabla de sesiones. No es autenticación —el sistema no tiene usuarios, el cap. 9 identifica por diagnóstico— pero sí impide la manipulación trivial. |
+| **`SESSION_SECRET` opcional, con secreto efímero por proceso si falta** | Un secreto fijo escrito en el código | Firmar con un secreto público es lo mismo que no firmar. Si falta, la app funciona y las sesiones simplemente no sobreviven a un reinicio; queda documentado en `.env.example`. |
+| **Repetir el cuestionario agrega un diagnóstico al mismo estudiante** | Crear un estudiante nuevo en cada intento | La tabla 17.2 admite varios diagnósticos por estudiante y la generación ya usa el más reciente. Si cada intento creara una persona, el A/B de la Fase 5 quedaría con la cohorte inflada de duplicados y las cápsulas de un mismo estudiante repartidas entre varios identificadores. |
+| **El bloque `contenido` se recorre por `tipo` y se arma la etiqueta HTML que corresponde** | Que el modelo devuelva HTML | El contrato de `generation/schemas.py` es estructurado justamente para que la UI decida la presentación. Además, HTML del LLM inyectado con `\|safe` sería XSS con firma del proveedor. Jinja escapa todo lo que viene del modelo. |
+| **`indice_correcta` y `retroalimentacion` no viajan al navegador** | Mandar la actividad completa y comparar en el cliente | Estarían en el código fuente de la página y el quiz dejaría de medir nada. La corrección se hace en el servidor contra `mini_quiz_json`. |
+| **`submit` comprueba que la cápsula sea del estudiante de la sesión** | Corregir por id sin más | Sin la comprobación, iterar ids ajenos devolvería la alternativa correcta de cualquier cápsula. |
+| **Los errores de formulario viajan como HTML con estado 200** | Devolver 4xx | HTMX solo intercambia contenido en respuestas exitosas: un 422 deja al estudiante mirando un formulario que no reacciona. |
+| **El visor distingue tres fallos en pantalla** (sin credencial / sin material curado / el modelo no logró una cápsula válida) | Un único "no se pudo generar" | Cada uno lo arregla una persona distinta: el equipo con la `LLM_API_KEY`, el docente curando, o revisando el prompt. Con un mensaje genérico, la demo no dice qué hacer. |
+| **El botón de validar va junto al selector de objetivo, en la misma fila** | Validar primero y asignar después | Es la regla de la Fase 2 llevada a la interfaz: un fragmento validado sin objetivo queda inalcanzable para siempre. `curation.validar` ya lo bloquea; ahora además no se puede ni intentar por descuido. |
+| **`GET /api/catalogo` con `solo_con_material=True` también en la web** | Mostrar todos los temas y avisar al entrar | Ofrecer un tema sin material curado lleva a un error de generación o a contenido inventado (cap. 12/13). Con el catálogo vacío se explica qué falta y se enlaza al panel de curación. |
+
+### Lo que encontró la inspección, no los tests
+
+1. **XSS reflejado en el aviso de error del cuestionario.** El mensaje cita la alternativa
+   recibida (`el ítem 1 trae una alternativa desconocida: 'z'`) y se estaba interpolando en
+   HTML sin escapar, así que un POST con `q1=<script>…` devolvía ese script dentro de la
+   página y el navegador lo ejecutaba — con la cookie de sesión ahí para robar. Corregido con
+   `html.escape` y con test de regresión. Los tests no lo veían porque el mensaje era correcto.
+
+2. **Faltan los enunciados de los 16 ítems.** `instrumento.py` guarda las 64 alternativas
+   (que son las que se puntúan) pero no el texto de las preguntas, porque para calificar no
+   hace falta, y el informe tampoco los transcribe. Están en el encabezado de
+   `data/data_cuestionarios_43.csv`, que no está versionado. Para que la Fase 4 se pudiera
+   mostrar se escribieron enunciados equivalentes, aislados en `web/textos.py` y marcados como
+   **provisionales**. ⚠️ **Hay que reemplazarlos por los originales del CSV antes de aplicar
+   el instrumento a estudiantes nuevos**, o los 43 diagnósticos ya cargados y los que entren
+   por la web no habrán respondido exactamente la misma pregunta.
+
+### Verificación
+
+Además de los 31 tests nuevos (`test_web_estudiante.py` y `test_web_docente.py`), se hizo el
+recorrido completo **contra uvicorn**, no con `TestClient`, para ejercitar de verdad las
+cabeceras de HTMX, la cookie y la subida multipart:
+
+1. Catálogo vacío al principio → explica que falta material curado.
+2. Alta del objetivo curricular (es carga manual por diseño: cap. 12).
+3. Subida de un PDF real desde el panel → 2 fragmentos, 2 páginas, 472 palabras, **todos
+   pendientes**, y la bandeja se recarga sola vía `HX-Trigger`.
+4. Validar sin objetivo → rechazado con el motivo, el fragmento **sigue pendiente**.
+5. Validar con objetivo → `validado`, y el documento promovido a `validado`.
+6. El mismo tema **ya aparece** en el catálogo del estudiante, con su conteo de fragmentos.
+7. El visor renderiza la cápsula con los cuatro tipos de bloque en su etiqueta correcta
+   (`<p>`, `<ol>`, `<table>`, `<dl>`), sus fuentes con documento y página, y el quiz corrige
+   bien acierto y error. La segunda visita al mismo tema sale del caché.
+8. Sin `LLM_API_KEY` el visor explica exactamente eso, que es el estado real de la máquina.
+
+El paso 7 se verificó con un doble del cliente LLM aplicado sobre la app real
+(`dependency_overrides`), sin tocar el repositorio: el motor está completo, lo que falta es
+la credencial.
+
+---
+
 ## 6. Pendiente inmediato
 
 Los dos primeros son ahora los que bloquean todo lo demás: el motor está escrito y probado,
@@ -591,25 +684,33 @@ pero **no se ha ejecutado nunca contra un modelo real ni sobre material real**.
    El catálogo se carga con `python scripts/cargar_objetivos.py data/objetivos.csv` (ese CSV
    todavía no existe) y los documentos por `POST /api/documentos`.
    Sin esto la Fase 3 no tiene nada real que recuperar: 0 objetivos, 0 fragmentos validados.
-2. **Conectar la UI de Patricio a los endpoints reales.** `web/routers/teacher.py` y
-   `student.py` siguen con `MOCK_FRAGMENTS` en memoria; ya existen `/api/documentos`,
-   `/api/fragmentos`, `/api/catalogo`, `/api/recuperar` y ahora `/api/capsulas` para
-   reemplazarlos. `viewer.html` es el que más trabajo pide: hoy renderiza un HTML fijo y tiene
-   que pasar a recorrer los bloques de `contenido` según su `tipo` (párrafo, tabla, esquema,
-   glosario…) y a mostrar las dos formas de actividad (`quiz_mc` e `intentalo_tu`).
+2. ~~**Conectar la UI de Patricio a los endpoints reales.**~~ ✅ **Cerrado el 11-ago-2026**
+   (sección 5 nonies). Las cinco vistas del estudiante y el panel del docente llaman a los
+   handlers reales; `viewer.html` recorre los bloques de `contenido` por `tipo` y muestra las
+   dos formas de actividad.
 3. **`tagger.py` (etiquetado asistido por LLM)** quedó fuera de esta entrega porque
    `LLM_API_KEY` está vacío. Hoy el curador asigna el objetivo a mano: funciona, pero es lento.
    Cuando exista la key, el tagger solo debe **proponer**, nunca decidir.
-4. Los **21 avisos de `ruff`** en `web/deps.py`, `web/routers/student.py` y
-   `web/routers/teacher.py` (orden de imports, `Optional` en vez de `X | None`, líneas largas en
-   el HTML inline) vienen del commit `12e00be` y no se tocaron para no pisar trabajo ajeno.
-   Desaparecen al conectar esos routers a la API real.
+4. ~~Los **21 avisos de `ruff`** en `web/deps.py`, `web/routers/student.py` y
+   `web/routers/teacher.py`.~~ ✅ **Cerrado el 11-ago-2026:** desaparecieron al conectar esos
+   routers a la API real, tal como se había previsto. `ruff check .` está limpio en todo el
+   repositorio.
 5. **Resolver la discrepancia de las tablas 16.2/16.3** con la profesora guía: o se corrige el
    informe con los valores recalculados, o aparece la planilla original que explique la
    diferencia. El código ya entrega los números reales; el informe es lo que habría que ajustar.
-6. Para la Fase 4 (UI) va a faltar el **enunciado** de cada uno de los 16 ítems:
-   `instrumento.py` guarda las 4 alternativas de cada pregunta pero no su texto, porque para
-   calificar no hace falta. Están en el encabezado del CSV cuando se necesiten.
+6. **Reemplazar los enunciados provisionales de los 16 ítems.** ⚠️ Sigue abierto y ahora es
+   más urgente, porque el cuestionario ya se puede responder por la web. `web/textos.py`
+   contiene enunciados **equivalentes pero reconstruidos**; los originales están en el
+   encabezado de `data/data_cuestionarios_43.csv` (no versionado). Hasta que se copien de ahí,
+   quien responda por la aplicación no habrá contestado exactamente la misma pregunta que los
+   43 estudiantes ya cargados, y los perfiles no serían estrictamente comparables.
+7. **Fijar `SESSION_SECRET` en el `.env` de cada máquina** antes de una demo o de una sesión
+   con estudiantes. Sin ella la app funciona, pero cada reinicio de `uvicorn --reload` cierra
+   las sesiones abiertas y obliga a responder el cuestionario de nuevo. Se genera con
+   `python -c "import secrets; print(secrets.token_hex(32))"`.
+8. **Instalar las dependencias opcionales de ingesta** (`pip install -e ".[ingest]"`) en la
+   máquina donde se vaya a curar: sin `pymupdf`/`python-pptx` el panel del docente no puede
+   procesar archivos. El panel lo detecta y lo dice, pero conviene dejarlo instalado.
 
 ~~Ratificar `palabras_texto`~~ ✅ **Aprobado por el equipo el 06-ago-2026** — queda la
 interpolación lineal sobre C_texto tal como está implementada.

@@ -4,67 +4,107 @@
 
 {% block content %}
 <div class="mb-8">
-    <h1 class="mb-2">Knowledge Base: Curación de Contenido</h1>
-    <p class="text-muted">Sube documentos para alimentar el motor RAG y revisa los fragmentos extraídos antes de indexarlos.</p>
+    <h1 class="mb-2">Base de Conocimiento: Curación de Contenido</h1>
+    <p class="text-muted">
+        Sube el documento oficial y valida los fragmentos que lo respaldan.
+        <strong>Ningún fragmento sin validar llega a una microcápsula</strong>: es lo que
+        garantiza que el contenido generado esté anclado a material institucional.
+    </p>
 </div>
 
 <div class="card mb-8">
-    <h2 class="text-lg mb-4">Cargar Nuevo Documento</h2>
-    <form hx-post="/teacher/curation/upload" hx-encoding="multipart/form-data" hx-target="#upload-status" class="flex items-center gap-4">
-        <input type="file" name="file" accept=".pdf,.pptx" class="form-control" required style="max-width: 400px;">
+    <h2 class="text-lg mb-4">Cargar nuevo documento</h2>
+    <form hx-post="/teacher/curation/upload"
+          hx-encoding="multipart/form-data"
+          hx-target="#upload-status"
+          class="flex items-center gap-4"
+          style="flex-wrap: wrap;">
+        <input type="file" name="file" accept=".pdf,.pptx" class="form-control" required
+               style="max-width: 340px;">
+        <input type="text" name="asignatura" class="form-control" maxlength="100"
+               placeholder="Asignatura (opcional)" style="max-width: 240px;">
         <button type="submit" class="btn btn-primary">
-            Subir e Ingerir
-            <span class="htmx-indicator ml-2">...</span>
+            Subir e ingerir
+            <span class="htmx-indicator ml-2">…</span>
         </button>
     </form>
     <div id="upload-status" class="mt-4"></div>
 </div>
 
-<div class="card">
-    <h2 class="text-lg mb-4">Bandeja de Revisión de Fragmentos</h2>
+{% if documentos %}
+<div class="card mb-8">
+    <h2 class="text-lg mb-4">Documentos cargados</h2>
     <div class="table-container">
         <table class="table">
             <thead>
                 <tr>
-                    <th>Origen</th>
-                    <th>Fragmento (Preview)</th>
+                    <th>Documento</th>
                     <th>Estado</th>
-                    <th>Acciones</th>
+                    <th>Avance de curación</th>
+                    <th></th>
                 </tr>
             </thead>
-            <tbody id="fragments-list">
-                {% for fragment in fragments %}
-                <tr id="fragment-{{ fragment.id }}">
-                    <td>
-                        <div class="font-medium">{{ fragment.source_file }}</div>
-                        <div class="text-sm text-muted">Pág. {{ fragment.page }}</div>
-                    </td>
-                    <td>
-                        <div class="text-sm" style="max-width: 400px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
-                            {{ fragment.text }}
-                        </div>
-                    </td>
-                    <td>
-                        <span class="badge badge-warning">Pendiente</span>
-                    </td>
-                    <td>
-                        <div class="flex gap-2">
-                            <button hx-post="/teacher/curation/{{ fragment.id }}/approve" hx-target="#fragment-{{ fragment.id }}" hx-swap="outerHTML" class="btn btn-outline text-sm" style="padding: 0.25rem 0.75rem; border-color: var(--success); color: var(--success);">
-                                Aprobar
-                            </button>
-                            <button hx-post="/teacher/curation/{{ fragment.id }}/reject" hx-target="#fragment-{{ fragment.id }}" hx-swap="outerHTML" class="btn btn-outline text-sm" style="padding: 0.25rem 0.75rem; border-color: var(--danger); color: var(--danger);">
-                                Rechazar
-                            </button>
-                        </div>
-                    </td>
-                </tr>
-                {% else %}
+            <tbody>
+                {% for fila in documentos %}
                 <tr>
-                    <td colspan="4" class="text-center text-muted py-8">No hay fragmentos pendientes de revisión.</td>
+                    <td>
+                        <div class="font-medium">{{ fila.documento.titulo }}</div>
+                        <div class="text-sm text-muted">
+                            {{ fila.documento.formato }}
+                            {% if fila.documento.asignatura %} · {{ fila.documento.asignatura }}{% endif %}
+                        </div>
+                    </td>
+                    <td>
+                        {% if fila.documento.estado_curacion == 'validado' %}
+                        <span class="badge badge-success">validado</span>
+                        {% elif fila.documento.estado_curacion == 'rechazado' %}
+                        <span class="badge badge-danger">rechazado</span>
+                        {% else %}
+                        <span class="badge badge-warning">pendiente</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-sm">
+                        {{ fila.conteo.validado }} validados ·
+                        {{ fila.conteo.pendiente }} pendientes ·
+                        {{ fila.conteo.descartado }} descartados
+                    </td>
+                    <td>
+                        <a class="btn btn-outline text-sm" style="padding: 0.25rem 0.75rem;"
+                           href="/teacher/curation?id_documento={{ fila.documento.id_documento }}">
+                            Revisar solo este
+                        </a>
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
+    </div>
+</div>
+{% endif %}
+
+{% if not objetivos %}
+<div class="alerta alerta-error mb-8">
+    <strong>No hay objetivos de aprendizaje cargados.</strong>
+    Sin ellos no se puede validar ningún fragmento, porque el retriever recupera por
+    objetivo y un fragmento validado sin objetivo queda inalcanzable para siempre.
+    Cárgalos con <code>python scripts/cargar_objetivos.py data/objetivos.csv</code>.
+</div>
+{% endif %}
+
+<div class="card">
+    <div class="flex justify-between items-center mb-4">
+        <h2 class="text-lg">Bandeja de revisión</h2>
+        {% if id_documento %}
+        <a href="/teacher/curation" class="text-sm text-muted">Ver todos los documentos</a>
+        {% endif %}
+    </div>
+
+    <div id="bandeja"
+         hx-get="/teacher/curation/fragmentos{% if id_documento %}?id_documento={{ id_documento }}{% endif %}"
+         hx-trigger="fragmentos-actualizados from:body"
+         hx-target="this"
+         hx-swap="innerHTML">
+        {% include "teacher/_bandeja.html" %}
     </div>
 </div>
 {% endblock %}

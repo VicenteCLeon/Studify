@@ -1,0 +1,14 @@
+{# Fragmento que HTMX inyecta bajo la actividad de cierre.
+
+   El texto viene del modelo, así que se renderiza con Jinja (que escapa solo) y
+   no con una cadena armada en Python. #}
+<div class="alerta alerta-{{ 'ok' if estado == 'ok' else 'error' if estado == 'error' else 'info' }}"
+     role="status">
+    <strong>{{ titulo }}</strong>
+    {% if correcta %}
+    <div class="mt-2">La correcta era: «{{ correcta }}».</div>
+    {% endif %}
+    {% if retroalimentacion %}
+    <div class="mt-2">{{ retroalimentacion }}</div>
+    {% endif %}
+</div>
