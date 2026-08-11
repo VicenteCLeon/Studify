@@ -52,7 +52,15 @@ select = ["E", "F", "I", "UP", "B", "SIM"]
 # `db: Session = Depends(get_db)` es la forma canónica de declarar dependencias
 # en FastAPI; B008 la marca porque en general llamar funciones en los defaults
 # es un bug, pero acá el framework resuelve la llamada en cada request.
-extend-immutable-calls = ["fastapi.Depends", "fastapi.Query", "fastapi.Path", "fastapi.Body"]
+# `File` y `Form` son el mismo idioma para subida de archivos y formularios.
+extend-immutable-calls = [
+    "fastapi.Depends",
+    "fastapi.Query",
+    "fastapi.Path",
+    "fastapi.Body",
+    "fastapi.File",
+    "fastapi.Form",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -3,16 +3,17 @@
 Arranque:  uvicorn studify.main:app --reload --app-dir src
 """
 
-from fastapi import FastAPI
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import RedirectResponse
 import os
+
+from fastapi import FastAPI
+from fastapi.responses import RedirectResponse
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
 
-from studify.api.routers import diagnostics
-from studify.web.routers import student, teacher
+from studify.api.routers import diagnostics, knowledge
 from studify.config import get_settings
 from studify.db.session import engine
+from studify.web.routers import student, teacher
 
 settings = get_settings()
 
@@ -26,6 +27,7 @@ app = FastAPI(
 )
 
 app.include_router(diagnostics.router)
+app.include_router(knowledge.router)
 app.include_router(student.router)
 app.include_router(teacher.router)
 

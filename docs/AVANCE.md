@@ -2,7 +2,7 @@
 
 > Documento vivo. Se actualiza al cierre de cada fase para que cualquier sesión de trabajo
 > (o cualquier persona) pueda retomar el proyecto sin releer todo el hilo de conversación.
-> Última actualización: **07-ago-2026**, avance parcial de Fase 1 (modelo de datos + motor VARK) y andamiaje de Fase 4 (UI mínima).
+> Última actualización: **10-ago-2026**, cierre del núcleo de la Fase 2 (ingesta, curación y retriever determinista).
 
 ---
 
@@ -33,8 +33,13 @@ quedó pendiente y qué decisiones se tomaron sobre la marcha.
 **Semana 0 completa** (`fbf4b3f`, pusheada a `origin/main` —
 https://github.com/VicenteCLeon/Studify.git) y **Fase 1 cerrada**: las 8 entidades del cap. 17
 migradas sobre Postgres, el motor VARK completo (scoring → pesos → jerarquía → reglas) y los 43
-diagnósticos reales cargados. **59 tests en verde**, `ruff` limpio. 
-Además, se construyó el **andamiaje inicial de la UI (Fase 4)** utilizando Jinja2, HTMX y Vanilla CSS, con 5 vistas principales (flujo estudiante y docente) conectadas.
+diagnósticos reales cargados.
+Además, se construyó el **andamiaje inicial de la UI (Fase 4)** utilizando Jinja2, HTMX y Vanilla CSS, con 5 vistas principales (flujo estudiante y docente) conectadas — todavía con datos *mock*.
+
+**Núcleo de la Fase 2 cerrado** (sección 5 septies): ingesta de PDF/PPTX con trazabilidad de
+página, curación humana con estados reales y **retriever determinista sin embeddings**.
+**104 tests en verde**; `ruff` limpio salvo 21 avisos preexistentes en los routers mock de la UI.
+
 Queda una discrepancia abierta: las tablas 16.2/16.3 del informe no se reproducen desde el CSV (sección 5 ter) — es un problema del informe, no del código.
 
 ---
@@ -168,20 +173,32 @@ Studify/
 │  │  └─ rules.py        #    tabla 11.1 → configuracion_contenido + directivas de prompt
 │  │  └─ instrumento.py  #    matriz de puntuación: las 64 alternativas → canal
 │  ├─ api/
-│  │  ├─ schemas.py      # ✅ contratos Pydantic de la API
+│  │  ├─ schemas.py      # ✅ contratos Pydantic del perfilamiento
+│  │  ├─ schemas_knowledge.py  # ✅ contratos de la base de conocimiento (Fase 2)
 │  │  └─ routers/
-│  │     └─ diagnostics.py  # ✅ POST /api/diagnosticos, GET /api/diagnosticos/{id}
-│  ├─ knowledge/         # paquete vacío (solo __init__.py) — Fase 2
-│  ├─ rag/               # paquete vacío (solo __init__.py) — Fase 3
-│  │  └─ prompts/        # NO EXISTE AÚN
+│  │     ├─ diagnostics.py  # ✅ POST /api/diagnosticos, GET /api/diagnosticos/{id}
+│  │     └─ knowledge.py    # ✅ documentos, fragmentos, curación, catálogo, recuperar
+│  ├─ knowledge/         # ✅ ingesta y curación (Fase 2)
+│  │  ├─ extract.py      #    PDF/PPTX → bloques con página y detección de encabezados
+│  │  ├─ chunker.py      #    bloques → fragmentos recuperables (fronteras duras)
+│  │  ├─ ingest.py       #    persistencia + dedup por SHA-256 + almacén de archivos
+│  │  └─ curation.py     #    validar / descartar / asignar objetivo / editar texto
+│  ├─ rag/               # ✅ recuperación determinista (Fase 2)
+│  │  ├─ retriever.py    #    SQL por id_objetivo + FTS español + orden por canal VARK
+│  │  └─ prompts/        #    NO EXISTE AÚN — Fase 3
 │  ├─ generation/        # paquete vacío (solo __init__.py) — Fase 3
 │  └─ web/               # ✅ UI mínima con HTMX + Jinja2 (templates/ + static/ + routers/)
 ├─ tests/
+│  ├─ conftest.py        # ✅ fixtures compartidas (necesita_bd, db, almacen_temporal)
 │  ├─ test_health.py     # smoke test de Semana 0
 │  ├─ test_vark.py       # ✅ 44 tests del motor VARK, contrastados contra el informe
-│  └─ test_api_diagnosticos.py  # ✅ 15 tests del endpoint (los de BD se saltan sin Postgres)
+│  ├─ test_api_diagnosticos.py   # ✅ 15 tests del endpoint (se saltan sin Postgres)
+│  ├─ test_knowledge_ingesta.py  # ✅ 22 tests de extracción y chunking (sin BD)
+│  ├─ test_knowledge_persistencia.py  # ✅ 6 tests de ingesta contra Postgres
+│  └─ test_curacion_retriever.py      # ✅ 17 tests de curación y determinismo
 ├─ scripts/
-│  └─ import_vark_csv.py  # ✅ carga los 43 diagnósticos reales (--dry-run, --reset)
+│  ├─ import_vark_csv.py   # ✅ carga los 43 diagnósticos reales (--dry-run, --reset)
+│  └─ cargar_objetivos.py  # ✅ carga el catálogo curricular desde CSV (--dry-run)
 ├─ data/                  # vacío (.gitkeep), ignorado por git salvo el .gitkeep
 └─ docs/
    ├─ seminario_titulo.md # el informe fuente (subido el 06-ago-2026, antes no estaba en el repo)
@@ -189,9 +206,8 @@ Studify/
    └─ AVANCE.md           # este archivo
 ```
 
-**Nota importante:** los directorios `knowledge/`, `rag/`, `generation/` y `api/routers/`
-siguen siendo paquetes Python vacíos (solo `__init__.py`) — andamiaje de la Semana 0, no
-implementación. `db/` y `vark/` sí tienen lógica real.
+**Nota importante:** el único paquete que sigue vacío es `generation/` (Fase 3). `db/`, `vark/`,
+`knowledge/`, `rag/` y `api/` tienen lógica real y tests.
 
 ---
 
@@ -339,14 +355,97 @@ Se adelantó el desarrollo de un andamiaje visual para la Fase 4 creando una maq
 
 ---
 
+## 5 septies. Fase 2 — Ingesta, curación y retriever determinista (10-ago-2026)
+
+Cierra el núcleo de la base de conocimiento: entra un PDF/PPTX oficial, sale material curado
+que el retriever puede recuperar de forma determinista y trazable.
+
+### Arquitectura en tres capas
+
+Se separó en tres módulos en vez del `ingest.py` único que proponía el plan, porque la
+fragmentación es la decisión que más impacta la calidad del RAG y conviene poder ajustarla y
+testearla sin volver a parsear archivos:
+
+| Módulo | Responsabilidad | Depende de Postgres |
+|---|---|---|
+| `knowledge/extract.py` | Archivo → bloques con página y marca de encabezado | No |
+| `knowledge/chunker.py` | Bloques → fragmentos recuperables | No |
+| `knowledge/ingest.py` | Persistencia, dedup, almacén de archivos | Sí |
+
+### Decisiones tomadas en la Fase 2
+
+| Decisión | Alternativa descartada | Motivo |
+|---|---|---|
+| **Fragmento objetivo de ~180 palabras** (máx. 350, mín. 40) | Fragmentar por página o por párrafo | La cápsula mide 150–300 palabras y se genera *a partir* del fragmento. Uno más corto no alcanza a sostenerlas y el LLM rellena inventando —alucinación por falta de contexto, no por exceso—; uno más largo rompe la correspondencia «un fragmento ↔ un objetivo» del cap. 12. |
+| **El encabezado es frontera dura**: siempre abre fragmento nuevo | Cerrar solo al llegar al tamaño objetivo | Unir dos secciones distintas en un fragmento destruye la correspondencia temática, que es lo único que hace recuperable el material. Se aplica aunque el fragmento anterior quede corto. |
+| **Detección de encabezados por tamaño de fuente relativo** (moda del documento × 1,15, y ≤ 15 palabras) | Umbral absoluto de tamaño | Cada apunte usa su propia tipografía: un umbral fijo marca todo como título en un documento de letra grande y nada en uno de letra chica. La moda se pondera por caracteres para que muchos títulos cortos no desplacen al cuerpo real. |
+| **La tabla va siempre en su propio fragmento** | Mezclarla con la prosa circundante | Para un perfil visual la tabla comparativa es el recurso que pide la tabla 11.1; fundida en un párrafo se vuelve irrecuperable. |
+| **No se puede validar un fragmento sin objetivo asignado** | Permitirlo y asignar después | El retriever recupera por `id_objetivo`. Un fragmento validado con `id_objetivo = NULL` queda inalcanzable para siempre: aprobado, sin error visible y sin llegar nunca a una cápsula. Es el fallo silencioso más fácil de cometer revisando decenas de fragmentos seguidos. |
+| **El retriever filtra `documento.estado_curacion != 'rechazado'`**, no `== 'validado'` | Exigir el estado positivo | Con el criterio positivo, una curación fragmento a fragmento sin marcar el documento completo devolvería cero resultados en silencio. En negativo, rechazar un documento sí retira su material aunque los fragmentos estuvieran validados. |
+| **Validar un fragmento promueve el documento a `validado`** | Dejar el estado del documento a cargo del curador | Si no, el documento queda "pendiente" para siempre y el panel muestra trabajo terminado como si estuviera por hacer. |
+| **Descartar no borra** | `DELETE` del fragmento | El cap. 12 exige trazabilidad del proceso de curación: saber qué se descartó (y que se revisó) es parte de eso. |
+| **`DELETE /api/documentos/{id}` se rechaza si el documento fundamentó cápsulas** | Permitir el borrado siempre | La FK es `ON DELETE SET NULL`: borrar no daría error, dejaría cápsulas con la fuente en blanco y rompería en silencio la auditabilidad del cap. 13. Para retirar material ya usado está `estado_curacion = 'rechazado'`. |
+| **El catálogo oculta los objetivos sin material validado** | Mostrar todos los temas | Un tema sin fragmentos validados no puede producir una cápsula fundamentada: llevaría al estudiante a un error o a contenido inventado. |
+| **El canal VARK reordena, no filtra** | Devolver solo los tipos preferidos del canal | Si un perfil visual recibiera solo tablas, un apunte sin tablas no daría nada. La preferencia sube los tipos afines y conserva el resto. |
+| **Los archivos se copian a `data/documentos/<sha256>.<ext>`** | Guardar la ruta original del docente | `ruta_archivo` debe seguir siendo válida aunque el docente mueva o borre su copia. Nombrar por hash evita además colisiones entre archivos llamados igual. |
+
+### Bug encontrado inspeccionando la salida, no por los tests
+
+Los 21 tests iniciales pasaban en verde y aun así **el texto extraído de todo PDF venía
+corrupto**: PyMuPDF entrega una `line` por renglón y se estaban uniendo con `""`, de modo que la
+última palabra de un renglón quedaba pegada a la primera del siguiente (`parareducir`,
+`nocontienen`, `ningunatributo`). Los tests de estructura —encabezados, páginas, numeración— no
+lo veían porque la estructura era correcta; solo apareció al imprimir el texto de un documento
+realista. Corregido uniendo las líneas con `"\n"` (que `normalizar` convierte después en espacio
+y aprovecha para deshacer los guiones de corte) y con test de regresión que verifica que todo
+token del texto extraído exista en el original.
+
+Habría degradado el full-text search en español y le habría entregado texto corrupto al LLM en
+la Fase 3, sin ningún síntoma visible salvo cápsulas de mala calidad.
+
+### Verificación end-to-end contra el servidor real
+
+Los 45 tests nuevos (22 sin BD + 6 de ingesta + 17 de curación/retriever) se complementaron con
+una corrida completa por HTTP sobre `uvicorn`, que confirmó las invariantes que importan:
+
+1. El catálogo **no muestra** un objetivo sin material validado.
+2. Reingerir el mismo archivo con otro nombre → **409** (dedup por contenido).
+3. `GET /api/recuperar` devuelve **vacío antes de curar** — la barrera del cap. 12/13.
+4. Validar sin objetivo → **422** con el motivo explicado.
+5. Tras curar, la recuperación entrega los fragmentos **con su cita** (`documento, p. N`).
+6. **Determinismo:** tres llamadas idénticas devuelven `[161, 162]` en el mismo orden.
+7. El full-text search en español acota de 2 a 1 fragmento con `"dependencia parcial claves"`.
+
+### Limitación conocida
+
+La deduplicación es por SHA-256 de los **bytes**, así que detecta el mismo archivo subido dos
+veces pero **no una reexportación** del mismo documento: un PDF regenerado lleva otro
+`/CreationDate` embebido y por lo tanto otro hash. Si el docente vuelve a exportar el apunte
+desde PowerPoint, entra como documento nuevo y sus fragmentos conviven con los anteriores en el
+retriever. Mitigarlo pide comparar el texto extraído y no los bytes.
+
+---
+
 ## 6. Pendiente inmediato
 
-1. **Resolver la discrepancia de las tablas 16.2/16.3** con la profesora guía: o se corrige el
+1. **Cargar material real.** El pipeline está probado con documentos sintéticos; falta la unidad
+   real de una asignatura. Techo duro del plan: **una unidad, 40–60 fragmentos**. El catálogo se
+   carga con `python scripts/cargar_objetivos.py data/objetivos.csv` y los documentos por
+   `POST /api/documentos`.
+2. **Conectar la UI de Patricio a los endpoints reales.** `web/routers/teacher.py` y
+   `student.py` siguen con `MOCK_FRAGMENTS` en memoria; ya existen `/api/documentos`,
+   `/api/fragmentos`, `/api/catalogo` y `/api/recuperar` para reemplazarlos.
+3. **`tagger.py` (etiquetado asistido por LLM)** quedó fuera de esta entrega porque
+   `LLM_API_KEY` está vacío. Hoy el curador asigna el objetivo a mano: funciona, pero es lento.
+   Cuando exista la key, el tagger solo debe **proponer**, nunca decidir.
+4. Los **21 avisos de `ruff`** en `web/deps.py`, `web/routers/student.py` y
+   `web/routers/teacher.py` (orden de imports, `Optional` en vez de `X | None`, líneas largas en
+   el HTML inline) vienen del commit `12e00be` y no se tocaron para no pisar trabajo ajeno.
+   Desaparecen al conectar esos routers a la API real.
+5. **Resolver la discrepancia de las tablas 16.2/16.3** con la profesora guía: o se corrige el
    informe con los valores recalculados, o aparece la planilla original que explique la
    diferencia. El código ya entrega los números reales; el informe es lo que habría que ajustar.
-2. Empezar la **Fase 2** (base de conocimiento e ingesta), que según el plan es la que más se
-   subestima. Techo duro: una unidad de una asignatura, 40–60 fragmentos.
-3. Para la Fase 4 (UI) va a faltar el **enunciado** de cada uno de los 16 ítems:
+6. Para la Fase 4 (UI) va a faltar el **enunciado** de cada uno de los 16 ítems:
    `instrumento.py` guarda las 4 alternativas de cada pregunta pero no su texto, porque para
    calificar no hace falta. Están en el encabezado del CSV cuando se necesiten.
 
@@ -369,13 +468,16 @@ tener que saltar de archivo:
    el modelo por fidelidad a la tabla 17.4 pero se persiste siempre en `False`, y el canal
    auditivo se atiende con redacción conversacional (`tono_narrativo = 'oral'`). Falta
    declararlo como trabajo futuro en el informe final.
-3. **Fragmentos no textuales** (tablas, diagramas): se resuelven guardando una descripción
-   textual en `metadatos_json` durante la curación; esa descripción es lo que se inyecta al
-   LLM, `ruta_recurso` es solo para renderizar en la UI.
-4. **Selección de tema por el estudiante** — falta definir/endpoint `GET /api/catalogo`
-   (asignatura → unidad → objetivo). No está en el informe original.
+3. **Fragmentos no textuales** (tablas, diagramas): ✅ **parcialmente cerrada en la Fase 2.** Las
+   tablas de PPTX se serializan a texto (`tipo_fragmento = 'tabla'`, filas separadas por `|`) y
+   van en su propio fragmento, de modo que el retriever y el FTS las ven. Sigue abierto el caso
+   de **imágenes y diagramas**: necesitan una descripción textual escrita durante la curación en
+   `metadatos_json`, y hoy la ingesta simplemente los omite.
+4. ~~**Selección de tema por el estudiante**~~ ✅ **Cerrada en la Fase 2:** `GET /api/catalogo`
+   devuelve el árbol asignatura → unidad → tema, ocultando por defecto los objetivos sin
+   material validado (parámetro `solo_con_material`).
 5. **Regeneración de cápsulas** — ¿se versiona o se sobreescribe si el estudiante pide otra
-   cápsula del mismo objetivo? Sin definir.
+   cápsula del mismo objetivo? Sin definir. Se decide en la Fase 3.
 
 ---
 

@@ -30,6 +30,11 @@ class Settings(BaseSettings):
     capsula_max_palabras: int = 300
     capsula_max_palabras_titulo: int = 10
 
+    # Dónde se guardan los documentos oficiales ingeridos (Fase 2). Se copian
+    # al almacén en vez de referenciar la ruta original para que `ruta_archivo`
+    # siga siendo válida si el docente mueve o borra el archivo de su carpeta.
+    documentos_dir: str = "data/documentos"
+
 
 @lru_cache
 def get_settings() -> Settings:
