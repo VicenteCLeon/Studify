@@ -20,22 +20,22 @@ exactamente la misma pregunta. Pendiente n.º 6 de AVANCE.md §6.
 
 # Un enunciado por ítem, en el mismo orden que `instrumento.ITEMS`.
 ENUNCIADOS: tuple[str, ...] = (
-    "Cuando estudias un concepto nuevo, ¿qué prefieres hacer primero?",
-    "Cuando alguien te enseña algo que no sabes hacer, ¿qué prefieres?",
-    "Cuando preparas una prueba o un examen, ¿cómo estudias?",
-    "Para aprender a usar un programa o una herramienta nueva, prefieres:",
-    "Cuando recuerdas algo que aprendiste en clase, ¿qué es lo primero que te viene?",
-    "Si tienes que explicarle un tema que dominas a un compañero, ¿qué haces?",
-    "Cuando te enfrentas a un problema que no sabes resolver, ¿qué haces?",
-    "¿Qué tipo de material de apoyo te resulta más útil para estudiar?",
-    "Cuando tienes que preparar una exposición, ¿cómo la trabajas?",
-    "En un trabajo grupal, ¿qué rol tomas habitualmente?",
-    "En tu tiempo libre, cuando quieres aprender algo por tu cuenta, ¿qué haces?",
-    "Durante una clase presencial, ¿en qué centras tu atención?",
-    "Cuando tienes que tomar una decisión importante, ¿cómo la analizas?",
-    "Si no entiendes una explicación a la primera, ¿qué haces?",
-    "Para memorizar una fórmula o una definición, ¿qué te funciona mejor?",
-    "Para aprender un lenguaje de programación nuevo, prefieres:",
+    "Cuando necesitas aprender un concepto nuevo en clases, prefieres:",
+    "Cuando el profesor da instrucciones complejas para una tarea, lo primero que haces es:",
+    "Para estudiar para un examen difícil, normalmente:",
+    "Si tienes que aprender a usar un programa de software nuevo, prefieres:",
+    "Cuando recuerdas algo que te enseñaron bien, es porque:",
+    "Para explicarle algo a un compañero que no entiende, prefieres:",
+    "Cuando tienes que resolver un problema técnico en tu carrera, normalmente:",
+    "¿Qué tipo de material de estudio te resulta más útil cuando estudias solo?",
+    "Si debes exponer sobre un tema que no manejas bien, lo primero que haces es:",
+    "En un trabajo grupal, el rol que adoptas más naturalmente es:",
+    "Cuando tienes tiempo libre para aprender algo por curiosidad, prefieres:",
+    "Cuando asistes a una clase larga, ¿qué haces para mantener la atención?",
+    "Si tienes que tomar una decisión importante de estudio (por ejemplo, elegir una especialidad), prefieres:",
+    "Cuando te pierdes en una clase y no entiendes algo, normalmente:",
+    "Para memorizar una fórmula o concepto abstracto en ingeniería, prefieres:",
+    "Si quisieras aprender un nuevo lenguaje de programación, preferirías:"
 )
 
 # --- Cómo se le nombra al estudiante cada pieza de su perfil ------------------

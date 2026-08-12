@@ -102,7 +102,7 @@ class ClienteOpenAILike:
 
         self._llm = OpenAILike(
             model=self.modelo,
-            api_base=ajustes.llm_base_url,
+            api_base=base_url if base_url is not None else ajustes.llm_base_url,
             api_key=clave,
             temperature=ajustes.llm_temperature,
             timeout=ajustes.llm_timeout,
