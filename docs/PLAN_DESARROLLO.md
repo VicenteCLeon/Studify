@@ -140,7 +140,7 @@ Repo, `docker-compose.yml` con Postgres, esqueleto FastAPI con `/health`, `.env.
 - Prompt maestro en tres bloques: **contexto** (fragmentos con su id) + **perfil** (derivado de `configuracion_contenido`, no de la etiqueta) + **formato** (esquema JSON + límite 150–300 palabras + idioma español obligatorio).
 - Validador + bucle de reparación.
 - Persistencia en `microcapsula_generada` con FK a `fragmento` → trazabilidad nativa.
-- **Bake-off de modelos:** mismo prompt × 3 modelos candidatos × 4 perfiles VARK. Medir: % de JSON válido al primer intento, adherencia al rango de palabras, calidad del español (evaluación ciega entre ustedes dos), latencia y costo por cápsula. → Es una tabla directa para el informe final.
+- **Bake-off de modelos:** (COMPLETADO) Se realizó la ejecución automatizada con el script `eval_runner.py`. Los resultados (en `data/resultados_evaluacion.csv`) validaron a `deepseek-chat` obteniendo un 100% de éxito en la generación de cápsulas al primer intento, con tiempos de latencia muy bajos (5-6 segundos). Qwen y GLM fallaron por autorizaciones denegadas. Se selecciona **DeepSeek** para la fase de producción.
 - Caché por `(id_objetivo, hash de configuracion_contenido redondeada)` para no pagar generación repetida en las pruebas.
 
 **Criterio de término:** `POST /api/capsulas {id_estudiante, id_objetivo}` devuelve una cápsula válida ≥95% de las veces, con quiz y fuentes verificables. Comparar visualmente cuatro cápsulas del mismo objetivo generadas para V, A, R y K: si no se distinguen entre sí, la adaptación no está funcionando y hay que trabajar el prompt.
@@ -151,6 +151,18 @@ Jinja + HTMX: cuestionario VARK (16 ítems, selección múltiple y opción de de
 **Criterio de término:** la demo completa se hace sin abrir Swagger.
 
 ### Fase 5 — Evaluación y resultados (28 sep – 09 oct)
+
+> **Alcance adicional no planeado (12-ago-2026):** se construyó un panel de analíticas para
+> el docente — historial de cápsulas, cobertura curricular por canal, rendimiento en quizzes
+> (acierto al primer intento), simulador VARK y estilos de aprendizaje de la cohorte
+> (`web/routers/teacher.py`, `analytics.html`, `simulator.html`). El código lo etiqueta
+> "Fase 5" en sus docstrings, pero **no es esta fase**: es una herramienta de operación del
+> docente, no la evaluación empírica descrita abajo, que sigue sin empezar. Auditado y
+> corregido con 32 tests nuevos; detalle completo en `AVANCE.md` sección 5 decies. Pendiente
+> de esa auditoría, con valor directo para el criterio de término de la Fase 3 de este plan:
+> el simulador todavía no ofrece la comparación V/A/R/K lado a lado que exige el párrafo de
+> "Criterio de término" más abajo.
+
 - Batería técnica (`eval_runner.py`): 20–30 consultas controladas → fidelidad, exactitud factual, relevancia, trazabilidad; rúbrica 1–5 con doble evaluador.
 - **A/B pedagógico (decidido 06-ago-2026, reemplaza el diseño del cap. 8.2 del informe):**
   dos grupos estudian la **misma materia**; el grupo experimental **accede a la app** y la

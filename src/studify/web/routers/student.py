@@ -10,6 +10,7 @@ cálculo del perfil cambiara, la pantalla y `POST /api/diagnosticos` cambiarían
 juntos, que es la única forma de que la demo y la API no se contradigan.
 """
 
+import logging
 from decimal import Decimal
 from html import escape
 
@@ -22,6 +23,7 @@ from studify.api.routers.capsules import (
     crear_capsula,
     diagnostico_vigente,
     get_cliente_llm,
+    registrar_quiz,
 )
 from studify.api.routers.diagnostics import crear_diagnostico
 from studify.api.routers.knowledge import catalogo
@@ -30,7 +32,7 @@ from studify.api.schemas import (
     EstudianteIn,
     RespuestaItemIn,
 )
-from studify.api.schemas_capsulas import CapsulaIn
+from studify.api.schemas_capsulas import CapsulaIn, InteraccionQuizIn
 from studify.db.models import (
     Estudiante,
     MicrocapsulaGenerada,
@@ -44,6 +46,8 @@ from studify.vark.rules import aplicar_reglas
 from studify.vark.scoring import PerfilVark
 from studify.web import sesion, textos
 from studify.web.deps import templates
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/student", tags=["web-student"])
 
@@ -449,7 +453,11 @@ def submit_activity(
 
     if quiz.get("tipo") == "intentalo_tu":
         # No hay respuesta única que corregir: se muestra la esperada para que
-        # el estudiante contraste lo que escribió.
+        # el estudiante contraste lo que escribió. Se registra igual —sin
+        # acierto ni alternativa— porque si no, los objetivos con actividad
+        # aplicada (los perfiles K) no aparecerían nunca en el panel del
+        # docente, como si nadie los hubiera trabajado.
+        _registrar_intento(db, fila, alternativa=None, acerto=None)
         return _feedback(
             request,
             estado="esperada",
@@ -466,6 +474,8 @@ def submit_activity(
         return _error("Selecciona una alternativa antes de revisar.")
 
     acerto = int(answer) == indice_correcta
+    _registrar_intento(db, fila, alternativa=int(answer), acerto=acerto)
+
     correcta = (
         alternativas[indice_correcta] if 0 <= indice_correcta < len(alternativas) else ""
     )
@@ -476,6 +486,40 @@ def submit_activity(
         retroalimentacion=quiz.get("retroalimentacion", ""),
         correcta=None if acerto else correcta,
     )
+
+
+def _registrar_intento(
+    db: Session,
+    fila: MicrocapsulaGenerada,
+    *,
+    alternativa: int | None,
+    acerto: bool | None,
+) -> None:
+    """Deja el intento en la base para el panel del docente (Fase 5).
+
+    Se llama al mismo handler de `POST /api/capsulas/{id}/quiz`, que es quien
+    numera el intento y comprueba el dueño de la cápsula.
+
+    El 404 y el 403 de ese handler no pueden darse acá: `submit_activity` ya
+    verificó ambas cosas antes de corregir. Lo único que puede fallar es el 409
+    de dos peticiones simultáneas —el doble clic—, y en ese caso el intento que
+    llegó primero ya quedó registrado. Perder el duplicado no vale interrumpirle
+    la retroalimentación al estudiante.
+    """
+    try:
+        registrar_quiz(
+            id_capsula=fila.id_capsula,
+            payload=InteraccionQuizIn(
+                id_estudiante=fila.id_estudiante,
+                alternativa_seleccionada=alternativa,
+                es_correcta=acerto,
+            ),
+            db=db,
+        )
+    except HTTPException:
+        logger.warning(
+            "no se pudo registrar el intento de la cápsula %s", fila.id_capsula
+        )
 
 
 def _preparar_bloques(contenido: list[BloqueContenido]) -> list[dict]:

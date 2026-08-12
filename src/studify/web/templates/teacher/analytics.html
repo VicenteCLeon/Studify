@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+
+{% block title %}Analíticas del Docente - Studify{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <h1 class="mb-2">Panel de Analíticas</h1>
+    <p class="text-muted">
+        Estadísticas sobre el uso de la plataforma, el rendimiento de los alumnos en los mini-quizzes,
+        y el estado de la cobertura curricular.
+    </p>
+</div>
+
+<!-- 5. Estadísticas VARK (Cohorte) -->
+<div class="card mb-8">
+    <h2 class="text-lg mb-4">Estilos de Aprendizaje del Curso</h2>
+    {% if vark_barras %}
+    <p class="text-muted mb-4">
+        Promedio del vector VARK de los {{ vark_total }} estudiantes diagnosticados.
+        Los cuatro canales suman 100%: es la composición media del curso, no la
+        proporción de alumnos de cada estilo.
+    </p>
+    <div class="flex flex-col gap-4">
+        {% for canal in vark_barras %}
+        <div>
+            <div class="flex justify-between mb-1">
+                <span class="font-medium">{{ canal.nombre }}</span>
+                <span class="text-muted">{{ canal.texto }}%</span>
+            </div>
+            <div class="progress-container">
+                <div class="progress-bar"
+                     style="width: {{ canal.ancho }}%; background-color: {{ canal.color }};"></div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-muted">Aún no hay estudiantes diagnosticados.</p>
+    {% endif %}
+</div>
+
+<!-- 2. Cobertura Curricular -->
+<div class="card mb-8">
+    <h2 class="text-lg mb-4">Cobertura Curricular (Gaps)</h2>
+    <p class="text-muted mb-4">
+        Material que el motor puede recuperar hoy para cada tema: fragmentos validados
+        cuyo documento no está rechazado. La columna por canal muestra si hay recursos
+        del tipo que cada perfil aprovecha; un canal en gris no deja al estudiante sin
+        cápsula, pero recibe el mismo texto que todos y la adaptación no se nota.
+    </p>
+    {% if sin_clasificar %}
+    <div class="alerta alerta-info mb-4" role="status">
+        Hay <strong>{{ sin_clasificar }}</strong> fragmento(s) ingeridos sin revisar.
+        Ninguno alimenta un tema hasta que los valides:
+        <a href="/teacher/curation">ir a la bandeja de curación</a>.
+    </div>
+    {% endif %}
+    <div class="table-container">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Asignatura</th>
+                    <th>Tema</th>
+                    <th>Material recuperable</th>
+                    <th>Adaptación por canal</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for fila in cobertura %}
+                <tr>
+                    <td>{{ fila.objetivo.asignatura }}</td>
+                    <td>{{ fila.objetivo.tema }}</td>
+                    <td>
+                        {% if fila.estado == 'sin_material' %}
+                        <span class="badge badge-danger">Falta material</span>
+                        {% elif fila.estado == 'escaso' %}
+                        <span class="badge badge-warning">{{ fila.total }} fragmento(s): escaso</span>
+                        {% else %}
+                        <span class="badge badge-success">{{ fila.total }} fragmentos</span>
+                        {% endif %}
+                        {% if fila.tipos %}
+                        <div class="text-muted text-sm mt-1">
+                            {% for tipo, cantidad in fila.tipos %}{{ cantidad }} {{ tipo }}{% if not loop.last %} · {% endif %}{% endfor %}
+                        </div>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if fila.total %}
+                        <div class="flex gap-2" style="flex-wrap: wrap;">
+                            {% for canal in fila.canales %}
+                            <span class="badge {% if canal.degradado %}badge-warning{% else %}badge-success{% endif %}"
+                                  title="{{ canal.nombre }}: {% if canal.degradado %}sin recursos del tipo que este perfil aprovecha, recibirá solo texto{% else %}{{ canal.cantidad }} fragmento(s) del tipo preferido{% endif %}">
+                                {{ canal.canal }}
+                            </span>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <span class="text-muted text-sm">—</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4" class="text-muted">No hay objetivos de aprendizaje cargados.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- 3. Rendimiento Quizzes -->
+<div class="card mb-8">
+    <h2 class="text-lg mb-4">Métricas de Rendimiento (Quizzes)</h2>
+    <p class="text-muted mb-4">
+        Aciertos <strong>al primer intento</strong>: el estudiante puede reenviar la
+        actividad, y contar los reintentos subiría el porcentaje sin que nadie haya
+        entendido más. Si el porcentaje es bajo o hay muchos reintentos, considera
+        mejorar el material curado para ese tema.
+    </p>
+    <div class="table-container">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Tema</th>
+                    <th>Alumnos</th>
+                    <th>Respuestas (1er intento)</th>
+                    <th>Aciertos</th>
+                    <th>Acierto al 1er intento</th>
+                    <th>Reintentos</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in quizzes %}
+                <tr>
+                    <td>{{ row.tema }}</td>
+                    <td>{{ row.alumnos }}</td>
+                    <td>
+                        {{ row.primeras }}
+                        {% if row.abiertas %}
+                        <span class="text-muted text-sm">(+{{ row.abiertas }} abiertas)</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ row.aciertos }}</td>
+                    <td>
+                        {% if row.porcentaje is none %}
+                        <span class="text-muted text-sm">sin quiz corregible</span>
+                        {% else %}
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <div class="progress-container" style="height: 8px;">
+                                <div class="progress-bar" style="width: {{ row.porcentaje }}%; background-color: {% if row.porcentaje >= 70 %}var(--success){% elif row.porcentaje >= 40 %}var(--warning){% else %}var(--danger){% endif %};"></div>
+                            </div>
+                            <span class="text-sm" style="min-width: 40px; text-align: right;">{{ row.porcentaje }}%</span>
+                        </div>
+                        {% endif %}
+                    </td>
+                    <td>{{ row.reintentos }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6" class="text-muted">Aún no hay respuestas de los alumnos.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- 1. Historial de Cápsulas -->
+<div class="card">
+    <h2 class="text-lg mb-4">Historial Reciente de Cápsulas</h2>
+    <div class="table-container">
+        <table class="table text-sm">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Fecha</th>
+                    <th>Estudiante</th>
+                    <th>Tema Generado</th>
+                    <th>Modelo LLM</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cap in capsulas %}
+                <tr>
+                    <td>#{{ cap.id_capsula }}</td>
+                    <td>{{ cap.fecha_generacion.strftime('%d-%m-%Y %H:%M') }}</td>
+                    <td>Estudiante #{{ cap.id_estudiante }}</td>
+                    <td>{{ cap.titulo }}</td>
+                    <td>{{ cap.modelo_llm or 'Desconocido' }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="5" class="text-muted">No se han generado cápsulas.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}

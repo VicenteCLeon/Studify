@@ -68,3 +68,35 @@ class ResumenCapsulaOut(BaseModel):
     estado_validacion: str
     modelo_llm: str | None = None
     fecha_generacion: datetime
+
+
+class InteraccionQuizIn(BaseModel):
+    """Un intento del estudiante en la actividad de cierre de una cápsula.
+
+    `id_estudiante` viaja en el cuerpo por la misma razón que en `CapsulaIn`: la
+    capa API no tiene sesión, y sin él este endpoint aceptaría respuestas para la
+    cápsula de cualquiera —o sea, cualquiera podría mover las métricas del panel
+    del docente desde afuera. No es autenticación; es la comprobación de
+    coherencia que este prototipo sí puede hacer.
+
+    Los dos campos nulables son las actividades `intentalo_tu`: no tienen
+    alternativas ni respuesta única, así que se registra el intento sin marcar
+    acierto ni error.
+    """
+
+    id_estudiante: int
+    alternativa_seleccionada: int | None = None
+    es_correcta: bool | None = None
+
+
+class InteraccionQuizOut(BaseModel):
+    """El intento tal como quedó registrado, ya numerado por el servidor."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id_interaccion: int
+    id_capsula: int
+    numero_intento: int
+    alternativa_seleccionada: int | None = None
+    es_correcta: bool | None = None
+    fecha_respuesta: datetime

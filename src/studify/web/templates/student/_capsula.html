@@ -1,0 +1,158 @@
+{# La microcápsula renderizada. La incluyen dos vistas con contextos opuestos:
+
+   - `student/viewer.html`, donde el estudiante responde la actividad y las
+     claves del quiz (`indice_correcta`, `retroalimentacion`) NO viajan al
+     navegador; y
+   - el simulador del docente, que necesita exactamente lo contrario: ver la
+     alternativa correcta y la retroalimentación para juzgar si la actividad
+     evalúa el objetivo, sin responder nada.
+
+   Esa diferencia es todo lo que decide `es_simulacion`. Es un partial y no una
+   página porque el simulador lo inyecta con HTMX dentro de una pantalla que ya
+   tiene su `<head>` y su cabecera. #}
+<div class="card" style="max-width: 900px; margin: 0 auto;">
+
+    <div class="capsule-header">
+        <h1 class="mb-2">{{ capsula.titulo }}</h1>
+        <p class="text-muted mb-4">{{ capsula.objetivo_aprendizaje }}</p>
+        <div class="flex gap-2" style="flex-wrap: wrap;">
+            <span class="badge badge-primary">{{ objetivo.codigo_objetivo }}</span>
+            <span class="badge badge-success">{{ objetivo.asignatura }} · {{ objetivo.unidad }}</span>
+            {% if es_simulacion %}
+            <span class="badge badge-warning">Simulación · perfil {{ perfil_simulado }} 100%</span>
+            {% elif capsula.origen == 'generada' %}
+            <span class="badge badge-warning">Generada para ti</span>
+            {% else %}
+            <span class="badge badge-warning">Recuperada de caché</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="capsule-content">
+        {% for bloque in bloques %}
+        <div class="bloque bloque-{{ bloque.tipo }}">
+            {% if bloque.encabezado %}
+            <h3 class="mb-2">{{ bloque.encabezado }}</h3>
+            {% endif %}
+
+            {% if bloque.forma == 'texto' %}
+            <p>{{ bloque.cuerpo }}</p>
+
+            {% elif bloque.forma == 'lista' %}
+                {% if bloque.ordenada %}
+                <ol class="lista-bloque">
+                    {% for elemento in bloque.cuerpo %}<li>{{ elemento }}</li>{% endfor %}
+                </ol>
+                {% else %}
+                <ul class="lista-bloque">
+                    {% for elemento in bloque.cuerpo %}<li>{{ elemento }}</li>{% endfor %}
+                </ul>
+                {% endif %}
+
+            {% elif bloque.forma == 'filas' %}
+                {% if bloque.tipo == 'glosario' %}
+                <dl class="glosario">
+                    {% for fila in bloque.cuerpo %}
+                    <dt>{{ fila[0] }}</dt>
+                    <dd>{{ fila[1:] | join(' ') }}</dd>
+                    {% endfor %}
+                </dl>
+                {% else %}
+                <div class="table-container">
+                    <table class="table">
+                        {% for fila in bloque.cuerpo %}
+                        {% if loop.first %}
+                        <thead><tr>{% for celda in fila %}<th>{{ celda }}</th>{% endfor %}</tr></thead>
+                        <tbody>
+                        {% else %}
+                        <tr>{% for celda in fila %}<td>{{ celda }}</td>{% endfor %}</tr>
+                        {% endif %}
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="capsule-activity" id="activity-container">
+        <h3 class="mb-4">Actividad de Cierre</h3>
+        <p class="mb-4">{{ actividad.pregunta }}</p>
+
+        {% if es_simulacion %}
+        {# El docente no responde: la cápsula simulada no está persistida, así
+           que no hay `id_capsula` contra el cual corregir. Se le muestra la
+           clave, que es lo que vino a revisar. #}
+            {% if actividad.tipo == 'quiz_mc' %}
+            <div class="radio-group mb-4">
+                {% for alternativa in actividad.alternativas %}
+                <label class="radio-option" style="background-color: var(--bg-surface);">
+                    <input type="radio" disabled
+                           {% if loop.index0 == actividad.indice_correcta %}checked{% endif %}>
+                    <span>{{ alternativa }}</span>
+                </label>
+                {% endfor %}
+            </div>
+            {% endif %}
+            <div class="alerta alerta-info" role="status">
+                <strong>
+                    {% if actividad.tipo == 'quiz_mc' %}
+                    Retroalimentación que verá el estudiante al acertar o fallar
+                    {% else %}
+                    Respuesta esperada
+                    {% endif %}
+                </strong>
+                <div class="mt-2">{{ actividad.retroalimentacion }}</div>
+            </div>
+
+        {% else %}
+        <form hx-post="/student/viewer/{{ capsula.id_capsula }}/submit"
+              hx-target="#feedback-result"
+              hx-swap="innerHTML">
+
+            {% if actividad.tipo == 'quiz_mc' %}
+            <div class="radio-group mb-6">
+                {% for alternativa in actividad.alternativas %}
+                <label class="radio-option" style="background-color: var(--bg-surface);">
+                    <input type="radio" name="answer" value="{{ loop.index0 }}" required>
+                    <span>{{ alternativa }}</span>
+                </label>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="form-group">
+                <textarea class="form-control" name="answer" rows="4"
+                          placeholder="Escribe aquí tu resolución antes de contrastarla."></textarea>
+            </div>
+            {% endif %}
+
+            <div class="flex items-center gap-4">
+                <button type="submit" class="btn btn-primary">
+                    {% if actividad.tipo == 'quiz_mc' %}Revisar Respuesta{% else %}Ver la respuesta esperada{% endif %}
+                    <span class="htmx-indicator ml-2">…</span>
+                </button>
+            </div>
+        </form>
+
+        <div id="feedback-result" class="mt-4"></div>
+        {% endif %}
+    </div>
+
+    <div class="fuentes mt-8">
+        <h3 class="mb-2 text-lg">Fuentes</h3>
+        <p class="text-sm text-muted mb-2">
+            Esta cápsula se construyó únicamente con estos fragmentos del material
+            institucional. El sistema verifica cada cita contra la base de datos.
+        </p>
+        <ul class="lista-fuentes">
+            {% for fuente in capsula.fuentes %}
+            <li>
+                <span class="badge badge-primary">#{{ fuente.id_fragmento }}</span>
+                {{ fuente.documento }}{% if fuente.pagina %}, p. {{ fuente.pagina }}{% endif %}
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>

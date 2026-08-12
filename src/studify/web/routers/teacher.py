@@ -18,18 +18,36 @@ una cápsula. `curation.validar` lo bloquea; acá se hace además imposible de
 intentar.
 """
 
+from decimal import Decimal
+
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from studify.api.routers.capsules import ClienteLLM, get_cliente_llm
 from studify.api.routers.knowledge import (
     listar_documentos,
     listar_objetivos,
     subir_documento,
 )
+from studify.config import get_settings
+from studify.db.models import (
+    DiagnosticoVark,
+    Fragmento,
+    InteraccionQuiz,
+    MicrocapsulaGenerada,
+    ObjetivoAprendizaje,
+)
 from studify.db.session import get_db
+from studify.generation.generator import ErrorGeneracion, generar
 from studify.knowledge import curation
+from studify.rag import orchestrator, retriever
+from studify.vark.rules import aplicar_reglas
+from studify.vark.scoring import CANALES, PerfilVark
+from studify.web import textos
 from studify.web.deps import templates
+from studify.web.routers.student import _preparar_bloques
 
 router = APIRouter(prefix="/teacher", tags=["web-teacher"])
 
@@ -37,6 +55,12 @@ router = APIRouter(prefix="/teacher", tags=["web-teacher"])
 # humano y el techo del plan es de 40–60 fragmentos por unidad, así que una
 # página basta para revisar un documento completo sin paginar.
 LIMITE_BANDEJA = 60
+
+# Desde cuántos fragmentos recuperables se considera cubierto un objetivo. Es la
+# mitad de lo que el retriever pide como contexto (`LIMITE_POR_DEFECTO`): por
+# debajo de eso la cápsula se genera igual, pero apoyada en una porción del
+# apunte demasiado chica como para fundamentar 150–300 palabras sin repetirse.
+MINIMO_RECOMENDADO = retriever.LIMITE_POR_DEFECTO // 2
 
 
 @router.get("/curation", response_class=HTMLResponse)
@@ -64,6 +88,139 @@ def get_fragmentos(
         request=request,
         name="teacher/_bandeja.html",
         context=_contexto_panel(db, id_documento),
+    )
+
+
+@router.get("/analytics", response_class=HTMLResponse)
+def get_analytics(request: Request, db: Session = Depends(get_db)):
+    """Panel de analíticas del curso (Fase 5)."""
+    
+    # 1. Cobertura Curricular
+    cobertura = _cobertura_curricular(db)
+
+    # 2. Historial de Cápsulas (últimas 50)
+    capsulas = db.scalars(
+        select(MicrocapsulaGenerada)
+        .order_by(MicrocapsulaGenerada.fecha_generacion.desc())
+        .limit(50)
+    ).all()
+
+    # 3. Rendimiento en la actividad de cierre, por objetivo.
+    quizzes = _rendimiento_actividades(db)
+
+    # 5. Estadísticas VARK (Promedios generales)
+    stmt_vark = select(
+        func.avg(DiagnosticoVark.porcentaje_v).label("v"),
+        func.avg(DiagnosticoVark.porcentaje_a).label("a"),
+        func.avg(DiagnosticoVark.porcentaje_r).label("r"),
+        func.avg(DiagnosticoVark.porcentaje_k).label("k"),
+        func.count(DiagnosticoVark.id_diagnostico).label("total")
+    )
+    vark = db.execute(stmt_vark).first()
+
+    return templates.TemplateResponse(
+        request=request,
+        name="teacher/analytics.html",
+        context={
+            "cobertura": cobertura,
+            "sin_clasificar": _fragmentos_sin_clasificar(db),
+            "capsulas": capsulas,
+            "quizzes": quizzes,
+            "vark_total": vark.total if vark else 0,
+            "vark_barras": _barras_cohorte(vark),
+        }
+    )
+
+
+@router.get("/simulator", response_class=HTMLResponse)
+def get_simulator(request: Request, db: Session = Depends(get_db)):
+    """Vista del simulador: elegir un tema y un perfil VARK."""
+    return templates.TemplateResponse(
+        request=request,
+        name="teacher/simulator.html",
+        context={
+            "objetivos": listar_objetivos(db=db),
+        }
+    )
+
+
+@router.post("/simulator/generate", response_class=HTMLResponse)
+def post_simulator_generate(
+    request: Request,
+    id_objetivo: int = Form(...),
+    canal: str = Form(...),
+    db: Session = Depends(get_db),
+    cliente: ClienteLLM | None = Depends(get_cliente_llm),
+):
+    """Genera una cápsula al vuelo para el perfil simulado."""
+    if not cliente:
+        return _aviso(request, "error", "Falta LLM_API_KEY para simular.")
+
+    objetivo = db.get(ObjetivoAprendizaje, id_objetivo)
+    if not objetivo:
+        return _aviso(request, "error", "Objetivo no encontrado.")
+
+    # Un canal desconocido dejaría el vector en 0/0/0/0, que rompe el invariante
+    # de `PerfilVark` (suma 100) y que `derivar()` interpreta como multimodal con
+    # primario V: se generaría una cápsula para un perfil que no existe, sin
+    # error visible. Se corta acá.
+    canal_vark = canal.strip().upper()
+    if canal_vark not in CANALES:
+        return _aviso(
+            request,
+            "error",
+            f"«{canal}» no es un canal VARK: elige Visual, Auditivo, "
+            f"Lectura/Escritura o Kinestésico.",
+        )
+
+    # Perfil simulado puro: 100% en el canal elegido, 0% en los otros tres.
+    porcentajes = {c: Decimal(100 if c == canal_vark else 0) for c in CANALES}
+    perfil = PerfilVark(
+        v=porcentajes["V"], a=porcentajes["A"], r=porcentajes["R"], k=porcentajes["K"]
+    )
+    config = aplicar_reglas(perfil)
+
+
+    fragmentos = retriever.recuperar(
+        db,
+        id_objetivo=id_objetivo,
+        canal_primario=config.jerarquia.canal_primario,
+    )
+    
+    try:
+        prompt = orchestrator.construir(
+            objetivo=objetivo,
+            fragmentos=fragmentos,
+            config=config,
+            modelo=get_settings().llm_model,
+        )
+        resultado = generar(prompt, cliente=cliente)
+    except orchestrator.ErrorPrompt as exc:
+        return _aviso(request, "error", f"Error de material: {exc}")
+    except ErrorGeneracion as exc:
+        return _aviso(request, "error", f"Falló la generación: {exc}")
+
+    capsula = resultado.capsula
+
+    # El mismo partial que ve el estudiante, no la página completa: HTMX lo
+    # inyecta dentro del simulador, que ya tiene cabecera y `<head>` propios.
+    #
+    # Acá la actividad viaja **entera**, con `indice_correcta` y
+    # `retroalimentacion`. Es lo contrario de lo que hace `student.py` a
+    # propósito: el estudiante no puede ver la clave en el código fuente, y el
+    # docente vino justamente a revisarla. La cápsula simulada además no se
+    # persiste, así que no hay nada que responder ni que corregir.
+    return templates.TemplateResponse(
+        request=request,
+        name="student/_capsula.html",
+        context={
+            "objetivo": objetivo,
+            "capsula": capsula,
+            "bloques": _preparar_bloques(capsula.contenido),
+            "actividad": capsula.actividad,
+            "es_simulacion": True,
+            "perfil_simulado": textos.NOMBRE_CANAL[canal_vark],
+        },
     )
 
 
@@ -145,6 +302,168 @@ def reject_fragment(request: Request, id_fragmento: int, db: Session = Depends(g
 
 
 # --- Auxiliares ---------------------------------------------------------------
+
+
+def _cobertura_curricular(db: Session) -> list[dict]:
+    """Qué temas puede sostener el sistema hoy y con qué calidad de adaptación.
+
+    Dos correcciones sobre la lectura ingenua de «tiene fragmentos aprobados»:
+
+    1. **Cuenta lo que el retriever puede recuperar**, no lo que está validado.
+       El inventario sale de `retriever.inventario_por_objetivo`, que aplica los
+       mismos filtros que la recuperación real —incluido el del documento
+       rechazado después de curar—, así que la pantalla no puede pintar de verde
+       material que el motor ignora.
+
+    2. **Un fragmento no es cobertura.** El retriever pide hasta
+       `LIMITE_POR_DEFECTO` fragmentos para fundamentar una cápsula; con uno
+       solo la genera igual, pero apoyada en una sola frase del apunte. Por eso
+       hay un tramo intermedio explícito en vez de un sí/no.
+
+    La columna por canal es el gap que el conteo total esconde: un objetivo con
+    ocho fragmentos de texto está completo para los perfiles A y R, y deja al
+    perfil V leyendo lo mismo que ellos.
+    """
+    inventario = retriever.inventario_por_objetivo(db)
+    objetivos = db.scalars(
+        select(ObjetivoAprendizaje).order_by(ObjetivoAprendizaje.codigo_objetivo)
+    ).all()
+
+    filas = []
+    for objetivo in objetivos:
+        tipos = inventario.get(objetivo.id_objetivo, {})
+        total = sum(tipos.values())
+        filas.append(
+            {
+                "objetivo": objetivo,
+                "total": total,
+                "tipos": sorted(tipos.items(), key=lambda kv: (-kv[1], kv[0])),
+                "canales": [
+                    {
+                        "canal": canal,
+                        "nombre": textos.NOMBRE_CANAL[canal],
+                        "cantidad": cantidad,
+                        # Con material, pero sin nada del tipo que ese canal
+                        # aprovecha: la cápsula sale, la adaptación no.
+                        "degradado": total > 0 and cantidad == 0,
+                    }
+                    for canal, cantidad in retriever.tipos_preferidos_disponibles(
+                        tipos
+                    ).items()
+                ],
+                "estado": (
+                    "sin_material"
+                    if total == 0
+                    else "escaso"
+                    if total < MINIMO_RECOMENDADO
+                    else "cubierto"
+                ),
+            }
+        )
+    return filas
+
+
+def _fragmentos_sin_clasificar(db: Session) -> int:
+    """Fragmentos ingeridos que siguen esperando revisión.
+
+    Se cuenta en global y no por objetivo a propósito: el objetivo se asigna
+    **al validar** (`curation.validar`), así que un fragmento pendiente todavía
+    no pertenece a ningún tema. Un conteo por objetivo daría cero en todas las
+    filas y haría parecer que no queda trabajo de curación pendiente.
+    """
+    return db.scalar(
+        select(func.count())
+        .select_from(Fragmento)
+        .where(Fragmento.estado_validacion == "pendiente")
+    ) or 0
+
+
+def _rendimiento_actividades(db: Session) -> list[dict]:
+    """Cómo le fue al curso en la actividad de cierre, por objetivo.
+
+    **El porcentaje se calcula solo sobre el primer intento.** El visor deja el
+    formulario en pantalla después de la retroalimentación, así que quien falla
+    puede cambiar la alternativa y reenviar; contando todos los intentos por
+    igual, el curso mejoraría sus cifras a fuerza de insistir y el número
+    dejaría de decir nada sobre lo que se entendió. Los reintentos se informan
+    aparte porque son una señal por derecho propio: mucho reintento en un tema
+    es material que no se está entendiendo a la primera.
+
+    Las actividades `intentalo_tu` no tienen respuesta corregible (`es_correcta`
+    nula) y quedan fuera del porcentaje, pero se cuentan igual: sin eso, un
+    objetivo trabajado solo por perfiles K se vería idéntico a uno que nadie
+    abrió nunca.
+
+    Va en una función y no dentro del endpoint para poder comprobar la métrica
+    contra la base sin levantar una plantilla de por medio.
+    """
+    primero = InteraccionQuiz.numero_intento == 1
+    corregible = InteraccionQuiz.es_correcta.is_not(None)
+    stmt = (
+        select(
+            ObjetivoAprendizaje.tema,
+            func.count(func.distinct(MicrocapsulaGenerada.id_estudiante)).label(
+                "alumnos"
+            ),
+            func.count().filter(primero & corregible).label("primeras"),
+            func.count().filter(primero & InteraccionQuiz.es_correcta.is_(True)).label(
+                "aciertos"
+            ),
+            func.count().filter(primero & ~corregible).label("abiertas"),
+            func.count().filter(InteraccionQuiz.numero_intento > 1).label("reintentos"),
+        )
+        .select_from(InteraccionQuiz)
+        .join(
+            MicrocapsulaGenerada,
+            InteraccionQuiz.id_capsula == MicrocapsulaGenerada.id_capsula,
+        )
+        .join(
+            ObjetivoAprendizaje,
+            MicrocapsulaGenerada.id_objetivo == ObjetivoAprendizaje.id_objetivo,
+        )
+        .group_by(ObjetivoAprendizaje.id_objetivo)
+        .order_by(ObjetivoAprendizaje.codigo_objetivo)
+    )
+    return [
+        {
+            "tema": row.tema,
+            "alumnos": row.alumnos,
+            "primeras": row.primeras,
+            "aciertos": row.aciertos,
+            "abiertas": row.abiertas,
+            "reintentos": row.reintentos,
+            # None y 0 no son lo mismo: sin quiz corregible no hay porcentaje
+            # que mostrar, y un 0% diría que todos fallaron.
+            "porcentaje": (
+                round(row.aciertos * 100 / row.primeras, 1) if row.primeras else None
+            ),
+        }
+        for row in db.execute(stmt).all()
+    ]
+
+
+def _barras_cohorte(vark) -> list[dict]:
+    """El promedio VARK del curso, listo para pintar con la misma escala que el
+    perfil individual del estudiante.
+
+    Se arma acá y no en la plantilla por la misma razón que `_barras` en
+    `student.py`: el nombre y el color de cada canal ya existen en `textos`, y
+    repetirlos en HTML hace que el gráfico del docente y el del estudiante
+    deriven a colores distintos para el mismo canal.
+    """
+    if vark is None or not vark.total:
+        return []
+    valores = {"V": vark.v, "A": vark.a, "R": vark.r, "K": vark.k}
+    ordenados = sorted(valores.items(), key=lambda kv: (-kv[1], "VARK".index(kv[0])))
+    return [
+        {
+            "nombre": textos.NOMBRE_CANAL[canal],
+            "color": textos.COLOR_CANAL[canal],
+            "ancho": f"{porcentaje:.2f}",
+            "texto": f"{porcentaje:.1f}".replace(".", ","),
+        }
+        for canal, porcentaje in ordenados
+    ]
 
 
 def _contexto_panel(db: Session, id_documento: int | None) -> dict:

@@ -413,6 +413,63 @@ class MicrocapsulaGenerada(Base):
         back_populates="capsulas"
     )
     fragmento_fuente: Mapped["Fragmento | None"] = relationship()
+    interacciones_quiz: Mapped[list["InteraccionQuiz"]] = relationship(
+        back_populates="capsula", cascade="all, delete-orphan"
+    )
+
+
+class InteraccionQuiz(Base):
+    """Cada intento de un estudiante en la actividad de cierre de una cápsula.
+
+    Añadida en la Fase 5 para que el panel del docente pueda decir algo sobre lo
+    que los estudiantes aprendieron y no solo sobre cuánto usaron el sistema.
+    Tres decisiones de esta tabla condicionan qué se puede medir con ella:
+
+    - **Se guardan todos los intentos, numerados.** El visor deja el formulario
+      en pantalla después de la retroalimentación, así que el estudiante puede
+      cambiar la alternativa y reenviar. Si todos los intentos pesaran igual, el
+      porcentaje de aciertos del curso subiría solo con que la gente insista
+      hasta acertar. Con `numero_intento` el panel informa **acierto al primer
+      intento** y, de paso, gana una señal que antes no existía: cuántos
+      intentos costó el objetivo.
+
+    - **No se repite `id_estudiante`.** Una cápsula pertenece a un único
+      estudiante (`microcapsula_generada.id_estudiante`), así que quién
+      respondió está a un JOIN de distancia; duplicar la columna solo abriría la
+      posibilidad de que las dos copias se contradigan.
+
+    - **`es_correcta` y `alternativa_seleccionada` admiten NULL.** Las
+      actividades `intentalo_tu` —las que pide la tabla 11.1 cuando p_K ≥ 40%—
+      no tienen alternativas ni una respuesta única que corregir. Registrarlas
+      igual, con ambos campos nulos, evita que los objetivos trabajados con
+      actividad aplicada desaparezcan del panel como si nadie los hubiera
+      abierto.
+    """
+
+    __tablename__ = "interaccion_quiz"
+    __table_args__ = (
+        # Un solo registro por intento: si dos peticiones simultáneas (el doble
+        # clic de siempre) calculan el mismo número, la segunda no entra.
+        UniqueConstraint(
+            "id_capsula", "numero_intento", name="uq_interaccion_capsula_intento"
+        ),
+        CheckConstraint("numero_intento >= 1", name="ck_interaccion_numero_intento"),
+    )
+
+    id_interaccion: Mapped[int] = mapped_column(primary_key=True)
+    id_capsula: Mapped[int] = mapped_column(
+        ForeignKey("microcapsula_generada.id_capsula", ondelete="CASCADE"), index=True
+    )
+    numero_intento: Mapped[int] = mapped_column(SmallInteger, default=1)
+    alternativa_seleccionada: Mapped[int | None] = mapped_column(SmallInteger)
+    es_correcta: Mapped[bool | None]
+    fecha_respuesta: Mapped[datetime] = mapped_column(
+        TS, server_default=func.now(), nullable=False
+    )
+
+    capsula: Mapped["MicrocapsulaGenerada"] = relationship(
+        back_populates="interacciones_quiz"
+    )
 
 
 # Índice GIN para el full-text search en español que el retriever usa como

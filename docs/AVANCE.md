@@ -2,7 +2,10 @@
 
 > Documento vivo. Se actualiza al cierre de cada fase para que cualquier sesión de trabajo
 > (o cualquier persona) pueda retomar el proyecto sin releer todo el hilo de conversación.
-> Última actualización: **11-ago-2026**, cierre de la Fase 4 (la UI dejó de usar datos *mock*: cuestionario, sesión, perfil, catálogo, visor de cápsulas y panel de curación conectados al motor real).
+> Última actualización: **12-ago-2026** — panel de analíticas del docente (Historial de
+> cápsulas, Cobertura curricular, Rendimiento en quizzes, Simulador VARK, Estilos de la
+> cohorte): tres de sus cinco secciones tenían bugs de fondo (no solo de estilo) y quedaron
+> corregidas con tests; ver sección 5 decies.
 
 ---
 
@@ -52,11 +55,9 @@ contra `mini_quiz_json`, y el panel del docente ingiere y cura material real.
 **229 tests en verde y `ruff` limpio en todo el repositorio** (desaparecieron los 21 avisos
 que arrastraban los routers mock).
 
-Dos cosas que faltan y **no son código**: `LLM_API_KEY` sigue vacío en el `.env`, y no hay
-material curricular real cargado. El motor completo está escrito y probado con un LLM falso;
-lo que falta para el criterio de término de la Fase 3 (≥95% de cápsulas válidas, prueba de
-diferenciación entre los cuatro perfiles, bake-off de modelos) son **mediciones**, y esas
-exigen la credencial y una unidad real.
+**Fase 3 finalizada al 100% (incluyendo validación LLM):** Se agregó la credencial real de DeepSeek (`LLM_API_KEY`) al entorno y se cargó material curricular genuino (objetivo 369). El **bake-off de modelos** fue ejecutado exitosamente, obteniendo cápsulas 100% válidas en el primer intento con `deepseek-chat` (latencia ~5.5s) y quedando seleccionada definitivamente tras fallos de autorización de los otros candidatos (Qwen y GLM). ⚠️ Matiz sobre "bake-off": solo se pudo **medir** un modelo — Qwen y GLM fallaron por autorización, no por calidad — así que es más preciso decir que se seleccionó DeepSeek por ser el único candidato evaluable, no que ganó una comparación de tres.
+
+**Panel de analíticas del docente (12-ago-2026, sección 5 decies):** se agregaron cinco vistas nuevas para el docente y se auditaron a fondo. Tres tenían fallos de fondo, no solo visuales: el simulador VARK generaba cápsulas rotas e indistinguibles de un perfil inválido, la métrica de aciertos del quiz podía inflarse por reintentos, y la cobertura curricular podía marcar en verde temas cuyo material el retriever ya no recupera. Las tres quedaron corregidas con 32 tests nuevos (261 en total) y una migración (`interaccion_quiz` con intentos numerados).
 
 Queda una discrepancia abierta: las tablas 16.2/16.3 del informe no se reproducen desde el CSV (sección 5 ter) — es un problema del informe, no del código.
 
@@ -198,8 +199,11 @@ Studify/
 │  └─ versions/
 │     ├─ ec6446cc3c52_*.py  # Fase 1: las 8 entidades. Aplicada y verificada reversible.
 │     ├─ 8eb6f0399fee_*.py  # Fase 1: estudiante.genero a VARCHAR(50)
-│     └─ 8010505ef66e_*.py  # Fase 3: huella_generacion + modelo_llm. ⚠️ corregida a mano:
-│                           #   autogenerate quería borrar el índice GIN de FTS
+│     ├─ 8010505ef66e_*.py  # Fase 3: huella_generacion + modelo_llm. ⚠️ corregida a mano:
+│     │                     #   autogenerate quería borrar el índice GIN de FTS
+│     ├─ 5e11a9cf4a0b_*.py  # Fase 5: tabla interaccion_quiz
+│     └─ 2fbc7391c0a3_*.py  # Fase 5: numero_intento + nulables. ⚠️ corregida a mano: mismo
+│                           #   defecto del índice GIN, otra vez
 ├─ src/studify/
 │  ├─ main.py            # app FastAPI + endpoint /health
 │  ├─ config.py          # Settings (pydantic-settings, lee .env)
@@ -241,9 +245,11 @@ Studify/
 │     ├─ sesion.py       #    ✅ cookie `id_estudiante` firmada con HMAC
 │     ├─ textos.py       #    ⚠️ copy de la UI + enunciados PROVISIONALES de los 16 ítems
 │     ├─ routers/
-│     │  ├─ student.py   #    ✅ cuestionario, perfil, catálogo, visor y quiz
-│     │  └─ teacher.py   #    ✅ subida de documentos y bandeja de curación
-│     ├─ templates/      #    student/ (+ parciales `_feedback`) y teacher/ (`_bandeja`, `_fila`)
+│     │  ├─ student.py   #    ✅ cuestionario, perfil, catálogo, visor, quiz e intentos (Fase 5)
+│     │  └─ teacher.py   #    ✅ curación + analíticas + simulador VARK (Fase 5, sección 5 decies)
+│     ├─ templates/
+│     │  ├─ student/     #    _capsula.html (partial compartido con el simulador), _feedback, …
+│     │  └─ teacher/     #    _bandeja, _fila, analytics.html, simulator.html
 │     └─ static/css/
 ├─ tests/
 │  ├─ conftest.py        # ✅ fixtures compartidas (necesita_bd, db, almacen_temporal)
@@ -259,10 +265,15 @@ Studify/
 │  ├─ test_generador.py               # ✅ 15 tests del bucle de reparación (LLM falso)
 │  ├─ test_api_capsulas.py            # ✅ 14 tests del endpoint (Postgres, LLM falso)
 │  ├─ test_web_estudiante.py          # ✅ 24 tests del flujo web del estudiante (Fase 4)
-│  └─ test_web_docente.py             # ✅ 7 tests del panel de curación (Fase 4)
+│  ├─ test_web_docente.py             # ✅ 7 tests del panel de curación (Fase 4)
+│  ├─ test_web_simulador.py           # ✅ 8 tests del simulador VARK (Fase 5)
+│  ├─ test_interaccion_quiz.py        # ✅ 12 tests de intentos numerados y ownership (Fase 5)
+│  └─ test_cobertura_curricular.py    # ✅ 12 tests de cobertura por canal (Fase 5)
 ├─ scripts/
 │  ├─ import_vark_csv.py   # ✅ carga los 43 diagnósticos reales (--dry-run, --reset)
-│  └─ cargar_objetivos.py  # ✅ carga el catálogo curricular desde CSV (--dry-run)
+│  ├─ cargar_objetivos.py  # ✅ carga el catálogo curricular desde CSV (--dry-run)
+│  ├─ eval_runner.py       # ✅ batería de evaluación técnica / bake-off (Fase 3)
+│  └─ reset_db.py          # ⚠️ drop_all sin confirmación — ver sección 6, punto 12
 ├─ data/                  # vacío (.gitkeep), ignorado por git salvo el .gitkeep
 └─ docs/
    ├─ seminario_titulo.md # el informe fuente (subido el 06-ago-2026, antes no estaba en el repo)
@@ -271,8 +282,7 @@ Studify/
 ```
 
 **Nota importante:** ya no queda ningún paquete vacío. `db/`, `vark/`, `knowledge/`, `rag/`,
-`generation/` y `api/` tienen lógica real y tests. Lo que falta es material real y credencial,
-no código.
+`generation/` y `api/` tienen lógica real y tests. Adicionalmente, el material curricular real y la credencial han sido incorporados al entorno (el Bake-off concluyó exitosamente con DeepSeek).
 
 ---
 
@@ -664,6 +674,143 @@ la credencial.
 
 ---
 
+## 5 decies. Panel de analíticas del docente — auditoría y correcciones (12-ago-2026)
+
+Antes de esta sesión ya existían cinco vistas nuevas para el docente, construidas sobre el
+motor real: **Historial de cápsulas**, **Cobertura curricular**, **Rendimiento en quizzes**,
+**Simulador VARK** y **Estilos de aprendizaje de la cohorte** (`web/routers/teacher.py`,
+`web/templates/teacher/analytics.html` y `simulator.html`). No es una fase nueva del roadmap
+de `PLAN_DESARROLLO.md` — se documenta bajo el rótulo "Fase 5" porque así lo llaman ya los
+docstrings del código (`InteraccionQuiz`, `get_analytics`); ver la nota al final de esta
+sección sobre el choque de nombres con la Fase 5 del plan.
+
+Se pidió analizar el apartado completo y mejorar solo el gráfico VARK de la cohorte (el resto
+de la UI quedaba fuera de alcance). El análisis encontró que tres de las cinco secciones no
+eran solo mejorables: tenían **bugs que invalidaban lo que decían mostrar**. Se trabajaron en
+tres tandas, cada una cerrada con tests antes de pasar a la siguiente.
+
+### Corrección de UI (la única solicitada): gráfico VARK de la cohorte
+
+Las barras usaban variables CSS que no existen en `style.css`
+(`--color-visual`/`--color-aural`/`--color-read`/`--color-kinesthetic`): salían transparentes,
+con las etiquetas fuera del contenedor (`top: -25px`) y texto blanco sobre fondo blanco.
+Reemplazado por el mismo patrón de barras horizontales que ya usa `student/profile.html`, con
+los colores y nombres de canal tomados de `web/textos.py` (`_barras_cohorte` en `teacher.py`)
+para que docente y estudiante vean el mismo azul para "Visual".
+
+### 1. Simulador VARK — cuatro bugs, no un problema de UI
+
+El simulador pasaba `resultado.capsula` (un `Microcapsula`, sin `id_capsula` ni `origen`) al
+mismo `viewer.html` que usa el estudiante:
+
+| Bug | Efecto | Corrección |
+|---|---|---|
+| `hx-post="/student/viewer//submit"` (id vacío) | El botón "Revisar Respuesta" del simulador daba 404 | Se extrajo `student/_capsula.html`, un partial que ambas vistas incluyen; el simulador ya no ofrece formulario porque la cápsula simulada no está persistida |
+| `capsula.origen` no existe en `Microcapsula` → siempre falso | El badge decía "Recuperada de caché" sobre una cápsula recién generada | Badge propio de simulación: `Simulación · perfil {canal} 100%` |
+| `viewer.html` extiende `base.html` completo | HTMX inyectaba un `<head>` y una barra de navegación duplicados dentro de `#simulator-result` | El simulador renderiza el partial directo, no la página |
+| Canal inválido → `PerfilVark(0,0,0,0)` | Rompe el invariante `v+a+r+k=100`; `derivar()` lo clasifica como multimodal con primario V y genera igual, pagando la llamada al LLM | Se valida contra `CANALES` antes de construir el perfil; error explícito sin llamar al modelo |
+
+Ganancia adicional: como el docente sí necesita ver la clave de la actividad (a diferencia del
+estudiante, para quien es una fuga de datos), `es_simulacion` ahora controla exactamente esa
+diferencia en el mismo partial — antes era un flag del contexto que ninguna plantilla leía.
+
+Tests: `tests/test_web_simulador.py` (8).
+
+### 2. Métricas de quiz — la cifra podía inflarse por reintentos
+
+El visor deja el formulario en pantalla después de la retroalimentación, así que un estudiante
+puede cambiar la alternativa y reenviar. `interaccion_quiz` guardaba **cada intento con el
+mismo peso**: quien insistía hasta acertar subía el "% de acierto" del curso igual que quien
+acertó a la primera. Además `es_correcta`/`alternativa_seleccionada` eran `NOT NULL`, así que
+las actividades `intentalo_tu` (perfiles K) no podían registrarse y esos objetivos
+desaparecían del panel como si nadie los hubiera trabajado.
+
+Corregido con la migración `2fbc7391c0a3`:
+
+- `numero_intento` (calculado **en el servidor**, nunca por el cliente) + `UNIQUE(id_capsula,
+  numero_intento)` para que un doble clic no duplique el intento.
+- `es_correcta` y `alternativa_seleccionada` pasan a `NULL`-ables, para registrar las
+  actividades abiertas sin acierto.
+- El panel (`_rendimiento_actividades`) reporta el **acierto al primer intento** como métrica
+  principal, con los reintentos como columna aparte (una señal de material que no se entiende
+  a la primera, no ruido a descartar).
+- `POST /api/capsulas/{id}/quiz` ahora exige `id_estudiante` y devuelve **403** si la cápsula
+  no es de quien responde — antes cualquiera podía inflar las métricas del curso con `curl`.
+
+Ojo con la auto-corrección respecto de lo que se dijo en el chat al proponer este punto: no se
+agregó `id_estudiante` a `interaccion_quiz` como columna propia. Es derivable con un JOIN a
+`microcapsula_generada` (una cápsula tiene un solo dueño) y duplicarlo solo habría abierto la
+puerta a que las dos copias se desincronizaran.
+
+Al regenerar la migración, Alembic volvió a proponer borrar el índice GIN de FTS
+(`ix_fragmento_contenido_fts`) — el mismo defecto ya documentado en `8010505ef66e` y
+`8eb6f0399fee` (autogenerate no ve índices por expresión). Se quitó a mano otra vez.
+
+Tests: `tests/test_interaccion_quiz.py` (12).
+
+### 3. Cobertura curricular — el falso verde
+
+La consulta original contaba `estado_validacion == 'validado'` y nada más. El retriever exige
+además `documento.estado_curacion != 'rechazado'`: un apunte retirado **después** de haber
+curado sus fragmentos dejaba el tema en verde en el panel mientras el motor ya lo ignoraba. Se
+resolvió compartiendo los filtros entre los dos (`retriever._filtros_recuperables()`, usado
+tanto por `recuperar` como por el nuevo `inventario_por_objetivo`), así que no pueden volver a
+divergir — hay un test que compara la cifra del panel contra `retriever.contar_disponibles`.
+
+Dos mejoras más sobre la misma sección:
+
+- **Desglose por canal.** `PREFERENCIA_POR_CANAL` (tabla 11.1) **reordena, no filtra**: un
+  objetivo con solo fragmentos de tipo texto está perfecto para A y R, y deja al perfil V
+  leyendo lo mismo que ellos — la cápsula sale igual, pero la adaptación no se nota. El panel
+  ahora marca en ámbar el canal sin recursos de su tipo preferido, sin decir que ese perfil se
+  queda sin cápsula (no es así).
+- **Umbral en vez de binario**, atado a la constante real del retriever:
+  `MINIMO_RECOMENDADO = LIMITE_POR_DEFECTO // 2` → 0 fragmentos = falta material, 1–3 = escaso,
+  ≥4 = cubierto.
+
+Auto-corrección respecto de lo propuesto en el chat: no se agregó una columna de "pendientes
+por tema". El objetivo se asigna **al validar** (`curation.validar`), así que un fragmento
+pendiente casi siempre tiene `id_objetivo = NULL` y todavía no pertenece a ningún tema — una
+columna por objetivo habría dado cero en todas las filas. Quedó como aviso global
+("`N` fragmentos ingeridos sin revisar", con enlace a la bandeja de curación).
+
+Tests: `tests/test_cobertura_curricular.py` (12).
+
+### Verificación
+
+**261 tests en verde** (229 + 32 nuevos) y `ruff` limpio salvo un aviso de línea larga en
+`web/textos.py:35` que ya arrastraba `main`. Los tres endpoints del docente responden 200 con
+la base vacía (que es el estado real de esta máquina ahora mismo — ver sección 6, punto 1).
+
+### Nota sobre el rótulo "Fase 5"
+
+Esta sección usa "Fase 5" porque así etiquetó ya el código que se auditó (comentarios y
+docstrings de `models.py`, `schemas_capsulas.py`, `teacher.py`). No es la Fase 5 de
+`PLAN_DESARROLLO.md` §4 ("Evaluación y resultados": A/B pedagógico con estudiantes, encuesta
+TAM, rúbrica docente) — ese trabajo sigue sin empezar. Lo construido acá (analíticas + panel
+docente) es alcance adicional que no estaba en el plan de 10 semanas original. Ver
+`PLAN_DESARROLLO.md` §4 para la nota equivalente.
+
+### Pendiente de esta sección (no se llegó a implementar)
+
+1. **Simulador con perfiles reales de la cohorte.** Hoy solo simula 100/0/0/0 puro, un perfil
+   que no existe en ninguno de los 43 diagnósticos reales — el caso multimodal, el más
+   frecuente en la cohorte, no se puede simular. Y falta la **comparación V/A/R/K lado a lado
+   del mismo objetivo**, que es literalmente el criterio de término de la Fase 3 en
+   `PLAN_DESARROLLO.md` §4 ("comparar visualmente cuatro cápsulas… si no se distinguen, la
+   adaptación no está funcionando"). Hoy esa comparación se arma de a una cápsula por vez.
+2. **Historial de cápsulas** no muestra `estado_validacion` (la tasa de validez real del LLM,
+   el otro criterio de término de la Fase 3) ni persiste `intentos`/`segundos` de la
+   generación — con esas dos columnas el panel reemplazaría al CSV del bake-off como evidencia
+   viva.
+3. **Higiene de repo:** `scripts/reset_db.py` sigue sin confirmación antes de `drop_all`; la
+   base de datos está vacía en esta máquina (0 objetivos, 0 diagnósticos, 0 fragmentos, 0
+   cápsulas) pese a lo que las secciones 3 ter/5 quinquies de arriba describen como cargado —
+   hay que volver a correr `import_vark_csv.py` y `cargar_objetivos.py` antes de usar el panel
+   con datos reales.
+
+---
+
 ## 6. Pendiente inmediato
 
 Los dos primeros son ahora los que bloquean todo lo demás: el motor está escrito y probado,
@@ -711,6 +858,20 @@ pero **no se ha ejecutado nunca contra un modelo real ni sobre material real**.
 8. **Instalar las dependencias opcionales de ingesta** (`pip install -e ".[ingest]"`) en la
    máquina donde se vaya a curar: sin `pymupdf`/`python-pptx` el panel del docente no puede
    procesar archivos. El panel lo detecta y lo dice, pero conviene dejarlo instalado.
+9. **Repoblar la base de datos.** Está vacía en esta máquina ahora mismo (0 objetivos, 0
+   diagnósticos, 0 fragmentos, 0 cápsulas) — confirmado al auditar el panel de analíticas
+   (sección 5 decies). Correr `import_vark_csv.py` y `cargar_objetivos.py` antes de usar
+   cualquier vista del docente o del estudiante con datos reales.
+10. **Simulador VARK: perfiles reales de la cohorte y comparación V/A/R/K lado a lado.**
+    Detalle en sección 5 decies, "Pendiente de esta sección". Es el punto de mayor valor para
+    el informe: la comparación lado a lado es la evidencia directa del criterio de término de
+    la Fase 3.
+11. **Historial de cápsulas: mostrar `estado_validacion` y persistir `intentos`/`segundos`
+    de la generación.** Convertiría el panel en evidencia viva del bake-off en vez de depender
+    solo de `data/resultados_evaluacion.csv`. Detalle en sección 5 decies.
+12. **`scripts/reset_db.py` sin confirmación** antes de `drop_all` + borrar `alembic_version`.
+    Es destructivo y de un solo comando; conviene una confirmación explícita antes de que borre
+    algo que cueste recuperar en una máquina compartida por el equipo.
 
 ~~Ratificar `palabras_texto`~~ ✅ **Aprobado por el equipo el 06-ago-2026** — queda la
 interpolación lineal sobre C_texto tal como está implementada.

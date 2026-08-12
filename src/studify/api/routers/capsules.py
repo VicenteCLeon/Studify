@@ -26,14 +26,22 @@ cápsula a un estudiante, y el A/B de la Fase 5 necesita saber qué vio cada uno
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import select
+from sqlalchemy import func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from studify.api.schemas_capsulas import CapsulaIn, CapsulaOut, ResumenCapsulaOut
+from studify.api.schemas_capsulas import (
+    CapsulaIn,
+    CapsulaOut,
+    InteraccionQuizIn,
+    InteraccionQuizOut,
+    ResumenCapsulaOut,
+)
 from studify.config import get_settings
 from studify.db.models import (
     DiagnosticoVark,
     Estudiante,
+    InteraccionQuiz,
     MicrocapsulaGenerada,
     ObjetivoAprendizaje,
 )
@@ -61,6 +69,11 @@ router = APIRouter(prefix="/api/capsulas", tags=["cápsulas"])
 # caracteres y el INSERT fallaría con un error de base de datos en vez de
 # entregar la cápsula.
 MAX_TITULO = 150
+
+# Cuántas veces se reintenta numerar un intento del quiz cuando dos peticiones
+# simultáneas se pisan. Dos alcanzan: el conflicto lo produce un doble clic, no
+# una carga concurrente real.
+INTENTOS_DE_ESCRITURA = 2
 
 
 def get_cliente_llm() -> ClienteLLM | None:
@@ -414,3 +427,71 @@ def _persistir(
     db.commit()
     db.refresh(fila)
     return fila
+
+
+@router.post(
+    "/{id_capsula}/quiz",
+    response_model=InteraccionQuizOut,
+    status_code=status.HTTP_201_CREATED,
+    summary="Registra un intento del estudiante en la actividad de la cápsula",
+)
+def registrar_quiz(
+    id_capsula: int, payload: InteraccionQuizIn, db: Session = Depends(get_db)
+) -> InteraccionQuiz:
+    """Deja constancia de un intento, numerado dentro de su cápsula.
+
+    **El número de intento lo pone el servidor**, nunca el cliente: es
+    exactamente lo que distingue «acertó» de «acertó a la cuarta», y si viniera
+    en el cuerpo el navegador podría declarar siempre 1 y el panel del docente
+    mediría una cosa distinta de la que dice medir.
+
+    La cápsula tiene dueño, así que responder la de otro es un 403: sin esta
+    comprobación cualquiera podría inflar desde fuera las métricas del curso.
+    """
+    capsula = db.get(MicrocapsulaGenerada, id_capsula)
+    if not capsula:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"no existe la cápsula {id_capsula}",
+        )
+    if capsula.id_estudiante != payload.id_estudiante:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=(
+                f"la cápsula {id_capsula} no es del estudiante "
+                f"{payload.id_estudiante}"
+            ),
+        )
+
+    # Calcular el número y escribirlo no es atómico: dos peticiones a la vez
+    # —el doble clic de siempre en «Revisar Respuesta»— leen el mismo máximo. La
+    # restricción única deja entrar una sola, y acá se reintenta con el número
+    # siguiente en lugar de devolverle un 500 al estudiante.
+    for _ in range(INTENTOS_DE_ESCRITURA):
+        siguiente = (
+            db.scalar(
+                select(func.max(InteraccionQuiz.numero_intento)).where(
+                    InteraccionQuiz.id_capsula == id_capsula
+                )
+            )
+            or 0
+        ) + 1
+        interaccion = InteraccionQuiz(
+            id_capsula=id_capsula,
+            numero_intento=siguiente,
+            alternativa_seleccionada=payload.alternativa_seleccionada,
+            es_correcta=payload.es_correcta,
+        )
+        db.add(interaccion)
+        try:
+            db.commit()
+        except IntegrityError:
+            db.rollback()
+            continue
+        db.refresh(interaccion)
+        return interaccion
+
+    raise HTTPException(
+        status_code=status.HTTP_409_CONFLICT,
+        detail=f"no se pudo numerar el intento en la cápsula {id_capsula}",
+    )

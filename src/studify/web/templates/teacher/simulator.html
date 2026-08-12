@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Simulador VARK - Studify{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <h1 class="mb-2">Simulador de Generación (VARK)</h1>
+    <p class="text-muted">
+        Elige un Tema Curricular y un Perfil de Aprendizaje dominante.
+        El sistema generará una cápsula al vuelo para que puedas evaluar la calidad
+        de la adaptación pedagógica antes de habilitarla para los alumnos.
+    </p>
+</div>
+
+<div class="card mb-8">
+    <form hx-post="/teacher/simulator/generate"
+          hx-target="#simulator-result"
+          class="flex items-center gap-4"
+          style="flex-wrap: wrap;">
+        
+        <select name="id_objetivo" class="form-control" required style="max-width: 300px;">
+            <option value="">Selecciona un Tema...</option>
+            {% for obj in objetivos %}
+            <option value="{{ obj.id_objetivo }}">{{ obj.asignatura }} - {{ obj.tema }}</option>
+            {% endfor %}
+        </select>
+        
+        <select name="canal" class="form-control" required style="max-width: 200px;">
+            <option value="">Perfil a simular...</option>
+            <option value="v">Visual (100%)</option>
+            <option value="a">Aural (100%)</option>
+            <option value="r">Lecto/Escritura (100%)</option>
+            <option value="k">Kinestésico (100%)</option>
+        </select>
+        
+        <button type="submit" class="btn btn-primary">
+            Generar Cápsula
+            <span class="htmx-indicator ml-2">⏳</span>
+        </button>
+    </form>
+</div>
+
+<!-- El visor de la cápsula (mismo template que los alumnos) se cargará aquí -->
+<div id="simulator-result">
+    <!-- Feedback de la generación -->
+</div>
+{% endblock %}

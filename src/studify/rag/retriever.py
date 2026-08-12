@@ -94,11 +94,21 @@ def _base_validados(id_objetivo: int) -> Select:
     return (
         select(Fragmento)
         .join(DocumentoFuente, Fragmento.id_documento == DocumentoFuente.id_documento)
-        .where(
-            Fragmento.id_objetivo == id_objetivo,
-            Fragmento.estado_validacion == "validado",
-            DocumentoFuente.estado_curacion != "rechazado",
-        )
+        .where(Fragmento.id_objetivo == id_objetivo, *_filtros_recuperables())
+    )
+
+
+def _filtros_recuperables() -> tuple:
+    """Las condiciones que hacen recuperable a un fragmento, en un solo lugar.
+
+    Las comparte `inventario_por_objetivo`, que es lo que el panel del docente
+    usa para decir si un tema tiene material. Si el panel las reescribiera por
+    su cuenta, bastaría con que una de las dos se desincronizara para que la
+    pantalla mostrara en verde un objetivo cuyo material el retriever ignora.
+    """
+    return (
+        Fragmento.estado_validacion == "validado",
+        DocumentoFuente.estado_curacion != "rechazado",
     )
 
 
@@ -159,6 +169,48 @@ def recuperar(
         )
         for f in filas
     ]
+
+
+def inventario_por_objetivo(db: Session) -> dict[int, dict[str, int]]:
+    """Qué material recuperable tiene cada objetivo, desglosado por tipo.
+
+    Una sola consulta para todos los objetivos: el panel del docente los recorre
+    completos y preguntar objetivo por objetivo sería una consulta por fila.
+
+    Aplica **los mismos filtros que `recuperar`**, incluido el del documento
+    rechazado. Contar solo por `estado_validacion` —que es lo intuitivo— daría
+    por cubierto un objetivo cuyos fragmentos vienen de un apunte retirado
+    después de la curación: material aprobado que el retriever ya no mira.
+    """
+    stmt = (
+        select(
+            Fragmento.id_objetivo,
+            Fragmento.tipo_fragmento,
+            func.count().label("cantidad"),
+        )
+        .join(DocumentoFuente, Fragmento.id_documento == DocumentoFuente.id_documento)
+        .where(Fragmento.id_objetivo.is_not(None), *_filtros_recuperables())
+        .group_by(Fragmento.id_objetivo, Fragmento.tipo_fragmento)
+    )
+    inventario: dict[int, dict[str, int]] = {}
+    for id_objetivo, tipo, cantidad in db.execute(stmt):
+        inventario.setdefault(id_objetivo, {})[tipo] = cantidad
+    return inventario
+
+
+def tipos_preferidos_disponibles(tipos: dict[str, int]) -> dict[str, int]:
+    """Cuántos fragmentos del tipo que prefiere cada canal hay en un objetivo.
+
+    Ojo con la lectura: `PREFERENCIA_POR_CANAL` **reordena, no filtra**. Un cero
+    acá no significa que ese perfil se quede sin cápsula —recibe el texto
+    disponible—, sino que la adaptación se degrada: un estudiante visual sin
+    tablas ni esquemas lee exactamente lo mismo que uno lecto-escritor, y la
+    diferenciación que el proyecto quiere demostrar no se produce en ese tema.
+    """
+    return {
+        canal: sum(tipos.get(tipo, 0) for tipo in preferidos)
+        for canal, preferidos in PREFERENCIA_POR_CANAL.items()
+    }
 
 
 def contar_disponibles(db: Session, id_objetivo: int) -> int:
