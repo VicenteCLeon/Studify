@@ -3,21 +3,18 @@
 {% block title %}Cuestionario VARK - Studify{% endblock %}
 
 {% block content %}
-<div class="card" style="max-width: 860px; margin: 0 auto;">
+<div class="card" style="max-width: 860px; margin: 0 auto; background-color: #fafffc;">
     <div class="text-center mb-6">
         <h1 class="mb-2">Descubre tu Estilo de Aprendizaje</h1>
         <p class="text-muted">
             {{ items | length }} situaciones cotidianas. <strong>Puedes marcar más de una
-            alternativa</strong> en cada una, y <strong>dejar en blanco</strong> las que no
+                alternativa</strong> en cada una, y <strong>dejar en blanco</strong> las que no
             te representen: ambas cosas son parte del instrumento y no afectan la validez
             de tu perfil.
         </p>
     </div>
 
-    <form hx-post="/student/vark"
-          hx-target="#form-error"
-          hx-swap="innerHTML"
-          hx-indicator="#enviando">
+    <form hx-post="/student/vark" hx-target="#form-error" hx-swap="innerHTML" hx-indicator="#enviando">
 
         <fieldset class="bloque-datos mb-8">
             <legend class="form-label">Antes de empezar (opcional)</legend>
@@ -47,8 +44,8 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label text-sm" for="carrera">Carrera</label>
-                    <input class="form-control" type="text" name="carrera" id="carrera"
-                           maxlength="80" placeholder="Ej.: Ingeniería Civil Informática">
+                    <input class="form-control" type="text" name="carrera" id="carrera" maxlength="80"
+                        placeholder="Ej.: Ingeniería Civil Informática">
                 </div>
             </div>
         </fieldset>
