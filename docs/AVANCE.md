@@ -2,10 +2,11 @@
 
 > Documento vivo. Se actualiza al cierre de cada fase para que cualquier sesión de trabajo
 > (o cualquier persona) pueda retomar el proyecto sin releer todo el hilo de conversación.
-> Última actualización: **12-ago-2026** — panel de analíticas del docente (Historial de
-> cápsulas, Cobertura curricular, Rendimiento en quizzes, Simulador VARK, Estilos de la
-> cohorte): tres de sus cinco secciones tenían bugs de fondo (no solo de estilo) y quedaron
-> corregidas con tests; ver sección 5 decies.
+> Última actualización: **14-ago-2026** — alta de objetivos de aprendizaje desde el panel del
+> docente (antes solo por consola) y primer material curricular real cargado (aún sin curar);
+> ver sección 5 duodecies. De paso, rebranding de la UI a "RepasAi" y fondo de marca en toda la
+> web (13-ago-2026, sección 5 undecies) y panel de analíticas del docente con tres bugs de
+> fondo corregidos (12-ago-2026, sección 5 decies).
 
 ---
 
@@ -58,6 +59,10 @@ que arrastraban los routers mock).
 **Fase 3 finalizada al 100% (incluyendo validación LLM):** Se agregó la credencial real de DeepSeek (`LLM_API_KEY`) al entorno y se cargó material curricular genuino (objetivo 369). El **bake-off de modelos** fue ejecutado exitosamente, obteniendo cápsulas 100% válidas en el primer intento con `deepseek-chat` (latencia ~5.5s) y quedando seleccionada definitivamente tras fallos de autorización de los otros candidatos (Qwen y GLM). ⚠️ Matiz sobre "bake-off": solo se pudo **medir** un modelo — Qwen y GLM fallaron por autorización, no por calidad — así que es más preciso decir que se seleccionó DeepSeek por ser el único candidato evaluable, no que ganó una comparación de tres.
 
 **Panel de analíticas del docente (12-ago-2026, sección 5 decies):** se agregaron cinco vistas nuevas para el docente y se auditaron a fondo. Tres tenían fallos de fondo, no solo visuales: el simulador VARK generaba cápsulas rotas e indistinguibles de un perfil inválido, la métrica de aciertos del quiz podía inflarse por reintentos, y la cobertura curricular podía marcar en verde temas cuyo material el retriever ya no recupera. Las tres quedaron corregidas con 32 tests nuevos (261 en total) y una migración (`interaccion_quiz` con intentos numerados).
+
+**Rebranding y fondo de marca (13-ago-2026, sección 5 undecies):** la UI pasó a llamarse "RepasAi" y toda la web tiene ahora una textura de fondo con íconos educativos. Es un cambio visual, sin código de dominio.
+
+**Alta de objetivos desde el panel del docente (14-ago-2026, sección 5 duodecies):** `POST /api/objetivos` existía desde la Fase 2 pero no estaba conectado a ninguna pantalla — el catálogo solo se podía cargar por consola. Ahora hay un formulario en `/teacher/curation` que reutiliza el mismo handler; el script de carga masiva se conserva para sembrar un plan de estudios completo. **265 tests en verde** (261 + 4), `ruff` limpio. De paso se cargó el primer material curricular real del proyecto —5 objetivos de "Diseño de UX" y un PPTX con 40 fragmentos— aunque todavía sin curar, y se encontró que esta máquina tenía dos migraciones de Patricio sin aplicar (`/teacher/analytics` daba 500 hasta correr `alembic upgrade head`).
 
 Queda una discrepancia abierta: las tablas 16.2/16.3 del informe no se reproducen desde el CSV (sección 5 ter) — es un problema del informe, no del código.
 
@@ -811,26 +816,108 @@ docente) es alcance adicional que no estaba en el plan de 10 semanas original. V
 
 ---
 
+## 5 undecies. Rebranding a "RepasAi" y fondo de marca (13-ago-2026)
+
+Cambios de UI hechos directamente por Vicente (commit `7b34ba3`, fuera de una sesión de
+trabajo asistida) — se documentan acá para que este archivo siga reflejando el estado real de
+la interfaz.
+
+- **Renombrado en toda la web:** "Studify" → "RepasAi" (`base.html`: `<title>` y el enlace del
+  logo en el header). Es solo el nombre visible en la UI — el paquete Python (`studify`), el
+  repositorio, `PLAN_DESARROLLO.md` y el resto de la documentación siguen diciendo "Studify".
+  Si el cambio de nombre se vuelve definitivo, falta decidir hasta dónde propagarlo.
+- **Fondo de marca en toda la web:** textura repetible de íconos educativos (libro, lápiz,
+  regla, compás, globo, letras sueltas "A"/"3") en verde y azul muy tenues, sobre un degradado
+  casi blanco. Viene de `docs/School Background.dc.html` y quedó aplicado a `body` en
+  `style.css` con `background-attachment: fixed`, para que se vea igual y quieta en toda la
+  app y no se repita "por página". El header conserva su fondo blanco sólido (`--bg-surface`),
+  así que la textura solo se nota detrás del contenido — no compite con la navegación.
+- **Tarjeta del cuestionario VARK** (`student/vark.html`): `background-color: #fafffc` (blanco
+  verdoso muy sutil), fijado a mano en hexadecimal y no con el token `--success-bg` —ese token
+  lo usan también las alertas de éxito en curación, así que tocarlo habría cambiado otra
+  pantalla sin querer.
+
+Verificado por captura contra el servidor real en `/student/vark`, `/teacher/curation` y
+`/teacher/analytics`: el fondo se ve consistente entre vistas y las tarjetas siguen legibles
+encima.
+
+---
+
+## 5 duodecies. Alta de objetivos de aprendizaje desde el panel del docente (14-ago-2026)
+
+Cierra una brecha entre lo que el backend ya podía hacer y lo que la UI ofrecía:
+`POST /api/objetivos` existe desde la Fase 2, pero nunca se conectó a ninguna pantalla — la
+única vía para agregar un objetivo era `scripts/cargar_objetivos.py`, pensado para sembrar un
+catálogo completo, no para la tarea de treinta segundos de agregar un tema suelto.
+
+- **`POST /teacher/curation/objetivos`** (`web/routers/teacher.py`): reutiliza `crear_objetivo`,
+  el handler de la API, en vez de reimplementar la lógica — mismo patrón que ya usaba la subida
+  de documentos con `subir_documento`. El control de código duplicado (`codigo_objetivo` es
+  clave natural) viene incluido sin escribirlo dos veces.
+- **Formulario nuevo en `teacher/curation.html`**, arriba de "Cargar nuevo documento" — es el
+  paso 0 real del flujo de curación. Muestra cuántos objetivos hay en el catálogo y una lista
+  desplegable con los existentes, para no tener que adivinar códigos ya usados.
+- **Mensajes de validación traducidos** (`_explicar_campos`): Pydantic devuelve errores en
+  inglés ("String should have at most 30 characters") y esta es una pantalla en español para un
+  docente, no un cliente de API.
+- **`scripts/cargar_objetivos.py` no se retira.** Sigue siendo la vía correcta para cargar un
+  plan de estudios completo de una vez —nadie escribe 60 objetivos en un formulario, uno por
+  uno—; el `--dry-run` y la actualización masiva por `codigo_objetivo` no tienen equivalente en
+  la UI y no lo necesitan. Ambas vías escriben por el mismo camino (`crear_objetivo`), así que
+  no pueden divergir ni duplicar un código entre sí.
+
+Tests nuevos en `tests/test_web_docente.py` (4): creación desde el panel, disponibilidad
+inmediata del objetivo para validar fragmentos, rechazo de código duplicado con el motivo
+explicado, y mensaje de error en español (no el texto de Pydantic). **265 tests en verde**
+(261 + 4), `ruff` limpio en todo lo tocado.
+
+### Bug encontrado al levantar el servidor, no por los tests
+
+Esta máquina tenía aplicada la migración de la Fase 3 (`8010505ef66e`) pero no las dos que
+agregó Patricio después (`5e11a9cf4a0b` interaccion_quiz, `2fbc7391c0a3` intentos numerados):
+`/teacher/analytics` daba **500** — `UndefinedTable: no existe la relación "interaccion_quiz"`.
+`pytest` no lo detecta porque la suite corre contra el estado real de la BD, y una migración
+faltante no es un caso que los tests simulen. Corregido con `alembic upgrade head`. Es
+exactamente el escenario que ya describe la sección 9 ("dos computadores del equipo"): cuando
+alguien más pushea migraciones nuevas, hay que acordarse de aplicarlas en la máquina local
+antes de levantar el servidor — no pasa solo.
+
+### Primer material curricular real cargado (parcial)
+
+De paso quedó armado `data/objetivos.csv`: 5 objetivos de "Diseño de UX", Unidad 1, derivados
+del contenido real de un PPTX ya subido (`01 - Introducción al diseño UX`, 40 fragmentos
+extraídos). Avanza en parte el pendiente n.º 1 de la sección 6: el catálogo ya no está vacío y
+hay material real esperando curación.
+
+**Sigue sin curar.** Los 40 fragmentos están todos en `pendiente`, 0 en `validado` — cargar el
+catálogo no es lo mismo que curar el material. Varios fragmentos del PPTX son solo el pie de
+página con el correo de la profesora (`Dra. Daniela Quiñones Otey — daniela.quinones@pucv.cl`,
+repetido en más de diez fragmentos distintos): conviene **rechazarlos** al revisar, no
+validarlos, porque no aportan contenido y ensuciarían las cápsulas generadas sobre ese objetivo.
+
+---
+
 ## 6. Pendiente inmediato
 
 Los dos primeros son ahora los que bloquean todo lo demás: el motor está escrito y probado,
 pero **no se ha ejecutado nunca contra un modelo real ni sobre material real**.
 
-0. **Conseguir la credencial del LLM y ponerla en `LLM_API_KEY`.** Con el `.env` actual
-   (`llm_api_key` vacío) `POST /api/capsulas` responde 503 y no se puede medir nada del criterio
-   de término de la Fase 3. Con la key, la primera corrida real es directa: el endpoint ya está
-   montado y el bake-off solo necesita cambiar `LLM_MODEL`/`LLM_BASE_URL` entre las tres
-   candidatas. **Primera cosa que hay que mirar en esa corrida:** si las cuatro cápsulas VARK
-   del mismo objetivo se distinguen entre sí. Si no, el plan §5 ya fija la mitigación —
+0. ~~**Conseguir la credencial del LLM y ponerla en `LLM_API_KEY`.**~~ ✅ **Cerrado.** La key de
+   DeepSeek está cargada (verificado el 13-ago-2026: `llm.api_key_configured: true` en
+   `/health`) y el bake-off ya corrió — ver sección 1. Queda igual el resto de este punto como
+   referencia, porque la mitigación que describe sigue siendo la que aplica si al ampliar el
+   material real las cuatro cápsulas VARK del mismo objetivo salieran parecidas. El plan §5 ya
+   fija la mitigación —
    instrucciones estructurales, no adjetivos de tono— y el prompt ya está construido así, de
    modo que lo que habría que ajustar son las instrucciones de
    `rag/prompts/maestro.py::INSTRUCCION_POR_DIRECTIVA`, no el motor.
-1. **Cargar material real de la base de conocimiento** (distinto de los diagnósticos VARK, que
-   ya están cargados — ver sección 3 ter). El pipeline está probado con documentos sintéticos;
-   falta la unidad real de una asignatura. Techo duro del plan: **una unidad, 40–60 fragmentos**.
-   El catálogo se carga con `python scripts/cargar_objetivos.py data/objetivos.csv` (ese CSV
-   todavía no existe) y los documentos por `POST /api/documentos`.
-   Sin esto la Fase 3 no tiene nada real que recuperar: 0 objetivos, 0 fragmentos validados.
+1. **Cargar material real de la base de conocimiento.** ⏳ **Parcial (14-ago-2026, sección
+   5 duodecies):** `data/objetivos.csv` ya existe con 5 objetivos reales de "Diseño de UX", y
+   hay un PPTX real subido con 40 fragmentos extraídos. **Falta curar:** los 40 siguen en
+   `pendiente`, 0 en `validado` — sin eso el retriever sigue sin nada que recuperar para esos
+   objetivos, y varios fragmentos son solo el pie de página del documento (hay que rechazarlos,
+   no validarlos). Sigue faltando además una segunda asignatura si se quiere más de un tema para
+   la prueba de diferenciación entre perfiles VARK del punto 0.
 2. ~~**Conectar la UI de Patricio a los endpoints reales.**~~ ✅ **Cerrado el 11-ago-2026**
    (sección 5 nonies). Las cinco vistas del estudiante y el panel del docente llaman a los
    handlers reales; `viewer.html` recorre los bloques de `contenido` por `tipo` y muestra las

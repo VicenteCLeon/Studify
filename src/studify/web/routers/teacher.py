@@ -22,15 +22,18 @@ from decimal import Decimal
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse
+from pydantic import ValidationError
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from studify.api.routers.capsules import ClienteLLM, get_cliente_llm
 from studify.api.routers.knowledge import (
+    crear_objetivo,
     listar_documentos,
     listar_objetivos,
     subir_documento,
 )
+from studify.api.schemas_knowledge import ObjetivoIn
 from studify.config import get_settings
 from studify.db.models import (
     DiagnosticoVark,
@@ -75,6 +78,60 @@ def get_curation(
         name="teacher/curation.html",
         context=_contexto_panel(db, id_documento),
     )
+
+
+@router.post("/curation/objetivos", response_class=HTMLResponse)
+def crear_objetivo_web(
+    request: Request,
+    codigo_objetivo: str = Form(...),
+    asignatura: str = Form(...),
+    unidad: str = Form(...),
+    tema: str = Form(...),
+    descripcion: str = Form(default=""),
+    nivel_taxonomico: str = Form(default=""),
+    db: Session = Depends(get_db),
+):
+    """Alta de un objetivo del catálogo desde el panel, sin pasar por consola.
+
+    `scripts/cargar_objetivos.py` sigue existiendo y es la vía correcta para
+    sembrar un plan de estudios completo de una vez —nadie escribe 60 objetivos
+    en un formulario—, pero obligar al docente a abrir una terminal para agregar
+    **un** tema convertía una tarea de treinta segundos en un trámite técnico.
+    Ambas vías escriben por el mismo camino: `crear_objetivo`, el handler de
+    `POST /api/objetivos`, con su control de código duplicado incluido.
+    """
+    try:
+        payload = ObjetivoIn(
+            codigo_objetivo=codigo_objetivo.strip(),
+            asignatura=asignatura.strip(),
+            unidad=unidad.strip(),
+            tema=tema.strip(),
+            descripcion=descripcion.strip() or None,
+            nivel_taxonomico=nivel_taxonomico.strip() or None,
+        )
+    except ValidationError as exc:
+        # Los largos de la tabla 17.5 los valida el propio contrato Pydantic.
+        # Sus mensajes vienen en inglés y esta pantalla es del docente, así que
+        # se traducen igual que en `generation/validator.py`. Es una ruta
+        # defensiva —el formulario ya trae `maxlength` y `required`—, pero se
+        # alcanza desde `curl` o si alguien quita un atributo de la plantilla.
+        return _aviso(request, "error", f"Datos inválidos — {_explicar_campos(exc)}")
+
+    try:
+        objetivo = crear_objetivo(payload=payload, db=db)
+    except HTTPException as exc:
+        return _aviso(request, "error", str(exc.detail))
+
+    respuesta = _aviso(
+        request,
+        "ok",
+        f"Objetivo «{objetivo.codigo_objetivo} — {objetivo.tema}» creado. "
+        f"Ya puedes asignarle fragmentos en la bandeja de revisión.",
+    )
+    # La bandeja recarga sus selectores para que el objetivo recién creado
+    # aparezca sin tener que refrescar la página a mano.
+    respuesta.headers["HX-Trigger"] = "fragmentos-actualizados"
+    return respuesta
 
 
 @router.get("/curation/fragmentos", response_class=HTMLResponse)
@@ -525,6 +582,25 @@ def _fila_con_error(
     request: Request, db: Session, id_fragmento: int, mensaje: str
 ) -> HTMLResponse:
     return _fila(request, db, id_fragmento, error=mensaje)
+
+
+def _explicar_campos(exc: ValidationError) -> str:
+    """Errores de Pydantic → una frase en español, campo por campo."""
+    partes: list[str] = []
+    for error in exc.errors():
+        campo = ".".join(str(p) for p in error["loc"]) or "(formulario)"
+        tipo = error["type"]
+        if tipo == "string_too_long":
+            limite = error.get("ctx", {}).get("max_length", "?")
+            detalle = f"supera el máximo de {limite} caracteres"
+        elif tipo in ("string_too_short", "missing"):
+            detalle = "es obligatorio"
+        elif tipo == "value_error":
+            detalle = error["msg"].removeprefix("Value error, ")
+        else:
+            detalle = error["msg"]
+        partes.append(f"{campo}: {detalle}")
+    return "; ".join(partes)
 
 
 def _aviso(request: Request, estado: str, mensaje: str) -> HTMLResponse:

@@ -13,6 +13,59 @@
 </div>
 
 <div class="card mb-8">
+    <div class="flex justify-between items-center mb-4">
+        <h2 class="text-lg">Objetivos de aprendizaje</h2>
+        <span class="text-sm text-muted">
+            {{ objetivos | length }} en el catálogo
+        </span>
+    </div>
+    <p class="text-muted text-sm mb-4">
+        Son los temas a los que se asigna cada fragmento. <strong>Sin al menos uno no
+        se puede validar nada</strong>, porque el retriever recupera por objetivo.
+        Para cargar un plan de estudios completo de una vez está
+        <code>python scripts/cargar_objetivos.py data/objetivos.csv</code>.
+    </p>
+    <form hx-post="/teacher/curation/objetivos"
+          hx-target="#objetivo-status"
+          class="flex items-center gap-4"
+          style="flex-wrap: wrap;">
+        <input type="text" name="codigo_objetivo" class="form-control" maxlength="30" required
+               placeholder="Código (ej. UX-U1-01)" style="max-width: 190px;">
+        <input type="text" name="asignatura" class="form-control" maxlength="100" required
+               placeholder="Asignatura" style="max-width: 200px;">
+        <input type="text" name="unidad" class="form-control" maxlength="100" required
+               placeholder="Unidad" style="max-width: 200px;">
+        <input type="text" name="tema" class="form-control" maxlength="150" required
+               placeholder="Tema" style="max-width: 220px;">
+        <input type="text" name="nivel_taxonomico" class="form-control" maxlength="50"
+               placeholder="Nivel (opcional)" style="max-width: 160px;">
+        <input type="text" name="descripcion" class="form-control"
+               placeholder="Descripción (opcional)" style="max-width: 320px;">
+        <button type="submit" class="btn btn-primary">
+            Crear objetivo
+            <span class="htmx-indicator ml-2">…</span>
+        </button>
+    </form>
+    <div id="objetivo-status" class="mt-4"></div>
+
+    {% if objetivos %}
+    <details class="mt-4">
+        <summary class="text-sm text-muted" style="cursor: pointer;">
+            Ver los {{ objetivos | length }} objetivos cargados
+        </summary>
+        <ul class="mt-2 text-sm">
+            {% for objetivo in objetivos %}
+            <li>
+                <strong>{{ objetivo.codigo_objetivo }}</strong> —
+                {{ objetivo.asignatura }} · {{ objetivo.unidad }} · {{ objetivo.tema }}
+            </li>
+            {% endfor %}
+        </ul>
+    </details>
+    {% endif %}
+</div>
+
+<div class="card mb-8">
     <h2 class="text-lg mb-4">Cargar nuevo documento</h2>
     <form hx-post="/teacher/curation/upload"
           hx-encoding="multipart/form-data"
@@ -87,7 +140,7 @@
     <strong>No hay objetivos de aprendizaje cargados.</strong>
     Sin ellos no se puede validar ningún fragmento, porque el retriever recupera por
     objetivo y un fragmento validado sin objetivo queda inalcanzable para siempre.
-    Cárgalos con <code>python scripts/cargar_objetivos.py data/objetivos.csv</code>.
+    Crea el primero en el formulario de arriba.
 </div>
 {% endif %}
 

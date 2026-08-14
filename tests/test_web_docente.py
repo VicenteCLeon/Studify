@@ -14,7 +14,7 @@ from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 from studify.db.models import DocumentoFuente, Fragmento, ObjetivoAprendizaje
 from studify.main import app
@@ -239,3 +239,117 @@ def test_la_bandeja_muestra_los_fragmentos_reales(
         f"/teacher/curation/fragmentos?id_documento={documento.id_documento}"
     ).text
     assert f'id="fragment-{fragmentos[0].id_fragmento}"' not in bandeja
+
+
+# --- Alta de objetivos desde el panel ----------------------------------------
+#
+# Antes el catálogo solo se cargaba con `scripts/cargar_objetivos.py`, y sin al
+# menos un objetivo el docente no puede validar nada: agregar un tema obligaba a
+# abrir una terminal. El script sigue siendo la vía para sembrar un plan de
+# estudios completo; el formulario cubre el caso de agregar uno.
+
+
+@pytest.fixture
+def limpiar_objetivos(db):
+    codigos: list[str] = []
+    yield codigos
+    for codigo in codigos:
+        fila = db.scalar(
+            select(ObjetivoAprendizaje).where(
+                ObjetivoAprendizaje.codigo_objetivo == codigo
+            )
+        )
+        if fila is not None:
+            db.delete(fila)
+    db.commit()
+
+
+def test_se_crea_un_objetivo_desde_el_panel(http, db, limpiar_objetivos):
+    limpiar_objetivos.append("TEST-WEB-01")
+
+    respuesta = http.post(
+        "/teacher/curation/objetivos",
+        data={
+            "codigo_objetivo": "TEST-WEB-01",
+            "asignatura": ASIGNATURA_PRUEBA,
+            "unidad": "Unidad 4",
+            "tema": "Tercera forma normal",
+            "descripcion": "Eliminar dependencias transitivas.",
+            "nivel_taxonomico": "aplicar",
+        },
+    )
+
+    assert respuesta.status_code == 200
+    fila = db.scalar(
+        select(ObjetivoAprendizaje).where(
+            ObjetivoAprendizaje.codigo_objetivo == "TEST-WEB-01"
+        )
+    )
+    assert fila is not None
+    assert fila.tema == "Tercera forma normal"
+    assert fila.estado == "activo"
+
+
+def test_el_objetivo_recien_creado_queda_disponible_para_validar(
+    http, db, limpiar_objetivos
+):
+    """Es el punto del cambio: sirve para curar sin pasar por la consola."""
+    limpiar_objetivos.append("TEST-WEB-02")
+    http.post(
+        "/teacher/curation/objetivos",
+        data={
+            "codigo_objetivo": "TEST-WEB-02",
+            "asignatura": ASIGNATURA_PRUEBA,
+            "unidad": "Unidad 4",
+            "tema": "Dependencias transitivas",
+            "descripcion": "",
+            "nivel_taxonomico": "",
+        },
+    )
+
+    # El selector de la bandeja lo tiene que ofrecer sin reiniciar nada.
+    assert "TEST-WEB-02" in http.get("/teacher/curation").text
+
+
+def test_un_codigo_repetido_se_rechaza_con_el_motivo(http, db, limpiar_objetivos):
+    """`codigo_objetivo` es la clave natural del catálogo."""
+    limpiar_objetivos.append("TEST-WEB-03")
+    datos = {
+        "codigo_objetivo": "TEST-WEB-03",
+        "asignatura": ASIGNATURA_PRUEBA,
+        "unidad": "Unidad 4",
+        "tema": "Un tema",
+        "descripcion": "",
+        "nivel_taxonomico": "",
+    }
+    http.post("/teacher/curation/objetivos", data=datos)
+
+    repetido = http.post("/teacher/curation/objetivos", data={**datos, "tema": "Otro"})
+
+    assert "ya existe un objetivo" in repetido.text
+    assert (
+        db.scalar(
+            select(func.count())
+            .select_from(ObjetivoAprendizaje)
+            .where(ObjetivoAprendizaje.codigo_objetivo == "TEST-WEB-03")
+        )
+        == 1
+    )
+
+
+def test_un_campo_demasiado_largo_se_explica_en_espanol(http):
+    """La pantalla es del docente; los mensajes de Pydantic vienen en inglés."""
+    respuesta = http.post(
+        "/teacher/curation/objetivos",
+        data={
+            "codigo_objetivo": "X" * 31,  # el máximo de la tabla 17.5 es 30
+            "asignatura": ASIGNATURA_PRUEBA,
+            "unidad": "U",
+            "tema": "T",
+            "descripcion": "",
+            "nivel_taxonomico": "",
+        },
+    )
+
+    assert "supera el máximo de 30 caracteres" in respuesta.text
+    assert "String should have at most" not in respuesta.text
