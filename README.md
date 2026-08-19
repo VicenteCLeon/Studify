@@ -7,8 +7,6 @@ sobre base de datos relacional (recuperación determinista por SQL, sin embeddin
 Seminario de Título — Ingeniería en Informática, PUCV.
 Patricio Hernández Vergara · Vicente Cisternas León · Profesora guía: Sandra Cano Mazuera.
 
-El plan de desarrollo completo está en [`docs/PLAN_DESARROLLO.md`](docs/PLAN_DESARROLLO.md).
-
 ---
 
 ## Requisitos
