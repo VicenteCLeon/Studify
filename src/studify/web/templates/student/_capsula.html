@@ -28,7 +28,21 @@
         </div>
     </div>
 
+    {# Pasos 2 y 3 de la estructura pedagógica. Van fuera del bucle de bloques
+       porque no son bloques tipados: son campos propios del contrato, y que la
+       activación aparezca siempre antes del concepto es parte del diseño, no
+       algo que decida el orden en que el modelo devolvió una lista. #}
+    <div class="capsule-activation">
+        <p class="paso-etiqueta">Para partir</p>
+        <p class="pregunta-activacion">{{ capsula.activacion }}</p>
+    </div>
+
     <div class="capsule-content">
+        <div class="bloque bloque-concepto">
+            <h3 class="mb-2">Concepto central</h3>
+            <p>{{ capsula.concepto_central }}</p>
+        </div>
+
         {% for bloque in bloques %}
         <div class="bloque bloque-{{ bloque.tipo }}">
             {% if bloque.encabezado %}

@@ -71,17 +71,35 @@ FRAGMENTOS = [
 
 
 def capsula_valida() -> dict:
-    """Cápsula bien formada de referencia; los tests la modifican por copia."""
+    """Cápsula bien formada de referencia; los tests la modifican por copia.
+
+    Sigue los siete pasos pedagógicos definidos el 14-ago-2026: OA, activación,
+    concepto central, representación adaptativa, ejemplo, pregunta de
+    comprobación y retroalimentación.
+    """
     return {
         "titulo": "Segunda forma normal y dependencias parciales",
         "objetivo_aprendizaje": (
             "Identificar dependencias parciales en una tabla relacional y "
             "corregirlas."
         ),
-        "contenido": [
-            {"tipo": "parrafo", "encabezado": None, "cuerpo": PARRAFO},
+        "activacion": (
+            "¿Te ha pasado que al corregir un dato en una planilla tienes que "
+            "cambiarlo en muchas filas a la vez?"
+        ),
+        "concepto_central": PARRAFO,
+        "representacion_adaptativa": [
             {"tipo": "parrafo", "encabezado": "Dependencia parcial", "cuerpo": EXPLICACION},
         ],
+        "ejemplo": {
+            "tipo": "ejemplo_resuelto",
+            "encabezado": "Caso aplicado",
+            "cuerpo": (
+                "En una tabla de matrículas con clave (id_alumno, id_ramo), el "
+                "nombre del ramo depende solo de id_ramo: es una dependencia "
+                "parcial y se corrige llevándolo a su propia tabla."
+            ),
+        },
         "actividad": {
             "tipo": "quiz_mc",
             "pregunta": "¿Cuándo una tabla incumple la segunda forma normal?",

@@ -72,7 +72,15 @@ class ClienteObediente:
             {
                 "titulo": "Segunda forma normal y dependencias parciales",
                 "objetivo_aprendizaje": "Identificar y corregir dependencias parciales.",
-                "contenido": [{"tipo": "parrafo", "cuerpo": TEXTO_LARGO}],
+                "activacion": "¿Por qué a veces hay que corregir el mismo dato en muchas filas?",
+                "concepto_central": TEXTO_LARGO,
+                "representacion_adaptativa": [
+                    {"tipo": "parrafo", "cuerpo": "Separar el atributo dependiente."}
+                ],
+                "ejemplo": {
+                    "tipo": "ejemplo_resuelto",
+                    "cuerpo": "En matrículas, el nombre del ramo depende solo de id_ramo.",
+                },
                 "actividad": {
                     "tipo": "quiz_mc",
                     "pregunta": "¿Cuándo una tabla incumple la segunda forma normal?",

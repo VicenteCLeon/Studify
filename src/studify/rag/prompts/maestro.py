@@ -69,6 +69,18 @@ PERFIL = PromptTemplate(
     "El estudiante tiene un perfil de aprendizaje diagnosticado. No menciones "
     "el perfil ni lo describas: se refleja en la estructura de la cápsula, no "
     "en un comentario sobre ella.\n\n"
+    # Los cuatro pesos C_* del cap. 11.2, en crudo. Van además de las
+    # instrucciones estructurales de más abajo y no en su lugar: los
+    # porcentajes dicen *cuánto* énfasis lleva cada canal —sobre todo dentro de
+    # la representación adaptativa, que es donde se mezclan los cuatro— pero un
+    # modelo ignora con facilidad un "22,75% de texto", así que las
+    # instrucciones concretas siguen siendo las que se pueden comprobar después
+    # en el JSON resultante.
+    "Perfil de representación (reparto del énfasis entre los cuatro canales):\n"
+    "- Texto: {peso_texto} %\n"
+    "- Visual: {peso_visual} %\n"
+    "- Narrativo: {peso_narrativo} %\n"
+    "- Práctico: {peso_practico} %\n\n"
     "Extensión del contenido: aproximadamente {palabras_texto} palabras "
     "(mínimo {palabras_min}, máximo {palabras_max}).\n"
     "Recursos visuales (bloques `tabla` o `esquema`): {recursos_visuales}.\n"
@@ -168,25 +180,58 @@ INSTRUCCION_POR_DIRECTIVA = {
 # y habría que escaparlas todas, que es una fuente de errores silenciosos.
 ESQUEMA_JSON = """{
   "titulo": "string, máximo 10 palabras",
-  "objetivo_aprendizaje": "string, una sola oración",
-  "contenido": [
+  "objetivo_aprendizaje": "string, una sola oración: el OA que cubre la cápsula",
+  "activacion": "string: UNA pregunta breve que conecte con lo que el estudiante ya sabe",
+  "concepto_central": "string: la explicación del concepto, en limpio",
+  "representacion_adaptativa": [
     {
       "tipo": "parrafo | lista_pasos | tabla | esquema | analogia | ejemplo_resuelto | glosario",
       "encabezado": "string o null",
       "cuerpo": "la forma depende del tipo; ver la lista de más abajo"
     }
   ],
+  "ejemplo": {
+    "tipo": "parrafo | lista_pasos | tabla | esquema | analogia | ejemplo_resuelto | glosario",
+    "encabezado": "string o null",
+    "cuerpo": "un caso concreto donde se aplica el concepto"
+  },
   "actividad": {
     "tipo": "quiz_mc | intentalo_tu",
-    "pregunta": "string",
+    "pregunta": "string: la pregunta de comprobación",
     "alternativas": ["solo en quiz_mc: 4 alternativas distintas"],
     "indice_correcta": "solo en quiz_mc: entero, la primera es 0",
-    "retroalimentacion": "string que explica por qué"
+    "retroalimentacion": "string: la retroalimentación, explica por qué"
   },
   "fuentes": [
     { "id_fragmento": 0, "documento": "string", "pagina": 0 }
   ]
 }"""
+
+# La secuencia pedagógica, explicada en prosa además del esquema. El esquema
+# dice qué campos hay; esto dice qué se espera de cada uno y por qué van en ese
+# orden, que es lo que el modelo necesita para que el paso 4 refuerce al 3 en
+# vez de repetirlo textualmente.
+SECUENCIA = (
+    "## Estructura pedagógica obligatoria\n\n"
+    "La cápsula sigue siempre estos siete pasos, en este orden:\n"
+    "1. **Objetivo de aprendizaje** (`objetivo_aprendizaje`): qué se va a "
+    "aprender, en una oración.\n"
+    "2. **Activación** (`activacion`): una pregunta breve que despierte lo que "
+    "el estudiante ya sabe. No la respondas todavía.\n"
+    "3. **Concepto central** (`concepto_central`): la explicación del concepto, "
+    "en prosa clara y sin adornos.\n"
+    "4. **Representación adaptativa** (`representacion_adaptativa`): el **mismo "
+    "concepto del paso 3, reexpresado** en el canal que prefiere este "
+    "estudiante. No es información nueva ni una repetición literal: es el mismo "
+    "contenido en otro formato, según el perfil y las instrucciones de más "
+    "abajo.\n"
+    "5. **Ejemplo o aplicación** (`ejemplo`): un caso concreto donde el "
+    "concepto se usa.\n"
+    "6. **Pregunta de comprobación** (`actividad.pregunta`): comprueba si "
+    "entendió el concepto central.\n"
+    "7. **Retroalimentación** (`actividad.retroalimentacion`): explica por qué "
+    "la respuesta correcta lo es.\n"
+)
 
 FORMATO = PromptTemplate(
     "## Formato de la respuesta\n\n"
@@ -199,8 +244,11 @@ FORMATO = PromptTemplate(
     "mismo número de columnas.\n\n"
     "Antes de responder, verifica:\n"
     "- El JSON parsea y no lleva comas colgantes ni texto fuera del objeto.\n"
+    "- Están los siete pasos: ninguno de los campos puede faltar ni ir vacío.\n"
     "- `titulo` tiene 10 palabras o menos.\n"
-    "- La suma de palabras de `contenido` está entre {palabras_min} y "
+    "- `activacion` es una pregunta y lleva signo de interrogación.\n"
+    "- La suma de palabras de `activacion`, `concepto_central`, "
+    "`representacion_adaptativa` y `ejemplo` está entre {palabras_min} y "
     "{palabras_max}.\n"
     "- `actividad` está presente y sus campos corresponden a su `tipo`: "
     "`quiz_mc` lleva `alternativas` e `indice_correcta`; `intentalo_tu` no "

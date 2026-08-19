@@ -98,6 +98,13 @@ def bloque_perfil(config: ConfiguracionGenerada, *, palabras_objetivo: int) -> s
 
     ajustes = get_settings()
     return prompts.PERFIL.format(
+        # Los C_* del cap. 11.2 se muestran redondeados a un decimal: el modelo
+        # no hace nada distinto con 22,75 que con 22,8, y la cifra larga invita
+        # a que la copie tal cual dentro del texto de la cápsula.
+        peso_texto=f"{config.pesos.texto:.1f}",
+        peso_visual=f"{config.pesos.visual:.1f}",
+        peso_narrativo=f"{config.pesos.narrativo:.1f}",
+        peso_practico=f"{config.pesos.practico:.1f}",
         palabras_texto=palabras_objetivo,
         palabras_min=ajustes.capsula_min_palabras,
         palabras_max=ajustes.capsula_max_palabras,
@@ -176,6 +183,11 @@ def construir(
         [
             bloque_tarea(objetivo),
             bloque_contexto(fragmentos),
+            # La secuencia va antes del perfil: primero qué construir (los siete
+            # pasos, iguales para todos), después cómo adaptarlo a este
+            # estudiante. Al revés, las instrucciones de perfil quedarían sin
+            # referente porque el modelo aún no sabe qué secciones existen.
+            prompts.SECUENCIA,
             bloque_perfil(config, palabras_objetivo=palabras_objetivo),
             bloque_formato(),
         ]

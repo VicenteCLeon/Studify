@@ -1,8 +1,35 @@
 """Contrato estructural de la microcápsula (PLAN_DESARROLLO.md §3).
 
 Es el punto de acuerdo entre el motor LLM y la UI: lo que el generador promete
-producir y lo que `web/templates/viewer.html` sabe renderizar. Por eso se define
-**antes** que el generador y no después.
+producir y lo que `web/templates/student/_capsula.html` sabe renderizar. Por eso
+se define **antes** que el generador y no después.
+
+**Estructura pedagógica de siete pasos (definida por la profesora guía el
+14-ago-2026).** Antes la cápsula era una lista de bloques sueltos que el modelo
+ordenaba a su criterio; ahora la secuencia es fija y cada paso tiene su propio
+campo, de modo que el esqueleto no depende de que el LLM se acuerde de
+respetarlo:
+
+    1. OA                        → `objetivo_aprendizaje`
+    2. Activación (pregunta)     → `activacion`
+    3. Concepto central          → `concepto_central`
+    4. Representación adaptativa → `representacion_adaptativa`  (bloques VARK)
+    5. Ejemplo / aplicación      → `ejemplo`
+    6. Pregunta de comprobación  → `actividad.pregunta`
+    7. Retroalimentación         → `actividad.retroalimentacion`
+
+Tener un campo por paso —en vez de una lista con etiquetas— hace que "falta la
+activación" sea un error de validación y no algo que haya que descubrir leyendo
+la cápsula.
+
+**Dónde vive la adaptación VARK.** El paso 4 es su sede principal: es una lista
+de bloques tipados y ahí caben la tabla del perfil visual, el glosario del
+lector-escritor y la analogía del auditivo. Pero la adaptación no se agota ahí
+(decisión del equipo, 14-ago-2026): `ejemplo` también es un bloque tipado, así
+que un perfil kinestésico recibe `lista_pasos` donde otro recibe un párrafo, y
+la actividad de cierre cambia a `intentalo_tu` cuando `p_K ≥ 40%`. Concentrar
+todo en el paso 4 habría dejado sin destino a varias directivas de
+`vark/rules.py` que el informe sí exige (tabla 11.1).
 
 Este módulo implementa la mitad *estructural* de la validación de la Fase 4 del
 cap. 18 —la que se puede decidir mirando solo el JSON— y deja en
@@ -59,6 +86,11 @@ MAX_PALABRAS_TITULO = 10
 # puntos —las abreviaturas y los decimales harían fallar esa cuenta— sino que se
 # acota la extensión, que es lo que la restricción realmente busca.
 MAX_PALABRAS_OBJETIVO = 40
+
+# La activación es una pregunta breve que engancha con el conocimiento previo
+# antes de explicar nada. Si se alarga deja de activar y pasa a ser exposición,
+# que es el paso siguiente.
+MAX_PALABRAS_ACTIVACION = 45
 
 
 def contar_palabras(texto: str) -> int:
@@ -223,14 +255,41 @@ class Microcapsula(BaseModel):
     Un modelo Pydantic y no un dict suelto porque este esquema es literalmente
     «la capa de validación estructural» de la Fase 4 del cap. 18: si el JSON del
     LLM no encaja acá, no llega ni a la base de datos ni a la pantalla.
+
+    Los campos siguen el orden de los siete pasos pedagógicos (ver el docstring
+    del módulo). Todos son obligatorios: una cápsula a la que le falte la
+    activación o el concepto central no es una cápsula incompleta que se pueda
+    mostrar igual, es una que hay que volver a pedirle al modelo.
     """
 
     model_config = ConfigDict(extra="ignore")
 
     titulo: str = Field(min_length=1)
+
+    # Paso 1 — OA.
     objetivo_aprendizaje: str = Field(min_length=1)
-    contenido: list[BloqueContenido] = Field(min_length=1)
+
+    # Paso 2 — Activación: pregunta de apertura, antes de explicar nada.
+    activacion: str = Field(min_length=1)
+
+    # Paso 3 — Concepto central: la explicación en limpio, la misma para los
+    # cuatro perfiles. Es texto y no un bloque tipado a propósito: lo que cambia
+    # entre perfiles es *cómo se refuerza* después (paso 4), no la definición.
+    concepto_central: str = Field(min_length=1)
+
+    # Paso 4 — Representación adaptativa: el mismo concepto reexpresado en el
+    # canal del estudiante. Sede principal de la adaptación VARK, por eso es una
+    # lista de bloques tipados y no un solo bloque.
+    representacion_adaptativa: list[BloqueContenido] = Field(min_length=1)
+
+    # Paso 5 — Ejemplo / aplicación. Bloque tipado (y no texto plano) para que
+    # un perfil kinestésico reciba `lista_pasos` donde otro recibe `parrafo`.
+    ejemplo: BloqueContenido
+
+    # Pasos 6 y 7 — pregunta de comprobación y retroalimentación, que viajan
+    # juntas porque la segunda solo tiene sentido respecto de la primera.
     actividad: Actividad
+
     # Al menos una fuente: una cápsula sin material citado no es RAG, es el
     # modelo respondiendo de memoria — exactamente lo que el cap. 13 descarta.
     fuentes: list[Fuente] = Field(min_length=1)
@@ -256,14 +315,50 @@ class Microcapsula(BaseModel):
             )
         return self
 
+    @model_validator(mode="after")
+    def activacion_es_una_pregunta(self) -> "Microcapsula":
+        """El paso 2 activa conocimiento previo, y para eso tiene que preguntar.
+
+        Se comprueba el signo de cierre y no el de apertura porque los modelos
+        omiten el «¿» inicial con frecuencia; exigir ambos gastaría reintentos
+        en un problema ortográfico y no pedagógico.
+        """
+        if "?" not in self.activacion:
+            raise ValueError(
+                "'activacion' debe ser una pregunta dirigida al estudiante y no "
+                f"lleva signo de interrogación: «{self.activacion}»"
+            )
+        palabras = contar_palabras(self.activacion)
+        if palabras > MAX_PALABRAS_ACTIVACION:
+            raise ValueError(
+                f"'activacion' tiene {palabras} palabras y el máximo es "
+                f"{MAX_PALABRAS_ACTIVACION}: es una pregunta breve de apertura, "
+                f"no la explicación"
+            )
+        return self
+
     def palabras_contenido(self) -> int:
         """Extensión de la cápsula según el cap. 11.1.
 
-        Cuenta **solo** los bloques de `contenido`. El título tiene su propio
-        límite y la actividad de cierre se mide aparte: el rango 150–300 describe
-        el cuerpo que el estudiante lee, no el quiz que responde después.
+        Suma los cuatro pasos que el estudiante lee de corrido: activación,
+        concepto central, representación adaptativa y ejemplo. El título tiene
+        su propio límite y la actividad de cierre se mide aparte — el rango
+        150–300 describe el cuerpo, no el quiz que se responde después.
         """
-        return sum(bloque.palabras() for bloque in self.contenido)
+        return (
+            contar_palabras(self.activacion)
+            + contar_palabras(self.concepto_central)
+            + sum(bloque.palabras() for bloque in self.representacion_adaptativa)
+            + self.ejemplo.palabras()
+        )
+
+    def bloques_legibles(self) -> list[BloqueContenido]:
+        """Los bloques tipados de la cápsula, en orden de lectura.
+
+        Lo usan la UI y los tests para recorrer la parte tipada sin repetir el
+        orden de los pasos en cada sitio.
+        """
+        return [*self.representacion_adaptativa, self.ejemplo]
 
     def texto_plano(self) -> str:
         """Todo el texto legible de la cápsula, para analizar el idioma.
@@ -272,8 +367,13 @@ class Microcapsula(BaseModel):
         las partes que el modelo redacta al final, cuando ya lleva mucho
         contexto en español encima.
         """
-        partes: list[str] = [self.titulo, self.objetivo_aprendizaje]
-        for bloque in self.contenido:
+        partes: list[str] = [
+            self.titulo,
+            self.objetivo_aprendizaje,
+            self.activacion,
+            self.concepto_central,
+        ]
+        for bloque in self.bloques_legibles():
             if bloque.encabezado:
                 partes.append(bloque.encabezado)
             if isinstance(bloque.cuerpo, str):

@@ -202,8 +202,34 @@ def test_repara_una_respuesta_truncada():
 
 
 def test_repara_una_capsula_en_ingles():
+    # Todos los pasos en inglés: con solo uno traducido, los demás siguen
+    # aportando marcadores del español y el detector acepta la cápsula, que es
+    # el comportamiento correcto (una palabra suelta no es deriva de idioma).
     en_ingles = con_defecto(
-        contenido=[
+        activacion="Have you ever had to fix the same value in many rows?",
+        concepto_central=(
+            "A partial dependency happens when a non key attribute depends only "
+            "on part of the composite primary key, and not on the whole key."
+        ),
+        ejemplo={
+            "tipo": "ejemplo_resuelto",
+            "cuerpo": (
+                "In an enrolment table keyed by student and course, the course "
+                "name depends only on the course, so it must be moved out."
+            ),
+        },
+        actividad={
+            "tipo": "quiz_mc",
+            "pregunta": "When does a table break the second normal form?",
+            "alternativas": [
+                "When a non key attribute depends on part of the key",
+                "When the table has more than five columns",
+                "When the primary key is an integer",
+            ],
+            "indice_correcta": 0,
+            "retroalimentacion": "It must depend on the whole key, not on a part.",
+        },
+        representacion_adaptativa=[
             {
                 "tipo": "parrafo",
                 "cuerpo": (
@@ -232,13 +258,28 @@ def test_repara_una_capsula_en_ingles():
 
 
 def test_repara_un_contenido_fuera_del_rango_de_palabras():
-    corta = con_defecto(contenido=[{"tipo": "parrafo", "cuerpo": "Muy breve."}])
+    corta = con_defecto(
+        concepto_central="Muy breve.",
+        representacion_adaptativa=[{"tipo": "parrafo", "cuerpo": "También breve."}],
+        ejemplo={"tipo": "parrafo", "cuerpo": "Un caso."},
+    )
     cliente = ClienteFalso(corta, VALIDA)
 
     resultado = generar(prompt_maestro(), cliente=cliente)
 
     assert resultado.intentos == 2
     assert "mínimo es 150" in cliente.conversaciones[1][3].contenido
+
+
+def test_repara_una_capsula_sin_pregunta_de_activacion():
+    """El paso 2 de la estructura pedagógica, reparado por el bucle."""
+    sin_pregunta = con_defecto(activacion="Vamos a ver las dependencias parciales.")
+    cliente = ClienteFalso(sin_pregunta, VALIDA)
+
+    resultado = generar(prompt_maestro(), cliente=cliente)
+
+    assert resultado.intentos == 2
+    assert "activacion" in cliente.conversaciones[1][3].contenido
 
 
 def test_tolera_las_cercas_markdown_sin_gastar_un_reintento():

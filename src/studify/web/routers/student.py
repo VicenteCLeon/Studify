@@ -414,7 +414,7 @@ def get_viewer(
         context={
             "objetivo": objetivo,
             "capsula": capsula,
-            "bloques": _preparar_bloques(capsula.contenido),
+            "bloques": _preparar_bloques(capsula.bloques_legibles()),
             # `indice_correcta` y `retroalimentacion` NO viajan al navegador: si
             # fueran al HTML, la respuesta correcta estaría en el código fuente
             # de la página y el quiz dejaría de medir nada.

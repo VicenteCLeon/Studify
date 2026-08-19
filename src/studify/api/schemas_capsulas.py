@@ -37,9 +37,13 @@ class CapsulaOut(BaseModel):
     fecha_generacion: datetime
     estado_validacion: str
 
+    # Los siete pasos pedagógicos, en orden (ver `generation/schemas.py`).
     titulo: str
     objetivo_aprendizaje: str
-    contenido: list[BloqueContenido]
+    activacion: str
+    concepto_central: str
+    representacion_adaptativa: list[BloqueContenido]
+    ejemplo: BloqueContenido
     actividad: Actividad
     fuentes: list[Fuente]
 
@@ -54,6 +58,16 @@ class CapsulaOut(BaseModel):
         ),
     )
     segundos: float | None = None
+
+    def bloques_legibles(self) -> list[BloqueContenido]:
+        """Los bloques tipados en orden de lectura, como en `Microcapsula`.
+
+        Se repite acá porque el visor recibe indistintamente una `CapsulaOut`
+        (flujo del estudiante, que lee de la base) o una `Microcapsula` (flujo
+        del simulador del docente, que no persiste nada), y ambas tienen que
+        responder lo mismo o la plantilla dejaría de servir para las dos.
+        """
+        return [*self.representacion_adaptativa, self.ejemplo]
 
 
 class ResumenCapsulaOut(BaseModel):

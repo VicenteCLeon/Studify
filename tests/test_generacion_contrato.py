@@ -164,9 +164,83 @@ def test_los_campos_desconocidos_se_ignoran_en_vez_de_rechazarse():
     """Un campo de más no justifica gastar un reintento con el modelo."""
     datos = capsula_valida()
     datos["dificultad"] = "media"
-    datos["contenido"][0]["color"] = "azul"
+    datos["representacion_adaptativa"][0]["color"] = "azul"
 
     assert validar_capsula(datos).es_valida
+
+
+# --- Estructura pedagógica de siete pasos (14-ago-2026) ----------------------
+
+
+@pytest.mark.parametrize(
+    "paso",
+    ["objetivo_aprendizaje", "activacion", "concepto_central",
+     "representacion_adaptativa", "ejemplo", "actividad"],
+)
+def test_cada_paso_de_la_estructura_es_obligatorio(paso):
+    """Ninguno de los siete pasos puede faltar.
+
+    Es el punto de la estructura fija: que la ausencia de la activación o del
+    concepto central sea un error de validación, y no algo que haya que
+    descubrir leyendo la cápsula.
+    """
+    datos = capsula_valida()
+    del datos[paso]
+
+    resultado = validar_capsula(datos)
+
+    assert not resultado.es_valida
+    assert any(paso in e for e in resultado.errores)
+
+
+def test_la_activacion_tiene_que_ser_una_pregunta():
+    """El paso 2 activa conocimiento previo, y para eso tiene que preguntar."""
+    datos = capsula_valida()
+    datos["activacion"] = "Vamos a estudiar las dependencias parciales."
+
+    resultado = validar_capsula(datos)
+
+    assert not resultado.es_valida
+    assert any("pregunta" in e for e in resultado.errores)
+
+
+def test_la_activacion_no_puede_ser_la_explicacion_completa():
+    datos = capsula_valida()
+    datos["activacion"] = PARRAFO + " ¿Lo tenías claro?"
+
+    resultado = validar_capsula(datos)
+
+    assert not resultado.es_valida
+    assert any("activacion" in e and "máximo" in e for e in resultado.errores)
+
+
+def test_el_ejemplo_es_un_bloque_tipado_y_se_adapta_al_perfil():
+    """`ejemplo` no es texto plano: así un perfil K recibe `lista_pasos`.
+
+    Es lo que permite que la adaptación VARK no quede encerrada en la sección
+    de representación adaptativa (decisión del 14-ago-2026).
+    """
+    datos = capsula_valida()
+    datos["ejemplo"] = {
+        "tipo": "lista_pasos",
+        "encabezado": "Cómo corregirlo",
+        "cuerpo": ["Identifica la clave completa.", "Separa el atributo dependiente."],
+    }
+
+    resultado = validar_capsula(datos)
+
+    assert resultado.es_valida, resultado.errores
+    assert resultado.capsula.ejemplo.tipo == "lista_pasos"
+
+
+def test_los_bloques_legibles_van_en_orden_de_lectura():
+    """Representación adaptativa primero, ejemplo después."""
+    capsula = Microcapsula.model_validate(capsula_valida())
+
+    bloques = capsula.bloques_legibles()
+
+    assert bloques[-1] is capsula.ejemplo
+    assert bloques[:-1] == capsula.representacion_adaptativa
 
 
 def test_capsula_sin_fuentes_se_rechaza():
@@ -185,7 +259,9 @@ def test_capsula_sin_fuentes_se_rechaza():
 
 def test_contenido_demasiado_corto_se_rechaza():
     datos = capsula_valida()
-    datos["contenido"] = [{"tipo": "parrafo", "cuerpo": "Muy breve."}]
+    datos["concepto_central"] = "Muy breve."
+    datos["representacion_adaptativa"] = [{"tipo": "parrafo", "cuerpo": "También breve."}]
+    datos["ejemplo"] = {"tipo": "parrafo", "cuerpo": "Un caso."}
 
     resultado = validar_capsula(datos)
 
@@ -195,17 +271,29 @@ def test_contenido_demasiado_corto_se_rechaza():
 
 def test_contenido_demasiado_largo_se_rechaza():
     datos = capsula_valida()
-    datos["contenido"] = [
+    datos["representacion_adaptativa"] = [
         {"tipo": "parrafo", "cuerpo": PARRAFO},
         {"tipo": "parrafo", "cuerpo": EXPLICACION},
         {"tipo": "parrafo", "cuerpo": PARRAFO},
-        {"tipo": "parrafo", "cuerpo": EXPLICACION},
     ]
 
     resultado = validar_capsula(datos)
 
     assert not resultado.es_valida
     assert any("máximo es 300" in e for e in resultado.errores)
+
+
+def test_los_cuatro_pasos_del_cuerpo_suman_para_el_rango():
+    """La cuenta incluye activación, concepto, representación y ejemplo.
+
+    Si solo contara uno de ellos, una cápsula podría pasar el rango con tres
+    secciones casi vacías.
+    """
+    datos = capsula_valida()
+    base = validar_capsula(datos).metricas["palabras_contenido"]
+
+    datos["activacion"] = datos["activacion"] + " ¿Y en tu experiencia?"
+    assert validar_capsula(datos).metricas["palabras_contenido"] == base + 4
 
 
 def test_el_encabezado_cuenta_como_contenido_leido():
@@ -359,21 +447,25 @@ def test_las_tildes_faltantes_no_se_confunden_con_otro_idioma():
 
 def test_capsula_redactada_en_ingles_se_rechaza_por_la_regla_6():
     datos = capsula_valida()
-    datos["contenido"] = [
+    datos["activacion"] = "Have you ever had to fix the same value in many rows?"
+    datos["concepto_central"] = (
+        "Normalization is the process that organizes the attributes of "
+        "a relational database in order to reduce redundancy and to "
+        "avoid anomalies when rows are inserted, updated or deleted "
+        "from the table. Each normal form adds one condition on top of "
+        "the previous one, so that a table which is in third normal "
+        "form also satisfies the first two forms."
+    )
+    datos["representacion_adaptativa"] = [
         {
             "tipo": "parrafo",
             "cuerpo": (
-                "Normalization is the process that organizes the attributes of "
-                "a relational database in order to reduce redundancy and to "
-                "avoid anomalies when rows are inserted, updated or deleted "
-                "from the table. Each normal form adds one condition on top of "
-                "the previous one, so that a table which is in third normal "
-                "form also satisfies the first two forms. The goal is not to "
-                "have many tables, but that each fact is stored only once and "
-                "in the place where it truly belongs, next to the key which "
-                "determines it. When this is done well, any correction has to "
-                "be applied at a single point and every query that reads the "
-                "data will see the corrected value immediately."
+                "The goal is not to have many tables, but that each fact is "
+                "stored only once and in the place where it truly belongs, "
+                "next to the key which determines it. When this is done well, "
+                "any correction has to be applied at a single point and every "
+                "query that reads the data will see the corrected value "
+                "immediately, because there are no stale copies left behind."
             ),
         }
     ]
@@ -447,7 +539,9 @@ def test_respuesta_no_parseable_se_reporta_como_error_no_como_excepcion():
 def test_el_mensaje_de_reparacion_enumera_todos_los_defectos():
     """Corregir de a uno agotaría los dos reintentos disponibles."""
     datos = capsula_valida()
-    datos["contenido"] = [{"tipo": "parrafo", "cuerpo": "Muy breve."}]
+    datos["concepto_central"] = "Muy breve."
+    datos["representacion_adaptativa"] = [{"tipo": "parrafo", "cuerpo": "También breve."}]
+    datos["ejemplo"] = {"tipo": "parrafo", "cuerpo": "Un caso."}
     datos["fuentes"] = [{"id_fragmento": 999, "documento": "x", "pagina": 1}]
 
     resultado = validar_capsula(datos)

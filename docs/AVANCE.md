@@ -2,11 +2,12 @@
 
 > Documento vivo. Se actualiza al cierre de cada fase para que cualquier sesión de trabajo
 > (o cualquier persona) pueda retomar el proyecto sin releer todo el hilo de conversación.
-> Última actualización: **14-ago-2026** — alta de objetivos de aprendizaje desde el panel del
-> docente (antes solo por consola) y primer material curricular real cargado (aún sin curar);
-> ver sección 5 duodecies. De paso, rebranding de la UI a "RepasAi" y fondo de marca en toda la
-> web (13-ago-2026, sección 5 undecies) y panel de analíticas del docente con tres bugs de
-> fondo corregidos (12-ago-2026, sección 5 decies).
+> Última actualización: **19-ago-2026** — **la microcápsula pasó a tener la estructura
+> pedagógica de siete pasos** que definió la profesora guía, y el prompt le muestra al modelo
+> los cuatro pesos C_* en crudo; ver sección 5 terdecies. Antes: alta de objetivos desde el
+> panel del docente (14-ago, sección 5 duodecies), rebranding a "RepasAi" y fondo de marca
+> (13-ago, sección 5 undecies) y panel de analíticas con tres bugs de fondo corregidos
+> (12-ago, sección 5 decies).
 
 ---
 
@@ -45,7 +46,9 @@ página, curación humana con estados reales y **retriever determinista sin embe
 
 **Motor de generación de la Fase 3 cerrado** (sección 5 octies): contrato Pydantic de la
 microcápsula, validador con las seis reglas de rechazo, prompt maestro en cuatro bloques,
-bucle de reparación y `POST /api/capsulas` con caché y versionado.
+bucle de reparación y `POST /api/capsulas` con caché y versionado. *(El contrato de la
+microcápsula se reemplazó el 19-ago por la estructura de siete pasos — sección 5 terdecies;
+el resto de esta sección sigue vigente.)*
 
 **Fase 4 cerrada** (sección 5 nonies): la UI dejó de usar datos *mock*. El cuestionario
 muestra los 16 ítems reales del instrumento, el diagnóstico se guarda de verdad, hay sesión
@@ -61,6 +64,8 @@ que arrastraban los routers mock).
 **Panel de analíticas del docente (12-ago-2026, sección 5 decies):** se agregaron cinco vistas nuevas para el docente y se auditaron a fondo. Tres tenían fallos de fondo, no solo visuales: el simulador VARK generaba cápsulas rotas e indistinguibles de un perfil inválido, la métrica de aciertos del quiz podía inflarse por reintentos, y la cobertura curricular podía marcar en verde temas cuyo material el retriever ya no recupera. Las tres quedaron corregidas con 32 tests nuevos (261 en total) y una migración (`interaccion_quiz` con intentos numerados).
 
 **Rebranding y fondo de marca (13-ago-2026, sección 5 undecies):** la UI pasó a llamarse "RepasAi" y toda la web tiene ahora una textura de fondo con íconos educativos. Es un cambio visual, sin código de dominio.
+
+**Estructura pedagógica de siete pasos (19-ago-2026, sección 5 terdecies):** la profesora guía observó que el informe no define la estructura de una microcápsula y propuso una (OA → activación → concepto central → representación adaptativa VARK → ejemplo → pregunta de comprobación → retroalimentación). Está implementada: cada paso es ahora un campo obligatorio del contrato en vez de un bloque suelto dentro de una lista, y el prompt le muestra al modelo los cuatro pesos C_* en crudo además de las instrucciones estructurales. Verificado contra DeepSeek con material real: cápsula válida al primer intento, 247 palabras, los siete pasos en orden. **277 tests en verde.** Tres puntos de su lista quedaron fuera a propósito (embeddings, OA secundarios y el campo "contenido" del OA) — el detalle está en la sección 5 terdecies y en [`AUDITORIA_LISTA_PROFESORA_14AGO2026.md`](AUDITORIA_LISTA_PROFESORA_14AGO2026.md).
 
 **Alta de objetivos desde el panel del docente (14-ago-2026, sección 5 duodecies):** `POST /api/objetivos` existía desde la Fase 2 pero no estaba conectado a ninguna pantalla — el catálogo solo se podía cargar por consola. Ahora hay un formulario en `/teacher/curation` que reutiliza el mismo handler; el script de carga masiva se conserva para sembrar un plan de estudios completo. **265 tests en verde** (261 + 4), `ruff` limpio. De paso se cargó el primer material curricular real del proyecto —5 objetivos de "Diseño de UX" y un PPTX con 40 fragmentos— aunque todavía sin curar, y se encontró que esta máquina tenía dos migraciones de Patricio sin aplicar (`/teacher/analytics` daba 500 hasta correr `alembic upgrade head`).
 
@@ -241,7 +246,7 @@ Studify/
 │  │  └─ prompts/
 │  │     └─ maestro.py   #    ✅ plantillas + directiva VARK → instrucción estructural
 │  ├─ generation/        # ✅ motor de generación (Fase 3)
-│  │  ├─ schemas.py      #    contrato de la microcápsula (reglas 1, 3 y 4)
+│  │  ├─ schemas.py      #    contrato de la microcápsula: 7 pasos pedagógicos
 │  │  ├─ idioma.py       #    detección de deriva de idioma (regla 6)
 │  │  ├─ validator.py    #    parser tolerante + reglas 2, 5 y 6 + realimentación
 │  │  └─ generator.py    #    cliente LLM (inyectable) + bucle de reparación
@@ -510,6 +515,12 @@ retriever. Mitigarlo pide comparar el texto extraído y no los bytes.
 
 Cierra el motor completo: entra un `(id_estudiante, id_objetivo)` y sale una microcápsula
 validada, en español, con quiz y con fuentes verificables contra el material curado.
+
+> ⚠️ **Leer junto con la sección 5 terdecies (19-ago-2026).** La *forma* de la microcápsula que
+> describe esta sección —`contenido[]`, una lista de bloques sueltos— fue reemplazada por la
+> estructura pedagógica de siete pasos que definió la profesora guía. Todo lo demás de esta
+> sección (las seis reglas del validador, el bucle de reparación, la huella de caché, el
+> detector de idioma) sigue vigente tal cual.
 
 ### Módulos nuevos
 
@@ -895,6 +906,94 @@ página con el correo de la profesora (`Dra. Daniela Quiñones Otey — daniela.
 repetido en más de diez fragmentos distintos): conviene **rechazarlos** al revisar, no
 validarlos, porque no aportan contenido y ensuciarían las cápsulas generadas sobre ese objetivo.
 
+> **Actualización 19-ago-2026:** ya se curó. Los cinco objetivos tienen material validado —13
+> fragmentos en "Diferencia entre diseño UX y UI", 10 en "Etapas del Design Thinking", 10 en
+> "Diseño centrado en el usuario", 4 y 3 en los dos restantes—, de modo que el pendiente n.º 1
+> de la sección 6 queda cerrado para esta asignatura.
+
+---
+
+## 5 terdecies. Estructura pedagógica de siete pasos (19-ago-2026)
+
+La profesora guía revisó el avance y observó que **el informe no define qué estructura tiene
+una microcápsula**. Propuso una, y esta sección la implementa. Es el cambio más profundo desde
+la Fase 3: toca el contrato, el validador, el prompt, el visor y cinco archivos de tests.
+
+La auditoría completa de su lista de revisión —punto por punto, con veredicto y ruta de archivo—
+está en [`AUDITORIA_LISTA_PROFESORA_14AGO2026.md`](AUDITORIA_LISTA_PROFESORA_14AGO2026.md).
+Esta sección documenta solo lo que se implementó de ahí.
+
+### Qué cambió en el contrato
+
+Antes la cápsula era `contenido[]`, una lista de bloques tipados que el modelo ordenaba a su
+criterio. Ahora cada paso tiene su propio campo obligatorio:
+
+| Paso | Campo | Antes |
+|---|---|---|
+| 1. OA | `objetivo_aprendizaje` | ya existía |
+| 2. Activación | `activacion` | **no existía** |
+| 3. Concepto central | `concepto_central` | un bloque más de `contenido[]`, sin etiqueta |
+| 4. Representación adaptativa | `representacion_adaptativa[]` | ídem, mezclado con el resto |
+| 5. Ejemplo / aplicación | `ejemplo` | tipo de bloque opcional |
+| 6. Pregunta de comprobación | `actividad.pregunta` | ya existía |
+| 7. Retroalimentación | `actividad.retroalimentacion` | ya existía |
+
+**Por qué un campo por paso y no una lista con etiquetas.** Con la forma anterior, "falta la
+activación" era algo que había que descubrir leyendo la cápsula; ahora es un error de
+validación que el bucle de reparación corrige solo. Que el orden sea el correcto tampoco
+depende ya de que el modelo se acuerde: lo fija el contrato.
+
+### Decisiones tomadas en esta entrega
+
+| Decisión | Alternativa descartada | Motivo |
+|---|---|---|
+| **La adaptación VARK no se encierra en el paso 4** | Concentrarla toda ahí, que es lo que sugiere el diagrama de la profesora | `ejemplo` también es un bloque tipado, así que un perfil kinestésico recibe `lista_pasos` donde otro recibe un párrafo, y la actividad sigue cambiando a `intentalo_tu` con `p_K ≥ 40%`. Concentrar todo en el paso 4 habría dejado sin destino a varias directivas de `vark/rules.py` que la tabla 11.1 del informe sí exige — el «inténtalo tú» del perfil K y el glosario del lector-escritor se habrían perdido. |
+| **El prompt muestra los cuatro pesos C_* en crudo *además* de las instrucciones estructurales** | Solo los porcentajes (literal a su plantilla), o seguir ocultándolos como hasta ahora | Su plantilla los pide explícitamente y son informativos —sobre todo dentro del paso 4, donde se mezclan los cuatro canales—, pero un modelo ignora con facilidad un «22,75 % de texto». Las instrucciones concretas («incluye una `tabla` de 3×2») siguen siendo las únicas que se pueden comprobar después en el JSON. Se dan las dos cosas: es estrictamente más información. |
+| **Los C_* se muestran redondeados a un decimal** | Pasarlos con la precisión completa | El modelo no hace nada distinto con 22,75 que con 22,8, y la cifra larga invita a que la copie tal cual dentro del texto de la cápsula. |
+| **La activación se valida como pregunta** (exige `?`) y se acota a 45 palabras | Aceptar cualquier texto en ese campo | Una «activación» sin interrogación es exposición, no activación; y si se alarga, invade el paso 3. Se comprueba el signo de cierre y no el de apertura porque los modelos omiten el «¿» inicial con frecuencia, y eso es un problema ortográfico, no pedagógico — gastar un reintento en ello sería desperdiciarlo. |
+| **`concepto_central` es texto plano, no un bloque tipado** | Hacerlo un `BloqueContenido` como los otros | Lo que cambia entre perfiles es *cómo se refuerza* el concepto (paso 4), no la definición misma. El paso 3 es deliberadamente el mismo para los cuatro canales. |
+| **Se borraron las 2 cápsulas existentes en vez de migrarlas** | Escribir una migración de datos o versionar el contrato | Eran dos filas de pruebas del bake-off. Una migración de `contenido_json` habría costado más que regenerarlas, y versionar el contrato para dos filas obsoletas habría dejado dos caminos de renderizado vivos para siempre. |
+| **`bloques_legibles()` duplicado en `Microcapsula` y en `CapsulaOut`** | Un único helper compartido | El visor recibe indistintamente una `CapsulaOut` (flujo del estudiante, que lee de la base) o una `Microcapsula` (simulador del docente, que no persiste nada). Ambas tienen que responder lo mismo o la plantilla dejaría de servir para las dos. |
+
+### Verificación contra el modelo real
+
+No solo tests: se generó una cápsula real contra DeepSeek sobre el material de UX ya curado
+(objetivo 190, «Diferencia entre diseño UX y diseño UI», perfil `{V:35, A:15, R:20, K:30}`):
+
+- **Válida al primer intento**, 8,4 s, **247 palabras** (dentro del rango 150–300 del cap. 11.1).
+- Los siete pasos presentes y en orden.
+- La representación adaptativa trajo **un esquema jerárquico y una tabla comparativa** — que es
+  lo que corresponde a un perfil con V como canal dominante.
+- Las cuatro fuentes citadas (`725, 728, 730, 731`) verificadas contra los fragmentos
+  realmente inyectados.
+- Renderizada en el visor por HTTP: la activación sale destacada arriba, el concepto central
+  rotulado, y después los bloques adaptativos y el ejemplo.
+
+**277 tests en verde** (265 + 12 nuevos), `ruff` limpio salvo el aviso preexistente de
+`web/textos.py:35`.
+
+Los 12 tests nuevos cubren: que cada uno de los siete pasos sea obligatorio (parametrizado, uno
+por paso), que la activación sea una pregunta y no la explicación completa, que `ejemplo` se
+adapte al perfil, que los cuatro pasos del cuerpo sumen para el rango de palabras, y que el
+bucle de reparación arregle una cápsula a la que le falte la pregunta de activación.
+
+### Lo que de la lista de la profesora **no** se implementó
+
+Tres puntos quedaron fuera a propósito y conviene tenerlos claros para la próxima reunión:
+
+1. **Embeddings / vectores** (punto 5 de su pipeline). No es un pendiente: contradice
+   directamente el cap. 13 del informe que ella ya aceptó, donde se argumenta que la
+   recuperación por similitud vectorial introduce un factor probabilístico incompatible con la
+   trazabilidad curricular. Se resuelve conversándolo, no programándolo.
+2. **OA secundarios por chunk.** `Fragmento.id_objetivo` es una FK singular; admitir varios
+   exige una tabla de asociación nueva. Además **hay tensión con otra regla de su propia
+   lista**: pide OA secundarios y a la vez «evitar que un chunk pertenezca a varios contenidos».
+   Antes de tocar el modelo hay que decidir si «contenido» (tema) y «OA» (objetivo evaluable)
+   son la misma jerarquía o dos cosas distintas — hoy el sistema los trata como una sola.
+3. **Campo «contenido» asociado al OA** (su ejemplo `OA01 → Contenido: Probabilidad
+   condicionada`). Existe `ObjetivoAprendizaje.descripcion`, que es texto libre, pero no es
+   exactamente lo mismo.
+
 ---
 
 ## 6. Pendiente inmediato
@@ -911,20 +1010,21 @@ pero **no se ha ejecutado nunca contra un modelo real ni sobre material real**.
    instrucciones estructurales, no adjetivos de tono— y el prompt ya está construido así, de
    modo que lo que habría que ajustar son las instrucciones de
    `rag/prompts/maestro.py::INSTRUCCION_POR_DIRECTIVA`, no el motor.
-1. **Cargar material real de la base de conocimiento.** ⏳ **Parcial (14-ago-2026, sección
-   5 duodecies):** `data/objetivos.csv` ya existe con 5 objetivos reales de "Diseño de UX", y
-   hay un PPTX real subido con 40 fragmentos extraídos. **Falta curar:** los 40 siguen en
-   `pendiente`, 0 en `validado` — sin eso el retriever sigue sin nada que recuperar para esos
-   objetivos, y varios fragmentos son solo el pie de página del documento (hay que rechazarlos,
-   no validarlos). Sigue faltando además una segunda asignatura si se quiere más de un tema para
-   la prueba de diferenciación entre perfiles VARK del punto 0.
+1. ~~**Cargar material real de la base de conocimiento.**~~ ✅ **Cerrado el 19-ago-2026 para la
+   primera asignatura.** Los cinco objetivos de "Diseño de UX" tienen material curado (13 + 10 +
+   10 + 4 + 3 fragmentos validados) y ya se generaron cápsulas reales sobre ellos. Queda como
+   deseable —no bloqueante— una **segunda asignatura**, para que la prueba de diferenciación
+   entre perfiles VARK del punto 0 no dependa de un solo dominio.
 2. ~~**Conectar la UI de Patricio a los endpoints reales.**~~ ✅ **Cerrado el 11-ago-2026**
    (sección 5 nonies). Las cinco vistas del estudiante y el panel del docente llaman a los
-   handlers reales; `viewer.html` recorre los bloques de `contenido` por `tipo` y muestra las
-   dos formas de actividad.
-3. **`tagger.py` (etiquetado asistido por LLM)** quedó fuera de esta entrega porque
-   `LLM_API_KEY` está vacío. Hoy el curador asigna el objetivo a mano: funciona, pero es lento.
-   Cuando exista la key, el tagger solo debe **proponer**, nunca decidir.
+   handlers reales; el visor recorre los bloques del contrato por `tipo` y muestra las dos
+   formas de actividad. Desde el 19-ago los recorre vía `bloques_legibles()`, que devuelve la
+   representación adaptativa seguida del ejemplo.
+3. **`tagger.py` (etiquetado asistido por LLM)** sigue sin implementarse. Quedó fuera de la
+   Fase 2 porque entonces no había credencial; **ahora sí la hay**, así que el bloqueo
+   desapareció y es trabajo pendiente sin más. Hoy el curador asigna el objetivo a mano:
+   funciona, pero es lento —se vio al curar los 40 fragmentos de UX—. Cuando se implemente, el
+   tagger solo debe **proponer**, nunca decidir.
 4. ~~Los **21 avisos de `ruff`** en `web/deps.py`, `web/routers/student.py` y
    `web/routers/teacher.py`.~~ ✅ **Cerrado el 11-ago-2026:** desaparecieron al conectar esos
    routers a la API real, tal como se había previsto. `ruff check .` está limpio en todo el
@@ -959,6 +1059,16 @@ pero **no se ha ejecutado nunca contra un modelo real ni sobre material real**.
 12. **`scripts/reset_db.py` sin confirmación** antes de `drop_all` + borrar `alembic_version`.
     Es destructivo y de un solo comando; conviene una confirmación explícita antes de que borre
     algo que cueste recuperar en una máquina compartida por el equipo.
+13. **Definir con la profesora si "contenido" y "OA" son la misma jerarquía.** De su lista salen
+    dos requisitos que hoy se contradicen: pide **OA secundarios** por chunk y a la vez «evitar
+    que un chunk pertenezca a varios contenidos». Con el modelo actual —`Fragmento.id_objetivo`
+    como FK singular— el segundo se cumple por construcción y el primero es imposible. Implementar
+    OA secundarios exige una tabla de asociación nueva, y antes hay que cerrar esa ambigüedad
+    conceptual. Detalle en `AUDITORIA_LISTA_PROFESORA_14AGO2026.md`, punto 3.
+14. **Zanjar el punto de los embeddings con la profesora.** Su pipeline propuesto los incluye
+    (paso 5); el cap. 13 del informe que ella aceptó argumenta explícitamente en contra. No es
+    trabajo de programación: es una conversación pendiente sobre si la arquitectura sigue siendo
+    la aprobada. Mientras no se cierre, el sistema sigue con recuperación SQL determinista.
 
 ~~Ratificar `palabras_texto`~~ ✅ **Aprobado por el equipo el 06-ago-2026** — queda la
 interpolación lineal sobre C_texto tal como está implementada.

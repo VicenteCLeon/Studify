@@ -294,34 +294,23 @@ TEXTO_FUENTE = (
     "y queda reflejada en todas las consultas que la utilizan después."
 )
 
-# Cápsula con las cuatro formas de bloque del contrato, para ejercitar el
-# renderizado completo del visor y no solo el párrafo.
+# Cápsula que ejercita las cuatro formas de renderizado del visor (párrafo,
+# lista, tabla y glosario) repartidas en los pasos de la estructura pedagógica.
+ACTIVACION_DE_PRUEBA = "¿Te ha tocado corregir el mismo dato en muchas filas a la vez?"
+
+CONCEPTO_DE_PRUEBA = (
+    "Una dependencia parcial ocurre cuando un atributo que no pertenece "
+    "a la clave primaria depende solamente de una parte de esa clave "
+    "compuesta, y no de la clave completa. Mientras esa dependencia "
+    "exista, la tabla incumple la segunda forma normal y el mismo dato "
+    "queda repetido en muchas filas, de modo que cualquier corrección "
+    "hay que aplicarla en todas ellas. El remedio consiste en trasladar "
+    "el atributo a una tabla propia junto con la porción de clave de la "
+    "que realmente depende, dejando una clave foránea en la tabla "
+    "original para no perder información."
+)
+
 BLOQUES_DE_PRUEBA = [
-    {
-        "tipo": "parrafo",
-        "encabezado": "Qué es una dependencia parcial",
-        "cuerpo": (
-            "Una dependencia parcial ocurre cuando un atributo que no pertenece "
-            "a la clave primaria depende solamente de una parte de esa clave "
-            "compuesta, y no de la clave completa. Mientras esa dependencia "
-            "exista, la tabla incumple la segunda forma normal y el mismo dato "
-            "queda repetido en muchas filas, de modo que cualquier corrección "
-            "hay que aplicarla en todas ellas. El remedio consiste en trasladar "
-            "el atributo a una tabla propia junto con la porción de clave de la "
-            "que realmente depende, dejando una clave foránea en la tabla "
-            "original para no perder información."
-        ),
-    },
-    {
-        "tipo": "lista_pasos",
-        "encabezado": "Cómo corregirla",
-        "cuerpo": [
-            "Identifica la clave primaria completa de la tabla original.",
-            "Revisa cada atributo no clave y pregúntate de qué parte depende.",
-            "Traslada los atributos dependientes a una tabla nueva.",
-            "Deja una clave foránea que apunte a esa tabla nueva.",
-        ],
-    },
     {
         "tipo": "tabla",
         "encabezado": "Antes y después",
@@ -340,6 +329,17 @@ BLOQUES_DE_PRUEBA = [
         ],
     },
 ]
+
+EJEMPLO_DE_PRUEBA = {
+    "tipo": "lista_pasos",
+    "encabezado": "Cómo corregirla",
+    "cuerpo": [
+        "Identifica la clave primaria completa de la tabla original.",
+        "Revisa cada atributo no clave y pregúntate de qué parte depende.",
+        "Traslada los atributos dependientes a una tabla nueva.",
+        "Deja una clave foránea que apunte a esa tabla nueva.",
+    ],
+}
 
 PREGUNTA = "¿Cuándo una tabla incumple la segunda forma normal?"
 ALTERNATIVAS = [
@@ -368,7 +368,10 @@ class ClienteFalso:
             {
                 "titulo": "Dependencias parciales y segunda forma normal",
                 "objetivo_aprendizaje": "Reconocer y corregir dependencias parciales.",
-                "contenido": BLOQUES_DE_PRUEBA,
+                "activacion": ACTIVACION_DE_PRUEBA,
+                "concepto_central": CONCEPTO_DE_PRUEBA,
+                "representacion_adaptativa": BLOQUES_DE_PRUEBA,
+                "ejemplo": EJEMPLO_DE_PRUEBA,
                 "actividad": {
                     "tipo": "quiz_mc",
                     "pregunta": PREGUNTA,

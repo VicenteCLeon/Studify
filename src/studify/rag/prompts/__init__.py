@@ -8,6 +8,7 @@ from studify.rag.prompts.maestro import (
     FRAGMENTO,
     INSTRUCCION_POR_DIRECTIVA,
     PERFIL,
+    SECUENCIA,
     SISTEMA,
     TAREA,
 )
@@ -20,6 +21,7 @@ __all__ = [
     "FRAGMENTO",
     "INSTRUCCION_POR_DIRECTIVA",
     "PERFIL",
+    "SECUENCIA",
     "SISTEMA",
     "TAREA",
 ]

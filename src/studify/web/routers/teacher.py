@@ -273,7 +273,7 @@ def post_simulator_generate(
         context={
             "objetivo": objetivo,
             "capsula": capsula,
-            "bloques": _preparar_bloques(capsula.contenido),
+            "bloques": _preparar_bloques(capsula.bloques_legibles()),
             "actividad": capsula.actividad,
             "es_simulacion": True,
             "perfil_simulado": textos.NOMBRE_CANAL[canal_vark],

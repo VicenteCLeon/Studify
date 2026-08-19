@@ -642,6 +642,34 @@ a:hover {
   margin-bottom: 1.5rem;
 }
 
+/* Paso 2 de la estructura pedagógica: la pregunta de activación. Se destaca
+   del cuerpo porque su función es que el estudiante se detenga a pensar antes
+   de leer la explicación; fundida en la prosa se lee de corrido y no activa
+   nada. */
+.capsule-activation {
+  background-color: var(--warning-bg);
+  border-left: 3px solid var(--warning);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.paso-etiqueta {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: 0.25rem;
+}
+
+.pregunta-activacion {
+  font-family: var(--font-heading);
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: var(--text-main);
+}
+
 .capsule-content {
   font-size: 1.125rem;
   line-height: 1.7;
