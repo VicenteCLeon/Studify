@@ -283,6 +283,42 @@ def test_contenido_demasiado_largo_se_rechaza():
     assert any("máximo es 300" in e for e in resultado.errores)
 
 
+def test_el_error_de_exceso_senala_cuanto_sobra_y_donde_recortar():
+    """AVANCE.md, sección 5 sedecies (24-ago-2026): capturando el texto crudo
+    de cada reintento se vio que el modelo devolvía la misma respuesta byte a
+    byte cuando el único motivo de rechazo era «tiene X palabras, el máximo es
+    Y» — sin un blanco concreto, no recortaba nada. El mensaje ahora dice
+    cuánto sobra y cuál es la parte más extensa.
+    """
+    datos = capsula_valida()
+    datos["representacion_adaptativa"] = [
+        {"tipo": "parrafo", "cuerpo": PARRAFO},
+        {"tipo": "parrafo", "cuerpo": EXPLICACION},
+        {"tipo": "parrafo", "cuerpo": PARRAFO},
+    ]
+
+    resultado = validar_capsula(datos)
+    (mensaje,) = [e for e in resultado.errores if "máximo es 300" in e]
+
+    palabras = resultado.metricas["palabras_contenido"]
+    assert f"sobran {palabras - 300}" in mensaje
+    assert "La parte más extensa es" in mensaje
+    # De los tres bloques `parrafo`, el basado en EXPLICACION es el más largo
+    # (82 palabras contra 81 de cada PARRAFO): tiene que ser el que se señale.
+    assert "'parrafo'" in mensaje
+
+
+def test_el_error_de_exceso_tambien_senala_el_concepto_central():
+    """La parte más larga no siempre es un bloque de `representacion_adaptativa`:
+    acá lo es `concepto_central`, y el mensaje tiene que nombrarlo igual."""
+    datos = capsula_valida()
+    resultado = validar(
+        {**datos, "concepto_central": " ".join(["palabra"] * 250)},
+        fragmentos=FRAGMENTOS,
+    )
+    assert any("La parte más extensa es el concepto central" in e for e in resultado.errores)
+
+
 def test_los_cuatro_pasos_del_cuerpo_suman_para_el_rango():
     """La cuenta incluye activación, concepto, representación y ejemplo.
 
@@ -551,6 +587,18 @@ def test_el_mensaje_de_reparacion_enumera_todos_los_defectos():
     assert "1." in mensaje and "2." in mensaje
     assert "999" in mensaje
     assert "español" in mensaje  # recuerda el idioma en cada reintento
+
+
+def test_el_mensaje_de_reparacion_pide_una_respuesta_distinta():
+    """AVANCE.md, sección 5 sedecies: el hallazgo fue que DeepSeek reenviaba
+    la respuesta anterior tal cual, sin cambiar nada, cuando el rechazo era
+    por exceso de palabras. El mensaje ahora se lo dice explícitamente."""
+    datos = capsula_valida()
+    datos["titulo"] = "Un título mucho más largo que diez palabras completas seguro"
+
+    mensaje = validar_capsula(datos).mensaje_para_reparacion()
+
+    assert "distinta de la anterior" in mensaje
 
 
 def test_el_error_de_esquema_llega_en_espanol():

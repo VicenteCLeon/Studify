@@ -33,7 +33,7 @@ from pydantic import ValidationError
 
 from studify.config import get_settings
 from studify.generation import idioma
-from studify.generation.schemas import Microcapsula
+from studify.generation.schemas import Microcapsula, contar_palabras
 from studify.rag.retriever import FragmentoRecuperado
 
 # Cercas de bloque Markdown: los modelos envuelven el JSON en ```json … ``` con
@@ -186,14 +186,58 @@ class ResultadoValidacion:
         Se enumeran **todos** los defectos y no solo el primero: cada reintento
         cuesta una llamada al modelo, y corregir de a uno agotaría los dos
         intentos disponibles en una cápsula que tenía tres problemas menores.
+
+        **La última línea existe por un hallazgo concreto (AVANCE.md, sección
+        5 sedecies, 24-ago-2026):** investigando por qué el perfil R fallaba
+        más, se capturó el texto crudo de cada intento y los tres eran
+        **byte a byte idénticos** — DeepSeek recibía el motivo de rechazo y
+        reenviaba exactamente la misma respuesta, sin cambiar una coma.
+        Pedir "corrige esto" no basta si el modelo no tiene una señal de que
+        repetirse no es una corrección válida.
         """
         listado = "\n".join(f"{i}. {e}" for i, e in enumerate(self.errores, start=1))
         return (
             "La respuesta anterior fue rechazada por estos motivos:\n"
             f"{listado}\n\n"
             "Corrige exclusivamente esos puntos y vuelve a entregar el objeto "
-            "JSON completo, en español y sin texto adicional fuera del JSON."
+            "JSON completo, en español y sin texto adicional fuera del JSON. "
+            "La respuesta nueva tiene que ser distinta de la anterior: si "
+            "envías el mismo contenido otra vez, el motivo de rechazo se "
+            "repite."
         )
+
+
+def _error_exceso_de_palabras(capsula: Microcapsula, palabras: int, maximo: int) -> str:
+    """Mensaje de la regla 2 cuando sobran palabras, con un blanco concreto.
+
+    Encontrado el 24-ago-2026 investigando por qué el perfil lector-escritor
+    (R) fallaba más que los otros tres (AVANCE.md, sección 5 sedecies): decir
+    solo «tiene X palabras, el máximo es Y» no le da al modelo ningún lugar
+    por dónde empezar a cortar, y en la práctica no cortaba nada. Señalar la
+    parte más extensa —normalmente el bloque `glosario` o `concepto_central`
+    en un perfil R, que trae más directivas de contenido que los demás— le da
+    un blanco concreto en vez de una cifra abstracta.
+    """
+    exceso = palabras - maximo
+    partes = [
+        ("la activación", contar_palabras(capsula.activacion)),
+        ("el concepto central", contar_palabras(capsula.concepto_central)),
+        *(
+            (
+                f"el bloque '{bloque.tipo}'"
+                + (f" (“{bloque.encabezado}”)" if bloque.encabezado else ""),
+                bloque.palabras(),
+            )
+            for bloque in capsula.bloques_legibles()
+        ),
+    ]
+    etiqueta, palabras_de_la_parte = max(partes, key=lambda par: par[1])
+    return (
+        f"el contenido tiene {palabras} palabras y el máximo es {maximo}: sobran "
+        f"{exceso}. La parte más extensa es {etiqueta}, con {palabras_de_la_parte} "
+        f"palabras — recórtala primero. No agregues contenido nuevo ni reordenes "
+        f"lo que ya está bien: solo acorta lo que sobra."
+    )
 
 
 def validar(
@@ -238,10 +282,7 @@ def validar(
             f"{ajustes.capsula_min_palabras}: hay que desarrollarlo más"
         )
     elif palabras > ajustes.capsula_max_palabras:
-        errores.append(
-            f"el contenido tiene {palabras} palabras y el máximo es "
-            f"{ajustes.capsula_max_palabras}: hay que recortarlo"
-        )
+        errores.append(_error_exceso_de_palabras(capsula, palabras, ajustes.capsula_max_palabras))
 
     # --- Regla 5: citas verificables -----------------------------------------
     disponibles = {f.id_fragmento: f for f in fragmentos}

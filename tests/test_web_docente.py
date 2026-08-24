@@ -10,15 +10,18 @@ Requieren Postgres (se saltan solos si no está) y las dependencias opcionales d
 ingesta (`pip install -e ".[ingest]"`).
 """
 
+import re
 from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import func, select
 
+from studify.api.routers.capsules import get_cliente_llm
 from studify.db.models import DocumentoFuente, Fragmento, ObjetivoAprendizaje
 from studify.main import app
 from tests.conftest import necesita_bd
+from tests.test_tagger import ClienteEtiquetadorFalso, ClienteQueDevuelveBasura
 
 pytestmark = necesita_bd
 
@@ -353,3 +356,173 @@ def test_un_campo_demasiado_largo_se_explica_en_espanol(http):
 
     assert "supera el máximo de 30 caracteres" in respuesta.text
     assert "String should have at most" not in respuesta.text
+
+
+# --- Etiquetado asistido por LLM (tagger) --------------------------------------
+#
+# Cierra el pendiente n.º 3 de AVANCE.md §6. Lo que protegen estos tests no es
+# que el modelo acierte —eso no se le puede exigir a un LLM—, es que la
+# sugerencia nunca se convierte en una asignación real por sí sola: sigue
+# haciendo falta el clic en «Validar», el mismo botón y el mismo endpoint que
+# ya existían.
+
+
+@pytest.fixture
+def documento_sin_clasificar(db):
+    """Documento con fragmentos pendientes y sin objetivo, sin pasar por PDF.
+
+    Los tests de ingesta de este archivo ya cubren el camino completo desde un
+    PDF real; el tagger no necesita eso —le basta con fragmentos en la base—,
+    así que se arma directo para no depender de `pymupdf`.
+    """
+    doc = DocumentoFuente(
+        titulo="Apunte sin clasificar",
+        formato="pdf",
+        asignatura=ASIGNATURA_PRUEBA,
+        hash_archivo="hash-de-prueba-tagger-web",
+        estado_curacion="pendiente",
+    )
+    db.add(doc)
+    db.flush()
+    for numero, texto in enumerate(
+        [
+            "La normalización reduce la redundancia de los datos almacenados.",
+            "Una dependencia parcial depende solo de parte de la clave compuesta.",
+        ],
+        start=1,
+    ):
+        db.add(
+            Fragmento(
+                id_documento=doc.id_documento,
+                numero_fragmento=numero,
+                tipo_fragmento="texto",
+                contenido_texto=texto,
+                estado_validacion="pendiente",
+            )
+        )
+    db.commit()
+    yield doc
+    db.delete(doc)
+    db.commit()
+
+
+@pytest.fixture
+def sin_llm():
+    app.dependency_overrides[get_cliente_llm] = lambda: None
+    yield
+    app.dependency_overrides.pop(get_cliente_llm, None)
+
+
+@pytest.fixture
+def llm_etiquetador():
+    """Sugiere siempre el primer objetivo que se le pase por argumento."""
+
+    def _instalar(**kwargs):
+        falso = ClienteEtiquetadorFalso(**kwargs)
+        app.dependency_overrides[get_cliente_llm] = lambda: falso
+        return falso
+
+    yield _instalar
+    app.dependency_overrides.pop(get_cliente_llm, None)
+
+
+def test_sin_llm_api_key_avisa_y_no_toca_nada(http, db, documento_sin_clasificar, sin_llm):
+    respuesta = http.post(
+        "/teacher/curation/tag", data={"id_documento": documento_sin_clasificar.id_documento}
+    )
+
+    assert respuesta.status_code == 200
+    assert "alerta-error" in respuesta.text
+    assert "LLM_API_KEY" in respuesta.text
+
+
+def test_tag_no_asigna_objetivo_solo_lo_propone(
+    http, db, objetivo, documento_sin_clasificar, llm_etiquetador
+):
+    """La invariante central, ahora verificada por HTTP: sigue sin decidir."""
+    llm_etiquetador(id_objetivo=objetivo.id_objetivo)
+
+    respuesta = http.post(
+        "/teacher/curation/tag", data={"id_documento": documento_sin_clasificar.id_documento}
+    )
+
+    assert respuesta.status_code == 200
+    assert respuesta.headers.get("HX-Trigger") == "fragmentos-actualizados"
+
+    fragmentos = db.scalars(
+        select(Fragmento)
+        .where(Fragmento.id_documento == documento_sin_clasificar.id_documento)
+    ).all()
+    assert all(f.id_objetivo is None for f in fragmentos), "propone, no decide"
+    assert all(f.estado_validacion == "pendiente" for f in fragmentos)
+
+
+def test_tag_preselecciona_el_objetivo_sugerido_en_la_bandeja(
+    http, db, objetivo, documento_sin_clasificar, llm_etiquetador
+):
+    llm_etiquetador(id_objetivo=objetivo.id_objetivo, etiqueta="Segunda forma normal")
+
+    http.post(
+        "/teacher/curation/tag", data={"id_documento": documento_sin_clasificar.id_documento}
+    )
+    bandeja = http.get(
+        f"/teacher/curation/fragmentos?id_documento={documento_sin_clasificar.id_documento}"
+    ).text
+
+    # Preseleccionado en el <select>, no como valor fijo: sigue siendo un
+    # `<option>` normal que el curador puede cambiar antes de validar.
+    opcion = re.search(
+        rf'<option value="{objetivo.id_objetivo}"[^>]*?(selected)?>', bandeja
+    )
+    assert opcion is not None and opcion.group(1) == "selected"
+    assert "badge-primary" in bandeja
+    assert "Segunda forma normal" in bandeja
+
+
+def test_tag_resume_cuantos_fragmentos_sugirio(
+    http, objetivo, documento_sin_clasificar, llm_etiquetador
+):
+    llm_etiquetador(id_objetivo=objetivo.id_objetivo)
+
+    respuesta = http.post(
+        "/teacher/curation/tag", data={"id_documento": documento_sin_clasificar.id_documento}
+    )
+
+    assert "2 de 2 fragmentos con objetivo sugerido" in respuesta.text
+
+
+def test_tag_sin_candidatos_lo_dice_sin_romper(http, documento_sin_clasificar, llm_etiquetador):
+    """Sin objetivos en el catálogo de esa asignatura, no hay nada que sugerir."""
+    llm_etiquetador()
+
+    respuesta = http.post(
+        "/teacher/curation/tag", data={"id_documento": documento_sin_clasificar.id_documento}
+    )
+
+    assert respuesta.status_code == 200
+    # "sin un objetivo claro" es el texto del caso "ok pero sin match"; acá el
+    # motivo es otro (sin candidatos), así que corresponde "fallaron".
+    assert "sin un objetivo claro" not in respuesta.text
+    assert "fallaron" in respuesta.text
+
+
+def test_tag_json_inservible_no_tumba_el_lote(http, db, documento_sin_clasificar):
+    """Dos fragmentos, el modelo devuelve basura para ambos: se reporta, no revienta."""
+    app.dependency_overrides[get_cliente_llm] = lambda: ClienteQueDevuelveBasura()
+    try:
+        respuesta = http.post(
+            "/teacher/curation/tag", data={"id_documento": documento_sin_clasificar.id_documento}
+        )
+    finally:
+        app.dependency_overrides.pop(get_cliente_llm, None)
+
+    assert respuesta.status_code == 200
+    assert "fallaron" in respuesta.text
+
+
+def test_tag_sin_fragmentos_pendientes_lo_dice(http, objetivo, llm_etiquetador):
+    llm_etiquetador(id_objetivo=objetivo.id_objetivo)
+
+    respuesta = http.post("/teacher/curation/tag", data={"id_documento": 10**9})
+
+    assert "No hay fragmentos pendientes" in respuesta.text

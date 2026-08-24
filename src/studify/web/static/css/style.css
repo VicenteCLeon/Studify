@@ -365,6 +365,21 @@ a:hover {
   border-color: var(--danger);
 }
 
+/* Comparación V/A/R/K del simulador docente: cuatro columnas, una por canal.
+   `minmax(280px, 1fr)` deja las cuatro en una fila en una pantalla ancha y las
+   apila en una angosta — sin scroll horizontal, que en una tabla de 4 cápsulas
+   sería incómodo de recorrer. */
+.grid-comparacion {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.comparacion-columna {
+  padding: 1.25rem;
+}
+
 /* Configuración de contenido derivada del perfil (tabla 17.4) */
 .grid-config {
   display: grid;

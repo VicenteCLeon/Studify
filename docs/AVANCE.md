@@ -2,12 +2,50 @@
 
 > Documento vivo. Se actualiza al cierre de cada fase para que cualquier sesión de trabajo
 > (o cualquier persona) pueda retomar el proyecto sin releer todo el hilo de conversación.
-> Última actualización: **19-ago-2026** — **la microcápsula pasó a tener la estructura
-> pedagógica de siete pasos** que definió la profesora guía, y el prompt le muestra al modelo
-> los cuatro pesos C_* en crudo; ver sección 5 terdecies. Antes: alta de objetivos desde el
-> panel del docente (14-ago, sección 5 duodecies), rebranding a "RepasAi" y fondo de marca
-> (13-ago, sección 5 undecies) y panel de analíticas con tres bugs de fondo corregidos
-> (12-ago, sección 5 decies).
+> Última actualización: **24-ago-2026** — repaso de coherencia entre `PLAN_DESARROLLO.md` y el
+> estado real: quedaron marcadas ✅/reabiertas las cinco decisiones de la sección 6 del plan
+> (el mapeo de C_* se cerró con una fórmula **distinta** a la propuesta original — sobre
+> porcentajes VARK, no sobre C_* —, fragmentos no textuales quedó parcialmente cerrado, tema y
+> regeneración cerrados, audio reabierto), se corrigió una frase de la Fase 5 que ya no era
+> cierta (el simulador "todavía no" comparaba V/A/R/K — sí lo hace desde hoy mismo), se anotó
+> el estado real del criterio de término de la Fase 3 (comparación hecha, ≥95% todavía no) y se
+> marcó como superado el esquema de cápsula de la sección 3, reemplazado el 19-ago por la
+> estructura de siete pasos. Nada de esto es código nuevo — es que el plan había quedado un
+> paso atrás del propio `AVANCE.md`. Antes, el mismo día: se agregó la **Fase 6** a
+> `PLAN_DESARROLLO.md` §4 a pedido del equipo — generación local de imagen/audio/video con
+> modelos gratuitos (candidatos: SDXL-Turbo, Piper TTS, video compuesto con `ffmpeg`/`moviepy`)
+> para complementar los canales V/A/K, fuera del horizonte de 10 semanas y sin bloquear el
+> criterio de término de las fases 1–5. Reabre el punto 2 de la sección 7 (`audio_activo`);
+> queda como pendiente n.º 16 de la sección 6, no iniciado — falta confirmar qué GPU/VRAM tiene
+> disponible cada máquina del equipo antes de empezar a implementar. Antes, el mismo día (esta
+> vez sí con código): implementado `knowledge/tagger.py`: el LLM propone objetivo y etiqueta
+> temática por fragmento contra el catálogo curricular activo, y la bandeja
+> de revisión del docente preselecciona esa propuesta en el `<select>` que ya existía. La
+> propuesta nunca escribe `Fragmento.id_objetivo` ni `estado_validacion` — "propone, no decide"
+> se hizo cumplir en el código, no solo en la intención —, y un `id_objetivo` fuera del catálogo
+> entregado (u otra asignatura) se descarta igual que una cita alucinada. Verificado contra
+> DeepSeek real: acertó los dos objetivos que sí correspondían a sus fragmentos y devolvió
+> `null`, con motivo, en el que no calzaba con ninguno. Cierra el pendiente n.º 3 (sección 5
+> septendecies). Suite completa: 308 tests en verde. Antes, el mismo día: investigado por qué el
+> perfil lector-escritor (R) fallaba la validación más que los otros tres (pendiente n.º 15),
+> hasta encontrar y corregir
+> **dos causas reales**: su objetivo de palabras interpolaba exactamente en el máximo duro del
+> validador, sin margen para la variación normal del modelo (corregido en
+> `rag/orchestrator.py`); y, capturando el texto crudo de cada intento, se confirmó que el
+> modelo **reenviaba la respuesta anterior byte a byte idéntica** cuando el mensaje de
+> reparación no le daba un blanco concreto (corregido en `generation/validator.py`). Verificado
+> contra DeepSeek real en tres rondas: **6 de 11 generaciones de R exitosas en total (55%)**,
+> con dos de los tres temas de prueba pasando ya de forma consistente — mejora real medida, no
+> resuelto del todo: ver sección 5 sedecies. Antes, el mismo día: el simulador docente pasó a
+> comparar los cuatro perfiles VARK lado a lado
+> (`POST /teacher/simulator/compare`), cerrando el criterio de término de la Fase 3 y siendo la
+> corrida que encontró el problema de R (sección 5 quindecies). Antes de eso: los 16 enunciados
+> del cuestionario VARK se verificaron carácter a carácter contra el CSV original y resultaron
+> idénticos, cerrando el pendiente n.º 6 (sección 5 quaterdecies). Antes de eso: la microcápsula
+> pasó a tener la estructura pedagógica de siete pasos que definió la profesora guía (19-ago,
+> sección 5 terdecies), alta de objetivos desde el panel del docente (14-ago,
+> sección 5 duodecies), rebranding a "RepasAi" y fondo de marca (13-ago, sección 5 undecies) y
+> panel de analíticas con tres bugs de fondo corregidos (12-ago, sección 5 decies).
 
 ---
 
@@ -68,6 +106,14 @@ que arrastraban los routers mock).
 **Estructura pedagógica de siete pasos (19-ago-2026, sección 5 terdecies):** la profesora guía observó que el informe no define la estructura de una microcápsula y propuso una (OA → activación → concepto central → representación adaptativa VARK → ejemplo → pregunta de comprobación → retroalimentación). Está implementada: cada paso es ahora un campo obligatorio del contrato en vez de un bloque suelto dentro de una lista, y el prompt le muestra al modelo los cuatro pesos C_* en crudo además de las instrucciones estructurales. Verificado contra DeepSeek con material real: cápsula válida al primer intento, 247 palabras, los siete pasos en orden. **277 tests en verde.** Tres puntos de su lista quedaron fuera a propósito (embeddings, OA secundarios y el campo "contenido" del OA) — el detalle está en la sección 5 terdecies y en [`AUDITORIA_LISTA_PROFESORA_14AGO2026.md`](AUDITORIA_LISTA_PROFESORA_14AGO2026.md).
 
 **Alta de objetivos desde el panel del docente (14-ago-2026, sección 5 duodecies):** `POST /api/objetivos` existía desde la Fase 2 pero no estaba conectado a ninguna pantalla — el catálogo solo se podía cargar por consola. Ahora hay un formulario en `/teacher/curation` que reutiliza el mismo handler; el script de carga masiva se conserva para sembrar un plan de estudios completo. **265 tests en verde** (261 + 4), `ruff` limpio. De paso se cargó el primer material curricular real del proyecto —5 objetivos de "Diseño de UX" y un PPTX con 40 fragmentos— aunque todavía sin curar, y se encontró que esta máquina tenía dos migraciones de Patricio sin aplicar (`/teacher/analytics` daba 500 hasta correr `alembic upgrade head`).
+
+**Enunciados VARK verificados (24-ago-2026, sección 5 quaterdecies):** los 16 enunciados del cuestionario en `web/textos.py`, marcados como "provisionales" desde la Fase 4, resultaron ser idénticos carácter a carácter al CSV original al compararlos programáticamente — no hubo nada que reemplazar. Test de regresión nuevo (`tests/test_textos_vark.py`) para que no vuelva a divergir en silencio.
+
+**Simulador: comparación V/A/R/K lado a lado (24-ago-2026, sección 5 quindecies):** `POST /teacher/simulator/compare` genera las cuatro cápsulas puras del mismo objetivo y las muestra una junto a otra, cerrando el criterio de término de la Fase 3. Verificado contra DeepSeek real (no solo tests): V, A y K salieron válidos y visiblemente distintos entre sí; **R falló la validación las tres veces por exceder las 300 palabras**, un hallazgo no buscado.
+
+**Investigación y doble corrección del fallo de R (24-ago-2026, sección 5 sedecies):** investigando por qué el perfil lector-escritor fallaba más que los otros tres, se encontraron y corrigieron **dos causas reales**, cada una verificada contra DeepSeek real por separado. La primera: el objetivo de palabras de R interpola exactamente en el máximo duro del validador (300), sin margen para la variación normal del modelo — corregido en `rag/orchestrator.py` (el modelo ahora apunta a 270, sin tocar el `palabras_texto` de `vark/rules.py` que persiste la tabla 17.4); la tasa de éxito subió de 1/3 a 2/3 sobre los mismos tres temas. La segunda, más sorprendente: capturando el texto crudo de cada intento se vio que el modelo **reenviaba la respuesta anterior byte a byte idéntica** cuando el mensaje de reparación no le daba un blanco concreto — corregido en `generation/validator.py`, y verificado que ahora el modelo sí recorta en vueltas sucesivas (3257→3202→3104 caracteres, cada una distinta) en vez de repetirse. **Panorama agregado de las tres rondas de verificación: 6 de 11 generaciones de R exitosas (55%)**, todavía lejos del ≥95% del criterio de término, pero dos de los tres temas de prueba ya pasan de forma consistente. Detalle completo y lo que queda pendiente en el pendiente n.º 15.
+
+**Etiquetado asistido por LLM (24-ago-2026, sección 5 septendecies):** `knowledge/tagger.py` le muestra al modelo el catálogo de objetivos activos de la asignatura y el texto de un fragmento, y le pide que proponga objetivo y etiqueta temática. La propuesta **no escribe** `Fragmento.id_objetivo` ni `estado_validacion` — vive en `metadatos_json` y solo preselecciona el `<select>` que el curador ya tenía que confirmar con «Validar» —, y un objetivo fuera del catálogo entregado se descarta igual que una cita alucinada. Verificado contra DeepSeek real: acertó los dos objetivos que sí correspondían a sus fragmentos y devolvió `null` en el que no calzaba con ninguno. Cierra el pendiente n.º 3. **308 tests en verde** (289 + 19).
 
 Queda una discrepancia abierta: las tablas 16.2/16.3 del informe no se reproducen desde el CSV (sección 5 ter) — es un problema del informe, no del código.
 
@@ -235,11 +281,13 @@ Studify/
 │  │     ├─ diagnostics.py  # ✅ POST /api/diagnosticos, GET /api/diagnosticos/{id}
 │  │     ├─ knowledge.py    # ✅ documentos, fragmentos, curación, catálogo, recuperar
 │  │     └─ capsules.py     # ✅ POST /api/capsulas (+ caché, ?regenerar, historial)
-│  ├─ knowledge/         # ✅ ingesta y curación (Fase 2)
+│  ├─ knowledge/         # ✅ ingesta, curación y etiquetado (Fase 2)
 │  │  ├─ extract.py      #    PDF/PPTX → bloques con página y detección de encabezados
 │  │  ├─ chunker.py      #    bloques → fragmentos recuperables (fronteras duras)
 │  │  ├─ ingest.py       #    persistencia + dedup por SHA-256 + almacén de archivos
-│  │  └─ curation.py     #    validar / descartar / asignar objetivo / editar texto
+│  │  ├─ curation.py     #    validar / descartar / asignar objetivo / editar texto
+│  │  └─ tagger.py       #    ✅ sugerencia de objetivo/etiqueta por LLM — propone, no decide
+│  │                     #       (sección 5 septendecies, 24-ago-2026)
 │  ├─ rag/               # ✅ recuperación determinista (Fase 2) + prompt (Fase 3)
 │  │  ├─ retriever.py    #    SQL por id_objetivo + FTS español + orden por canal VARK
 │  │  ├─ orchestrator.py #    ✅ ensamblado del prompt maestro + huella de caché
@@ -253,13 +301,13 @@ Studify/
 │  └─ web/               # ✅ UI mínima con HTMX + Jinja2 (Fase 4, conectada al motor)
 │     ├─ deps.py         #    entorno Jinja2 compartido
 │     ├─ sesion.py       #    ✅ cookie `id_estudiante` firmada con HMAC
-│     ├─ textos.py       #    ⚠️ copy de la UI + enunciados PROVISIONALES de los 16 ítems
+│     ├─ textos.py       #    ✅ copy de la UI + enunciados de los 16 ítems (verificados 24-ago)
 │     ├─ routers/
 │     │  ├─ student.py   #    ✅ cuestionario, perfil, catálogo, visor, quiz e intentos (Fase 5)
 │     │  └─ teacher.py   #    ✅ curación + analíticas + simulador VARK (Fase 5, sección 5 decies)
 │     ├─ templates/
 │     │  ├─ student/     #    _capsula.html (partial compartido con el simulador), _feedback, …
-│     │  └─ teacher/     #    _bandeja, _fila, analytics.html, simulator.html
+│     │  └─ teacher/     #    _bandeja, _fila, analytics.html, simulator.html, _comparacion.html
 │     └─ static/css/
 ├─ tests/
 │  ├─ conftest.py        # ✅ fixtures compartidas (necesita_bd, db, almacen_temporal)
@@ -269,16 +317,18 @@ Studify/
 │  ├─ test_knowledge_ingesta.py  # ✅ 22 tests de extracción y chunking (sin BD)
 │  ├─ test_knowledge_persistencia.py  # ✅ 6 tests de ingesta contra Postgres
 │  ├─ test_curacion_retriever.py      # ✅ 17 tests de curación y determinismo
+│  ├─ test_tagger.py                  # ✅ 12 tests del etiquetado por LLM (propone, no decide)
 │  ├─ material.py                # ✅ material de prueba compartido de la Fase 3 (no es un test)
-│  ├─ test_generacion_contrato.py     # ✅ 42 tests del contrato y las 6 reglas (sin BD ni LLM)
-│  ├─ test_prompt_maestro.py          # ✅ 23 tests del prompt y la huella (sin BD ni LLM)
+│  ├─ test_generacion_contrato.py     # ✅ 56 tests del contrato y las 6 reglas (sin BD ni LLM)
+│  ├─ test_prompt_maestro.py          # ✅ 25 tests del prompt y la huella (sin BD ni LLM)
 │  ├─ test_generador.py               # ✅ 15 tests del bucle de reparación (LLM falso)
 │  ├─ test_api_capsulas.py            # ✅ 14 tests del endpoint (Postgres, LLM falso)
 │  ├─ test_web_estudiante.py          # ✅ 24 tests del flujo web del estudiante (Fase 4)
-│  ├─ test_web_docente.py             # ✅ 7 tests del panel de curación (Fase 4)
-│  ├─ test_web_simulador.py           # ✅ 8 tests del simulador VARK (Fase 5)
+│  ├─ test_web_docente.py             # ✅ 18 tests del panel de curación, incl. etiquetado (Fase 4)
+│  ├─ test_web_simulador.py           # ✅ 13 tests del simulador VARK, incl. comparación (Fase 5)
 │  ├─ test_interaccion_quiz.py        # ✅ 12 tests de intentos numerados y ownership (Fase 5)
-│  └─ test_cobertura_curricular.py    # ✅ 12 tests de cobertura por canal (Fase 5)
+│  ├─ test_cobertura_curricular.py    # ✅ 12 tests de cobertura por canal (Fase 5)
+│  └─ test_textos_vark.py             # ✅ 2 tests: enunciados vs. CSV original (se saltan sin el CSV)
 ├─ scripts/
 │  ├─ import_vark_csv.py   # ✅ carga los 43 diagnósticos reales (--dry-run, --reset)
 │  ├─ cargar_objetivos.py  # ✅ carga el catálogo curricular desde CSV (--dry-run)
@@ -996,6 +1046,386 @@ Tres puntos quedaron fuera a propósito y conviene tenerlos claros para la próx
 
 ---
 
+## 5 quaterdecies. Verificación de los 16 enunciados VARK (24-ago-2026)
+
+Cierra el pendiente n.º 6 de la sección 6, abierto desde la Fase 4 (sección 5 nonies,
+11-ago-2026): `web/textos.py` mostraba los 16 enunciados del cuestionario con un aviso de que
+eran una "redacción equivalente, reconstruida desde las alternativas", y que había que
+reemplazarlos por los originales del CSV antes de aplicarle el instrumento a más estudiantes.
+
+**El aviso estaba desactualizado.** Esta máquina sí tiene `data/data_cuestionarios_43.csv`
+(no versionado, pero presente acá), así que se pudo comparar programáticamente:
+
+```python
+# tests/test_textos_vark.py::test_enunciados_identicos_al_csv_original
+for mostrado, real in zip(ENUNCIADOS, enunciados_del_csv, strict=True):
+    assert mostrado == real
+```
+
+Los 16 enunciados de `web/textos.py` resultaron **idénticos, carácter a carácter** (tildes,
+signos de interrogación y puntuación incluidos) a las columnas 5:21 del encabezado del CSV. No
+hubo que corregir ni un enunciado. La hipótesis más probable es que quien los escribió durante
+la Fase 4 sí tenía el CSV a la vista en ese momento y copió el texto literal, pero redactó el
+aviso de forma conservadora ("por si acaso hay que reconstruirlos") y nadie volvió a
+verificarlo contra el archivo — que es exactamente el tipo de advertencia que envejece mal si
+no se revisita.
+
+**Lo que sí se encontró:** un salto de línea sobrante en el encabezado del ítem 2 (artefacto
+propio del export de Google Forms, columna `...lo primero que haces es:\n`), que no afecta la
+comparación porque el test hace `.strip()` de cada columna antes de comparar — es whitespace de
+exportación, no una diferencia de contenido.
+
+### Qué se hizo
+
+- **`web/textos.py`**: se reemplazó el docstring de advertencia por uno que documenta la
+  verificación (con fecha y con el archivo de test que la sostiene), sin tocar ni una palabra
+  de la tupla `ENUNCIADOS` — no había nada que corregir.
+- **`tests/test_textos_vark.py`** (nuevo, 2 tests): compara `ENUNCIADOS` contra
+  `vark/instrumento.ITEMS` (mismo largo, sin requerir el CSV) y contra el CSV real
+  (carácter a carácter, con `strict=True` en el `zip` para que un desfase de largo falle en vez
+  de comparar en silencio hasta el ítem más corto). Sigue el mismo criterio que `necesita_bd` en
+  `conftest.py`: se **salta**, no falla, en una máquina sin el CSV — así queda como guardia de
+  regresión permanente sin convertirse en un test frágil para el resto del equipo.
+
+---
+
+## 5 quindecies. Simulador: comparación V/A/R/K lado a lado (24-ago-2026)
+
+Cierra la mitad del pendiente n.º 10 de la sección 6 (queda abierta la otra mitad, "perfiles
+reales de la cohorte") y con ella el criterio de término de la Fase 3 en
+`PLAN_DESARROLLO.md` §4: «comparar visualmente cuatro cápsulas del mismo objetivo generadas
+para V, A, R y K: si no se distinguen entre sí, la adaptación no está funcionando». Hasta
+ahora el simulador solo generaba una cápsula a la vez; comparar los cuatro perfiles exigía
+abrir cuatro pestañas y acordarse de lo que decía cada una.
+
+### Qué se agregó
+
+- **`POST /teacher/simulator/compare`** (`web/routers/teacher.py`): recibe un `id_objetivo` y
+  genera las cuatro cápsulas puras (V, A, R, K al 100%) sobre el mismo material, en el orden
+  fijo de `vark.scoring.CANALES`.
+- **`teacher/_comparacion.html`** (nuevo partial): cuatro columnas en una grilla, cada una con
+  el título, la activación, el concepto central, los tipos de bloque de la representación
+  adaptativa (como badges, para ver la huella estructural de un vistazo), los bloques mismos,
+  el tipo de actividad de cierre y el conteo de palabras/fuentes. **No reutiliza
+  `student/_capsula.html`**: cuatro cápsulas completas una junto a la otra habrían sido
+  ilegibles, y lo que hay que juzgar acá es la diferencia estructural entre columnas, no leer
+  cada cápsula entera — para eso sigue estando el generador de un solo canal.
+- **`teacher/simulator.html`**: segundo formulario, "Los cuatro perfiles, lado a lado", con su
+  propio `<select>` de objetivo (no comparte el del generador de un canal) para que el
+  `required` del `<select>` de canal del primer formulario no bloquee el botón de comparar.
+
+### Decisiones tomadas
+
+| Decisión | Alternativa descartada | Motivo |
+|---|---|---|
+| **Cada columna se genera y falla de forma independiente** (`_generar_capsula_pura` atrapa su propio error y devuelve un dict con `error`, nunca deja escapar una excepción) | Abortar toda la comparación si una de las cuatro llamadas al LLM falla | Cuatro llamadas son cuatro oportunidades de que una falle (timeout, cápsula que no pasa el validador en los reintentos). Abortar por una desperdiciaría las otras tres, que ya se pagaron. Verificado con un cliente falso que falla desde la tercera llamada (`tests/test_web_simulador.py::test_compare_una_columna_que_falla_no_tumba_a_las_otras`) y, sin buscarlo, con el modelo real — ver más abajo. |
+| **`_generar_capsula_pura` se factorizó desde `post_simulator_generate`** | Duplicar la construcción del perfil puro y la llamada al motor en la ruta nueva | El generador de un solo canal y el comparador tienen que producir exactamente la misma cápsula ante el mismo canal; si divergieran, la comparación de a cuatro podría mostrar algo distinto de lo que el docente ya vio al probar un canal suelto. |
+| **La comparación no muestra `indice_correcta` ni `retroalimentacion`**, solo el tipo de actividad y la pregunta | Mostrar la actividad completa, como hace el generador de un solo canal | La comparación es sobre *estructura* (¿la actividad cambia de `quiz_mc` a `intentalo_tu` con el perfil K?, ¿la pregunta cambia de tono?), no sobre la clave de corrección. Para revisar la actividad completa está el generador de un canal, que sí la muestra entera. |
+| **Grilla `auto-fit, minmax(280px, 1fr)`** en vez de una fila con scroll horizontal | `overflow-x: auto` con las cuatro columnas en una sola fila | Cuatro cápsulas comparándose son exactamente el caso en que uno quiere verlas todas sin desplazarse; en una pantalla angosta se apilan en vez de obligar a hacer scroll para llegar a la cuarta. |
+
+### Verificación contra el modelo real, no solo tests
+
+Con los 13 tests nuevos en verde (`tests/test_web_simulador.py`, 8→13) se hizo además una
+corrida real contra DeepSeek —igual que en la Fase 3 y en la sección 5 terdecies—, sembrando
+un objetivo y un fragmento de prueba y llamando al endpoint sin sustituir el cliente LLM.
+
+**Resultado: 3 de 4 columnas salieron válidas y visiblemente distintas entre sí**, que es
+justamente lo que el criterio de término pide poder ver:
+
+- **V** trajo un esquema jerárquico, una tabla comparativa y un párrafo — material para
+  «ver» la estructura.
+- **A** trajo una analogía cotidiana («imagina que tienes una lista de pedidos…») en tono
+  conversacional.
+- **K** trajo una secuencia paso a paso, un ejemplo resuelto, y su actividad de cierre cambió
+  sola a `intentalo_tu` (respuesta abierta) en vez de `quiz_mc` — exactamente la directiva
+  `actividad_aplicada` de `vark/rules.py` en acción.
+- **R falló las tres veces**: «el contenido tiene 360 palabras y el máximo es 300: hay que
+  recortarlo». El bucle de reparación reinyectó el error dos veces y el modelo no logró bajar
+  lo suficiente. La comparación **no se cayó por esto** — mostró las otras tres columnas y el
+  motivo del fallo en la cuarta, que es exactamente el diseño de resiliencia de esta entrega.
+
+Este hallazgo no estaba buscado — apareció al verificar la funcionalidad, no al perseguir un
+bug— y queda registrado como pendiente n.º 15 de la sección 6: con una sola corrida no alcanza
+para afirmar que el canal R falla sistemáticamente, pero es la clase de dato que el criterio
+de término de la Fase 3 (`≥95% cápsula válida`) tiene que medir con más repeticiones antes de
+darse por cumplido, y el comparador es ahora la herramienta que permite observarlo de un
+vistazo en vez de tropezar con él por casualidad.
+
+Los datos de prueba (objetivo, documento y fragmento sembrados a mano para esta verificación)
+se borraron después: la base quedó exactamente como estaba antes de la corrida.
+
+---
+
+## 5 sedecies. Por qué falla el perfil R: dos causas encontradas y corregidas (24-ago-2026)
+
+Cierra —parcialmente— el pendiente n.º 15 que dejó la sección anterior. No es una corrección
+de un test: es una investigación sobre el motivo de un fallo real contra el modelo, con dos
+correcciones encontradas una después de la otra, cada una aplicada y vuelta a medir contra el
+modelo real antes de seguir.
+
+### La causa está en el código, no en el modelo
+
+`vark/rules._palabras_objetivo` interpola linealmente el objetivo de palabras de la cápsula
+sobre el rango 150–300 (cap. 11.1), según dónde cae `C_texto` dentro de su rango alcanzable
+[40, 75] (cap. 11.2). El perfil lector-escritor puro tiene el coeficiente más alto de la matriz
+para ese componente (0.75, el máximo de toda la fila), así que su `C_texto` cae exactamente en
+75 — el techo del rango— y su objetivo de palabras interpola exactamente en **300**: el mismo
+número que `capsula_max_palabras`, el máximo duro que aplica el validador (regla 2 del plan §3).
+
+El prompt le dice al modelo, literalmente: «Extensión del contenido: aproximadamente 300
+palabras (mínimo 150, máximo 300)». Apuntar al mismo número que el techo no deja ningún margen
+para la variación normal de redacción de un LLM — cualquier verbosidad de más cae directo en
+rechazo. Ningún otro perfil tiene este problema: el segundo coeficiente más alto de la fila
+`texto` es K (0.50 → objetivo ≈ 193) y después A (0.55 → objetivo ≈ 214), ambos con más de 80
+palabras de margen antes de tocar el techo. Es un caso límite de una fórmula que en general
+está bien —interpolación lineal sobre un rango acotado—, no un error de esa fórmula: el problema
+es que nunca se había puesto ese caso límite frente al modelo real hasta la sección anterior.
+
+### Confirmación empírica antes de tocar nada
+
+Se repitió la generación del perfil R puro sobre tres temas nuevos y distintos entre sí (para
+que no fuera un problema de un tema en particular), sembrando material de prueba y usando el
+cliente real de DeepSeek:
+
+| Tema | Resultado | Detalle |
+|---|---|---|
+| Segunda forma normal | ❌ Falló | 345 palabras las tres veces —**exactamente el mismo número en los tres intentos**, la reinyección del error no le hizo cambiar nada perceptible al modelo |
+| Recursividad en algoritmos | ❌ Falló | 359 → 303 → 303 palabras: bajó una vez y se estancó |
+| Notación O grande | ✅ Pasó | 299 palabras al segundo intento — pasó raspando, a 1 palabra del límite |
+
+**1 de 3 (33%)**, coherente con el fallo ya visto en la sección anterior con un cuarto tema
+distinto. Con este dato ya no es una sola corrida: son cuatro intentos de R en tres sesiones
+distintas, con **tres fallos por el mismo motivo exacto**.
+
+### La corrección
+
+En `rag/orchestrator.py::construir`, el número que se le pide al modelo (`palabras_objetivo`,
+el mismo que entra en la huella de caché) queda acotado a `capsula_max_palabras -
+MARGEN_PALABRAS_OBJETIVO` (30 palabras, así que 270 con la configuración actual), sin bajar
+nunca de `capsula_min_palabras`. **No se tocó `vark/rules.py`**: `configuracion_contenido.
+palabras_texto` —el campo persistido de la tabla 17.4, aprobado por el equipo el 06-ago-2026—
+sigue siendo exactamente 300 para el perfil R puro; lo único que cambia es el número que se
+escribe dentro del texto del prompt. `test_perfil_lector_puro_pide_mas_palabras_que_visual_
+puro` (`test_vark.py`) sigue pasando sin tocarlo.
+
+Se descartó bajar el propio `palabras_texto` de `rules.py`: habría cambiado un valor que la
+tabla 17.4 persiste y que el equipo ya aprobó, por una razón que es enteramente de *cómo se le
+comunica el número al modelo*, no de cuántas palabras le corresponden al perfil según el
+informe.
+
+### Verificación después de la corrección
+
+Se repitió la misma corrida —los mismos tres temas, mismo perfil R puro, mismo modelo real—:
+
+| Tema | Antes | Después |
+|---|---|---|
+| Segunda forma normal | ❌ 345 palabras (máx. 300) | ✅ 277 palabras, 1 intento |
+| Recursividad en algoritmos | ❌ 359→303 palabras | ✅ 292 palabras, 1 intento |
+| Notación O grande | ✅ 299 palabras (raspando) | ❌ 310 palabras las tres veces |
+
+**La tasa de éxito subió de 1/3 a 2/3** sobre exactamente los mismos temas. También bajó la
+latencia de los que sí pasaron (6–7 s con 1 intento, contra 12–17 s cuando había que reintentar)
+y, sobre las dos corridas que sí pasaron, quedaron más lejos del límite (277 y 292, contra 299
+antes). **No queda resuelto del todo**: "Notación O grande" pasó antes y falla ahora —la
+temperatura del modelo (0.4, no cero) introduce variación entre corridas incluso con el mismo
+prompt, así que parte del efecto es ruido y no se puede afirmar que el margen de 30 sea el
+número óptimo con esta sola comparación—, y el patrón más preocupante persiste: **el modelo
+devolvió el mismo conteo de palabras en los tres intentos**, tanto antes como después de la
+corrección. La reinyección del error ("recórtalo") no parece estar logrando que el modelo haga
+un recorte real; podría estar haciendo cambios cosméticos que no bajan el total, o simplemente
+no está claro *qué* recortar. Ese es un motivo de fallo distinto del que se corrigió acá y queda
+como parte no resuelta del pendiente n.º 15.
+
+### Verificación de que no rompió nada
+
+`tests/test_prompt_maestro.py` gana dos tests: uno que fija que el objetivo que ve el modelo
+para R puro queda por debajo del máximo real, y otro que confirma que el margen no le cambia el
+número a ningún perfil que no se acerque al techo (V, A, K y el multimodal equilibrado). **286
+tests en verde** (284 + 2), `ruff` limpio. Los datos de prueba de las dos corridas contra el
+modelo real se borraron al terminar cada una.
+
+### Segunda causa: el modelo repetía la respuesta byte a byte
+
+El patrón que quedó pendiente arriba —mismo conteo de palabras en los tres intentos— se
+investigó capturando el texto crudo de **cada** intento, no solo el conteo final, envolviendo el
+cliente real con un espía que guarda lo que se envía y lo que se recibe. Se repitió R sobre
+«Notación O grande» —el tema que venía fallando— y se comparó intento 1 contra intento 2 contra
+intento 3 con `==` de Python, no por longitud:
+
+```
+intento 1: 3268 caracteres
+intento 2: 3268 caracteres  →  ¿idéntico al intento 1?  True
+intento 3: 3268 caracteres  →  ¿idéntico al intento 2?  True
+```
+
+**Los tres intentos eran byte a byte idénticos.** No es que el modelo intentara acortar y no
+lograra bajar lo suficiente: **no cambiaba una sola coma**. El JSON capturado confirma que el
+mensaje de reparación sí le llegaba completo y correcto en cada reintento (`num_mensajes_
+enviados` crecía 2 → 4 → 6, y el último mensaje de usuario traía el motivo de rechazo tal cual lo
+arma `mensaje_para_reparacion`) — así que no era un bug en cómo se arma o se envía la
+conversación. El problema es que el mensaje —«tiene 337 palabras, el máximo es 300: hay que
+recortarlo»— no le daba al modelo ningún lugar concreto por dónde empezar, y ante eso DeepSeek
+optaba por reenviar lo que ya consideraba una buena respuesta antes que arriesgarse a estropearla
+recortando a ciegas.
+
+### La segunda corrección
+
+Dos cambios en `generation/validator.py`, ambos en el mensaje que se reinyecta:
+
+1. **`_error_exceso_de_palabras`** (nueva función): el mensaje de la regla 2 cuando sobran
+   palabras ahora dice **cuánto** sobra (`sobran {exceso}`, no solo el total y el máximo) y
+   **cuál es la parte más extensa** —comparando `activación`, `concepto_central` y cada bloque de
+   `bloques_legibles()` por su cuenta de palabras—, nombrándola por su tipo y su encabezado si
+   tiene uno. Le da al modelo un blanco concreto en vez de una resta que tiene que hacer él
+   mismo y que, evidentemente, no estaba usando para decidir qué tocar.
+2. **`mensaje_para_reparacion`**: se agregó una frase explícita — «La respuesta nueva tiene que
+   ser distinta de la anterior: si envías el mismo contenido otra vez, el motivo de rechazo se
+   repite» —, dirigida exactamente al comportamiento que se observó (reenviar lo mismo).
+
+Tests nuevos en `tests/test_generacion_contrato.py` (3): que el mensaje incluya el exceso exacto
+y la parte más larga cuando esta es un bloque, que no reviente cuando la parte más larga es
+`concepto_central` en vez de un bloque (cubre la rama sin caso especial de empate), y que
+`mensaje_para_reparacion` incluya el pedido explícito de una respuesta distinta.
+
+### Verificación de la segunda corrección
+
+Se repitió la captura byte a byte sobre el mismo tema que fallaba, con el mensaje ya corregido:
+
+```
+intento 1: 3257 caracteres
+intento 2: 3202 caracteres  →  ¿idéntico al intento 1?  False
+intento 3: 3104 caracteres  →  ¿idéntico al intento 2?  False
+```
+
+**Esta vez el modelo sí recortó en cada vuelta** —3257 → 3202 → 3104 caracteres, cada uno
+distinto del anterior— y la cápsula quedó válida al tercer intento con 291 palabras. Es la
+primera vez en toda esta investigación que se observa al modelo *corrigiendo de verdad* en vez
+de reenviar o estancarse.
+
+Repetida además la corrida completa de los tres temas (con las dos correcciones ya aplicadas):
+
+| Tema | Sin corregir | Solo el margen | Margen + mensaje específico |
+|---|---|---|---|
+| Segunda forma normal | ❌ 345×3 (idéntico) | ✅ 277, 1 intento | ✅ 250, 1 intento |
+| Recursividad en algoritmos | ❌ 359→303→303 | ✅ 292, 1 intento | ✅ 266, 2 intentos |
+| Notación O grande | ✅ 299 (raspando) | ❌ 310×3 | ❌ 308×3 (mismo motivo, sin bytes capturados esta vez) |
+
+Dos de los tres temas (normalización y recursividad) **pasan de forma consistente** en las dos
+corridas posteriores a la primera corrección, y con la segunda corrección normalización quedó
+además más lejos del límite (250 contra 277 palabras) en el mismo primer intento; recursividad
+necesitó un intento más (2 en vez de 1), pero ese intento adicional es justamente el mecanismo
+de reparación funcionando —recortando de verdad— y no un síntoma nuevo. «Notación O grande»
+sigue siendo el caso difícil: su
+`concepto_central` sobre complejidad algorítmica necesita más palabras para explicarse con rigor
+(147 de las 308) que el de los otros dos temas, y comprimir una explicación técnica sin perder
+precisión parece costarle más al modelo que comprimir una explicación de bases de datos —es una
+hipótesis razonable a partir de los números, no algo confirmado con más de estos datos.
+
+**Panorama agregado de toda la investigación (11 generaciones de R en total, tres sesiones el
+mismo día): 6 de 11 exitosas (55%).** Sigue lejos del ≥95% del criterio de término de la Fase 3,
+pero ya no es un fallo sin explicación: se identificaron y corrigieron **dos causas reales y
+distintas** —el objetivo de palabras pegado al techo, y un mensaje de reparación que no le daba
+al modelo un blanco concreto—, ambas con mejora medida contra el modelo real, y lo que queda es
+un caso de contenido genuinamente más difícil de comprimir, no un defecto del sistema.
+
+### Verificación de que la segunda corrección no rompió nada
+
+**289 tests en verde** (286 + 3), `ruff` limpio. Los tres tests existentes que comprobaban el
+texto del mensaje de rechazo (`"máximo es 300" in e`, `"español" in mensaje`) siguen pasando sin
+tocarlos: ambas frases se conservaron tal cual, el mensaje solo se extendió. Los datos de prueba
+de las tres corridas nuevas contra el modelo real se borraron al terminar cada una.
+
+### Lo que queda pendiente
+
+1. **«Notación O grande» sigue fallando más que los otros dos temas.** Con una sola comparación
+   de tres temas no alcanza para separar «es un tema con contenido genuinamente más largo» de
+   «sigue habiendo margen para mejorar el mensaje de reparación». Antes de tocar nada más hace
+   falta un muestreo más grande —varios temas más, varias corridas por tema— para saber si el
+   55% agregado sube con más datos o si «Notación O grande» es un caso atípico que arrastra el
+   promedio hacia abajo.
+2. **El margen de 30 palabras sigue siendo una primera estimación.** Con la segunda corrección
+   puesta, dos de tres temas ya no necesitan el margen para pasar (pasan incluso sin reintentos);
+   subirlo más allá de 30 tiene sentido revisarlo recién si el problema persiste con una muestra
+   más grande, no ahora sobre esta evidencia.
+3. **No se implementó telemetría persistente de intentos/fallos por perfil.** Cada corrida de
+   esta sección se armó a mano con un script de investigación (no versionado) que siembra datos
+   de prueba y los borra al terminar. El pendiente n.º 11 de esta sección (historial de cápsulas
+   con `estado_validacion` e `intentos`) resolvería esto de forma permanente: con eso, el panel
+   de analíticas del docente mostraría la tasa de éxito real por perfil sin tener que armar un
+   script cada vez que se quiera revisar.
+
+---
+
+## 5 septendecies. Etiquetado asistido por LLM — `knowledge/tagger.py` (24-ago-2026)
+
+Cierra el pendiente n.º 3 de la sección 6. Quedó fuera de la Fase 2 porque entonces no había
+credencial de LLM; desde el 13-ago-2026 sí la hay, así que el único motivo real para no
+implementarlo ya no aplicaba. El dolor que motiva esto está registrado en el propio plan: «se
+vio al curar los 40 fragmentos de UX» que asignar objetivo a mano, fragmento por fragmento, es
+lo más lento de la curación.
+
+### Qué se agregó
+
+- **`knowledge/tagger.py`** (nuevo módulo): `etiquetar_fragmento(db, id_fragmento, cliente=…)`
+  le muestra al modelo el catálogo de objetivos activos (acotado a la asignatura del documento,
+  cuando se conoce) y el texto del fragmento, y le pide un JSON con `id_objetivo`,
+  `etiqueta_tematica` y `motivo`. `etiquetar_pendientes(db, cliente=…, id_documento=…, limite=…)`
+  hace lo mismo en lote sobre los fragmentos `pendiente` sin objetivo, sin que un fragmento que
+  falla tumbe al resto.
+- **`POST /teacher/curation/tag`** (`web/routers/teacher.py`): dispara el lote sobre el
+  documento que esté filtrado en la bandeja (o sobre todos si no hay filtro), y devuelve un
+  resumen de cuántos fragmentos quedaron con propuesta.
+- **`teacher/curation.html`**: botón «Sugerir objetivos con IA» junto a la bandeja de revisión.
+- **`teacher/_fila.html`**: si un fragmento sin objetivo tiene una sugerencia guardada, el
+  `<select>` la trae **preseleccionada** y debajo aparece un badge «IA» con la etiqueta temática
+  y el motivo.
+
+### La decisión de diseño que sostiene todo lo demás: propone, no decide — literal
+
+`PLAN_DESARROLLO.md` lo dice en palabras («el LLM propone, no decide») y acá se hizo cumplir en
+el código, no solo en la intención: `tagger.py` **no escribe `Fragmento.id_objetivo` ni
+`estado_validacion`**. Guarda la propuesta en `metadatos_json['sugerencia_llm']`, y es la UI la
+que la usa para prellenar el `<select>` de la bandeja — el mismo `<select>` que ya existía, con
+el mismo botón «Validar» que ya existía. Si el modelo se equivoca, no hay nada que deshacer: es
+un valor por defecto en un formulario, no una escritura en la base. Un curador que no confía en
+la sugerencia simplemente elige otra opción antes de validar, exactamente igual que si el select
+hubiera estado vacío.
+
+| Decisión | Alternativa descartada | Motivo |
+|---|---|---|
+| **La sugerencia vive en `metadatos_json`, nunca en `id_objetivo`** | Escribir `id_objetivo` directo y dejar el fragmento "pre-asignado" | Es la diferencia entre proponer y decidir. Escribir la FK real —aunque `estado_validacion` siguiera en `pendiente`— habilitaría un camino donde alguien confirma sin mirar, y el fallo silencioso que `curation.py` bloquea con tanto cuidado (fragmento inalcanzable por FK nula) tendría un gemelo nuevo: fragmento mal clasificado por FK puesta por una máquina sin supervisión real. |
+| **El catálogo del prompt se acota a la asignatura del documento** | Listar todos los objetivos activos de todas las asignaturas | Menos opciones irrelevantes es menos superficie para que el modelo elija algo que no corresponde, y de paso abarata cada llamada. `DocumentoFuente.asignatura` es opcional; si falta, se listan todos — peor que nada, pero sigue siendo mejor que negarse a sugerir. |
+| **Un `id_objetivo` fuera del catálogo entregado se descarta, no se usa** | Confiar en cualquier entero que el modelo devuelva | Es el mismo riesgo de "cita alucinada" que la regla 5 de `generation/validator.py`, aplicado acá al catálogo curricular en vez de a los fragmentos citados. Se descarta solo la propuesta de objetivo — la etiqueta temática puede seguir siendo útil aunque el modelo no haya sabido a qué objetivo del catálogo asociarla. |
+| **`tipo_fragmento` no se re-propone** | Pedirle al modelo también el tipo de fragmento, como sugiere la lista textual del plan | Ya lo resuelve `knowledge/chunker.py` a partir de la estructura del documento (PDF/PPTX), con más certeza que la que puede tener un LLM leyendo solo el texto plano. Re-proponerlo sería redundante y una fuente nueva de error sobre algo que ya está bien resuelto. |
+| **Un fragmento ya sugerido se vuelve a etiquetar si se pide de nuevo** | Saltarlo si ya tiene `sugerencia_llm` guardada | El curador puede haber corregido el texto (`curation.editar_texto`) entre una corrida y la siguiente; volver a etiquetar entrega una propuesta consistente con el texto actual, a costa de una llamada de más si simplemente se repite el clic sin haber cambiado nada. |
+
+### Verificación
+
+`tests/test_tagger.py` (12 tests, capa de servicio) cubre la invariante central —la sugerencia
+nunca toca `id_objetivo` ni `estado_validacion`, pase lo que pase en la respuesta del modelo—,
+el descarte de un id inventado o de otra asignatura, el caso sin candidatos (no llama al modelo:
+ahorra el costo), el JSON inservible, y que el lote sigue adelante cuando un fragmento falla.
+`tests/test_web_docente.py` agrega 7 tests por HTTP: sin `LLM_API_KEY` avisa y no toca nada, el
+`<select>` queda preseleccionado con la propuesta, el resumen cuenta bien los fragmentos, y
+ningún caso de fallo tumba la respuesta.
+
+**Contra el modelo real**, no solo con el cliente falso: se sembró un catálogo de tres objetivos
+claramente distintos (segunda forma normal, recursividad, arquitectura cliente-servidor) y tres
+fragmentos — dos que calzan sin ambigüedad con uno de los tres, y uno "trampa" sobre fotosíntesis
+que no calza con ninguno. DeepSeek acertó los tres: propuso el objetivo correcto en los dos
+primeros y devolvió `id_objetivo: null` en el tercero en vez de forzar una respuesta, con un
+motivo en español explicando por qué ninguno correspondía. Se confirmó además, contra el modelo
+real y no solo con el falso, que `id_objetivo` siguió en `NULL` en la base los tres casos — la
+invariante "propone, no decide" se sostiene también fuera de los tests. Los datos de prueba se
+borraron al terminar.
+
+Suite completa: 308 tests en verde (289 + 19 nuevos). `ruff check .` limpio sobre los archivos
+tocados por este cambio (las dos excepciones preexistentes y ajenas a este cambio —
+`web/textos.py:33` y `scripts/eval_runner.py`, `scratch.py`— no se tocaron ni se atribuyen a
+esta entrega).
+
+---
+
 ## 6. Pendiente inmediato
 
 Los dos primeros son ahora los que bloquean todo lo demás: el motor está escrito y probado,
@@ -1020,11 +1450,13 @@ pero **no se ha ejecutado nunca contra un modelo real ni sobre material real**.
    handlers reales; el visor recorre los bloques del contrato por `tipo` y muestra las dos
    formas de actividad. Desde el 19-ago los recorre vía `bloques_legibles()`, que devuelve la
    representación adaptativa seguida del ejemplo.
-3. **`tagger.py` (etiquetado asistido por LLM)** sigue sin implementarse. Quedó fuera de la
-   Fase 2 porque entonces no había credencial; **ahora sí la hay**, así que el bloqueo
-   desapareció y es trabajo pendiente sin más. Hoy el curador asigna el objetivo a mano:
-   funciona, pero es lento —se vio al curar los 40 fragmentos de UX—. Cuando se implemente, el
-   tagger solo debe **proponer**, nunca decidir.
+3. ~~**`tagger.py` (etiquetado asistido por LLM)**~~ ✅ **Cerrado el 24-ago-2026** — ver
+   sección 5 septendecies. `knowledge/tagger.py` propone objetivo y etiqueta temática por
+   fragmento contra el catálogo activo; la propuesta queda en `metadatos_json`, nunca en
+   `Fragmento.id_objetivo`, y la bandeja de revisión la usa solo para preseleccionar el
+   `<select>` que el curador confirma con «Validar». Verificado contra DeepSeek real: acertó
+   los dos objetivos que sí correspondían y devolvió `null` en el fragmento que no calzaba con
+   ninguno, en vez de forzar una respuesta.
 4. ~~Los **21 avisos de `ruff`** en `web/deps.py`, `web/routers/student.py` y
    `web/routers/teacher.py`.~~ ✅ **Cerrado el 11-ago-2026:** desaparecieron al conectar esos
    routers a la API real, tal como se había previsto. `ruff check .` está limpio en todo el
@@ -1032,12 +1464,12 @@ pero **no se ha ejecutado nunca contra un modelo real ni sobre material real**.
 5. **Resolver la discrepancia de las tablas 16.2/16.3** con la profesora guía: o se corrige el
    informe con los valores recalculados, o aparece la planilla original que explique la
    diferencia. El código ya entrega los números reales; el informe es lo que habría que ajustar.
-6. **Reemplazar los enunciados provisionales de los 16 ítems.** ⚠️ Sigue abierto y ahora es
-   más urgente, porque el cuestionario ya se puede responder por la web. `web/textos.py`
-   contiene enunciados **equivalentes pero reconstruidos**; los originales están en el
-   encabezado de `data/data_cuestionarios_43.csv` (no versionado). Hasta que se copien de ahí,
-   quien responda por la aplicación no habrá contestado exactamente la misma pregunta que los
-   43 estudiantes ya cargados, y los perfiles no serían estrictamente comparables.
+6. ~~**Reemplazar los enunciados provisionales de los 16 ítems.**~~ ✅ **Cerrado el
+   24-ago-2026** — ver sección 5 quaterdecies. No hizo falta reemplazar nada: comparados
+   carácter a carácter contra el encabezado real de `data/data_cuestionarios_43.csv`, los 16
+   enunciados de `web/textos.py` ya eran idénticos al instrumento original. El aviso de
+   "provisional" describía un riesgo que en los hechos nunca se concretó, y se mantuvo ahí sin
+   volver a verificarse. Test de regresión en `tests/test_textos_vark.py`.
 7. **Fijar `SESSION_SECRET` en el `.env` de cada máquina** antes de una demo o de una sesión
    con estudiantes. Sin ella la app funciona, pero cada reinicio de `uvicorn --reload` cierra
    las sesiones abiertas y obliga a responder el cuestionario de nuevo. Se genera con
@@ -1049,10 +1481,12 @@ pero **no se ha ejecutado nunca contra un modelo real ni sobre material real**.
    diagnósticos, 0 fragmentos, 0 cápsulas) — confirmado al auditar el panel de analíticas
    (sección 5 decies). Correr `import_vark_csv.py` y `cargar_objetivos.py` antes de usar
    cualquier vista del docente o del estudiante con datos reales.
-10. **Simulador VARK: perfiles reales de la cohorte y comparación V/A/R/K lado a lado.**
-    Detalle en sección 5 decies, "Pendiente de esta sección". Es el punto de mayor valor para
-    el informe: la comparación lado a lado es la evidencia directa del criterio de término de
-    la Fase 3.
+10. ~~**Simulador VARK: comparación V/A/R/K lado a lado.**~~ ✅ **Cerrado el 24-ago-2026** —
+    ver sección 5 quindecies. `POST /teacher/simulator/compare` genera las cuatro cápsulas
+    puras del mismo objetivo y las muestra una junto a otra. **Sigue abierta la otra mitad de
+    este punto: perfiles reales de la cohorte.** El simulador solo ofrece perfiles puros
+    (100% en un canal); ninguno de los 43 diagnósticos reales tiene ese vector, y el caso
+    multimodal —el más frecuente en la cohorte— no se puede simular todavía.
 11. **Historial de cápsulas: mostrar `estado_validacion` y persistir `intentos`/`segundos`
     de la generación.** Convertiría el panel en evidencia viva del bake-off en vez de depender
     solo de `data/resultados_evaluacion.csv`. Detalle en sección 5 decies.
@@ -1069,6 +1503,33 @@ pero **no se ha ejecutado nunca contra un modelo real ni sobre material real**.
     (paso 5); el cap. 13 del informe que ella aceptó argumenta explícitamente en contra. No es
     trabajo de programación: es una conversación pendiente sobre si la arquitectura sigue siendo
     la aprobada. Mientras no se cierre, el sistema sigue con recuperación SQL determinista.
+15. 🔶 **El perfil lector-escritor (R) falla la validación con más frecuencia que los otros
+    tres — significativamente mejorado, no cerrado del todo.** Investigado a fondo el
+    24-ago-2026 (sección 5 sedecies) hasta encontrar y corregir **dos causas reales, verificadas
+    por separado contra DeepSeek real**: (1) el objetivo de palabras de R interpola exactamente
+    en el máximo duro del validador, sin margen para la variación normal del modelo — corregido
+    en `rag/orchestrator.py`; (2) capturando el texto crudo de cada intento se confirmó que el
+    modelo **reenviaba la respuesta anterior byte a byte idéntica** cuando el mensaje de
+    reparación no le daba un blanco concreto — corregido en `generation/validator.py` (el
+    mensaje ahora dice cuánto sobra y cuál es la parte más larga, y pide explícitamente una
+    respuesta distinta). Verificado que la segunda corrección sí logra que el modelo recorte de
+    verdad en vueltas sucesivas (3257→3202→3104 caracteres, cada uno distinto del anterior, en
+    vez de tres copias idénticas). **Panorama agregado de las tres sesiones de investigación:
+    6 de 11 generaciones de R exitosas (55%)**, todavía lejos del ≥95% del criterio de término
+    de la Fase 3, pero dos de los tres temas de prueba ya pasan de forma consistente. Queda un
+    tema («Notación O grande») que sigue fallando más que los otros —hipótesis: su explicación
+    técnica necesita más palabras y comprimirla sin perder rigor le cuesta más al modelo—, sin
+    confirmar todavía con más datos. Detalle completo, con las tres tablas de evidencia
+    antes/después/después-de-lo-otro, en la sección 5 sedecies.
+16. **Generación multimedia local (imagen/audio/video) — planificada, no iniciada.** Agregada
+    el 24-ago-2026 a pedido del equipo: `PLAN_DESARROLLO.md` §4 tiene la Fase 6 completa
+    (candidatos de modelo por modalidad, riesgos, integración propuesta). Es una **extensión**
+    fuera del horizonte de 10 semanas — no bloquea el criterio de término de las fases 1–5, que
+    sigue siendo solo texto — y reabre el punto 2 de la sección 7 (`audio_activo`), que hasta
+    ahora estaba cerrado como "fuera de alcance para el prototipo". Antes de empezar a
+    implementar hace falta confirmar qué GPU/VRAM tiene disponible cada máquina del equipo: los
+    modelos candidatos (SDXL-Turbo, Piper TTS) se eligieron pensando en hardware modesto, pero
+    sin ese dato confirmado no se puede afirmar que corran razonablemente.
 
 ~~Ratificar `palabras_texto`~~ ✅ **Aprobado por el equipo el 06-ago-2026** — queda la
 interpolación lineal sobre C_texto tal como está implementada.
@@ -1085,10 +1546,15 @@ tener que saltar de archivo:
    decisiones de la Fase 1 y el docstring de `vark/rules.py`). El único parámetro sin base
    directa en el informe (`palabras_texto`, interpolado sobre C_texto) también quedó aprobado
    por el equipo el 06-ago-2026.
-2. ~~**`audio_activo`**~~ ✅ **Cerrada en la Fase 1:** queda fuera de alcance. El campo existe en
-   el modelo por fidelidad a la tabla 17.4 pero se persiste siempre en `False`, y el canal
-   auditivo se atiende con redacción conversacional (`tono_narrativo = 'oral'`). Falta
-   declararlo como trabajo futuro en el informe final.
+2. ~~**`audio_activo`**~~ ✅ **Cerrada en la Fase 1 para el prototipo (fases 1–5):** queda fuera
+   de alcance. El campo existe en el modelo por fidelidad a la tabla 17.4 pero se persiste
+   siempre en `False`, y el canal auditivo se atiende con redacción conversacional
+   (`tono_narrativo = 'oral'`). **Reabierta el 24-ago-2026, no como reversión sino como
+   extensión**: a pedido del equipo se agregó la Fase 6 en `PLAN_DESARROLLO.md` §4 —
+   generación local de imagen/audio/video (modelos gratuitos, sin API de pago) para
+   complementar los canales V/A/K, fuera del horizonte de 10 semanas y sin bloquear el
+   criterio de término de las fases 1–5. Planificada, **no iniciada**: ver pendiente n.º 16 de
+   la sección 6.
 3. **Fragmentos no textuales** (tablas, diagramas): ✅ **parcialmente cerrada en la Fase 2.** Las
    tablas de PPTX se serializan a texto (`tipo_fragmento = 'tabla'`, filas separadas por `|`) y
    van en su propio fragmento, de modo que el retriever y el FTS las ven. Sigue abierto el caso

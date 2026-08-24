@@ -299,6 +299,40 @@ def test_dos_perfiles_casi_iguales_comparten_cache():
     assert construir(perfil(0, 0, 100, 0)).huella == construir(perfil(1, 0, 99, 0)).huella
 
 
+def test_el_objetivo_de_palabras_no_llega_pegado_al_maximo():
+    """Pendiente n.º 15 de AVANCE.md, investigado el 24-ago-2026.
+
+    `aplicar_reglas` interpola el perfil lector-escritor puro exactamente en
+    300 palabras — el mismo número que `capsula_max_palabras` — porque su
+    C_texto (0.75) es el máximo de la matriz del cap. 11.2. Pedirle al modelo
+    "apunta a 300, no pases de 300" no deja margen para la variación normal de
+    redacción; contra el modelo real, ese perfil falló la validación 3 de 4
+    veces por exceso de palabras mientras los otros tres no fallaron ninguna.
+    `construir` tiene que pedir un número por debajo del techo real, sin tocar
+    el `palabras_texto` que persiste `vark/rules.py` (el que sí está en
+    tabla 17.4 y quedó aprobado por el equipo el 06-ago-2026).
+    """
+    puro = aplicar_reglas(perfil(0, 0, 100, 0))
+    assert puro.palabras_texto == 300  # sigue igual: no se tocó rules.py
+
+    maestro = construir(perfil(0, 0, 100, 0))
+    assert maestro.palabras_objetivo < 300
+    assert f"aproximadamente {maestro.palabras_objetivo} palabras" in maestro.usuario
+    # El máximo duro se sigue mostrando tal cual: solo el objetivo baja, el
+    # techo real que exige el validador no se le oculta al modelo.
+    assert "máximo 300" in maestro.usuario
+
+
+def test_el_margen_de_seguridad_no_afecta_a_los_perfiles_que_no_lo_necesitan():
+    """Solo el tramo alto (cerca del techo real) se ve afectado por el margen."""
+    for vector in [(100, 0, 0, 0), (0, 100, 0, 0), (0, 0, 0, 100), (25, 25, 25, 25)]:
+        config = aplicar_reglas(perfil(*vector))
+        maestro = construir(perfil(*vector))
+        # Ninguno de estos perfiles se acerca al techo, así que el objetivo que
+        # entra al prompt es el mismo que sin margen (redondeado a tramos de 10).
+        assert maestro.palabras_objetivo == round(config.palabras_texto / 10) * 10
+
+
 # --- Invariantes del prompt completo -----------------------------------------
 
 

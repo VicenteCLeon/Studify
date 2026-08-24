@@ -5,17 +5,15 @@ en pantalla, sin tocar el flujo. Y vive en `web/` y no en `vark/` porque nada de
 esto interviene en la calificación — el motor VARK trabaja con las letras a/b/c/d
 y con los canales V/A/R/K, no con estas cadenas.
 
-⚠️ **Los enunciados son provisionales.** `vark/instrumento.py` guarda las 64
-alternativas del instrumento (que son las que se puntúan) pero **no** el
-enunciado de cada uno de los 16 ítems, porque para calificar no hace falta. Los
-enunciados reales están en el encabezado de `data/data_cuestionarios_43.csv`, el
-export de Google Forms con el que se aplicó el cuestionario; ese archivo no está
-versionado y no existe en todas las máquinas del equipo. Los textos de abajo son
-una redacción equivalente, reconstruida desde las alternativas de cada ítem,
-para que la UI de la Fase 4 pueda mostrarse. **Hay que reemplazarlos por los
-originales del CSV antes de aplicar el instrumento a estudiantes nuevos**, o los
-43 diagnósticos ya cargados y los que entren por la web no habrán respondido
-exactamente la misma pregunta. Pendiente n.º 6 de AVANCE.md §6.
+**Los 16 enunciados están verificados contra el instrumento original**
+(24-ago-2026, cierra el pendiente n.º 6 de AVANCE.md §6). `vark/instrumento.py`
+guarda las 64 alternativas (que son las que se puntúan) pero no el enunciado de
+cada ítem, porque para calificar no hace falta; el enunciado se agregó acá para
+mostrar el cuestionario en la web. Contrastados carácter a carácter contra el
+encabezado de `data/data_cuestionarios_43.csv` —el export de Google Forms con el
+que se aplicó el cuestionario a los 43 estudiantes ya cargados—, los 16 son
+**idénticos** (ver `tests/test_textos_vark.py`, que corre esa comparación cuando
+el CSV está presente; el archivo no está versionado). No hubo que corregir nada.
 """
 
 # Un enunciado por ítem, en el mismo orden que `instrumento.ITEMS`.

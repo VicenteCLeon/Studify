@@ -24,15 +24,25 @@
         {% elif fragmento.estado == 'descartado' %}
         <span class="badge badge-danger">descartado</span>
         {% else %}
+        {# Sin objetivo asignado todavía, el select se preselecciona con la
+           propuesta del tagger si hay una — sigue siendo solo una propuesta:
+           el POST de "Validar" es lo único que la vuelve real. #}
         <select name="id_objetivo" class="form-control text-sm" style="min-width: 220px;">
             <option value="">— sin asignar —</option>
             {% for objetivo in objetivos %}
             <option value="{{ objetivo.id_objetivo }}"
-                    {% if objetivo.id_objetivo == fragmento.id_objetivo %}selected{% endif %}>
+                    {% if objetivo.id_objetivo == (fragmento.id_objetivo or fragmento.sugerido_id_objetivo) %}selected{% endif %}>
                 {{ objetivo.codigo_objetivo }} · {{ objetivo.tema }}
             </option>
             {% endfor %}
         </select>
+        {% if fragmento.sugerido_etiqueta or fragmento.sugerido_motivo %}
+        <div class="text-sm text-muted mt-1">
+            <span class="badge badge-primary">IA</span>
+            {% if fragmento.sugerido_etiqueta %}{{ fragmento.sugerido_etiqueta }}{% endif %}
+            {% if fragmento.sugerido_motivo %} — {{ fragmento.sugerido_motivo }}{% endif %}
+        </div>
+        {% endif %}
         {% endif %}
     </td>
     <td>

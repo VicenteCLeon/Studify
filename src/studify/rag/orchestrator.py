@@ -36,6 +36,24 @@ from studify.vark.rules import ConfiguracionGenerada
 # de nada: en una cohorte de 43 se pagarían 43 generaciones para el mismo tema.
 TRAMO_PALABRAS = 10
 
+# Cuánto se le pide al modelo por debajo del máximo duro cuando el objetivo de
+# palabras queda pegado al techo. Encontrado el 24-ago-2026 investigando el
+# pendiente n.º 15 de AVANCE.md: `vark/rules._palabras_objetivo` interpola
+# linealmente entre 150 y 300, y el perfil lector-escritor puro tiene C_texto en
+# su máximo (0.75 de 0.75), así que su objetivo cae exactamente en 300 — el
+# mismo número que `capsula_max_palabras`. Pedirle al modelo "apunta a 300, no
+# pases de 300" no le deja ningún margen para la variación normal de redacción,
+# y es justo el perfil que más se pasa: en una corrida de verificación contra el
+# modelo real, R falló la validación 3 de 4 veces por exceso de palabras
+# mientras V, A y K —cuyo objetivo siempre queda por debajo del máximo— no
+# fallaron ninguna. Los demás perfiles no se acercan a este umbral (el segundo
+# más alto, el lector-escritor casi puro, ronda 280–290), así que el margen no
+# les cambia nada. No se toca `vark/rules.py`: el objetivo persistido en
+# `configuracion_contenido.palabras_texto` (tabla 17.4, aprobado por el equipo
+# el 06-ago-2026) sigue siendo 150–300 tal cual; esto ajusta solo lo que ve el
+# modelo en el prompt.
+MARGEN_PALABRAS_OBJETIVO = 30
+
 
 class ErrorPrompt(Exception):
     """No se puede construir un prompt maestro con los datos entregados."""
@@ -177,7 +195,14 @@ def construir(
     modelo: str,
 ) -> PromptMaestro:
     """Arma el prompt maestro completo para un objetivo y un perfil."""
-    palabras_objetivo = _redondear_palabras(config.palabras_texto)
+    ajustes = get_settings()
+    palabras_objetivo = max(
+        ajustes.capsula_min_palabras,
+        min(
+            _redondear_palabras(config.palabras_texto),
+            ajustes.capsula_max_palabras - MARGEN_PALABRAS_OBJETIVO,
+        ),
+    )
 
     usuario = "\n\n".join(
         [

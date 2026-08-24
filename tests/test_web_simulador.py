@@ -19,6 +19,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import func, select
 
+from studify.api.routers.capsules import get_cliente_llm
 from studify.db.models import (
     DocumentoFuente,
     Fragmento,
@@ -27,7 +28,7 @@ from studify.db.models import (
 )
 from studify.main import app
 from tests.conftest import necesita_bd
-from tests.test_api_capsulas import TEXTO_LARGO, cliente_falso  # noqa: F401
+from tests.test_api_capsulas import TEXTO_LARGO, ClienteObediente, cliente_falso  # noqa: F401
 
 pytestmark = necesita_bd
 
@@ -184,3 +185,97 @@ def test_un_objetivo_inexistente_no_llega_al_modelo(
     assert respuesta.status_code == 200
     assert "Objetivo no encontrado" in respuesta.text
     assert cliente_falso.llamadas == 0
+
+
+# --- Comparación V/A/R/K lado a lado ------------------------------------------
+#
+# Cierra el pendiente n.º 10 de AVANCE.md §6, que es literalmente el criterio de
+# término de la Fase 3 en PLAN_DESARROLLO.md §4: "comparar visualmente cuatro
+# cápsulas del mismo objetivo generadas para V, A, R y K: si no se distinguen
+# entre sí, la adaptación no está funcionando". Antes solo se podía generar una
+# cápsula a la vez y compararlas de memoria entre pestañas.
+
+
+def _comparar(http, objetivo):
+    return http.post(
+        "/teacher/simulator/compare", data={"id_objetivo": objetivo.id_objetivo}
+    )
+
+
+def test_compare_genera_las_cuatro_columnas(
+    http, objetivo_con_material, cliente_falso  # noqa: F811
+):
+    respuesta = _comparar(http, objetivo_con_material)
+
+    assert respuesta.status_code == 200
+    cuerpo = respuesta.text
+    for nombre in ("Visual", "Auditivo", "Lectura / Escritura", "Kinestésico"):
+        assert nombre in cuerpo
+    assert cliente_falso.llamadas == 4
+
+
+def test_compare_no_ofrece_formulario_de_respuesta(
+    http, objetivo_con_material, cliente_falso  # noqa: F811
+):
+    """Igual que el simulador de un solo canal: nada de esto está persistido,
+    así que no hay `id_capsula` contra el cual corregir."""
+    cuerpo = _comparar(http, objetivo_con_material).text
+
+    assert "<form" not in cuerpo
+
+
+def test_compare_no_ensucia_el_historial(
+    http, db, objetivo_con_material, cliente_falso  # noqa: F811
+):
+    antes = db.scalar(select(func.count(MicrocapsulaGenerada.id_capsula)))
+
+    _comparar(http, objetivo_con_material)
+
+    db.expire_all()
+    assert db.scalar(select(func.count(MicrocapsulaGenerada.id_capsula))) == antes
+
+
+def test_compare_un_objetivo_inexistente_no_llega_al_modelo(http, cliente_falso):  # noqa: F811
+    respuesta = http.post(
+        "/teacher/simulator/compare", data={"id_objetivo": 999_999}
+    )
+
+    assert respuesta.status_code == 200
+    assert "Objetivo no encontrado" in respuesta.text
+    assert cliente_falso.llamadas == 0
+
+
+def test_compare_una_columna_que_falla_no_tumba_a_las_otras(http, objetivo_con_material):
+    """Cuatro llamadas al LLM son cuatro oportunidades de que una falle. Si el
+    modelo se agota reparando una columna, las otras tres —que sí se pagaron—
+    tienen que seguir mostrándose: abortar toda la comparación por un solo
+    fallo desperdiciaría el trabajo que sí funcionó.
+
+    El cliente falso se porta bien en las dos primeras llamadas (canales V y
+    A, en el orden fijo de `CANALES`) y devuelve basura sin parar desde la
+    tercera en adelante, así que las columnas R y K agotan sus reintentos y
+    quedan en error mientras V y A sí producen cápsula.
+    """
+    falso = ClienteObediente()
+    original = falso.responder
+
+    def responder_con_falla_desde_la_tercera(mensajes):
+        falso.llamadas += 1
+        if falso.llamadas >= 3:
+            return "esto no es un JSON válido"
+        falso.llamadas -= 1  # el `responder` original vuelve a contarla
+        return original(mensajes)
+
+    falso.responder = responder_con_falla_desde_la_tercera
+    app.dependency_overrides[get_cliente_llm] = lambda: falso
+    try:
+        respuesta = _comparar(http, objetivo_con_material)
+    finally:
+        app.dependency_overrides.pop(get_cliente_llm, None)
+
+    assert respuesta.status_code == 200
+    cuerpo = respuesta.text
+    assert "Falló la generación" in cuerpo
+    # El título que devuelve el cliente falso solo aparece cuando la
+    # generación tuvo éxito: dos veces, una por columna que sí funcionó.
+    assert cuerpo.count("Segunda forma normal y dependencias parciales") == 2

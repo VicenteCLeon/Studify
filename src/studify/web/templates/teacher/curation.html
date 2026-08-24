@@ -147,10 +147,25 @@
 <div class="card">
     <div class="flex justify-between items-center mb-4">
         <h2 class="text-lg">Bandeja de revisión</h2>
-        {% if id_documento %}
-        <a href="/teacher/curation" class="text-sm text-muted">Ver todos los documentos</a>
-        {% endif %}
+        <div class="flex items-center gap-4">
+            {% if objetivos %}
+            <form hx-post="/teacher/curation/tag" hx-target="#tag-status" hx-swap="innerHTML">
+                {% if id_documento %}
+                <input type="hidden" name="id_documento" value="{{ id_documento }}">
+                {% endif %}
+                <button type="submit" class="btn btn-outline text-sm" style="padding: 0.25rem 0.75rem;"
+                        title="El modelo propone objetivo y etiqueta para lo que sigue sin clasificar; tú sigues validando cada fragmento.">
+                    Sugerir objetivos con IA
+                    <span class="htmx-indicator ml-2">…</span>
+                </button>
+            </form>
+            {% endif %}
+            {% if id_documento %}
+            <a href="/teacher/curation" class="text-sm text-muted">Ver todos los documentos</a>
+            {% endif %}
+        </div>
     </div>
+    <div id="tag-status" class="mb-4"></div>
 
     <div id="bandeja"
          hx-get="/teacher/curation/fragmentos{% if id_documento %}?id_documento={{ id_documento }}{% endif %}"

@@ -44,7 +44,7 @@ from studify.db.models import (
 )
 from studify.db.session import get_db
 from studify.generation.generator import ErrorGeneracion, generar
-from studify.knowledge import curation
+from studify.knowledge import curation, tagger
 from studify.rag import orchestrator, retriever
 from studify.vark.rules import aplicar_reglas
 from studify.vark.scoring import CANALES, PerfilVark
@@ -230,34 +230,11 @@ def post_simulator_generate(
             f"Lectura/Escritura o Kinestésico.",
         )
 
-    # Perfil simulado puro: 100% en el canal elegido, 0% en los otros tres.
-    porcentajes = {c: Decimal(100 if c == canal_vark else 0) for c in CANALES}
-    perfil = PerfilVark(
-        v=porcentajes["V"], a=porcentajes["A"], r=porcentajes["R"], k=porcentajes["K"]
-    )
-    config = aplicar_reglas(perfil)
+    columna = _generar_capsula_pura(db, objetivo, canal_vark, cliente)
+    if columna["error"]:
+        return _aviso(request, "error", columna["error"])
 
-
-    fragmentos = retriever.recuperar(
-        db,
-        id_objetivo=id_objetivo,
-        canal_primario=config.jerarquia.canal_primario,
-    )
-    
-    try:
-        prompt = orchestrator.construir(
-            objetivo=objetivo,
-            fragmentos=fragmentos,
-            config=config,
-            modelo=get_settings().llm_model,
-        )
-        resultado = generar(prompt, cliente=cliente)
-    except orchestrator.ErrorPrompt as exc:
-        return _aviso(request, "error", f"Error de material: {exc}")
-    except ErrorGeneracion as exc:
-        return _aviso(request, "error", f"Falló la generación: {exc}")
-
-    capsula = resultado.capsula
+    capsula = columna["capsula"]
 
     # El mismo partial que ve el estudiante, no la página completa: HTMX lo
     # inyecta dentro del simulador, que ya tiene cabecera y `<head>` propios.
@@ -273,11 +250,49 @@ def post_simulator_generate(
         context={
             "objetivo": objetivo,
             "capsula": capsula,
-            "bloques": _preparar_bloques(capsula.bloques_legibles()),
+            "bloques": columna["bloques"],
             "actividad": capsula.actividad,
             "es_simulacion": True,
             "perfil_simulado": textos.NOMBRE_CANAL[canal_vark],
         },
+    )
+
+
+@router.post("/simulator/compare", response_class=HTMLResponse)
+def post_simulator_compare(
+    request: Request,
+    id_objetivo: int = Form(...),
+    db: Session = Depends(get_db),
+    cliente: ClienteLLM | None = Depends(get_cliente_llm),
+):
+    """Genera las cuatro cápsulas puras (V, A, R, K) del mismo objetivo, lado a lado.
+
+    Cierra el pendiente n.º 10 de AVANCE.md §6, que es literalmente el criterio
+    de término de la Fase 3 en PLAN_DESARROLLO.md §4: «comparar visualmente
+    cuatro cápsulas del mismo objetivo generadas para V, A, R y K: si no se
+    distinguen entre sí, la adaptación no está funcionando». Antes solo se
+    podía generar una cápsula a la vez (`/simulator/generate`) y compararlas de
+    memoria entre pestañas.
+
+    **Cada canal se resuelve por separado y un fallo no aborta a los otros
+    tres.** Cuatro llamadas al LLM son cuatro oportunidades de que una falle
+    (timeout, cápsula que no pasa el validador en los reintentos); si una
+    columna revienta, las otras tres igual sirven para juzgar la adaptación —
+    y son exactamente las que ya se pagaron.
+    """
+    if not cliente:
+        return _aviso(request, "error", "Falta LLM_API_KEY para simular.")
+
+    objetivo = db.get(ObjetivoAprendizaje, id_objetivo)
+    if not objetivo:
+        return _aviso(request, "error", "Objetivo no encontrado.")
+
+    columnas = [_generar_capsula_pura(db, objetivo, canal, cliente) for canal in CANALES]
+
+    return templates.TemplateResponse(
+        request=request,
+        name="teacher/_comparacion.html",
+        context={"objetivo": objetivo, "columnas": columnas},
     )
 
 
@@ -327,6 +342,57 @@ def upload_document(
     return respuesta
 
 
+@router.post("/curation/tag", response_class=HTMLResponse)
+def tag_pending_fragments(
+    request: Request,
+    id_documento: int | None = Form(default=None),
+    db: Session = Depends(get_db),
+    cliente: ClienteLLM | None = Depends(get_cliente_llm),
+):
+    """Sugiere objetivo y etiqueta temática para los fragmentos pendientes sin objetivo.
+
+    No valida nada por sí solo (`knowledge.tagger` no toca `id_objetivo` ni
+    `estado_validacion`): deja la propuesta en `metadatos_json`, y es
+    `_a_fila`/`_fila.html` quien la usa para preseleccionar el selector de
+    objetivo en la bandeja. El curador sigue teniendo que pulsar «Validar».
+    """
+    if not cliente:
+        return _aviso(request, "error", "Falta LLM_API_KEY para sugerir con IA.")
+
+    sugerencias = tagger.etiquetar_pendientes(
+        db, cliente=cliente, id_documento=id_documento, limite=LIMITE_BANDEJA
+    )
+
+    if not sugerencias:
+        respuesta = _aviso(
+            request,
+            "ok",
+            "No hay fragmentos pendientes sin objetivo para sugerir"
+            + (" en este documento." if id_documento else "."),
+        )
+    else:
+        exitosas = [s for s in sugerencias if s.ok and s.id_objetivo is not None]
+        sin_propuesta = [s for s in sugerencias if s.ok and s.id_objetivo is None]
+        fallidas = [s for s in sugerencias if not s.ok]
+        partes = [f"{len(exitosas)} de {len(sugerencias)} fragmentos con objetivo sugerido"]
+        if sin_propuesta:
+            partes.append(f"{len(sin_propuesta)} sin un objetivo claro (revísalos a mano)")
+        if fallidas:
+            partes.append(f"{len(fallidas)} fallaron: {fallidas[0].error}")
+        respuesta = _aviso(
+            request,
+            "ok" if exitosas else "error",
+            "; ".join(partes)
+            + ". Revisa la bandeja: los campos ya vienen prellenados, pero cada "
+            "fragmento se sigue validando a mano.",
+        )
+
+    # Misma recarga que tras una ingesta: la bandeja se refresca sola con las
+    # sugerencias nuevas, sin pedirle al docente que recargue la página.
+    respuesta.headers["HX-Trigger"] = "fragmentos-actualizados"
+    return respuesta
+
+
 @router.post("/curation/{id_fragmento}/approve", response_class=HTMLResponse)
 def approve_fragment(
     request: Request,
@@ -359,6 +425,82 @@ def reject_fragment(request: Request, id_fragmento: int, db: Session = Depends(g
 
 
 # --- Auxiliares ---------------------------------------------------------------
+
+
+def _perfil_puro(canal_vark: str) -> PerfilVark:
+    """Perfil VARK sintético: 100% en un canal, 0% en los otros tres.
+
+    Es una simplificación deliberada del simulador (ninguno de los 43
+    diagnósticos reales tiene este vector): sirve para forzar al máximo la
+    directiva de un solo canal y ver si el prompt la traduce en algo distinto
+    en la cápsula, no para reproducir un perfil real de estudiante.
+    """
+    porcentajes = {c: Decimal(100 if c == canal_vark else 0) for c in CANALES}
+    return PerfilVark(
+        v=porcentajes["V"], a=porcentajes["A"], r=porcentajes["R"], k=porcentajes["K"]
+    )
+
+
+def _generar_capsula_pura(
+    db: Session,
+    objetivo: ObjetivoAprendizaje,
+    canal_vark: str,
+    cliente: ClienteLLM,
+) -> dict:
+    """Una columna del simulador: la cápsula para un perfil puro, o el motivo del fallo.
+
+    Se usa tanto desde `/simulator/generate` (una columna) como desde
+    `/simulator/compare` (las cuatro), para que ambas rutas generen exactamente
+    la misma cápsula ante el mismo canal — si divergieran, la comparación de a
+    cuatro podría mostrar algo distinto de lo que el docente ya vio al probar
+    un canal suelto.
+    """
+    perfil = _perfil_puro(canal_vark)
+    config = aplicar_reglas(perfil)
+
+    fragmentos = retriever.recuperar(
+        db,
+        id_objetivo=objetivo.id_objetivo,
+        canal_primario=config.jerarquia.canal_primario,
+    )
+
+    try:
+        prompt = orchestrator.construir(
+            objetivo=objetivo,
+            fragmentos=fragmentos,
+            config=config,
+            modelo=get_settings().llm_model,
+        )
+        resultado = generar(prompt, cliente=cliente)
+    except orchestrator.ErrorPrompt as exc:
+        return _columna_error(canal_vark, f"Error de material: {exc}")
+    except ErrorGeneracion as exc:
+        return _columna_error(canal_vark, f"Falló la generación: {exc}")
+
+    capsula = resultado.capsula
+    return {
+        "canal": canal_vark,
+        "nombre_canal": textos.NOMBRE_CANAL[canal_vark],
+        "color_canal": textos.COLOR_CANAL[canal_vark],
+        "capsula": capsula,
+        "bloques": _preparar_bloques(capsula.bloques_legibles()),
+        "palabras": capsula.palabras_contenido(),
+        "error": None,
+    }
+
+
+def _columna_error(canal_vark: str, mensaje: str) -> dict:
+    """Misma forma que una columna exitosa, para que la plantilla no tenga que
+    distinguir dos estructuras distintas — solo revisa `error`."""
+    return {
+        "canal": canal_vark,
+        "nombre_canal": textos.NOMBRE_CANAL[canal_vark],
+        "color_canal": textos.COLOR_CANAL[canal_vark],
+        "capsula": None,
+        "bloques": None,
+        "palabras": None,
+        "error": mensaje,
+    }
 
 
 def _cobertura_curricular(db: Session) -> list[dict]:
@@ -545,8 +687,20 @@ def _documentos_con_avance(db: Session) -> list[dict]:
 
 
 def _a_fila(fragmento) -> dict:
-    """Un fragmento tal como lo necesita la plantilla de la bandeja."""
+    """Un fragmento tal como lo necesita la plantilla de la bandeja.
+
+    La sugerencia del tagger solo se expone mientras el fragmento sigue sin
+    objetivo asignado: una vez que alguien lo valida, `id_objetivo` deja de
+    ser `None` y esta función ya no la incluye — no hace falta, la plantilla
+    solo la usa para preseleccionar un `<select>` que a esa altura ni se
+    muestra.
+    """
     texto = fragmento.contenido_texto or ""
+    sugerencia = (
+        (fragmento.metadatos_json or {}).get("sugerencia_llm")
+        if fragmento.id_objetivo is None
+        else None
+    ) or {}
     return {
         "id": fragmento.id_fragmento,
         "documento": fragmento.documento.titulo,
@@ -557,6 +711,9 @@ def _a_fila(fragmento) -> dict:
         "palabras": len(texto.split()),
         "estado": fragmento.estado_validacion,
         "id_objetivo": fragmento.id_objetivo,
+        "sugerido_id_objetivo": sugerencia.get("id_objetivo"),
+        "sugerido_etiqueta": sugerencia.get("etiqueta_tematica"),
+        "sugerido_motivo": sugerencia.get("motivo"),
     }
 
 

@@ -76,6 +76,16 @@ Studify/
 
 ## 3. Contrato de la microcápsula (el artefacto central)
 
+> ⚠️ **Esquema original de esta sección — superado el 19-ago-2026.** Se conserva tal cual se
+> planeó (es el punto de partida, no lo que corre hoy). La profesora guía observó que el
+> informe no define la estructura interna de una cápsula y propuso una de **siete pasos
+> pedagógicos** (OA → activación → concepto central → representación adaptativa VARK →
+> ejemplo → pregunta de comprobación → retroalimentación), implementada desde entonces: el
+> antiguo array `contenido` se separó en campos propios (`activacion`, `concepto_central`,
+> `representacion_adaptativa[]`, `ejemplo`), cada uno con su propia regla de validación. El
+> contrato real vive en `generation/schemas.py`; el detalle de la migración y por qué, en
+> `AVANCE.md` sección 5 terdecies.
+
 Este esquema es el punto de acuerdo entre el motor LLM y la UI. Definirlo **antes** de escribir el generador.
 
 ```json
@@ -127,7 +137,7 @@ Repo, `docker-compose.yml` con Postgres, esqueleto FastAPI con `/health`, `.env.
 ### Fase 2 — Base de conocimiento e ingesta (24 ago – 04 sep)
 - Catálogo de `objetivo_aprendizaje` (carga manual: es información curricular, no se infiere).
 - `ingest.py`: PDF/PPTX → fragmentos con `pagina_inicio`/`pagina_fin`.
-- `tagger.py`: el LLM **propone** objetivo asociado, etiqueta temática y tipo de fragmento; queda en `estado_validacion = 'pendiente'`.
+- ~~`tagger.py`: el LLM **propone** objetivo asociado, etiqueta temática y tipo de fragmento; queda en `estado_validacion = 'pendiente'`.~~ ✅ **Implementado el 24-ago-2026** (`AVANCE.md` sección 5 septendecies). El tipo de fragmento no se re-propone: ya lo resuelve `chunker.py` con más certeza que un LLM leyendo solo texto plano. La propuesta de objetivo/etiqueta se guarda en `metadatos_json`, nunca escribe `Fragmento.id_objetivo` directamente — la bandeja del docente la usa solo para preseleccionar el `<select>` que el curador confirma.
 - `curation.py` + endpoints: aprobar/rechazar/editar. **Ningún fragmento sin validar entra al retriever.**
 - `retriever.py`: SQL determinista filtrando por `id_objetivo` + `estado_validacion='validado'`, con full-text search en español como filtro secundario y ordenamiento por tipo de fragmento según perfil VARK.
 
@@ -145,6 +155,16 @@ Repo, `docker-compose.yml` con Postgres, esqueleto FastAPI con `/health`, `.env.
 
 **Criterio de término:** `POST /api/capsulas {id_estudiante, id_objetivo}` devuelve una cápsula válida ≥95% de las veces, con quiz y fuentes verificables. Comparar visualmente cuatro cápsulas del mismo objetivo generadas para V, A, R y K: si no se distinguen entre sí, la adaptación no está funcionando y hay que trabajar el prompt.
 
+> **Estado del criterio (24-ago-2026):** la comparación visual **ya existe**
+> (`POST /teacher/simulator/compare`, `AVANCE.md` sección 5 quindecies) y fue la que encontró
+> que V, A y K se distinguen entre sí, pero **R fallaba la validación sistemáticamente**. Se
+> investigó a fondo y se corrigieron dos causas reales (sección 5 sedecies): el margen de
+> palabras del perfil R contra el máximo del validador, y un mensaje de reparación que no le
+> daba al modelo un blanco concreto para recortar. **El ≥95% del criterio todavía no se
+> cumple** — el agregado medido en las tres rondas de investigación es 6/11 (55%), con dos de
+> tres temas de prueba pasando ya de forma consistente y uno («Notación O grande») que sigue
+> fallando más. Detalle y lo que falta en `AVANCE.md`, pendiente n.º 15.
+
 ### Fase 4 — UI mínima funcional (21–25 sep)
 Jinja + HTMX: cuestionario VARK (16 ítems, selección múltiple y opción de dejar en blanco, según cap. 10) → pantalla de resultado con el vector porcentual → catálogo de temas → cápsula renderizada según perfil → quiz con retroalimentación. Panel de curación mínimo (subir documento, revisar fragmentos, validar).
 
@@ -158,10 +178,12 @@ Jinja + HTMX: cuestionario VARK (16 ítems, selección múltiple y opción de de
 > (`web/routers/teacher.py`, `analytics.html`, `simulator.html`). El código lo etiqueta
 > "Fase 5" en sus docstrings, pero **no es esta fase**: es una herramienta de operación del
 > docente, no la evaluación empírica descrita abajo, que sigue sin empezar. Auditado y
-> corregido con 32 tests nuevos; detalle completo en `AVANCE.md` sección 5 decies. Pendiente
+> corregido con 32 tests nuevos; detalle completo en `AVANCE.md` sección 5 decies. ~~Pendiente
 > de esa auditoría, con valor directo para el criterio de término de la Fase 3 de este plan:
 > el simulador todavía no ofrece la comparación V/A/R/K lado a lado que exige el párrafo de
-> "Criterio de término" más abajo.
+> "Criterio de término" más abajo.~~ **Implementado el 24-ago-2026**
+> (`POST /teacher/simulator/compare`, `AVANCE.md` sección 5 quindecies) — ver el estado
+> actualizado del criterio de término de la Fase 3, arriba.
 
 - Batería técnica (`eval_runner.py`): 20–30 consultas controladas → fidelidad, exactitud factual, relevancia, trazabilidad; rúbrica 1–5 con doble evaluador.
 - **A/B pedagógico (decidido 06-ago-2026, reemplaza el diseño del cap. 8.2 del informe):**
@@ -190,6 +212,57 @@ Jinja + HTMX: cuestionario VARK (16 ítems, selección múltiple y opción de de
 
 > **Track paralelo:** los instrumentos, el consentimiento informado y el reclutamiento tienen que estar listos en la **semana 6**, no en la 9. Conseguir participantes es lo que más se atrasa.
 
+### Fase 6 — Generación multimedia local (extensión, agregada 24-ago-2026)
+
+> **Fuera del horizonte original de 10 semanas** (Semana 0 → Fase 5, hasta el 09-oct-2026): se
+> agrega como fase de extensión, a continuación de la evaluación y sin bloquear el criterio de
+> término de las fases 1–5, que sigue siendo solo texto. Se agrega por pedido explícito del
+> equipo: complementar el perfil VARK con recursos **generados**, no solo redactados, para los
+> canales que hoy reciben únicamente texto adaptado. La condición del equipo es que el modelo
+> sea **local y gratuito** —no un proveedor de pago como el LLM de texto—, así que el criterio
+> de selección de cada modelo no es "el mejor disponible" sino "el que corre en el hardware que
+> el equipo realmente tiene sin bloquear el resto del sistema".
+
+- **Qué se activa y por qué canal.** `configuracion_contenido` (tabla 17.4) ya calcula
+  `recursos_visuales`, `audio_activo` y `componentes_practicos` por perfil VARK
+  (`vark/rules.py`), pero hoy `audio_activo` se persiste siempre en `False` (§6, punto 2) y
+  ninguno de los tres dispara la generación de nada — son números que la cápsula de texto
+  ignora. Esta fase conecta lo que ya se calcula a un generador real:
+  - **V (visual):** una imagen o diagrama que ilustra el `concepto_central` o el bloque
+    `esquema`/`analogia` de la representación adaptativa.
+  - **A (auditivo):** audio narrado de la cápsula (o de `concepto_central` + `ejemplo`), para
+    el canal que hoy solo recibe "redacción conversacional" (`tono_narrativo = 'oral'`).
+  - **K (kinestésico):** un video corto que combina la imagen generada con la narración de
+    audio, como resumen de apoyo a la actividad práctica.
+- **Modelos candidatos** (locales, con pesos abiertos, sin costo de API — confirmar la licencia
+  exacta de cada uno antes de adoptarlo; "pesos abiertos" no siempre significa "uso académico
+  sin restricciones"):
+
+  | Modalidad | Candidato principal | Por qué | Si el hardware no alcanza |
+  |---|---|---|---|
+  | Imagen | SDXL-Turbo / SD-Turbo vía `diffusers` (Hugging Face) | 1–4 pasos de inferencia: corre en una GPU modesta y hasta en CPU con tiempos tolerables | Diagrama determinista (Mermaid/Graphviz) a partir de una especificación que el propio LLM de texto ya puede producir — sin el riesgo de texto/etiquetas mal renderizadas que tienen los modelos de difusión, algo que en material *educativo* con diagramas rotulados no es cosmético |
+  | Audio | Piper TTS | Ligero, corre bien en CPU, voces en español, licencia MIT | — (ya es la opción liviana; Coqui XTTS-v2 queda como mejora de calidad si hay GPU, pero su licencia (CPML) hay que confirmarla para uso académico antes de adoptarla) |
+  | Video | Composición programática (`ffmpeg`/`moviepy` sobre la imagen y el audio ya generados) | Un modelo de video generativo real (Stable Video Diffusion, AnimateDiff, CogVideoX) exige VRAM que ninguna máquina del equipo tiene confirmada, y tarda minutos por unos segundos de video; componer un video narrado a partir de recursos ya generados es determinista, rápido y no alucina | Evaluar un modelo de video generativo real solo si se confirma una GPU con VRAM suficiente (~12 GB o más) |
+
+- **Integración propuesta:** paquete nuevo `src/studify/media/`, con el mismo patrón que ya
+  usa `generation/` para el LLM de texto — un cliente por modalidad detrás de un `Protocol`
+  inyectable (igual que `ClienteLLM`), para poder testear con dobles falsos sin GPU ni modelos
+  descargados. El disparo se condiciona a `configuracion_contenido`, y si el modelo local no
+  está disponible la cápsula se sigue sirviendo solo con texto —el mismo patrón defensivo que
+  ya existe hoy para `LLM_API_KEY` ausente (`get_cliente_llm() -> None`)—: la falta de GPU o de
+  un modelo descargado nunca debe romper la generación de texto, que es lo que ya cumple el
+  criterio de término de la Fase 3.
+- **Persistencia:** una tabla nueva (p. ej. `recurso_multimedia`, con FK a
+  `microcapsula_generada`) con ruta, tipo (`imagen`/`audio`/`video`), formato y duración, en vez
+  de sobrecargar `contenido_json`, que hoy es texto puro y ya tiene un contrato Pydantic cerrado
+  (cap. 3 de este plan).
+
+**Criterio de término (propuesto, a confirmar con el equipo):** para un objetivo con material
+curado, generar la cápsula de un perfil V, A y K y que cada una incluya su recurso multimedia
+correspondiente, generado localmente y sin intervención manual. El tiempo máximo aceptable y el
+umbral de calidad quedan pendientes de definir una vez que se confirme qué hardware (GPU/VRAM)
+tiene disponible cada máquina del equipo — ver el nuevo riesgo en la sección 5.
+
 ---
 
 ## 5. Riesgos y mitigaciones
@@ -202,18 +275,38 @@ Jinja + HTMX: cuestionario VARK (16 ítems, selección múltiple y opción de de
 | Las cuatro cápsulas VARK salen indistinguibles | Prueba de diferenciación al cierre de la Fase 3; si falla, el prompt debe recibir instrucciones **estructurales** (qué bloques incluir), no adjetivos de tono |
 | Costo/latencia durante las pruebas | Caché de cápsulas + modelo barato en desarrollo, modelo bueno solo para la evaluación final |
 | Consentimiento y ética con estudiantes | Formulario de consentimiento revisado con la profesora guía antes de la semana 6 |
+| **(Fase 6)** No hay GPU/VRAM confirmada en las máquinas del equipo para correr modelos locales de imagen/audio/video | Elegir modelos ligeros que toleran CPU o GPU modesta (SDXL-Turbo, Piper TTS); componer video a partir de imagen+audio ya generados en vez de un modelo de video generativo real; si no hay recursos, la cápsula se sirve solo con texto — nunca bloquea lo que ya funciona |
+| **(Fase 6)** Un modelo de difusión de imagen renderiza mal el texto/etiquetas de un diagrama educativo | Preferir un diagrama determinista (Mermaid/Graphviz) generado desde una especificación de texto cuando el recurso necesita etiquetas correctas; reservar la difusión para ilustraciones sin texto |
+| **(Fase 6)** "Modelo local gratuito" no siempre significa licencia libre para uso académico (p. ej. Coqui XTTS-v2 es CPML) | Confirmar la licencia de cada modelo candidato antes de adoptarlo, no solo que los pesos sean descargables |
 
 ---
 
 ## 6. Decisiones pendientes que bloquean código
 
-Estas se cierran en la Semana 0 / Fase 1. Todas nacen de vacíos del informe:
+Se planeó cerrarlas en la Semana 0 / Fase 1; en la práctica se fueron cerrando entre la Fase 1
+y la Fase 3, y no siempre con la propuesta que se anotó acá — el detalle de qué se implementó
+realmente y por qué está en `AVANCE.md` sección 7, que se mantiene sincronizada con esta lista.
+Todas nacen de vacíos del informe:
 
-1. **Mapeo de C_\* a parámetros concretos.** Las fórmulas del cap. 11.2 producen valores continuos, pero `configuracion_contenido` guarda enteros (`recursos_visuales`, `componentes_practicos`, `palabras_texto`). Faltan los cortes. Propuesta: `recursos_visuales = 0 si C_visual<15, 1 si <25, 2 si ≥25`; `palabras_texto = 150 + round(C_texto/100 · 150)`; `componentes_practicos` análogo con C_practico.
-2. **`audio_activo`.** El campo existe en la tabla 17.4 pero no hay TTS en el stack del cap. 14. Decidir: (a) fuera de alcance y el canal auditivo se atiende solo con redacción conversacional, o (b) agregar TTS. Recomendación: (a) para el prototipo, y declararlo como trabajo futuro.
+1. ~~**Mapeo de C_\* a parámetros concretos.**~~ ✅ **Cerrada en la Fase 1**, pero **no con la
+   propuesta de abajo**: el corte se hizo sobre los **porcentajes VARK crudos**, no sobre los
+   C_*, porque ahí sí hay soporte directo del informe (tabla 11.1) y la propuesta original no
+   lo tenía. `palabras_texto` (que no tiene base directa en el informe) quedó aprobado por el
+   equipo el 06-ago-2026 tal como se implementó. Detalle en `AVANCE.md` sección 7, punto 1, y
+   en el docstring de `vark/rules.py`.
+   - Las fórmulas del cap. 11.2 producen valores continuos, pero `configuracion_contenido` guarda enteros (`recursos_visuales`, `componentes_practicos`, `palabras_texto`). Faltan los cortes. Propuesta original (**descartada**): `recursos_visuales = 0 si C_visual<15, 1 si <25, 2 si ≥25`; `palabras_texto = 150 + round(C_texto/100 · 150)`; `componentes_practicos` análogo con C_practico.
+2. **`audio_activo`.** El campo existe en la tabla 17.4 pero no hay TTS en el stack del cap. 14. Decidido para el prototipo (fases 1–5): (a) fuera de alcance, el canal auditivo se atiende solo con redacción conversacional. **Reabierto el 24-ago-2026** como trabajo futuro concreto, no solo declarado: ver Fase 6 (§4), que además de audio agrega imagen y video generados localmente para complementar los tres canales que no son texto.
 3. **Fragmentos no textuales.** ¿Cómo se le entrega una tabla o un diagrama a un LLM de texto? Definición propuesta: al curar, se guarda una **descripción textual** del recurso en `metadatos_json`, y esa descripción es lo que se inyecta; `ruta_recurso` se usa solo para renderizar en la UI.
-4. **Selección del tema por el estudiante.** No está en el informe. Se necesita `GET /api/catalogo` (asignatura → unidad → objetivo).
-5. **Regeneración.** ¿Puede un estudiante pedir otra cápsula del mismo objetivo? Definir si se versiona o se sobreescribe.
+   - ✅ **Parcialmente cerrada en la Fase 2:** las tablas de PPTX se serializan a texto y van en su propio fragmento (`tipo_fragmento = 'tabla'`), así que el retriever y el FTS ya las ven — eso es exactamente la propuesta de esta línea, aplicada. **Sigue abierto** el caso de imágenes y diagramas: la ingesta hoy los omite, todavía no se escribe la descripción textual en `metadatos_json` durante la curación. Detalle en `AVANCE.md` sección 7, punto 3.
+4. ~~**Selección del tema por el estudiante.**~~ ✅ **Cerrada en la Fase 2:** `GET /api/catalogo`
+   devuelve el árbol asignatura → unidad → tema, ocultando por defecto los objetivos sin
+   material validado.
+   - No está en el informe. Se necesita `GET /api/catalogo` (asignatura → unidad → objetivo).
+5. ~~**Regeneración.**~~ ✅ **Cerrada en la Fase 3 (11-ago-2026): se versiona.**
+   `POST /api/capsulas` devuelve por defecto la cápsula cacheada para la misma huella; con
+   `?regenerar=true` genera una versión nueva y conserva la anterior — necesario porque el
+   bake-off y la validación docente comparan varias cápsulas del mismo objetivo.
+   - ¿Puede un estudiante pedir otra cápsula del mismo objetivo? Definir si se versiona o se sobreescribe.
 
 ---
 
