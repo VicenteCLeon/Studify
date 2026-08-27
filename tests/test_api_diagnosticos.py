@@ -9,9 +9,10 @@ from decimal import Decimal
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import text
+from sqlalchemy import func, select, text
 
-from studify.db.session import engine
+from studify.db.models import Estudiante
+from studify.db.session import SessionLocal, engine
 from studify.main import app
 
 client = TestClient(app)
@@ -29,6 +30,39 @@ def _hay_base_de_datos() -> bool:
 necesita_bd = pytest.mark.skipif(
     not _hay_base_de_datos(), reason="requiere Postgres levantado"
 )
+
+
+@pytest.fixture(autouse=True)
+def limpiar_lo_que_cree_el_test():
+    """Borra los estudiantes que cada test deje atrás.
+
+    Este archivo era **la única fuente de basura permanente** en la base de
+    desarrollo: sus tests crean estudiantes por HTTP y nadie los borraba, así
+    que cada corrida de `pytest` sumaba una decena y no se restaba ninguna. El
+    daño no es el espacio, es que `/teacher/analytics` promedia el vector VARK
+    de **toda** la tabla `diagnostico_vark`: con más diagnósticos sintéticos que
+    reales, los «estilos de aprendizaje del curso» dejan de describir a la
+    cohorte. Ya había pasado antes —`AVANCE.md` §3 ter documenta 28
+    diagnósticos de este mismo archivo barridos el 10-ago— y volvió a pasar
+    porque entonces se limpió el resultado y no la causa.
+
+    Va por `id_estudiante > max(antes)` en vez de por un marcador en `carrera`
+    porque estos tests usan carreras que también existen de verdad en el CSV
+    («Ingeniería en Informática»): filtrar por contenido borraría datos reales.
+    El resto de las tablas del módulo cae sola por `ON DELETE CASCADE`.
+    """
+    if not _hay_base_de_datos():
+        yield
+        return
+
+    with SessionLocal() as db:
+        ultimo_previo = db.scalar(select(func.max(Estudiante.id_estudiante))) or 0
+
+    yield
+
+    with SessionLocal() as db:
+        db.query(Estudiante).filter(Estudiante.id_estudiante > ultimo_previo).delete()
+        db.commit()
 
 
 def respuestas_kinestesicas() -> list[dict]:

@@ -44,14 +44,34 @@ from studify.knowledge.ingest import (
     ingerir,
 )
 from studify.rag.retriever import contar_disponibles, recuperar
+from studify.web.routers import auth
 
+# Dos routers sobre el mismo prefijo, separados por **quién** puede llamarlos.
+#
+# `router` queda abierto: solo `/api/catalogo`, que es lo que un front del
+# estudiante necesita para ofrecerle temas y que ya oculta los objetivos sin
+# material validado.
+#
+# `router_docente` exige credenciales (`auth.requiere_docente_api`) porque todo
+# lo que cuelga de él **decide qué material llega a las cápsulas** — la barrera
+# del cap. 12/13 — o expone el material curado en crudo. La dependencia va en el
+# router y no en cada handler por lo mismo que en `web/routers/teacher.py`: un
+# endpoint nuevo queda cerrado por colgar de acá, no por acordarse de anotarlo.
+#
+# La UI web no se ve afectada por esta separación: `web/routers/*.py` importa
+# estos handlers como funciones y los llama directo, sin pasar por HTTP.
 router = APIRouter(prefix="/api", tags=["base de conocimiento"])
+router_docente = APIRouter(
+    prefix="/api",
+    tags=["base de conocimiento (docente)"],
+    dependencies=[Depends(auth.requiere_docente_api)],
+)
 
 
 # --- Catálogo curricular ------------------------------------------------------
 
 
-@router.post(
+@router_docente.post(
     "/objetivos",
     response_model=ObjetivoOut,
     status_code=status.HTTP_201_CREATED,
@@ -76,7 +96,7 @@ def crear_objetivo(payload: ObjetivoIn, db: Session = Depends(get_db)) -> Objeti
     return objetivo
 
 
-@router.get(
+@router_docente.get(
     "/objetivos",
     response_model=list[ObjetivoOut],
     summary="Lista los objetivos del catálogo",
@@ -154,7 +174,7 @@ def catalogo(
 # --- Documentos ---------------------------------------------------------------
 
 
-@router.post(
+@router_docente.post(
     "/documentos",
     response_model=IngestaOut,
     status_code=status.HTTP_201_CREATED,
@@ -219,7 +239,9 @@ def subir_documento(
     )
 
 
-@router.get("/documentos", response_model=list[DocumentoOut], summary="Lista los documentos")
+@router_docente.get(
+    "/documentos", response_model=list[DocumentoOut], summary="Lista los documentos"
+)
 def listar_documentos(db: Session = Depends(get_db)) -> list[DocumentoFuente]:
     return list(
         db.scalars(
@@ -228,7 +250,7 @@ def listar_documentos(db: Session = Depends(get_db)) -> list[DocumentoFuente]:
     )
 
 
-@router.delete(
+@router_docente.delete(
     "/documentos/{id_documento}",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Elimina un documento y sus fragmentos",
@@ -273,7 +295,7 @@ def eliminar_documento(id_documento: int, db: Session = Depends(get_db)) -> None
     db.commit()
 
 
-@router.get(
+@router_docente.get(
     "/documentos/{id_documento}/resumen",
     response_model=ResumenCuracionOut,
     summary="Avance de la curación de un documento",
@@ -310,7 +332,7 @@ def _a_curacion(fragmento: Fragmento) -> FragmentoEnCuracion:
     )
 
 
-@router.get(
+@router_docente.get(
     "/fragmentos",
     response_model=list[FragmentoEnCuracion],
     summary="Bandeja de curación",
@@ -348,7 +370,7 @@ def _ejecutar(operacion) -> Fragmento:
         raise HTTPException(status_code=codigo, detail=mensaje) from exc
 
 
-@router.post(
+@router_docente.post(
     "/fragmentos/{id_fragmento}/validar",
     response_model=FragmentoOut,
     summary="Habilita un fragmento para el retriever",
@@ -362,7 +384,7 @@ def validar_fragmento(
     return _ejecutar(lambda: curation.validar(db, id_fragmento, id_objetivo=id_objetivo))
 
 
-@router.post(
+@router_docente.post(
     "/fragmentos/{id_fragmento}/descartar",
     response_model=FragmentoOut,
     summary="Marca un fragmento como no utilizable",
@@ -371,7 +393,7 @@ def descartar_fragmento(id_fragmento: int, db: Session = Depends(get_db)) -> Fra
     return _ejecutar(lambda: curation.descartar(db, id_fragmento))
 
 
-@router.patch(
+@router_docente.patch(
     "/fragmentos/{id_fragmento}/objetivo",
     response_model=FragmentoOut,
     summary="Asigna el objetivo de aprendizaje de un fragmento",
@@ -384,7 +406,7 @@ def asignar_objetivo(
     )
 
 
-@router.patch(
+@router_docente.patch(
     "/fragmentos/{id_fragmento}/texto",
     response_model=FragmentoOut,
     summary="Corrige el texto extraído antes de validarlo",
@@ -398,7 +420,7 @@ def editar_fragmento(
 # --- Recuperación (previa a la Fase 3) ---------------------------------------
 
 
-@router.get(
+@router_docente.get(
     "/recuperar",
     response_model=list[FragmentoRecuperadoOut],
     summary="Fragmentos validados de un objetivo (RAG estructurado)",

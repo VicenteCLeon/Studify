@@ -22,6 +22,30 @@ class Settings(BaseSettings):
     # `uvicorn --reload`). Fijarla en el `.env` es lo que hace cómoda la demo.
     session_secret: str = ""
 
+    # Usuario y clave del panel del docente (`/teacher/*`). No hay tabla de
+    # usuarios: el cap. 9 identifica al estudiante por su diagnóstico y no por
+    # una credencial, y el docente es un rol operativo del piloto —una o dos
+    # personas—, no una cuenta que haya que administrar. Una credencial
+    # compartida separa las dos vistas sin construir un sistema de usuarios que
+    # el informe no pide ni evalúa. No se valida contra la base de datos: el
+    # panel tiene que poder abrirse aunque Postgres esté caído, que es
+    # justamente cuando más falta hace poder entrar a revisar algo.
+    #
+    # ⚠️ **`admin` / `admin123` son credenciales de demo, no un secreto.**
+    # Quedan como valor por defecto para que el panel funcione nada más clonar
+    # el repo, sin depender de un `.env` a medio completar. Cambiarlas antes de
+    # exponer el sistema a la cohorte (fijando `TEACHER_USERNAME` y
+    # `TEACHER_PASSWORD` en el `.env`) es responsabilidad de quien lo despliegue
+    # — acá no se puede distinguir "sigue en admin123 porque nadie lo cambió" de
+    # "developer lo dejó así a propósito para la demo local".
+    #
+    # **Si `TEACHER_PASSWORD` se deja vacía explícitamente, el panel se cierra
+    # por completo** (no cae de vuelta al valor por defecto). Es la puerta de la
+    # barrera de curación del cap. 12/13: para desactivarla del todo hay que
+    # hacerlo a propósito. Ver `web/routers/auth.py`.
+    teacher_username: str = "admin"
+    teacher_password: str = "admin123"
+
     # Proveedor LLM con API compatible con OpenAI (DeepSeek / Qwen / GLM).
     # El modelo se decide con datos en el bake-off de la Fase 3.
     llm_base_url: str = "https://api.deepseek.com/v1"

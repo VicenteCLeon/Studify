@@ -29,8 +29,15 @@ ASIGNATURA_PRUEBA = "Bases de Datos (test docente)"
 
 
 @pytest.fixture
-def http() -> TestClient:
-    return TestClient(app)
+def http(http_docente) -> TestClient:
+    """El panel exige sesión de docente; la fixture compartida ya la abrió.
+
+    Que estos tests pasen por el login de verdad (y no por una cookie inyectada)
+    es parte de lo que protegen: si el guardián de `/teacher/*` se rompiera o el
+    login dejara de emitir una cookie válida, la suite completa del panel se
+    caería en vez de seguir verde sobre una puerta que ya no cierra.
+    """
+    return http_docente
 
 
 @pytest.fixture

@@ -59,10 +59,23 @@ from studify.rag.orchestrator import ErrorPrompt
 from studify.rag.retriever import recuperar
 from studify.vark.rules import aplicar_reglas
 from studify.vark.scoring import PerfilVark
+from studify.web.routers import auth
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/capsulas", tags=["cápsulas"])
+
+# Generar y leer *una* cápsula es del estudiante; **listarlas todas no**. El
+# historial no está acotado a un estudiante —`?id_estudiante=` es un filtro
+# opcional, no una restricción—, así que sin filtro devuelve las cápsulas de
+# toda la cohorte. Eso es una vista de analítica del docente, y es exactamente
+# lo que el panel usa. Va en su propio router para que la dependencia no haya
+# que recordarla en cada handler.
+router_docente = APIRouter(
+    prefix="/api/capsulas",
+    tags=["cápsulas (docente)"],
+    dependencies=[Depends(auth.requiere_docente_api)],
+)
 
 # Longitud de `microcapsula_generada.titulo` (tabla 17.8). El contrato ya limita
 # el título a 10 palabras, pero diez palabras largas caben igual sobre 150
@@ -325,7 +338,7 @@ def crear_capsula(
     return _a_salida(fila, origen="generada", resultado=resultado)
 
 
-@router.get(
+@router_docente.get(
     "",
     response_model=list[ResumenCapsulaOut],
     summary="Historial de cápsulas, filtrable por estudiante y objetivo",

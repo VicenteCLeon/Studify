@@ -13,7 +13,7 @@ from sqlalchemy import text
 from studify.api.routers import capsules, diagnostics, knowledge
 from studify.config import get_settings
 from studify.db.session import engine
-from studify.web.routers import student, teacher
+from studify.web.routers import auth, student, teacher
 
 settings = get_settings()
 
@@ -29,7 +29,14 @@ app = FastAPI(
 app.include_router(diagnostics.router)
 app.include_router(knowledge.router)
 app.include_router(capsules.router)
+# Los `*_docente` cuelgan del mismo prefijo `/api` pero exigen credenciales:
+# curación del material y analítica de la cohorte. Ver `api/routers/knowledge.py`.
+app.include_router(knowledge.router_docente)
+app.include_router(capsules.router_docente)
 app.include_router(student.router)
+# Antes que `teacher.router`: `/teacher/login` tiene que resolverse por el
+# router abierto y no quedar detrás del guardián del panel.
+app.include_router(auth.router)
 app.include_router(teacher.router)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))

@@ -6,6 +6,10 @@ fragmento qué queda disponible para el retriever. Ningún fragmento sin validar
 llega jamás al prompt (cap. 12/13), así que esta pantalla no es administrativa:
 es la barrera de seguridad del proyecto.
 
+Por eso mismo todo este router exige sesión de docente (`web/routers/auth.py`):
+la dependencia está declarada en el `APIRouter`, de modo que cubre también las
+vistas que se agreguen más adelante.
+
 Como en `student.py`, los endpoints son síncronos (`def`) porque tocan
 SQLAlchemy, y no reimplementan lógica: llaman a `knowledge.ingest`,
 `knowledge.curation` y a los mismos handlers que expone `/api/*`.
@@ -50,9 +54,18 @@ from studify.vark.rules import aplicar_reglas
 from studify.vark.scoring import CANALES, PerfilVark
 from studify.web import textos
 from studify.web.deps import templates
+from studify.web.routers import auth
 from studify.web.routers.student import _preparar_bloques
 
-router = APIRouter(prefix="/teacher", tags=["web-teacher"])
+# El guardián va acá, en el router, y no en cada handler: cualquier vista que se
+# agregue después al panel queda cerrada por el solo hecho de colgar de este
+# router, sin depender de que alguien se acuerde de repetir la dependencia. El
+# login vive en `web/routers/auth.py`, que es el único `/teacher/*` abierto.
+router = APIRouter(
+    prefix="/teacher",
+    tags=["web-teacher"],
+    dependencies=[Depends(auth.requiere_docente)],
+)
 
 # Cuántos fragmentos muestra la bandeja de una vez. La curación es trabajo
 # humano y el techo del plan es de 40–60 fragmentos por unidad, así que una

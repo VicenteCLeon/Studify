@@ -36,8 +36,9 @@ ASIGNATURA_PRUEBA = "Bases de Datos (test simulador)"
 
 
 @pytest.fixture
-def http():
-    return TestClient(app)
+def http(http_docente) -> TestClient:
+    """El simulador cuelga de `/teacher/*`, que exige sesión de docente."""
+    return http_docente
 
 
 @pytest.fixture

@@ -2,7 +2,42 @@
 
 > Documento vivo. Se actualiza al cierre de cada fase para que cualquier sesión de trabajo
 > (o cualquier persona) pueda retomar el proyecto sin releer todo el hilo de conversación.
-> Última actualización: **24-ago-2026** — repaso de coherencia entre `PLAN_DESARROLLO.md` y el
+> Última actualización: **26-ago-2026** — **separación de las vistas del estudiante y del
+> docente** (secciones 5 duodevicies y 5 undevicies). Hasta ahora `/teacher/*` estaba abierto:
+> la cabecera ofrecía las tres pestañas del docente a cualquiera y ninguna comprobaba nada, de
+> modo que la bandeja de curación —que decide qué material llega a las cápsulas, cap. 12/13— la
+> podía usar quien escribiera la URL. Ahora hay un botón «Soy docente» que lleva a
+> `/teacher/login`, una credencial única (usuario + clave) y un guardián declarado en el
+> `APIRouter`, de forma que toda vista nueva del panel queda cerrada por construcción y no por
+> disciplina; un test lo comprueba recorriendo las rutas ya montadas. La cookie del docente
+> lleva el vencimiento y la huella de la credencial dentro de la firma (rotar usuario o clave
+> expulsa las sesiones abiertas), las peticiones HTMX sin sesión reciben `HX-Redirect` en vez
+> de un 303 que HTMX incrustaría dentro de un `<div>`, y con `TEACHER_PASSWORD=` puesta vacía a
+> propósito el panel se cierra para todos en vez de quedar abierto en silencio. **A pedido del
+> equipo, el valor de fábrica —sin tocar el `.env`— es usuario `admin` y clave `admin123`**
+> (sección 5 undevicies): es un retroceso de seguridad deliberado a cambio de que el panel
+> funcione nada más clonar el repo, documentado como tal y a cambiar antes de exponer el
+> sistema a estudiantes reales. **330 tests en verde** (327 + 3). El mismo día, además,
+> **higiene operativa** (sección 5 vicies): al ir a cerrar los tres pendientes «operativos»,
+> dos describían un estado que ya no era cierto —las dependencias de ingesta ya estaban
+> instaladas, y la base no estaba vacía sino **contaminada**: 157 diagnósticos donde los reales
+> son 43—. La causa era `tests/test_api_diagnosticos.py`, el único archivo de la suite sin
+> fixture de limpieza, que sumaba una decena de estudiantes en cada corrida de `pytest`; el
+> mismo problema que la sección 3 ter ya había documentado el 10-ago y que volvió porque
+> entonces se limpió el resultado y no la causa. Se arregló primero la causa (fixture autouse,
+> verificada con dos corridas seguidas sin que se muevan los conteos) y después el resultado
+> (`--reset` + recarga: 43 estudiantes y 1.202 respuestas, el número exacto de la sección
+> 5 ter). El material curado no se tocó y `SESSION_SECRET` quedó fijada. Y por último, también
+> el mismo día, **el cierre de `/api/*`** (sección 5 unvicies, pendiente n.º 17): el login había
+> separado las *vistas* pero no los *endpoints*, así que `POST /api/objetivos`, los `PATCH` de
+> curación y `DELETE /api/documentos/{id}` seguían aceptando escrituras anónimas. Los 13 de
+> curación y analítica pasaron a un `router_docente` que responde 401 con `WWW-Authenticate`
+> —no el 303 de la web, que un cliente HTTP seguiría hasta creer que la llamada funcionó— y
+> acepta cookie o HTTP Basic; quedan abiertos los seis del estudiante. **De paso apareció un
+> problema peor:** el test de cobertura de rutas escrito esa mañana **pasaba en vacío**, porque
+> FastAPI 0.141 no aplana `include_router` y el filtro veía 2 de 41 rutas — corregido, con un
+> test que ahora vigila al vigilante. **339 tests en verde.**
+> Antes: **24-ago-2026** — repaso de coherencia entre `PLAN_DESARROLLO.md` y el
 > estado real: quedaron marcadas ✅/reabiertas las cinco decisiones de la sección 6 del plan
 > (el mapeo de C_* se cerró con una fórmula **distinta** a la propuesta original — sobre
 > porcentajes VARK, no sobre C_* —, fragmentos no textuales quedó parcialmente cerrado, tema y
@@ -115,6 +150,19 @@ que arrastraban los routers mock).
 
 **Etiquetado asistido por LLM (24-ago-2026, sección 5 septendecies):** `knowledge/tagger.py` le muestra al modelo el catálogo de objetivos activos de la asignatura y el texto de un fragmento, y le pide que proponga objetivo y etiqueta temática. La propuesta **no escribe** `Fragmento.id_objetivo` ni `estado_validacion` — vive en `metadatos_json` y solo preselecciona el `<select>` que el curador ya tenía que confirmar con «Validar» —, y un objetivo fuera del catálogo entregado se descarta igual que una cita alucinada. Verificado contra DeepSeek real: acertó los dos objetivos que sí correspondían a sus fragmentos y devolvió `null` en el que no calzaba con ninguno. Cierra el pendiente n.º 3. **308 tests en verde** (289 + 19).
 
+**Separación de vistas estudiante/docente (26-ago-2026, sección 5 duodevicies):** `/teacher/*`
+dejó de estar abierto. La cabecera muestra un botón «Soy docente» a quien no tiene sesión y las
+tres pestañas del panel más «Salir» a quien sí; el acceso lo da `/teacher/login` con una
+credencial única, y el guardián está declarado en el `APIRouter` para que cualquier vista que
+se agregue después quede cerrada por construcción — hay un test que lo verifica sobre las
+rutas ya montadas, no sobre una lista escrita a mano.
+
+**Credencial de fábrica `admin`/`admin123` (mismo día, sección 5 undevicies):** a pedido del
+equipo, el default sin tocar el `.env` pasó de "panel cerrado" a "panel abierto con
+`admin`/`admin123`" — retroceso de seguridad deliberado a cambio de que el sistema funcione
+nada más clonar el repo, documentado como tal (`config.py`, `.env.example`) y a cambiar antes
+de exponer el sistema a estudiantes reales. **330 tests en verde** (308 + 19 + 3).
+
 Queda una discrepancia abierta: las tablas 16.2/16.3 del informe no se reproducen desde el CSV (sección 5 ter) — es un problema del informe, no del código.
 
 ---
@@ -226,6 +274,10 @@ cargó con `python scripts/import_vark_csv.py data/data_cuestionarios_43.csv --r
 ruido de `test_api_diagnosticos.py` (crea diagnósticos y no los limpia) por los 43 reales.
 Verificado: `estudiante`, `diagnostico_vark` y `configuracion_contenido` quedaron en 43 cada una.
 
+> ⚠️ **Volvió a pasar.** Esta limpieza barrió el resultado pero no la causa: `pytest` siguió
+> sumando estudiantes en cada corrida y al 26-ago-2026 había otra vez **157 diagnósticos** para
+> 43 reales. La fixture que lo cierra de raíz se agregó ese día — ver sección 5 vicies.
+
 **Distinción importante para no confundir en sesiones futuras:** este CSV son las **respuestas
 del cuestionario VARK** (dato de estudiantes). No es el **catálogo de objetivos de aprendizaje**
 que la Fase 3 necesita (`codigo_objetivo, asignatura, unidad, tema, descripcion,
@@ -299,21 +351,22 @@ Studify/
 │  │  ├─ validator.py    #    parser tolerante + reglas 2, 5 y 6 + realimentación
 │  │  └─ generator.py    #    cliente LLM (inyectable) + bucle de reparación
 │  └─ web/               # ✅ UI mínima con HTMX + Jinja2 (Fase 4, conectada al motor)
-│     ├─ deps.py         #    entorno Jinja2 compartido
-│     ├─ sesion.py       #    ✅ cookie `id_estudiante` firmada con HMAC
+│     ├─ deps.py         #    entorno Jinja2 + procesador de contexto (`es_docente`)
+│     ├─ sesion.py       #    ✅ cookies firmadas: `id_estudiante` (quién) y `docente` (permiso)
 │     ├─ textos.py       #    ✅ copy de la UI + enunciados de los 16 ítems (verificados 24-ago)
 │     ├─ routers/
+│     │  ├─ auth.py      #    ✅ login/logout del docente + guardián de /teacher/* (26-ago)
 │     │  ├─ student.py   #    ✅ cuestionario, perfil, catálogo, visor, quiz e intentos (Fase 5)
 │     │  └─ teacher.py   #    ✅ curación + analíticas + simulador VARK (Fase 5, sección 5 decies)
 │     ├─ templates/
 │     │  ├─ student/     #    _capsula.html (partial compartido con el simulador), _feedback, …
-│     │  └─ teacher/     #    _bandeja, _fila, analytics.html, simulator.html, _comparacion.html
+│     │  └─ teacher/     #    login.html, _bandeja, _fila, analytics, simulator, _comparacion
 │     └─ static/css/
 ├─ tests/
 │  ├─ conftest.py        # ✅ fixtures compartidas (necesita_bd, db, almacen_temporal)
 │  ├─ test_health.py     # smoke test de Semana 0
 │  ├─ test_vark.py       # ✅ 44 tests del motor VARK, contrastados contra el informe
-│  ├─ test_api_diagnosticos.py   # ✅ 15 tests del endpoint (se saltan sin Postgres)
+│  ├─ test_api_diagnosticos.py   # ✅ 15 tests del endpoint (+ limpieza autouse, 26-ago)
 │  ├─ test_knowledge_ingesta.py  # ✅ 22 tests de extracción y chunking (sin BD)
 │  ├─ test_knowledge_persistencia.py  # ✅ 6 tests de ingesta contra Postgres
 │  ├─ test_curacion_retriever.py      # ✅ 17 tests de curación y determinismo
@@ -324,6 +377,7 @@ Studify/
 │  ├─ test_generador.py               # ✅ 15 tests del bucle de reparación (LLM falso)
 │  ├─ test_api_capsulas.py            # ✅ 14 tests del endpoint (Postgres, LLM falso)
 │  ├─ test_web_estudiante.py          # ✅ 24 tests del flujo web del estudiante (Fase 4)
+│  ├─ test_web_auth.py                # ✅ 19 tests del login del docente y el guardián (26-ago)
 │  ├─ test_web_docente.py             # ✅ 18 tests del panel de curación, incl. etiquetado (Fase 4)
 │  ├─ test_web_simulador.py           # ✅ 13 tests del simulador VARK, incl. comparación (Fase 5)
 │  ├─ test_interaccion_quiz.py        # ✅ 12 tests de intentos numerados y ownership (Fase 5)
@@ -1426,6 +1480,338 @@ esta entrega).
 
 ---
 
+## 5 duodevicies. Separación de vistas: login del docente (26-ago-2026)
+
+Hasta hoy la aplicación tenía **una sola cara**. La cabecera compartida
+(`base.html`) mostraba las tres pestañas del docente junto a las del estudiante,
+y `/teacher/*` no comprobaba nada: cualquiera que escribiera la URL —o que
+simplemente leyera el menú— entraba a la bandeja de curación. Eso no es un
+detalle de presentación: **lo que se valida en esa bandeja es lo único que el
+retriever recupera** (cap. 12/13), así que la pantalla que decide qué material
+llega a las cápsulas estaba abierta, igual que las analíticas de la cohorte y el
+simulador, que gasta créditos del LLM en cada clic.
+
+No estaba anotado como pendiente en ninguna de las dos listas de este documento.
+Apareció al revisar qué existía como "panel de administración" y encontrar que
+`web/sesion.py` decía, en su propio docstring, «no hay usuarios, contraseñas ni
+roles, porque el sistema no los tiene».
+
+### La decisión de fondo: una clave compartida, no un sistema de usuarios
+
+El informe no modela docentes. El cap. 9 identifica al **estudiante** por su
+diagnóstico VARK y no por una credencial, y el docente aparece únicamente como
+el rol que cura, valida y revisa. Con una o dos personas en el piloto, una tabla
+de usuarios con hash de contraseñas, alta, baja y recuperación sería
+infraestructura que nadie va a usar y que además hay que justificar en el
+capítulo de modelo de datos, donde no existe.
+
+Se implementó entonces una credencial única (`TEACHER_USERNAME`/`TEACHER_PASSWORD`,
+con **`admin`/`admin123` como valor de fábrica** — ver sección 5 undevicies) que
+abre las tres vistas del panel. Si el proyecto llegara a tener varios docentes
+con material propio, el punto de cambio es una sola función
+(`sesion.verificar_credenciales_docente`) y el resto del andamiaje —guardián,
+cookie firmada, redirecciones— sirve igual.
+
+| Decisión | Alternativa descartada | Motivo |
+|---|---|---|
+| **El guardián se declara en el `APIRouter`**, no en cada handler | `Depends(requiere_docente)` endpoint por endpoint | Cualquier vista que se agregue después al panel queda cerrada por el solo hecho de colgar de ese router. Handler por handler, olvidar un decorador abre un agujero silencioso —que es exactamente el modo de fallo que este cambio viene a cerrar—. Hay un test (`test_todas_las_rutas_del_panel_exigen_sesion`) que recorre `app.routes` ya montadas y falla si alguna ruta de `/teacher/*` queda sin guardián. |
+| **Sin `TEACHER_PASSWORD` el panel se cierra para todos** | Dejarlo abierto cuando no hay clave configurada | Fallar abierto en silencio ante un `.env` incompleto es peor que no tener puerta: nadie se entera de que no está cerrada. La pantalla de login lo explica con el nombre exacto de la variable en vez de decir "clave incorrecta", que mandaría a buscar el problema donde no está. |
+| **Una petición HTMX sin sesión recibe 401 + `HX-Redirect`**, no un 303 | El mismo 303 que recibe una navegación normal | HTMX sigue los 303 **dentro del propio XHR**. Con la sesión vencida, el docente vería la página de login entera incrustada dentro del `<div>` de estado de la bandeja: una pantalla rota, sin forma de escribir la clave ahí y sin explicación. `HX-Redirect` pide una navegación completa del navegador. Casi todo el panel se mueve por HTMX, así que este no es un caso de borde. |
+| **La huella de la clave va dentro de la firma de la cookie** | Firmar solo el vencimiento | Hace que **cambiar `TEACHER_PASSWORD` invalide las sesiones ya abiertas**. Sin esto, rotar la clave —el único remedio disponible si se filtra— no expulsaría a quien ya tuviera la cookie, que es justo el escenario en que uno la rota. |
+| **El vencimiento viaja firmado, no solo en el `max_age`** | Confiar en el `max_age` de la cookie | El `max_age` lo respeta el navegador, y el navegador es precisamente lo que no se puede dar por bueno. Con el vencimiento dentro del mensaje firmado, estirar la sesión desde el cliente rompe la firma. |
+| **12 horas de sesión para el docente, contra 30 días del estudiante** | La misma duración para ambos | Las dos cookies no arriesgan lo mismo: la del estudiante recuerda un perfil de aprendizaje, la del docente concede permiso sobre la curación. Un computador de laboratorio con la sesión olvidada deja de ser una puerta abierta al día siguiente. |
+| **`next` acotado a rutas que empiezan en `/teacher/`** | Redirigir a donde diga el parámetro | Sin la comprobación, `/teacher/login?next=https://sitio-falso` convierte el login en un redirector abierto: el patrón clásico para hacer pasar un enlace de phishing por un enlace legítimo del sistema. Se descarta también `//otro-sitio`, que el navegador lee como URL absoluta pese a empezar con `/`. |
+| **Freno de fuerza bruta en memoria (5 intentos / 60 s por IP)** | Sin freno, o un limitador con almacenamiento compartido | Una clave compartida se elige corta y no se rota seguido: sin freno, un script la encuentra en minutos. El freno es deliberadamente modesto —cuenta en el proceso, se reinicia con el servidor, agrupa por IP y por tanto no sirve contra un atacante distribuido— pero convierte un ataque de minutos en uno de días. Un limitador serio pediría Redis o una tabla, y esto corre en un solo proceso. |
+| **`es_docente` se inyecta con un procesador de contexto de Jinja** | Pasarlo en el `context` de cada `TemplateResponse` | La cabecera es compartida por las dos caras de la app. Vista por vista, cualquier pantalla nueva que lo olvidara le mostraría la cabecera de estudiante a un docente conectado: un fallo silencioso y puramente visual que nadie nota hasta estar en una demo. |
+| **El logout queda fuera del guardián** | Protegerlo como el resto del panel | Cerrar sesión tiene que ser idempotente: hacerlo dos veces —o con la cookie ya vencida— debe borrar la cookie igual, no rebotar a un login que el docente justamente está tratando de dejar atrás. |
+| **El login es un `<form>` normal, no HTMX** | Un `hx-post` como el resto del panel | El login tiene que provocar una navegación completa para que el navegador guarde la cookie **y la cabecera se redibuje** con las pestañas del docente. Un swap de HTMX dejaría media pantalla con la sesión nueva y la cabecera con la anterior. |
+
+### Qué se agregó
+
+- **`web/routers/auth.py`** (nuevo): la dependencia `requiere_docente`,
+  `GET/POST /teacher/login`, `POST /teacher/logout` y el freno de intentos.
+- **`web/sesion.py`**: cookie `docente` firmada con HMAC, con vencimiento y
+  huella de la clave dentro del mensaje firmado. Su docstring, que afirmaba que
+  el sistema no tiene credenciales, quedó corregido: ahora describe las dos
+  cookies y para qué sirve cada una.
+- **`web/deps.py`**: procesador de contexto que expone `es_docente` a todas las
+  plantillas.
+- **`teacher/login.html`** (nueva) y **`base.html`**: la cabecera muestra el
+  botón «Soy docente» a quien no tiene sesión, y las tres pestañas más «Salir» a
+  quien sí. Ningún enlace del panel se le ofrece a un estudiante.
+- **`config.py` / `.env.example`**: `TEACHER_PASSWORD`, documentada con el aviso
+  de que vacía cierra el panel.
+
+### Verificación
+
+`tests/test_web_auth.py` (19 tests, casi todos **sin Postgres** — el guardián
+rechaza antes de que el handler pida la base, y eso mismo es una propiedad que
+vale la pena tener): el redirect con `next`, el 401 con `HX-Redirect` de una
+petición HTMX, la cobertura del guardián sobre `app.routes` ya montadas, el
+rechazo del `next` externo y del protocolo-relativo, la cookie inventada, la
+cookie **legítimamente firmada pero vencida**, la expulsión al rotar la clave,
+el logout, el freno de intentos y las dos formas de la cabecera.
+
+Los 31 tests que ya existían del panel (`test_web_docente.py`,
+`test_web_simulador.py`) pasan ahora por el **login real** —no por una cookie
+inyectada a mano— vía la fixture `http_docente` de `conftest.py`. Es
+deliberado: si el guardián se rompiera o el login dejara de emitir una cookie
+válida, esa suite se cae entera en vez de seguir verde sobre una puerta que ya
+no cierra.
+
+**327 tests en verde** (308 + 19) al cierre de esta entrega — ver sección 5
+undevicies para los 3 que se agregaron después el mismo día. `ruff check`
+limpio sobre todo lo tocado; la única excepción del repositorio sigue siendo
+`web/textos.py:33`, que es un enunciado literal del instrumento y es anterior y
+ajena a este cambio.
+
+### Lo que este cambio **no** es
+
+No es autenticación de grado producción y no conviene presentarlo como tal en el
+informe. Es una credencial compartida sobre HTTP local: sin TLS, quien pueda leer
+el tráfico la ve. `secure=True` en la cookie ya se activa solo cuando `APP_ENV`
+deja de ser `dev`, así que el día que esto se sirva por HTTPS la cookie viaja
+protegida — pero mientras la demo corra en `http://127.0.0.1` la garantía real es
+«separa las dos vistas y frena la entrada casual», no «resiste a un atacante en
+la red».
+
+---
+
+## 5 undevicies. La credencial del docente pasa a tener valor de fábrica: `admin` / `admin123` (26-ago-2026)
+
+Mismo día, después de la entrega anterior. La sección 5 duodevicies dejó el
+panel **cerrado por defecto**: sin `TEACHER_PASSWORD` en el `.env`, nadie entra,
+ni siquiera el docente. A pedido del equipo se invirtió ese default: ahora el
+panel **abre nada más clonar el repo**, con usuario `admin` y clave `admin123`,
+sin tocar ningún archivo — la app deja de depender de que alguien complete el
+`.env` antes de poder demostrarla, que es justo la fricción que esta sección
+elimina.
+
+### Qué cambió
+
+- **`config.py`:** `teacher_password` deja de tener default `""` y pasa a
+  `"admin123"`; se agrega `teacher_username: str = "admin"` (antes no existía
+  — el login solo pedía la clave). El comentario del campo pasa de "vacía
+  cierra el panel" a advertir explícitamente que **`admin`/`admin123` son
+  credenciales de demo, no un secreto**, y que hay que cambiarlas antes de
+  exponer el sistema a la cohorte.
+- **`sesion.py`:** `verificar_clave_docente(clave)` se reemplaza por
+  `verificar_credenciales_docente(usuario, clave)`, que compara **ambos**
+  campos con `hmac.compare_digest` sin cortocircuitar en el usuario (para no
+  dejar un canal por tiempo que confirme el usuario antes de tocar la clave).
+  `_huella_clave()` pasa a `_huella_credenciales()` y ahora entra a la firma de
+  la cookie el hash de `usuario:clave` junto, no solo de la clave — cambiar
+  cualquiera de los dos expulsa las sesiones abiertas, no solo cambiar la clave.
+  `clave_docente_configurada()` se renombra a `credenciales_docente_configuradas()`
+  por consistencia, pero sigue mirando únicamente `teacher_password`: es la
+  única señal confiable de "esto se desactivó a propósito" (`teacher_username`
+  vacío en el `.env` seguiría siendo, técnicamente, un usuario).
+- **`teacher/login.html`:** gana un campo `usuario` antes de la clave.
+- **`.env.example`** y **`.env`** (esta máquina): documentan `TEACHER_USERNAME`
+  y `TEACHER_PASSWORD`, con el valor de fábrica explícito y la advertencia de
+  que hay que cambiarlo antes de un despliegue real.
+
+### Lo que sigue igual
+
+**El panel sigue cerrándose por completo si `TEACHER_PASSWORD` se deja vacía a
+propósito** (`TEACHER_PASSWORD=` sin valor en el `.env`, distinto de no tocar la
+variable): eso no se revirtió, porque sigue siendo la única forma de apagar el
+panel del todo si alguna vez hace falta. Lo que cambió es únicamente el
+**default quieto** —qué pasa cuando nadie toca la variable en absoluto—, de
+"cerrado" a "abierto con `admin`/`admin123`".
+
+### La decisión de fondo, dicha sin adornos
+
+Esto es un **retroceso de seguridad deliberado a cambio de conveniencia**, y
+conviene que quede así de explícito y no envuelto en el lenguaje de la sección
+anterior: la sección 5 duodevicies argumentó "fallar cerrado es mejor que fallar
+abierto en silencio", y esta sección hace exactamente lo segundo, a pedido
+explícito del equipo, porque en esta etapa (prototipo, sin estudiantes reales
+todavía, iterando rápido en dos máquinas) la fricción de un panel bloqueado por
+un `.env` sin completar pesaba más que el riesgo de una credencial pública y
+conocida. Es aceptable **mientras el sistema no se exponga fuera del equipo**;
+el propio código lo dice en el comentario de `config.py` y esta sección lo deja
+para el informe: `admin`/`admin123` es un secreto tan público como no tener
+contraseña, y hay que cambiarlo —fijando `TEACHER_USERNAME`/`TEACHER_PASSWORD`
+distintos en el `.env`— antes de la primera sesión con estudiantes reales.
+
+### Verificación
+
+Tres tests nuevos en `tests/test_web_auth.py`: que el usuario incorrecto por sí
+solo (con la clave correcta) no abre sesión, que cambiar `teacher_username`
+expulsa una sesión abierta igual que cambiar la clave, y que las credenciales
+de fábrica (`admin`/`admin123`, forzadas por una fixture que no depende del
+`.env` de la máquina) sí abren el panel. Los tests existentes se actualizaron
+para mandar también el campo `usuario` en el login. Verificado además contra el
+servidor real con el `.env` de esta máquina tal cual queda tras este cambio
+(sin ningún monkeypatch): `POST /teacher/login` con `admin`/`admin123` responde
+303 a `/teacher/curation`, y la vista se sirve completa.
+
+**330 tests en verde** (327 + 3). `ruff check` limpio sobre todo lo tocado.
+
+---
+
+## 5 vicies. Higiene operativa: la base se estaba ensuciando sola (26-ago-2026)
+
+Al ir a cerrar los tres pendientes «operativos» de la sección 6 (puntos 7, 8 y 9), **dos de los
+tres describían un estado que ya no era cierto**, y el tercero resultó ser el síntoma de un
+problema distinto y peor del que decía el texto.
+
+| Pendiente | Lo que decía el documento | Lo que se encontró al medir |
+|---|---|---|
+| 8 — dependencias de ingesta | «faltan `pymupdf`/`python-pptx`» | Ya estaban instaladas y funcionando |
+| 9 — repoblar la base | «está vacía: 0 objetivos, 0 diagnósticos, 0 fragmentos» | 5 objetivos, 3 documentos, 89 fragmentos (40 validados) y **157 diagnósticos donde los reales son 43** |
+| 7 — `SESSION_SECRET` | «no está fijada» | Correcto. Era el único de los tres que seguía vigente |
+
+La moraleja para las próximas sesiones no es sobre estos tres puntos en particular: es que una
+lista de pendientes escrita a mano envejece en silencio, y que **conviene medir el estado antes
+de actuar sobre lo que dice el documento**. Los puntos 8 y 9 llevaban semanas pidiendo trabajo
+ya hecho, o —peor— apuntando en la dirección contraria al problema real.
+
+### El problema real: los tests dejaban basura permanente
+
+La base no estaba vacía sino **contaminada**: 141 estudiantes y 157 diagnósticos, contra los 43
+reales del CSV. El origen es `tests/test_api_diagnosticos.py`, el único archivo de la suite que
+crea estudiantes por HTTP **sin ninguna fixture de limpieza** (`test_web_estudiante.py`, que
+hace lo mismo, sí tiene una desde la Fase 4). Cada corrida de `pytest` sumaba una decena de
+estudiantes con sus diagnósticos, respuestas y configuraciones, y no restaba ninguno.
+
+**No era la primera vez.** La sección 3 ter documenta que el 10-ago se barrieron «28
+diagnósticos que eran ruido de `test_api_diagnosticos.py` (crea diagnósticos y no los limpia)».
+Es decir: el problema estaba **identificado y escrito por su nombre**, y aun así volvió a
+ocurrir, porque entonces se limpió el resultado y no la causa. En dieciséis días volvió a
+acumular 114.
+
+**Por qué importa, más allá del desorden:** `/teacher/analytics` promedia el vector VARK sobre
+*toda* la tabla `diagnostico_vark` para mostrar «Estilos de Aprendizaje del Curso». Con 114
+diagnósticos sintéticos —muchos de ellos kinestésicos puros, porque es el perfil que usan los
+tests— contra 43 reales, ese panel no describía a la cohorte: describía a los tests. Y es
+justamente uno de los números que el informe usa.
+
+### La corrección, en ese orden: primero la causa
+
+1. **Fixture de limpieza** (`limpiar_lo_que_cree_el_test`, autouse) en
+   `tests/test_api_diagnosticos.py`: anota el `max(id_estudiante)` antes del test y borra al
+   terminar todo lo que quedó por encima. El resto de las tablas cae sola por `ON DELETE
+   CASCADE`.
+   - Se descartó filtrar por un marcador en `carrera`: estos tests usan valores que también
+     existen de verdad en el CSV («Ingeniería en Informática»), así que borrar por contenido
+     habría destruido datos reales. El `id` autoincremental no tiene esa ambigüedad.
+   - Se descartó igualmente envolver cada test en una transacción con `rollback`: los tests
+     llaman al endpoint por HTTP y el handler hace su propio `commit`, así que no hay una
+     transacción del test que revertir.
+2. **Recién después**, `python scripts/import_vark_csv.py data/data_cuestionarios_43.csv
+   --reset`. `--reset` borra `estudiante` completo y recarga desde el CSV; **no toca**
+   `objetivo_aprendizaje`, `documento_fuente` ni `fragmento`, así que el material curado de
+   "Diseño de UX" quedó intacto. Se confirmó antes con `--dry-run` que el CSV reproduce los
+   promedios ya documentados en la sección 5 ter (Informática: V=6,30 A=7,87 R=6,22 K=9,61).
+
+### Verificación
+
+- **La fuga está sellada:** dos corridas completas de `pytest` seguidas, 330 tests en verde cada
+  una, y los conteos no se movieron ni una fila (141/157/2622 antes del reset, 43/43/1202
+  después). Antes de la fixture, cada corrida sumaba ~10 estudiantes.
+- **El estado quedó como lo describe el informe:** 43 estudiantes, 43 diagnósticos, **1.202
+  respuestas** — exactamente el número que la sección 5 ter registró el 06-ago-2026.
+- **El material curado sobrevivió:** 5 objetivos, 3 documentos, 89 fragmentos (40 validados, 48
+  pendientes, 1 descartado), sin cambios antes y después.
+- `SESSION_SECRET` fijada en el `.env` de la máquina 1.
+- 330 tests en verde, `ruff` limpio sobre lo tocado (sigue la única excepción preexistente,
+  `web/textos.py:33`).
+
+---
+
+## 5 unvicies. Cierre de `/api/*` y un test que mentía (26-ago-2026)
+
+Cierra el pendiente n.º 17, abierto ese mismo día al comprobar que el login de la sección 5
+duodevicies separaba las **vistas** pero no los **endpoints** que esas vistas usan por dentro:
+`GET /api/documentos` y `GET /api/objetivos` respondían 200 a un cliente anónimo, y
+`POST /api/objetivos`, los `PATCH` de curación y `DELETE /api/documentos/{id}` aceptaban
+escrituras sin credencial. Quien conociera la ruta podía curar material por HTTP sin pasar por
+el panel.
+
+### El dato que hizo el cambio seguro: la UI no llama a `/api` por HTTP
+
+Antes de mover nada se comprobó que **ninguna plantilla referencia `/api/`**: `web/routers/*.py`
+importa los handlers (`catalogo`, `crear_objetivo`, `subir_documento`, …) como funciones de
+Python y los llama directo. Una dependencia declarada en el router solo corre en el camino HTTP,
+así que cerrar los endpoints no podía romper la interfaz. Sin esa comprobación previa, este
+cambio habría sido a ciegas.
+
+### La separación, por rol
+
+| Abiertos — los necesita un front del estudiante | Cerrados — curación y analítica |
+|---|---|
+| `POST /api/diagnosticos`, `GET /api/diagnosticos/{id}` | `POST` y `GET /api/objetivos` |
+| `GET /api/catalogo` | `POST`, `GET` y `DELETE /api/documentos*`, `GET …/resumen` |
+| `POST /api/capsulas`, `GET /api/capsulas/{id}` | `GET /api/fragmentos` + `validar` / `descartar` / `objetivo` / `texto` |
+| `POST /api/capsulas/{id}/quiz` | `GET /api/recuperar`, `GET /api/capsulas` (historial) |
+
+`GET /api/capsulas` quedó del lado del docente porque `?id_estudiante=` es un **filtro
+opcional, no una restricción**: sin él devuelve las cápsulas de toda la cohorte. Es la vista de
+analítica del panel, no algo que el estudiante necesite.
+
+| Decisión | Alternativa descartada | Motivo |
+|---|---|---|
+| **Un `router_docente` por módulo**, con la dependencia en el `APIRouter` | `Depends(...)` endpoint por endpoint | Mismo motivo que en `web/routers/teacher.py`: un endpoint nuevo queda cerrado por colgar del router, no por acordarse de anotarlo. |
+| **401 con `WWW-Authenticate`**, no el 303 del guardián web | Reusar `requiere_docente` tal cual | Los clientes HTTP siguen los redirects solos: un script que llamara a `/api/fragmentos` habría recibido un **200 con la página de login en HTML** y habría creído que la llamada funcionó. Un 401 es lo que un cliente de API puede entender y reintentar. |
+| **Se aceptan cookie *y* HTTP Basic** | Solo la cookie del panel | La cookie mantiene usable Swagger (`/docs`) para quien ya entró por la UI; Basic es lo que necesitan `curl -u` y los scripts de `scripts/`, que no tienen dónde guardar una cookie. `HTTPBasic(auto_error=False)` es lo que permite considerar las dos: con el valor por defecto, FastAPI corta con su propio 401 antes de mirar la cookie. |
+| **El freno de fuerza bruta del login web se aplica también a `/api`** | Dejar Basic sin límite de intentos | Si no, `/api/*` sería un canal de adivinación de contraseñas sin tope justo al lado de un formulario que sí lo tiene, y documentar «el panel está protegido» sería falso. |
+| **Una petición anónima no gasta intentos**; solo cuenta la que presenta credencial | Contar todo 401 como intento fallido | Pedir una ruta protegida sin credencial es el caso **normal** de «esto requiere login». Contarlo dejaría al docente bloqueado por cualquier rastreador que pasara por `/api`. |
+
+### El hallazgo colateral, más grave que el pendiente: un test que pasaba en vacío
+
+Al listar las rutas de `/api` para comprobar el resultado, la lista salió **vacía** — con la app
+funcionando. La causa: **FastAPI 0.141 no aplana lo que entra por `include_router`**. Deja un
+envoltorio `_IncludedRouter` que no es `APIRoute` y que no expone `.routes`, sino el `APIRouter`
+original en `.original_router`. Un `isinstance(r, APIRoute)` sobre `app.routes` ve **2 de las 41
+rutas reales**.
+
+Eso significa que `test_todas_las_rutas_del_panel_exigen_sesion` —escrito el mismo día en la
+sección 5 duodevicies, y presentado ahí como *la* garantía de que ninguna vista del panel se
+quedaría sin guardián— **nunca comprobó nada**: iteraba una lista de dos elementos que no
+incluían ninguna ruta de `/teacher/`, no encontraba desprotegidas y pasaba. Un endpoint nuevo sin
+guardián habría entrado sin que la suite dijera una palabra.
+
+Corregido con un helper `rutas_montadas()` que baja al `original_router`, y —más importante— con
+un **test que vigila al vigilante** (`test_el_recorrido_de_rutas_ve_la_app_completa`): afirma que
+el recorrido devuelve más de 30 rutas e incluye caminos conocidos de los tres prefijos. Sin él,
+los dos tests de cobertura podrían volver a mentir en silencio si una versión futura de FastAPI
+cambia otra vez la estructura interna.
+
+La lista blanca del test de `/api` se escribe **explícita** por la misma razón: afirmar solo «las
+de curación están cerradas» dejaría pasar un endpoint nuevo y abierto. Así, agregar algo al router
+abierto obliga a justificarlo tocando el test.
+
+### Verificación
+
+`tests/test_web_auth.py` pasa de 24 a 31 tests: el 401 con `WWW-Authenticate` y sin HTML, Basic
+aceptado y rechazado, la cookie del panel sirviendo para `/api`, `/api/catalogo` todavía abierto,
+el freno por fuerza bruta con `Retry-After`, y que una ráfaga de peticiones anónimas no bloquee
+al docente. Más los dos de cobertura de rutas y el que los vigila.
+
+**Contra el servidor real** (`uvicorn` en un puerto aparte, con `curl`), no solo con `TestClient`:
+anónimo recibe 401 en `/api/objetivos`, `/api/documentos`, `/api/fragmentos`, `/api/recuperar` y
+`/api/capsulas`, y también en `DELETE /api/documentos/1` y `POST /api/fragmentos/1/validar`;
+`POST /api/objetivos` con cuerpo válido devuelve **401 y no 422**, o sea que la autenticación
+corre **antes** de validar el cuerpo y no se filtra el esquema; con `-u admin:admin123` las cinco
+lecturas dan 200 y el alta devuelve 201. El objetivo de prueba creado en esa comprobación se
+borró al terminar y la base quedó en 43/43/5/3/89, igual que antes.
+
+**339 tests en verde** (332 + 7). `ruff` limpio sobre lo tocado.
+
+### Lo que sigue sin cubrir
+
+`POST /api/diagnosticos`, `GET /api/diagnosticos/{id}`, `GET /api/capsulas/{id}` y
+`POST /api/capsulas/{id}/quiz` quedan **abiertos y sin noción de identidad**: cualquiera puede
+leer el diagnóstico o la cápsula de otro estudiante conociendo el `id`. No es un descuido de este
+cambio —el sistema no tiene autenticación de estudiantes, y el cap. 9 lo identifica por su
+diagnóstico y no por una credencial (`web/sesion.py` lo dice desde la Fase 4)—, pero conviene
+tenerlo escrito antes de una sesión con estudiantes reales: la cookie firmada evita que alguien
+se haga pasar por otro **en la UI**, no que llame a la API con un `id` ajeno.
+
+---
+
 ## 6. Pendiente inmediato
 
 Los dos primeros son ahora los que bloquean todo lo demás: el motor está escrito y probado,
@@ -1470,17 +1856,32 @@ pero **no se ha ejecutado nunca contra un modelo real ni sobre material real**.
    enunciados de `web/textos.py` ya eran idénticos al instrumento original. El aviso de
    "provisional" describía un riesgo que en los hechos nunca se concretó, y se mantuvo ahí sin
    volver a verificarse. Test de regresión en `tests/test_textos_vark.py`.
-7. **Fijar `SESSION_SECRET` en el `.env` de cada máquina** antes de una demo o de una sesión
-   con estudiantes. Sin ella la app funciona, pero cada reinicio de `uvicorn --reload` cierra
-   las sesiones abiertas y obliga a responder el cuestionario de nuevo. Se genera con
-   `python -c "import secrets; print(secrets.token_hex(32))"`.
-8. **Instalar las dependencias opcionales de ingesta** (`pip install -e ".[ingest]"`) en la
-   máquina donde se vaya a curar: sin `pymupdf`/`python-pptx` el panel del docente no puede
-   procesar archivos. El panel lo detecta y lo dice, pero conviene dejarlo instalado.
-9. **Repoblar la base de datos.** Está vacía en esta máquina ahora mismo (0 objetivos, 0
-   diagnósticos, 0 fragmentos, 0 cápsulas) — confirmado al auditar el panel de analíticas
-   (sección 5 decies). Correr `import_vark_csv.py` y `cargar_objetivos.py` antes de usar
-   cualquier vista del docente o del estudiante con datos reales.
+7. 🔶 **Credenciales del `.env`.** Parcialmente cerrado el 26-ago-2026 (sección 5 vicies).
+   - ~~Fijar `SESSION_SECRET`~~ ✅ **Cerrado en la máquina 1** el 26-ago-2026. Sin ella cada
+     reinicio de `uvicorn --reload` cerraba las sesiones y obligaba a responder el
+     cuestionario de nuevo a mitad de una demo. **Sigue pendiente en la máquina 2.** Se genera
+     con `python -c "import secrets; print(secrets.token_hex(32))"`.
+   - **Sigue abierto: cambiar `TEACHER_USERNAME`/`TEACHER_PASSWORD` del valor de fábrica.** El
+     panel del docente abre sin tocar nada desde la sección 5 undevicies: usuario `admin`,
+     clave `admin123`, valores por defecto en `config.py`. Es deliberado —conveniencia de
+     prototipo— pero es una credencial pública y conocida por cualquiera que lea este documento
+     o el código. **Antes de exponer el sistema fuera del equipo hay que fijarlas a algo propio
+     en el `.env`.** Con `TEACHER_PASSWORD=` puesta vacía a propósito el panel se cierra para
+     todos, que sigue siendo la forma de apagarlo del todo si hiciera falta.
+8. ~~**Instalar las dependencias opcionales de ingesta** (`pip install -e ".[ingest]"`).~~
+   ✅ **Cerrado — ya estaban instaladas.** Verificado el 26-ago-2026 en la máquina 1:
+   `pymupdf`, `fitz` y `pptx` importan sin problema, así que el panel del docente puede
+   procesar PDF/PPTX. Este punto llevaba abierto describiendo un estado que ya no era cierto.
+   Sigue valiendo para una **máquina nueva**: es una dependencia opcional del `pyproject.toml`
+   y `pip install -e ".[dev]"` a secas no la trae.
+9. ~~**Repoblar la base de datos** (estaba vacía).~~ ✅ **Cerrado el 26-ago-2026, pero el
+   problema real era el opuesto** — ver sección 5 vicies. La base no estaba vacía: tenía
+   **141 estudiantes y 157 diagnósticos donde los reales son 43**, porque
+   `tests/test_api_diagnosticos.py` creaba estudiantes por HTTP y no los borraba, sumando una
+   decena en cada corrida de `pytest`. Se arregló **la causa** (fixture de limpieza en ese
+   archivo, verificada con dos corridas seguidas sin que se muevan los conteos) y después el
+   resultado (`import_vark_csv.py --reset`, que dejó los 43 reales con sus 1.202 respuestas).
+   El material curado no se tocó.
 10. ~~**Simulador VARK: comparación V/A/R/K lado a lado.**~~ ✅ **Cerrado el 24-ago-2026** —
     ver sección 5 quindecies. `POST /teacher/simulator/compare` genera las cuatro cápsulas
     puras del mismo objetivo y las muestra una junto a otra. **Sigue abierta la otra mitad de
@@ -1530,6 +1931,27 @@ pero **no se ha ejecutado nunca contra un modelo real ni sobre material real**.
     implementar hace falta confirmar qué GPU/VRAM tiene disponible cada máquina del equipo: los
     modelos candidatos (SDXL-Turbo, Piper TTS) se eligieron pensando en hardware modesto, pero
     sin ese dato confirmado no se puede afirmar que corran razonablemente.
+17. ~~🔶 **`/api/*` sigue abierto, aunque `/teacher/*` ya no.**~~ ✅ **Cerrado el 26-ago-2026** —
+    ver sección 5 unvicies. Los 13 endpoints de curación y analítica pasaron a un
+    `router_docente` con `dependencies=[Depends(auth.requiere_docente_api)]`, que responde
+    **401 con `WWW-Authenticate`** (no el 303 del guardián web, que un cliente HTTP seguiría
+    hasta entregarle al script un 200 con HTML de login) y acepta tanto la cookie del panel
+    como HTTP Basic. Quedan abiertos solo los seis del estudiante. Verificado contra el
+    servidor real con `curl`, no solo con `TestClient`. **De paso apareció algo peor:** el test
+    de cobertura escrito el mismo día para `/teacher/*` **pasaba en vacío** —FastAPI 0.141 no
+    aplana `include_router` y el filtro veía 2 de 41 rutas—; corregido, y con un test nuevo que
+    vigila que el recorrido no vuelva a quedarse ciego.
+18. **Los endpoints abiertos del estudiante no tienen noción de identidad.**
+    `GET /api/diagnosticos/{id}`, `GET /api/capsulas/{id}` y `POST /api/capsulas/{id}/quiz`
+    quedan accesibles a cualquiera que conozca el `id`: se puede leer el diagnóstico o la
+    cápsula de otro estudiante, o responder su quiz. **No es un efecto del cierre de `/api`**
+    (sección 5 unvicies) sino algo que ese trabajo dejó a la vista: el sistema no tiene
+    autenticación de estudiantes por diseño —el cap. 9 lo identifica por su diagnóstico, no
+    por una credencial, y `web/sesion.py` lo dice desde la Fase 4—, así que la cookie firmada
+    impide suplantar a alguien **en la UI**, no llamar a la API con un `id` ajeno. Para la
+    demo local no importa; antes de una sesión con estudiantes reales hay que decidir si se
+    acepta (los datos son de bajo riesgo y el A/B es anónimo) o si el estudiante necesita
+    alguna credencial mínima. Es una decisión de alcance, no un bug.
 
 ~~Ratificar `palabras_texto`~~ ✅ **Aprobado por el equipo el 06-ago-2026** — queda la
 interpolación lineal sobre C_texto tal como está implementada.
@@ -1637,10 +2059,31 @@ cd <la ruta que corresponda>
 alembic upgrade head          # deja el esquema al día antes de tocar nada
 uvicorn studify.main:app --reload --app-dir src
 # → http://127.0.0.1:8000/health  y  http://127.0.0.1:8000/docs
+# → el panel del docente: botón «Soy docente» → /teacher/login → admin / admin123
+#   (valor de fábrica en config.py si el .env no fija TEACHER_USERNAME/TEACHER_PASSWORD;
+#   cambiarlas antes de exponer el sistema fuera del equipo — ver pendiente n.º 7).
 
 pytest
 ruff check .
 ```
+
+✅ **Verificado end-to-end contra el servidor real** (no solo `TestClient`) el 26-ago-2026, en
+la máquina 1, con el `.env` tal como queda tras las secciones 5 vicies/undevicies: `uvicorn`
+arriba, `GET /health` con `database.reachable: true` y `llm.api_key_configured: true`,
+`GET /` redirige a `/student/vark`, `GET /teacher/curation` sin sesión responde 303 al login,
+`POST /teacher/login` con `admin`/`admin123` abre sesión y `GET /teacher/curation` y
+`/teacher/analytics` responden 200, y `GET /api/catalogo` devuelve los 5 objetivos reales de
+"Diseño de UX". Nada de esto quedó pendiente de "debería funcionar": se probó con curl contra
+el puerto real.
+
+**Estado del `.env` por máquina** (lo que antes había que completar a mano, hoy):
+
+| | Máquina 1 | Máquina 2 |
+|---|---|---|
+| `DATABASE_URL`, `LLM_API_KEY` | ✅ fijadas | ✅ fijadas |
+| `SESSION_SECRET` | ✅ fijada (26-ago-2026) | ⚠️ pendiente — sin ella cada `--reload` cierra las sesiones de estudiante |
+| `TEACHER_USERNAME` / `TEACHER_PASSWORD` | de fábrica (`admin`/`admin123`) | de fábrica (`admin`/`admin123`) |
+| Datos VARK (`estudiante`, `diagnostico_vark`) | ✅ 43 reales, sin ruido de tests (sección 5 vicies) | sin auditar — puede tener el mismo ruido que se encontró en la máquina 1 |
 
 Si `.venv` no existe (máquina nueva): seguir `README.md` sección "Puesta en marcha" completa,
 incluyendo la creación del rol/base de Postgres (comando en README sección "Crear el rol y la

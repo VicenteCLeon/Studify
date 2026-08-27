@@ -25,11 +25,23 @@
             <div class="brand">
                 <a href="/">RepasAi</a>
             </div>
+            {# Las pestañas del docente solo existen para quien pasó por
+               /teacher/login. No es únicamente estético: `auth.requiere_docente`
+               cierra igual esas rutas, y mostrar enlaces que van a rebotar al
+               login sería ofrecerle al estudiante una puerta que no es suya. #}
             <nav class="nav-links">
-                <a href="/student/catalog">Estudiante</a>
-                <a href="/teacher/curation">Curación (Docente)</a>
-                <a href="/teacher/analytics">Analíticas (Docente)</a>
-                <a href="/teacher/simulator">Simulador (Docente)</a>
+                <a href="/student/catalog">Temas</a>
+                <a href="/student/profile">Mi perfil</a>
+                {% if es_docente %}
+                <a href="/teacher/curation">Curación</a>
+                <a href="/teacher/analytics">Analíticas</a>
+                <a href="/teacher/simulator">Simulador</a>
+                <form method="post" action="/teacher/logout" class="nav-form">
+                    <button type="submit" class="btn btn-outline btn-nav">Salir</button>
+                </form>
+                {% else %}
+                <a href="/teacher/login" class="btn btn-outline btn-nav">Soy docente</a>
+                {% endif %}
             </nav>
         </div>
     </header>

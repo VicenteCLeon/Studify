@@ -11,33 +11,6 @@
     </p>
 </div>
 
-<!-- 5. Estadísticas VARK (Cohorte) -->
-<div class="card mb-8">
-    <h2 class="text-lg mb-4">Estilos de Aprendizaje del Curso</h2>
-    {% if vark_barras %}
-    <p class="text-muted mb-4">
-        Promedio del vector VARK de los {{ vark_total }} estudiantes diagnosticados.
-        Los cuatro canales suman 100%: es la composición media del curso, no la
-        proporción de alumnos de cada estilo.
-    </p>
-    <div class="flex flex-col gap-4">
-        {% for canal in vark_barras %}
-        <div>
-            <div class="flex justify-between mb-1">
-                <span class="font-medium">{{ canal.nombre }}</span>
-                <span class="text-muted">{{ canal.texto }}%</span>
-            </div>
-            <div class="progress-container">
-                <div class="progress-bar"
-                     style="width: {{ canal.ancho }}%; background-color: {{ canal.color }};"></div>
-            </div>
-        </div>
-        {% endfor %}
-    </div>
-    {% else %}
-    <p class="text-muted">Aún no hay estudiantes diagnosticados.</p>
-    {% endif %}
-</div>
 
 <!-- 2. Cobertura Curricular -->
 <div class="card mb-8">
@@ -80,7 +53,8 @@
                         {% endif %}
                         {% if fila.tipos %}
                         <div class="text-muted text-sm mt-1">
-                            {% for tipo, cantidad in fila.tipos %}{{ cantidad }} {{ tipo }}{% if not loop.last %} · {% endif %}{% endfor %}
+                            {% for tipo, cantidad in fila.tipos %}{{ cantidad }} {{ tipo }}{% if not loop.last %} · {%
+                            endif %}{% endfor %}
                         </div>
                         {% endif %}
                     </td>
@@ -89,7 +63,7 @@
                         <div class="flex gap-2" style="flex-wrap: wrap;">
                             {% for canal in fila.canales %}
                             <span class="badge {% if canal.degradado %}badge-warning{% else %}badge-success{% endif %}"
-                                  title="{{ canal.nombre }}: {% if canal.degradado %}sin recursos del tipo que este perfil aprovecha, recibirá solo texto{% else %}{{ canal.cantidad }} fragmento(s) del tipo preferido{% endif %}">
+                                title="{{ canal.nombre }}: {% if canal.degradado %}sin recursos del tipo que este perfil aprovecha, recibirá solo texto{% else %}{{ canal.cantidad }} fragmento(s) del tipo preferido{% endif %}">
                                 {{ canal.canal }}
                             </span>
                             {% endfor %}
@@ -100,7 +74,9 @@
                     </td>
                 </tr>
                 {% else %}
-                <tr><td colspan="4" class="text-muted">No hay objetivos de aprendizaje cargados.</td></tr>
+                <tr>
+                    <td colspan="4" class="text-muted">No hay objetivos de aprendizaje cargados.</td>
+                </tr>
                 {% endfor %}
             </tbody>
         </table>
@@ -146,16 +122,21 @@
                         {% else %}
                         <div style="display: flex; align-items: center; gap: 0.5rem;">
                             <div class="progress-container" style="height: 8px;">
-                                <div class="progress-bar" style="width: {{ row.porcentaje }}%; background-color: {% if row.porcentaje >= 70 %}var(--success){% elif row.porcentaje >= 40 %}var(--warning){% else %}var(--danger){% endif %};"></div>
+                                <div class="progress-bar"
+                                    style="width: {{ row.porcentaje }}%; background-color: {% if row.porcentaje >= 70 %}var(--success){% elif row.porcentaje >= 40 %}var(--warning){% else %}var(--danger){% endif %};">
+                                </div>
                             </div>
-                            <span class="text-sm" style="min-width: 40px; text-align: right;">{{ row.porcentaje }}%</span>
+                            <span class="text-sm" style="min-width: 40px; text-align: right;">{{ row.porcentaje
+                                }}%</span>
                         </div>
                         {% endif %}
                     </td>
                     <td>{{ row.reintentos }}</td>
                 </tr>
                 {% else %}
-                <tr><td colspan="6" class="text-muted">Aún no hay respuestas de los alumnos.</td></tr>
+                <tr>
+                    <td colspan="6" class="text-muted">Aún no hay respuestas de los alumnos.</td>
+                </tr>
                 {% endfor %}
             </tbody>
         </table>
@@ -186,7 +167,9 @@
                     <td>{{ cap.modelo_llm or 'Desconocido' }}</td>
                 </tr>
                 {% else %}
-                <tr><td colspan="5" class="text-muted">No se han generado cápsulas.</td></tr>
+                <tr>
+                    <td colspan="5" class="text-muted">No se han generado cápsulas.</td>
+                </tr>
                 {% endfor %}
             </tbody>
         </table>

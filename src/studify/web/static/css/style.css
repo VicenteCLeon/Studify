@@ -132,6 +132,9 @@ a:hover {
 .nav-links {
   display: flex;
   gap: 1.5rem;
+  /* La barra mezcla enlaces con el botón de acceso/salida del docente, y sin
+     esto el botón —más alto que el texto— empuja la fila y desalinea todo. */
+  align-items: center;
 }
 
 .nav-links a {
@@ -141,6 +144,24 @@ a:hover {
 
 .nav-links a:hover,
 .nav-links a.active {
+  color: var(--primary);
+}
+
+/* El logout es un <form> (un POST, no un enlace: cerrar sesión cambia estado y
+   no debe dispararse desde una precarga del navegador). El form es un bloque y
+   rompería la fila flex si no se neutraliza acá. */
+.nav-form {
+  display: flex;
+  margin: 0;
+}
+
+/* Botón dentro de la barra: mismo alto visual que los enlaces vecinos. */
+.btn-nav {
+  padding: 0.35rem 0.9rem;
+  font-size: 0.875rem;
+}
+
+.nav-links a.btn-nav {
   color: var(--primary);
 }
 
@@ -203,6 +224,13 @@ a:hover {
   box-shadow: var(--shadow-lg);
 }
 
+/* Tarjeta del login del docente: angosta y centrada, para que la pantalla se
+   lea como una puerta y no como una vista más del panel. */
+.card-login {
+  max-width: 26rem;
+  margin: 3rem auto;
+}
+
 /* Components - Buttons */
 .btn {
   display: inline-flex;
@@ -231,6 +259,10 @@ a:hover {
 .btn-primary:hover:not(:disabled) {
   background-color: var(--primary-hover);
   transform: translateY(-1px);
+}
+
+.btn-block {
+  width: 100%;
 }
 
 .btn-outline {

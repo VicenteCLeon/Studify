@@ -32,7 +32,7 @@ from studify.db.models import (
 from studify.main import app
 from studify.vark.rules import aplicar_reglas
 from studify.vark.scoring import PerfilVark
-from tests.conftest import necesita_bd
+from tests.conftest import USUARIO_DOCENTE, necesita_bd
 
 pytestmark = necesita_bd
 
@@ -344,7 +344,7 @@ def test_la_segunda_peticion_sale_del_cache_sin_llamar_al_modelo(
 
 
 def test_regenerar_crea_una_version_nueva_y_conserva_la_anterior(
-    http, escenario, cliente_falso
+    http, escenario, cliente_falso, clave_docente
 ):
     """La decisión de la Fase 3: se versiona, no se sobrescribe."""
     primera = _pedir(http, escenario).json()
@@ -354,8 +354,16 @@ def test_regenerar_crea_una_version_nueva_y_conserva_la_anterior(
     assert segunda["id_capsula"] != primera["id_capsula"]
     assert cliente_falso.llamadas == 2
 
+    # El historial pasó a exigir credenciales de docente (pendiente n.º 17): sin
+    # filtro devuelve las cápsulas de toda la cohorte, así que es analítica y no
+    # algo del estudiante. Se piden por HTTP Basic y no por cookie porque es lo
+    # que usaría un script — y de paso deja probada esa vía. Las peticiones de
+    # generación de arriba siguen siendo anónimas a propósito: son del
+    # estudiante y tienen que funcionar sin credencial.
     historial = http.get(
-        "/api/capsulas", params={"id_objetivo": escenario["objetivo"].id_objetivo}
+        "/api/capsulas",
+        params={"id_objetivo": escenario["objetivo"].id_objetivo},
+        auth=(USUARIO_DOCENTE, clave_docente),
     ).json()
     assert {c["id_capsula"] for c in historial} >= {
         primera["id_capsula"],
