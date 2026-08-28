@@ -2,7 +2,22 @@
 
 > Documento vivo. Se actualiza al cierre de cada fase para que cualquier sesión de trabajo
 > (o cualquier persona) pueda retomar el proyecto sin releer todo el hilo de conversación.
-> Última actualización: **26-ago-2026** — **separación de las vistas del estudiante y del
+> Última actualización: **27-ago-2026** — **migración del frontend a React + TypeScript +
+> Vite** (sección 5 duovicies), las ocho pantallas: las cuatro del estudiante y las cuatro del
+> docente. Lo caro no era el frontend sino que **el panel del docente no tenía API**: ~240
+> líneas de cálculo (cobertura, rendimiento, cohorte, simulador) solo se podían alcanzar
+> renderizando una plantilla Jinja, pese a que el plan daba por hecho que «todo pasa por
+> `/api/*`». Se extrajeron a `studify/analytics/` —una sola función para las dos interfaces— y
+> se expusieron en `api/routers/panel.py` y `api/routers/ui.py`. La SPA la sirve el propio
+> FastAPI desde el mismo origen, para que la sesión siga viajando en la cookie `httpOnly`
+> firmada en vez de un token en `localStorage`. **La interfaz Jinja se conserva intacta** en
+> `/student/*` y `/teacher/*` hasta que React se haya usado de verdad (pendiente n.º 18).
+> La verificación contra el servidor real encontró dos bugs: el comodín de la SPA se tragaba
+> los `/api` inexistentes y devolvía HTML con 200, y `FragmentoEnCuracion` no exponía la
+> sugerencia del tagger, con lo que la curación en React habría perdido esa función en
+> silencio. **366 tests en verde.** Estado y siguientes pasos en
+> [`MIGRACION_REACT.md`](MIGRACION_REACT.md).
+> Antes: **26-ago-2026** — **separación de las vistas del estudiante y del
 > docente** (secciones 5 duodevicies y 5 undevicies). Hasta ahora `/teacher/*` estaba abierto:
 > la cabecera ofrecía las tres pestañas del docente a cualquiera y ninguna comprobaba nada, de
 > modo que la bandeja de curación —que decide qué material llega a las cápsulas, cap. 12/13— la
@@ -1812,6 +1827,107 @@ se haga pasar por otro **en la UI**, no que llame a la API con un `id` ajeno.
 
 ---
 
+## 5 duovicies. Migración del frontend a React + TypeScript + Vite (27-ago-2026)
+
+A pedido del equipo, que tiene experiencia previa con React, Angular, Ionic y Vite, y que
+buscaba interactividad de aplicación en vez de recarga de fragmentos por HTMX. Se migran
+**las ocho pantallas**: las cuatro del estudiante y las cuatro del docente.
+
+### Lo que hizo falta antes de escribir una línea de React
+
+El obstáculo no era el frontend: era que **el panel del docente no tenía API**.
+`PLAN_DESARROLLO.md` justifica Jinja+HTMX diciendo que «todo pasa por `/api/*`, así que la UI
+React posterior no obliga a tocar el backend». Para el estudiante era cierto —`student.py` no
+tiene un solo `select()` propio, delega todo en handlers de la API—, pero para el docente
+**no**: `teacher.py` tenía ~240 líneas de cálculo (cobertura curricular, rendimiento de
+quizzes, promedio de la cohorte, simulador) que solo se podían alcanzar renderizando una
+plantilla.
+
+Antes de tocar nada se comprobó un dato que hizo el cambio seguro: **ninguna plantilla
+referencia `/api/`**. Los routers web importan los handlers como funciones de Python y los
+llaman directo, así que una dependencia declarada en el router solo corre en el camino HTTP y
+cerrar o mover endpoints no podía romper la interfaz existente.
+
+| Se movió / se agregó | Dónde | Qué resuelve |
+|---|---|---|
+| `studify/analytics/panel.py` | dominio (nuevo) | Cobertura, rendimiento, cohorte y pendientes, sacados de `teacher.py`. **Una sola función** para Jinja y React: es lo único que garantiza que los dos paneles no se contradigan mientras convivan. |
+| `studify/analytics/simulador.py` | dominio (nuevo) | Perfil puro y generación de la columna. Ya no arrastra la preparación de bloques, que es presentación. |
+| `api/routers/panel.py` | API (nuevo) | `GET /api/analiticas`, `POST /api/simulador/generar`, `POST /api/simulador/comparar` |
+| `api/routers/ui.py` | API (nuevo) | Instrumento VARK, sesión del estudiante, perfil legible, corrección del quiz, textos compartidos |
+| `POST /api/fragmentos/etiquetar` | `api/routers/knowledge.py` | El tagger, que solo se podía disparar desde una ruta que devuelve HTML |
+| `router_api` en `web/routers/auth.py` | API | Login/logout del docente hablando JSON |
+
+### Decisiones de la migración
+
+| Decisión | Alternativa descartada | Motivo |
+|---|---|---|
+| **La SPA se sirve desde el propio FastAPI** (`web/spa/`, montada en `/`) | Un servidor Vite aparte en producción, o un dominio distinto | Mantiene el **mismo origen**, y eso es lo que permite que la sesión siga viajando en la cookie `httpOnly` firmada que ya existe. Un frontend en otro origen habría obligado a abrir CORS y, en la práctica, a mover la sesión a un token en `localStorage` — que cualquier XSS puede leer. Habría sido cambiar una arquitectura más segura por una menos segura para no ganar nada. |
+| **Se reutiliza el `style.css` existente**, copiado tal cual | Tailwind, que se había mencionado al recomendar el stack | El equipo pidió no agregar nada que no estuviera. Reutilizarlo preserva la marca exacta (incluida la textura de fondo en `data:` URI) y evita una dependencia y un paso de build más. |
+| **Sin librería de data fetching**; un `useApi` de ~60 líneas | TanStack Query | Ocho pantallas con necesidades simples. Lo único delicado —que una respuesta tardía no pise el estado de una pantalla ya abandonada, y la generación tarda 5-6 s— se resuelve con un `cancelado` en el efecto. Menos que mantener y que justificar en el informe. |
+| **Los tipos TypeScript se escriben a mano**, con el esquema del que vienen anotado | Generarlos desde el OpenAPI | Un generador agrega un paso de build y una dependencia a un proyecto que no los necesita, y estos contratos cambian poco. La contrapartida —mantenerlos sincronizados— se acepta explícitamente. |
+| **El color de cada canal viene del servidor** (`GET /api/textos`) | Copiar el mapa a una constante en TypeScript | Ya hay dos gráficos que pintan los mismos canales (el perfil del estudiante y la cohorte del docente). Duplicar el mapa garantiza que en algún momento el canal V se pinte de un color en una pantalla y de otro en la otra. |
+| **La interfaz Jinja se conserva intacta**, montada en `/student/*` y `/teacher/*` | Borrarla en el mismo paso | React ocupa `/` y no colisiona con ninguna ruta existente. Borrar una UI que funciona y sus ~74 tests, seis semanas antes del cierre, no es algo que convenga hacer en la misma entrega que la introduce: primero se usa React de verdad, después se retira lo viejo. |
+
+### Dos bugs que encontró la verificación contra el servidor real
+
+1. **Una ruta `/api/*` inexistente devolvía la SPA en vez de un 404.** El comodín que sirve
+   `index.html` para las rutas del cliente (necesario para que recargar en
+   `/docente/analiticas` funcione) se estaba tragando también los `/api` mal escritos, así que
+   un script recibía **200 con HTML dentro** y creía que la llamada había funcionado. Es la
+   misma clase de fallo que se evitó en la sección 5 unvicies al no reusar el 303 de la web
+   para la API. Corregido: `/api/...` que llega al comodín levanta 404. Salió al ejecutar un
+   GET contra un endpoint que solo acepta POST.
+2. **`FragmentoEnCuracion` no exponía la sugerencia del tagger.** La bandeja Jinja la leía del
+   objeto ORM (`metadatos_json`), pero el esquema de la API no la incluía, así que la pantalla
+   de curación en React no habría podido preseleccionar el objetivo propuesto —una función que
+   ya existía y que se habría perdido en silencio—. Se agregaron tres campos planos
+   (`sugerido_id_objetivo`, `sugerido_etiqueta`, `sugerido_motivo`), con la misma regla que
+   `_a_fila`: solo viajan mientras el fragmento sigue sin objetivo asignado.
+
+También hubo que agregar `objetivo` a `CapsulaOut`: la plantilla recibía el objeto ORM aparte
+para pintar las insignias (código, asignatura, unidad), y un cliente que solo ve el JSON no
+tenía de dónde sacarlas sin llamar a `GET /api/objetivos`, que es del docente.
+
+### Verificación
+
+- **366 tests en verde** (339 + 27): `test_api_ui.py` (15) y `test_api_panel.py` (12). Los dos
+  archivos que probaban las funciones movidas siguen probando exactamente las mismas
+  funciones, solo cambió el import.
+- Lo que protegen los tests nuevos no es la pantalla, son las dos invariantes del informe que
+  la capa Jinja garantizaba por construcción y que una API pública tiene que defender
+  explícitamente: **la matriz de puntuación no se filtra al cliente** (cap. 17.1 — se comprueba
+  sobre el texto crudo de la respuesta, no sobre el JSON parseado) y **`indice_correcta` no
+  viaja nunca al navegador**.
+- `npx tsc --noEmit` limpio con `strict`, `noUncheckedIndexedAccess` y `noUnusedLocals`.
+- Build de producción: 215 KB (67 KB gzip), sin advertencias.
+- **Contra el servidor real**, no solo con `TestClient`: flujo completo del estudiante
+  (sesión vacía → cuestionario → cookie → perfil con K=100% unimodal, 193 palabras, 3
+  componentes prácticos → catálogo → logout), login del docente por JSON, `/api/analiticas`
+  devolviendo las cinco métricas sobre los datos reales (5 objetivos, 48 fragmentos sin
+  clasificar, 43 diagnósticos), y la bandeja de curación con sus tres documentos. Los dos
+  estudiantes de prueba se borraron al terminar; la base quedó en 43.
+- Se verificó además que el comodín de la SPA **no** se come `/api/*`, `/student/*`,
+  `/teacher/*`, `/docs` ni `/health`, y que las rutas profundas de React (`/docente/analiticas`,
+  `/visor/186`) responden al recargar.
+
+### Cómo se trabaja ahora
+
+```powershell
+# Desarrollo (dos procesos): uvicorn en 8000 y Vite en 5173 con proxy a la API.
+uvicorn studify.main:app --reload --app-dir src
+cd frontend; npm run dev        # → http://127.0.0.1:5173
+
+# Producción / demo (un solo proceso): se compila y FastAPI sirve todo.
+cd frontend; npm run build      # → src/studify/web/spa/
+uvicorn studify.main:app --app-dir src   # → http://127.0.0.1:8000
+```
+
+El build es artefacto generado y está en `.gitignore`, igual que `node_modules`. **Si alguien
+clona el repo y no corre `npm run build`, la app no queda sin interfaz**: `/` redirige al flujo
+Jinja de siempre, que sigue montado.
+
+---
+
 ## 6. Pendiente inmediato
 
 Los dos primeros son ahora los que bloquean todo lo demás: el motor está escrito y probado,
@@ -1941,7 +2057,18 @@ pero **no se ha ejecutado nunca contra un modelo real ni sobre material real**.
     de cobertura escrito el mismo día para `/teacher/*` **pasaba en vacío** —FastAPI 0.141 no
     aplana `include_router` y el filtro veía 2 de 41 rutas—; corregido, y con un test nuevo que
     vigila que el recorrido no vuelva a quedarse ciego.
-18. **Los endpoints abiertos del estudiante no tienen noción de identidad.**
+18. 🔶 **Conviven dos interfaces: React (`/`) y Jinja (`/student/*`, `/teacher/*`).** La
+    migración del 27-ago (sección 5 duovicies) dejó la interfaz vieja intacta a propósito —no
+    se borra una UI que funciona, con sus ~74 tests, en la misma entrega que introduce la
+    nueva—, pero **eso no puede quedarse así indefinidamente**: dos interfaces sobre la misma
+    lógica es el doble de superficie para que una quede atrás. El plan es usar React unos días
+    y, cuando esté claro que cubre todo, retirar `web/routers/student.py`,
+    `web/routers/teacher.py`, `web/templates/` y sus tests —comprobando antes que cada
+    invariante que esos tests protegen tenga un equivalente en `test_api_ui.py` /
+    `test_api_panel.py`, porque varios (el fragmento validado sin objetivo, la clave del quiz
+    que no viaja) son del informe y no de la pantalla. Detalle en
+    [`MIGRACION_REACT.md`](MIGRACION_REACT.md).
+19. **Los endpoints abiertos del estudiante no tienen noción de identidad.**
     `GET /api/diagnosticos/{id}`, `GET /api/capsulas/{id}` y `POST /api/capsulas/{id}/quiz`
     quedan accesibles a cualquiera que conozca el `id`: se puede leer el diagnóstico o la
     cápsula de otro estudiante, o responder su quiz. **No es un efecto del cierre de `/api`**

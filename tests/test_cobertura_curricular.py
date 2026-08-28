@@ -18,14 +18,18 @@ Requieren Postgres (se saltan solos si no está).
 import pytest
 from sqlalchemy import select
 
+from studify.analytics import panel
 from studify.db.models import DocumentoFuente, Fragmento, ObjetivoAprendizaje
 from studify.rag import retriever
-from studify.web.routers.teacher import (
-    MINIMO_RECOMENDADO,
-    _cobertura_curricular,
-    _fragmentos_sin_clasificar,
-)
 from tests.conftest import necesita_bd
+
+# Las tres se movieron de `web/routers/teacher.py` a `studify.analytics.panel` en
+# la migración a React (27-ago-2026): el cálculo dejó de estar atado a renderizar
+# una plantilla. Los tests no cambian —comprueban la misma función—, solo de
+# dónde la importan; los alias conservan los nombres que ya usaban.
+MINIMO_RECOMENDADO = panel.MINIMO_RECOMENDADO
+_cobertura_curricular = panel.cobertura_curricular
+_fragmentos_sin_clasificar = panel.fragmentos_sin_clasificar
 
 pytestmark = necesita_bd
 

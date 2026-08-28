@@ -22,6 +22,14 @@ data/*
 *.docx
 respuestas_vark*.csv
 
+# Frontend (React + Vite)
+frontend/node_modules/
+frontend/*.tsbuildinfo
+# El build de Vite sale a src/studify/web/spa/ y lo sirve FastAPI. Es artefacto
+# generado, igual que un __pycache__: se reconstruye con `npm run build` y
+# versionarlo llenaría cada commit de diffs de bundles minificados.
+src/studify/web/spa/
+
 # Editor / SO
 # .vscode/ NO se ignora completo: settings.json y extensions.json se comparten para que
 # cualquiera que clone el repo herede el intérprete de Python, ruff y pytest ya configurados.

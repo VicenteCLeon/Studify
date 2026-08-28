@@ -28,9 +28,10 @@ Este módulo es esa puerta, y nada más que eso:
 import logging
 import time
 
-from fastapi import APIRouter, Depends, Form, HTTPException, Request, status
+from fastapi import APIRouter, Depends, Form, HTTPException, Request, Response, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
+from pydantic import BaseModel
 
 from studify.web import sesion
 from studify.web.deps import templates
@@ -274,6 +275,88 @@ def post_login(
     respuesta = RedirectResponse(url=destino, status_code=status.HTTP_303_SEE_OTHER)
     sesion.iniciar_docente(respuesta)
     return respuesta
+
+
+# --- La misma puerta, para un cliente que espera JSON -------------------------
+#
+# El cliente React no puede usar `POST /teacher/login`: ese devuelve HTML y
+# responde con un 303 que `fetch` sigue solo, de modo que una clave incorrecta
+# llegaría como un 200 con la página de login dentro. Estos tres endpoints son
+# el mismo flujo —misma verificación, misma cookie firmada, mismo freno de
+# fuerza bruta— hablando JSON.
+
+router_api = APIRouter(prefix="/api/docente", tags=["acceso del docente"])
+
+
+class CredencialesIn(BaseModel):
+    usuario: str = ""
+    clave: str = ""
+
+
+class SesionDocenteOut(BaseModel):
+    """Si hay sesión de docente y si la instalación tiene credencial configurada.
+
+    `configurado` es `False` cuando `TEACHER_PASSWORD` se dejó vacía a propósito:
+    el cliente lo usa para explicar que el panel está cerrado en vez de decir
+    «clave incorrecta», que mandaría a buscar el problema donde no está.
+    """
+
+    autenticado: bool
+    configurado: bool
+
+
+@router_api.get("/sesion", response_model=SesionDocenteOut)
+def api_sesion(request: Request) -> SesionDocenteOut:
+    return SesionDocenteOut(
+        autenticado=sesion.es_docente(request),
+        configurado=sesion.credenciales_docente_configuradas(),
+    )
+
+
+@router_api.post("/login", response_model=SesionDocenteOut)
+def api_login(
+    credenciales: CredencialesIn, request: Request, response: Response
+) -> SesionDocenteOut:
+    if not sesion.credenciales_docente_configuradas():
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=(
+                "El panel está cerrado en esta instalación: falta TEACHER_PASSWORD "
+                "en el archivo .env."
+            ),
+        )
+
+    origen = _origen(request)
+    espera = _segundos_de_bloqueo(origen)
+    if espera:
+        logger.warning("login de docente bloqueado por intentos fallidos: %s", origen)
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=f"Demasiados intentos fallidos. Espera {espera} segundo(s).",
+            headers={"Retry-After": str(espera)},
+        )
+
+    if not sesion.verificar_credenciales_docente(
+        credenciales.usuario, credenciales.clave
+    ):
+        _fallos_por_origen.setdefault(origen, []).append(time.time())
+        logger.warning("credenciales de docente incorrectas desde %s", origen)
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Usuario o clave incorrectos.",
+        )
+
+    _fallos_por_origen.pop(origen, None)
+    sesion.iniciar_docente(response)
+    return SesionDocenteOut(autenticado=True, configurado=True)
+
+
+@router_api.post("/logout", response_model=SesionDocenteOut)
+def api_logout(response: Response) -> SesionDocenteOut:
+    sesion.cerrar_docente(response)
+    return SesionDocenteOut(
+        autenticado=False, configurado=sesion.credenciales_docente_configuradas()
+    )
 
 
 @router.post("/logout")

@@ -10,9 +10,11 @@ import tempfile
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
+from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from studify.api.routers.capsules import ClienteLLM, get_cliente_llm
 from studify.api.schemas_knowledge import (
     AsignarObjetivoIn,
     AsignaturaDisponible,
@@ -36,7 +38,7 @@ from studify.db.models import (
     ObjetivoAprendizaje,
 )
 from studify.db.session import get_db
-from studify.knowledge import curation
+from studify.knowledge import curation, tagger
 from studify.knowledge.extract import FORMATOS_SOPORTADOS, FormatoNoSoportado
 from studify.knowledge.ingest import (
     DocumentoDuplicado,
@@ -315,7 +317,18 @@ def resumen_curacion(id_documento: int, db: Session = Depends(get_db)) -> Resume
 
 def _a_curacion(fragmento: Fragmento) -> FragmentoEnCuracion:
     texto = fragmento.contenido_texto or ""
+    # La sugerencia del tagger solo se expone mientras el fragmento sigue sin
+    # objetivo asignado: una vez validado, `id_objetivo` deja de ser `None` y no
+    # hay `<select>` que preseleccionar.
+    sugerencia = (
+        (fragmento.metadatos_json or {}).get("sugerencia_llm")
+        if fragmento.id_objetivo is None
+        else None
+    ) or {}
     return FragmentoEnCuracion(
+        sugerido_id_objetivo=sugerencia.get("id_objetivo"),
+        sugerido_etiqueta=sugerencia.get("etiqueta_tematica"),
+        sugerido_motivo=sugerencia.get("motivo"),
         id_fragmento=fragmento.id_fragmento,
         id_documento=fragmento.id_documento,
         id_objetivo=fragmento.id_objetivo,
@@ -457,3 +470,63 @@ def recuperar_fragmentos(
         )
         for f in fragmentos
     ]
+
+
+# --- Etiquetado asistido por LLM ---------------------------------------------
+
+
+class EtiquetadoOut(BaseModel):
+    """Resumen de una corrida del tagger sobre los fragmentos pendientes.
+
+    Los tres conteos se separan porque significan cosas distintas para el
+    curador: `con_objetivo` ya trae el `<select>` preseleccionado, `sin_objetivo`
+    son fragmentos que el modelo miró y decidió **no** clasificar —lo cual es una
+    respuesta legítima, no un fallo— y `fallidos` son los que ni siquiera se
+    pudieron consultar.
+    """
+
+    total: int
+    con_objetivo: int
+    sin_objetivo: int
+    fallidos: int
+    primer_error: str | None = None
+
+
+@router_docente.post(
+    "/fragmentos/etiquetar",
+    response_model=EtiquetadoOut,
+    summary="El LLM propone objetivo y etiqueta para los fragmentos pendientes",
+)
+def etiquetar_fragmentos(
+    id_documento: int | None = None,
+    limite: int = Query(default=60, ge=1, le=200),
+    db: Session = Depends(get_db),
+    cliente: ClienteLLM | None = Depends(get_cliente_llm),
+) -> EtiquetadoOut:
+    """Dispara `knowledge.tagger` en lote. **Propone, no decide.**
+
+    La sugerencia queda en `metadatos_json`; no escribe `Fragmento.id_objetivo`
+    ni `estado_validacion`. La interfaz la usa solo para preseleccionar el
+    selector que el curador confirma con «Validar», así que si el modelo se
+    equivoca no hay nada que deshacer.
+
+    Existe como endpoint desde la migración a React: antes solo se podía disparar
+    desde `POST /teacher/curation/tag`, que devuelve HTML.
+    """
+    if cliente is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Falta LLM_API_KEY para sugerir con IA.",
+        )
+
+    sugerencias = tagger.etiquetar_pendientes(
+        db, cliente=cliente, id_documento=id_documento, limite=limite
+    )
+    fallidas = [s for s in sugerencias if not s.ok]
+    return EtiquetadoOut(
+        total=len(sugerencias),
+        con_objetivo=sum(1 for s in sugerencias if s.ok and s.id_objetivo is not None),
+        sin_objetivo=sum(1 for s in sugerencias if s.ok and s.id_objetivo is None),
+        fallidos=len(fallidas),
+        primer_error=fallidas[0].error if fallidas else None,
+    )

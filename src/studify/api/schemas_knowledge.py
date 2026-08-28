@@ -124,6 +124,18 @@ class FragmentoEnCuracion(FragmentoOut):
     objetivo_codigo: str | None = None
     palabras: int
 
+    # La propuesta del tagger (`knowledge/tagger.py`). Se expone plana en vez de
+    # mandar `metadatos_json` entero por dos razones: ese campo es un cajón de
+    # sastre cuyo contenido puede cambiar, y el cliente solo necesita esto para
+    # preseleccionar el selector de objetivo.
+    #
+    # **Solo viaja mientras el fragmento sigue sin objetivo asignado.** Una vez
+    # validado, `id_objetivo` deja de ser nulo y la sugerencia no tiene nada que
+    # preseleccionar — igual que hacía `_a_fila` en la vista Jinja.
+    sugerido_id_objetivo: int | None = None
+    sugerido_etiqueta: str | None = None
+    sugerido_motivo: str | None = None
+
 
 class ValidarFragmentoIn(BaseModel):
     """Aprobación de un fragmento, opcionalmente asignando su objetivo."""

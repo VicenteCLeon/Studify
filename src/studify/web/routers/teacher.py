@@ -22,14 +22,13 @@ una cápsula. `curation.validar` lo bloquea; acá se hace además imposible de
 intentar.
 """
 
-from decimal import Decimal
-
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse
 from pydantic import ValidationError
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from studify.analytics import panel, simulador
 from studify.api.routers.capsules import ClienteLLM, get_cliente_llm
 from studify.api.routers.knowledge import (
     crear_objetivo,
@@ -38,20 +37,14 @@ from studify.api.routers.knowledge import (
     subir_documento,
 )
 from studify.api.schemas_knowledge import ObjetivoIn
-from studify.config import get_settings
 from studify.db.models import (
-    DiagnosticoVark,
-    Fragmento,
-    InteraccionQuiz,
     MicrocapsulaGenerada,
     ObjetivoAprendizaje,
 )
 from studify.db.session import get_db
-from studify.generation.generator import ErrorGeneracion, generar
 from studify.knowledge import curation, tagger
-from studify.rag import orchestrator, retriever
-from studify.vark.rules import aplicar_reglas
-from studify.vark.scoring import CANALES, PerfilVark
+from studify.rag import retriever
+from studify.vark.scoring import CANALES
 from studify.web import textos
 from studify.web.deps import templates
 from studify.web.routers import auth
@@ -166,7 +159,7 @@ def get_analytics(request: Request, db: Session = Depends(get_db)):
     """Panel de analíticas del curso (Fase 5)."""
     
     # 1. Cobertura Curricular
-    cobertura = _cobertura_curricular(db)
+    cobertura = panel.cobertura_curricular(db)
 
     # 2. Historial de Cápsulas (últimas 50)
     capsulas = db.scalars(
@@ -176,28 +169,21 @@ def get_analytics(request: Request, db: Session = Depends(get_db)):
     ).all()
 
     # 3. Rendimiento en la actividad de cierre, por objetivo.
-    quizzes = _rendimiento_actividades(db)
+    quizzes = panel.rendimiento_actividades(db)
 
     # 5. Estadísticas VARK (Promedios generales)
-    stmt_vark = select(
-        func.avg(DiagnosticoVark.porcentaje_v).label("v"),
-        func.avg(DiagnosticoVark.porcentaje_a).label("a"),
-        func.avg(DiagnosticoVark.porcentaje_r).label("r"),
-        func.avg(DiagnosticoVark.porcentaje_k).label("k"),
-        func.count(DiagnosticoVark.id_diagnostico).label("total")
-    )
-    vark = db.execute(stmt_vark).first()
+    vark = panel.promedio_vark_cohorte(db)
 
     return templates.TemplateResponse(
         request=request,
         name="teacher/analytics.html",
         context={
             "cobertura": cobertura,
-            "sin_clasificar": _fragmentos_sin_clasificar(db),
+            "sin_clasificar": panel.fragmentos_sin_clasificar(db),
             "capsulas": capsulas,
             "quizzes": quizzes,
             "vark_total": vark.total if vark else 0,
-            "vark_barras": _barras_cohorte(vark),
+            "vark_barras": panel.barras_cohorte(vark),
         }
     )
 
@@ -440,18 +426,13 @@ def reject_fragment(request: Request, id_fragmento: int, db: Session = Depends(g
 # --- Auxiliares ---------------------------------------------------------------
 
 
-def _perfil_puro(canal_vark: str) -> PerfilVark:
-    """Perfil VARK sintético: 100% en un canal, 0% en los otros tres.
-
-    Es una simplificación deliberada del simulador (ninguno de los 43
-    diagnósticos reales tiene este vector): sirve para forzar al máximo la
-    directiva de un solo canal y ver si el prompt la traduce en algo distinto
-    en la cápsula, no para reproducir un perfil real de estudiante.
-    """
-    porcentajes = {c: Decimal(100 if c == canal_vark else 0) for c in CANALES}
-    return PerfilVark(
-        v=porcentajes["V"], a=porcentajes["A"], r=porcentajes["R"], k=porcentajes["K"]
-    )
+# `_perfil_puro`, `_generar_capsula_pura`, `_columna_error`,
+# `_cobertura_curricular`, `_fragmentos_sin_clasificar`, `_rendimiento_actividades`
+# y `_barras_cohorte` se movieron a `studify.analytics` en la migración a React
+# (27-ago-2026): eran ~240 líneas de cálculo que solo se podían alcanzar
+# renderizando una plantilla. Ahora las consume tanto esta vista como
+# `api/routers/analytics.py`, que es lo único que garantiza que el panel Jinja y
+# el de React no se contradigan mientras convivan.
 
 
 def _generar_capsula_pura(
@@ -460,222 +441,24 @@ def _generar_capsula_pura(
     canal_vark: str,
     cliente: ClienteLLM,
 ) -> dict:
-    """Una columna del simulador: la cápsula para un perfil puro, o el motivo del fallo.
+    """Adapta la columna del dominio a lo que espera la plantilla.
 
-    Se usa tanto desde `/simulator/generate` (una columna) como desde
-    `/simulator/compare` (las cuatro), para que ambas rutas generen exactamente
-    la misma cápsula ante el mismo canal — si divergieran, la comparación de a
-    cuatro podría mostrar algo distinto de lo que el docente ya vio al probar
-    un canal suelto.
+    El dominio devuelve la `Microcapsula` cruda; acá se le agregan los bloques
+    ya normalizados, que es una decisión de presentación y por eso no vive allá.
     """
-    perfil = _perfil_puro(canal_vark)
-    config = aplicar_reglas(perfil)
-
-    fragmentos = retriever.recuperar(
-        db,
-        id_objetivo=objetivo.id_objetivo,
-        canal_primario=config.jerarquia.canal_primario,
+    columna = simulador.generar_capsula_pura(db, objetivo, canal_vark, cliente)
+    columna["bloques"] = (
+        _preparar_bloques(columna["capsula"].bloques_legibles())
+        if columna["capsula"] is not None
+        else None
     )
-
-    try:
-        prompt = orchestrator.construir(
-            objetivo=objetivo,
-            fragmentos=fragmentos,
-            config=config,
-            modelo=get_settings().llm_model,
-        )
-        resultado = generar(prompt, cliente=cliente)
-    except orchestrator.ErrorPrompt as exc:
-        return _columna_error(canal_vark, f"Error de material: {exc}")
-    except ErrorGeneracion as exc:
-        return _columna_error(canal_vark, f"Falló la generación: {exc}")
-
-    capsula = resultado.capsula
-    return {
-        "canal": canal_vark,
-        "nombre_canal": textos.NOMBRE_CANAL[canal_vark],
-        "color_canal": textos.COLOR_CANAL[canal_vark],
-        "capsula": capsula,
-        "bloques": _preparar_bloques(capsula.bloques_legibles()),
-        "palabras": capsula.palabras_contenido(),
-        "error": None,
-    }
+    return columna
 
 
 def _columna_error(canal_vark: str, mensaje: str) -> dict:
-    """Misma forma que una columna exitosa, para que la plantilla no tenga que
-    distinguir dos estructuras distintas — solo revisa `error`."""
-    return {
-        "canal": canal_vark,
-        "nombre_canal": textos.NOMBRE_CANAL[canal_vark],
-        "color_canal": textos.COLOR_CANAL[canal_vark],
-        "capsula": None,
-        "bloques": None,
-        "palabras": None,
-        "error": mensaje,
-    }
-
-
-def _cobertura_curricular(db: Session) -> list[dict]:
-    """Qué temas puede sostener el sistema hoy y con qué calidad de adaptación.
-
-    Dos correcciones sobre la lectura ingenua de «tiene fragmentos aprobados»:
-
-    1. **Cuenta lo que el retriever puede recuperar**, no lo que está validado.
-       El inventario sale de `retriever.inventario_por_objetivo`, que aplica los
-       mismos filtros que la recuperación real —incluido el del documento
-       rechazado después de curar—, así que la pantalla no puede pintar de verde
-       material que el motor ignora.
-
-    2. **Un fragmento no es cobertura.** El retriever pide hasta
-       `LIMITE_POR_DEFECTO` fragmentos para fundamentar una cápsula; con uno
-       solo la genera igual, pero apoyada en una sola frase del apunte. Por eso
-       hay un tramo intermedio explícito en vez de un sí/no.
-
-    La columna por canal es el gap que el conteo total esconde: un objetivo con
-    ocho fragmentos de texto está completo para los perfiles A y R, y deja al
-    perfil V leyendo lo mismo que ellos.
-    """
-    inventario = retriever.inventario_por_objetivo(db)
-    objetivos = db.scalars(
-        select(ObjetivoAprendizaje).order_by(ObjetivoAprendizaje.codigo_objetivo)
-    ).all()
-
-    filas = []
-    for objetivo in objetivos:
-        tipos = inventario.get(objetivo.id_objetivo, {})
-        total = sum(tipos.values())
-        filas.append(
-            {
-                "objetivo": objetivo,
-                "total": total,
-                "tipos": sorted(tipos.items(), key=lambda kv: (-kv[1], kv[0])),
-                "canales": [
-                    {
-                        "canal": canal,
-                        "nombre": textos.NOMBRE_CANAL[canal],
-                        "cantidad": cantidad,
-                        # Con material, pero sin nada del tipo que ese canal
-                        # aprovecha: la cápsula sale, la adaptación no.
-                        "degradado": total > 0 and cantidad == 0,
-                    }
-                    for canal, cantidad in retriever.tipos_preferidos_disponibles(
-                        tipos
-                    ).items()
-                ],
-                "estado": (
-                    "sin_material"
-                    if total == 0
-                    else "escaso"
-                    if total < MINIMO_RECOMENDADO
-                    else "cubierto"
-                ),
-            }
-        )
-    return filas
-
-
-def _fragmentos_sin_clasificar(db: Session) -> int:
-    """Fragmentos ingeridos que siguen esperando revisión.
-
-    Se cuenta en global y no por objetivo a propósito: el objetivo se asigna
-    **al validar** (`curation.validar`), así que un fragmento pendiente todavía
-    no pertenece a ningún tema. Un conteo por objetivo daría cero en todas las
-    filas y haría parecer que no queda trabajo de curación pendiente.
-    """
-    return db.scalar(
-        select(func.count())
-        .select_from(Fragmento)
-        .where(Fragmento.estado_validacion == "pendiente")
-    ) or 0
-
-
-def _rendimiento_actividades(db: Session) -> list[dict]:
-    """Cómo le fue al curso en la actividad de cierre, por objetivo.
-
-    **El porcentaje se calcula solo sobre el primer intento.** El visor deja el
-    formulario en pantalla después de la retroalimentación, así que quien falla
-    puede cambiar la alternativa y reenviar; contando todos los intentos por
-    igual, el curso mejoraría sus cifras a fuerza de insistir y el número
-    dejaría de decir nada sobre lo que se entendió. Los reintentos se informan
-    aparte porque son una señal por derecho propio: mucho reintento en un tema
-    es material que no se está entendiendo a la primera.
-
-    Las actividades `intentalo_tu` no tienen respuesta corregible (`es_correcta`
-    nula) y quedan fuera del porcentaje, pero se cuentan igual: sin eso, un
-    objetivo trabajado solo por perfiles K se vería idéntico a uno que nadie
-    abrió nunca.
-
-    Va en una función y no dentro del endpoint para poder comprobar la métrica
-    contra la base sin levantar una plantilla de por medio.
-    """
-    primero = InteraccionQuiz.numero_intento == 1
-    corregible = InteraccionQuiz.es_correcta.is_not(None)
-    stmt = (
-        select(
-            ObjetivoAprendizaje.tema,
-            func.count(func.distinct(MicrocapsulaGenerada.id_estudiante)).label(
-                "alumnos"
-            ),
-            func.count().filter(primero & corregible).label("primeras"),
-            func.count().filter(primero & InteraccionQuiz.es_correcta.is_(True)).label(
-                "aciertos"
-            ),
-            func.count().filter(primero & ~corregible).label("abiertas"),
-            func.count().filter(InteraccionQuiz.numero_intento > 1).label("reintentos"),
-        )
-        .select_from(InteraccionQuiz)
-        .join(
-            MicrocapsulaGenerada,
-            InteraccionQuiz.id_capsula == MicrocapsulaGenerada.id_capsula,
-        )
-        .join(
-            ObjetivoAprendizaje,
-            MicrocapsulaGenerada.id_objetivo == ObjetivoAprendizaje.id_objetivo,
-        )
-        .group_by(ObjetivoAprendizaje.id_objetivo)
-        .order_by(ObjetivoAprendizaje.codigo_objetivo)
-    )
-    return [
-        {
-            "tema": row.tema,
-            "alumnos": row.alumnos,
-            "primeras": row.primeras,
-            "aciertos": row.aciertos,
-            "abiertas": row.abiertas,
-            "reintentos": row.reintentos,
-            # None y 0 no son lo mismo: sin quiz corregible no hay porcentaje
-            # que mostrar, y un 0% diría que todos fallaron.
-            "porcentaje": (
-                round(row.aciertos * 100 / row.primeras, 1) if row.primeras else None
-            ),
-        }
-        for row in db.execute(stmt).all()
-    ]
-
-
-def _barras_cohorte(vark) -> list[dict]:
-    """El promedio VARK del curso, listo para pintar con la misma escala que el
-    perfil individual del estudiante.
-
-    Se arma acá y no en la plantilla por la misma razón que `_barras` en
-    `student.py`: el nombre y el color de cada canal ya existen en `textos`, y
-    repetirlos en HTML hace que el gráfico del docente y el del estudiante
-    deriven a colores distintos para el mismo canal.
-    """
-    if vark is None or not vark.total:
-        return []
-    valores = {"V": vark.v, "A": vark.a, "R": vark.r, "K": vark.k}
-    ordenados = sorted(valores.items(), key=lambda kv: (-kv[1], "VARK".index(kv[0])))
-    return [
-        {
-            "nombre": textos.NOMBRE_CANAL[canal],
-            "color": textos.COLOR_CANAL[canal],
-            "ancho": f"{porcentaje:.2f}",
-            "texto": f"{porcentaje:.1f}".replace(".", ","),
-        }
-        for canal, porcentaje in ordenados
-    ]
+    columna = simulador.columna_error(canal_vark, mensaje)
+    columna["bloques"] = None
+    return columna
 
 
 def _contexto_panel(db: Session, id_documento: int | None) -> dict:

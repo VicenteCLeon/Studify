@@ -178,12 +178,30 @@ def test_solo_lo_del_estudiante_queda_abierto_en_la_api():
     pedir su cápsula y responder el quiz.
     """
     abiertas_esperadas = {
+        # Flujo del estudiante: responder el cuestionario, ver su perfil, elegir
+        # tema, pedir su cápsula y responder el quiz.
         ("POST", "/api/diagnosticos"),
         ("GET", "/api/diagnosticos/{id_diagnostico}"),
         ("GET", "/api/catalogo"),
         ("POST", "/api/capsulas"),
         ("GET", "/api/capsulas/{id_capsula}"),
         ("POST", "/api/capsulas/{id_capsula}/quiz"),
+        # Agregados por la migración a React (27-ago-2026): lo que antes se
+        # calculaba dentro de los handlers Jinja del estudiante.
+        ("GET", "/api/instrumento"),
+        ("GET", "/api/textos"),
+        ("GET", "/api/sesion"),
+        ("POST", "/api/sesion/{id_estudiante}"),
+        ("DELETE", "/api/sesion"),
+        ("GET", "/api/perfil"),
+        ("POST", "/api/capsulas/{id_capsula}/responder"),
+        # El acceso del docente. Tienen que estar abiertos por definición: son
+        # la puerta, no lo que hay detrás. Quien no la ha cruzado todavía no
+        # puede presentar credenciales, y `GET /api/docente/sesion` responde
+        # justamente «no estás autenticado» sin exigir estarlo.
+        ("GET", "/api/docente/sesion"),
+        ("POST", "/api/docente/login"),
+        ("POST", "/api/docente/logout"),
     }
 
     abiertas_reales = set()

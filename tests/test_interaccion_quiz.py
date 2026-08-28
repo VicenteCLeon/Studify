@@ -16,6 +16,8 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import select
 
+# Movida a `studify.analytics.panel` en la migración a React (27-ago-2026).
+from studify.analytics.panel import rendimiento_actividades as _rendimiento_actividades
 from studify.db.models import (
     DocumentoFuente,
     Estudiante,
@@ -26,7 +28,6 @@ from studify.db.models import (
 )
 from studify.main import app
 from studify.web import sesion
-from studify.web.routers.teacher import _rendimiento_actividades
 from tests.conftest import necesita_bd
 from tests.test_api_capsulas import TEXTO_LARGO
 

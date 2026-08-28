@@ -140,6 +140,10 @@ def _a_salida(
         id_capsula=fila.id_capsula,
         id_estudiante=fila.id_estudiante,
         id_objetivo=fila.id_objetivo,
+        # La relación ya está cargada por el ORM; el visor la necesita para las
+        # insignias (código, asignatura, unidad) que la plantilla Jinja recibía
+        # como objeto aparte.
+        objetivo=fila.objetivo,
         fecha_generacion=fila.fecha_generacion,
         estado_validacion=fila.estado_validacion,
         origen=origen,

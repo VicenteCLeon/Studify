@@ -26,6 +26,25 @@ class CapsulaIn(BaseModel):
     id_objetivo: int
 
 
+class ObjetivoDeCapsula(BaseModel):
+    """El tema al que pertenece la cápsula, para las insignias del visor.
+
+    Lo agrega la migración a React (27-ago-2026) y **no es información nueva**:
+    la plantilla Jinja ya mostraba estos tres campos, pero los recibía por
+    separado porque el handler tenía el objeto ORM a mano. Un cliente que solo
+    ve la respuesta JSON no tenía forma de obtenerlos sin llamar a
+    `GET /api/objetivos`, que es del docente.
+    """
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id_objetivo: int
+    codigo_objetivo: str
+    asignatura: str
+    unidad: str
+    tema: str
+
+
 class CapsulaOut(BaseModel):
     """La microcápsula tal como la recibe la UI."""
 
@@ -34,6 +53,7 @@ class CapsulaOut(BaseModel):
     id_capsula: int
     id_estudiante: int
     id_objetivo: int
+    objetivo: ObjetivoDeCapsula | None = None
     fecha_generacion: datetime
     estado_validacion: str
 
