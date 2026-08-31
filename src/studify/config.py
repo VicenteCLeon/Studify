@@ -71,8 +71,10 @@ class Settings(BaseSettings):
 
     # Dónde se guardan los documentos oficiales ingeridos (Fase 2). Se copian
     # al almacén en vez de referenciar la ruta original para que `ruta_archivo`
-    # siga siendo válida si el docente mueve o borra el archivo de su carpeta.
     documentos_dir: str = "data/documentos"
+
+    # Dónde se guardan los recursos multimedia generados (Fase 6).
+    media_dir: str = "data/media"
 
 
 @lru_cache

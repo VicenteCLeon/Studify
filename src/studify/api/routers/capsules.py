@@ -321,9 +321,7 @@ def crear_capsula(
             payload.id_objetivo,
             exc.errores_por_intento,
         )
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)
-        ) from exc
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc
 
     fila = _persistir(
         db,
@@ -335,6 +333,26 @@ def crear_capsula(
         huella=prompt.huella,
         modelo=resultado.modelo,
     )
+
+    # --- Fase 6: Generación Multimedia Local ---
+    # Ejecutamos de forma secuencial la síntesis de V/A/K
+    import json
+    from pathlib import Path
+
+    from studify.media.generator import GeneradorMultimedia
+
+    try:
+        media_gen = GeneradorMultimedia(Path(ajustes.media_dir))
+        texto_crudo = json.dumps(resultado.capsula.model_dump(), ensure_ascii=False)
+        logger.info(
+            f"Iniciando generación multimedia local (Fase 6) para cápsula {fila.id_capsula}"
+        )
+        activos = media_gen.generar_activos(config, texto_crudo, str(fila.id_capsula))
+        logger.info(f"Generación multimedia finalizada. Activos: {activos}")
+    except Exception as e:
+        logger.error(f"Fallo en generación multimedia local para cápsula {fila.id_capsula}: {e}")
+        # En caso de error (o falta de VRAM), entregamos la cápsula de texto de todos modos
+
     return _a_salida(fila, origen="generada", resultado=resultado)
 
 
@@ -470,10 +488,7 @@ def registrar_quiz(
     if capsula.id_estudiante != payload.id_estudiante:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail=(
-                f"la cápsula {id_capsula} no es del estudiante "
-                f"{payload.id_estudiante}"
-            ),
+            detail=(f"la cápsula {id_capsula} no es del estudiante {payload.id_estudiante}"),
         )
 
     # Calcular el número y escribirlo no es atómico: dos peticiones a la vez
