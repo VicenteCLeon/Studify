@@ -364,7 +364,7 @@ Con el objetivo de perfilar adecuadamente a los usuarios y descubrir posibles co
 
 Sobre la base de la investigación y el análisis expuesto en este documento, se establece la hoja de ruta técnica para una eventual fase de ejecución, asegurando que la implementación tecnológica se realice en estricta alineación con la teoría pedagógica estudiada.
 
-Para dar respuesta a la necesidad de personalización pedagógica, el sistema integra un módulo de diagnóstico basado en el modelo de inventario de estilos de aprendizaje VARK (Visual, Aural/Auditivo, Read-Write/Lectura-Escritura, Kinesthetic/Kinestésico), desarrollado por Neil Fleming. El procesamiento de la información, desde el llenado del instrumento hasta la agregación estadística del perfil grupal, se define mediante un flujo estructurado de tres fases lógicas:
+Para dar respuesta a la necesidad de personalización pedagógica, el sistema integra un módulo de diagnóstico basado en el modelo de inventario de estilos de aprendizaje VARK (Visual, Auditivo, Read-Write/Lectura-Escritura, Kinesthetic/Kinestésico), desarrollado por Neil Fleming. El procesamiento de la información, desde el llenado del instrumento hasta la agregación estadística del perfil grupal, se define mediante un flujo estructurado de tres fases lógicas:
 
 **Fase de Instrumentación y Recolección de Preferencias**
 El diagnóstico se inicia con la aplicación de la versión estándar del cuestionario VARK, compuesto por preguntas de opción múltiple contextualizadas en situaciones cotidianas de resolución de problemas. El instrumento se distribuirá de forma digital utilizando Google Forms.
