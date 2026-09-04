@@ -422,6 +422,18 @@ def get_viewer(
                 "tipo": capsula.actividad.tipo,
                 "pregunta": capsula.actividad.pregunta,
                 "alternativas": capsula.actividad.alternativas,
+                "tarjetas": [
+                    {"anverso": t.anverso, "reverso": t.reverso}
+                    for t in getattr(capsula.actividad, "tarjetas", [])
+                ],
+                "preguntas": [
+                    {
+                        "indice": i,
+                        "enunciado": p.enunciado,
+                        "alternativas": p.alternativas,
+                    }
+                    for i, p in enumerate(getattr(capsula.actividad, "preguntas", []))
+                ],
             },
         },
     )
@@ -463,6 +475,52 @@ def submit_activity(
             estado="esperada",
             titulo="Respuesta esperada",
             retroalimentacion=quiz.get("retroalimentacion", ""),
+        )
+
+    if quiz.get("tipo") == "flashcards":
+        # Actividad kinestésica de memorización y práctica activa.
+        _registrar_intento(db, fila, alternativa=None, acerto=True)
+        return _feedback(
+            request,
+            estado="ok",
+            titulo="¡Sesión de Flashcards completada!",
+            retroalimentacion="Has ejercitado el recuerdo activo (Active Recall) de los conceptos fundamentales. ¡Excelente trabajo de práctica kinestésica!",
+        )
+
+    if quiz.get("tipo") == "quiz_multi":
+        preguntas = quiz.get("preguntas") or []
+        if not preguntas:
+            return _error("Esta cápsula no tiene preguntas configuradas.")
+
+        partes = [p.strip() for p in answer.split(",") if p.strip()]
+        if len(partes) < len(preguntas):
+            return _error(f"Por favor responde las {len(preguntas)} preguntas antes de revisar.")
+
+        aciertos = 0
+        detalles = []
+        for i, preg in enumerate(preguntas):
+            correcta_idx = preg.get("indice_correcta", 0)
+            alts = preg.get("alternativas") or []
+            seleccion = int(partes[i]) if (i < len(partes) and partes[i].isdigit()) else -1
+            es_correcta = (seleccion == correcta_idx)
+            if es_correcta:
+                aciertos += 1
+            corr_txt = alts[correcta_idx] if 0 <= correcta_idx < len(alts) else ""
+            detalles.append({
+                "enunciado": preg.get("enunciado", f"Pregunta {i+1}"),
+                "es_correcta": es_correcta,
+                "correcta_texto": corr_txt,
+                "explicacion": preg.get("explicacion", ""),
+            })
+
+        todos_bien = (aciertos == len(preguntas))
+        _registrar_intento(db, fila, alternativa=None, acerto=todos_bien)
+        return _feedback(
+            request,
+            estado="ok" if todos_bien else "esperada",
+            titulo=f"Cuestionario finalizado: {aciertos} de {len(preguntas)} respuestas correctas",
+            retroalimentacion="Revisa las explicaciones de cada pregunta para consolidar los conceptos clave.",
+            detalles=detalles,
         )
 
     indice_correcta = quiz.get("indice_correcta")
@@ -602,6 +660,7 @@ def _feedback(
     titulo: str,
     retroalimentacion: str,
     correcta: str | None = None,
+    detalles: list[dict] | None = None,
 ) -> HTMLResponse:
     """Fragmento de retroalimentación para HTMX.
 
@@ -617,5 +676,6 @@ def _feedback(
             "titulo": titulo,
             "retroalimentacion": retroalimentacion,
             "correcta": correcta,
+            "detalles": detalles,
         },
     )

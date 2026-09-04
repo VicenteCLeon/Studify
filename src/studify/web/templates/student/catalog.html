@@ -37,8 +37,9 @@
                                         </span>
                                     </span>
                                     <a href="/student/viewer/{{ tema.id_objetivo }}"
-                                       class="btn btn-primary text-sm"
-                                       style="padding: 0.5rem 1rem; white-space: nowrap;">Estudiar</a>
+                                        class="btn btn-primary text-sm btn-study"
+                                        data-codigo="{{ tema.codigo_objetivo }}" data-tema="{{ tema.tema }}"
+                                        style="padding: 0.5rem 1rem; white-space: nowrap;">Estudiar</a>
                                 </li>
                                 {% endfor %}
                             </ul>
@@ -66,4 +67,138 @@
 <div class="flex justify-center mt-8">
     <a href="/student/profile" class="text-muted">← Ver mi perfil de aprendizaje</a>
 </div>
+
+<!-- =========================================================================
+     Pantalla de Carga y Feedback Adaptativo (Senior UI/UX)
+     ========================================================================= -->
+<div id="loading-overlay" class="loading-overlay" aria-hidden="true" role="dialog" aria-modal="true">
+    <div class="loading-backdrop"></div>
+    <div class="loading-card">
+        <!-- Video animado de carga personalizada -->
+        <div class="loading-video-container">
+            <video id="loading-video" class="loading-video" autoplay loop muted playsinline preload="auto">
+                <source src="/public/animacionCarga.mp4" type="video/mp4">
+            </video>
+        </div>
+
+        <h2 class="loading-title">Personalizando tu microcápsula</h2>
+
+        <div class="loading-topic-badge">
+            <span class="loading-code" id="loading-code">OA</span>
+            <span class="loading-name" id="loading-name">Tema de estudio</span>
+        </div>
+
+        <!-- Barra de progreso indeterminada -->
+        <div class="loading-progress-track">
+            <div class="loading-progress-bar"></div>
+        </div>
+
+        <!-- Ciclo dinámico de pasos pedagógicos -->
+        <div class="loading-steps-container">
+            <p id="loading-step-text" class="loading-step-text">
+                <span class="loading-step-bullet">●</span>
+                <span id="loading-step-label">Consultando tu perfil de aprendizaje VARK...</span>
+            </p>
+        </div>
+
+        <p class="loading-disclaimer">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                style="vertical-align: -2px; margin-right: 4px;">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+            La IA está adaptando la profundidad, ejemplos y tono a tu estilo. Esto puede tardar unos segundos.
+        </p>
+    </div>
+</div>
+
+<script>
+    (function () {
+        const overlay = document.getElementById('loading-overlay');
+        const codeEl = document.getElementById('loading-code');
+        const nameEl = document.getElementById('loading-name');
+        const stepLabel = document.getElementById('loading-step-label');
+        const stepText = document.getElementById('loading-step-text');
+        const studyButtons = document.querySelectorAll('.btn-study');
+
+        const steps = [
+            "Consultando tu perfil de aprendizaje VARK...",
+            "Recuperando fragmentos curriculares validados...",
+            "Estructurando el contenido con IA adaptativa...",
+            "Diseñando ejemplos prácticos y analogías...",
+            "Configurando tu actividad de evaluación formativa...",
+            "Validando coherencia pedagógica y citas..."
+        ];
+
+        let stepInterval = null;
+
+        function startLoading(code, name) {
+            if (codeEl) codeEl.textContent = code || 'OA';
+            if (nameEl) nameEl.textContent = name || 'Tema seleccionado';
+            if (overlay) {
+                overlay.classList.add('is-active');
+                overlay.setAttribute('aria-hidden', 'false');
+            }
+
+            // Deshabilitar otros botones para evitar doble clic
+            studyButtons.forEach(btn => {
+                btn.style.pointerEvents = 'none';
+                btn.style.opacity = '0.7';
+            });
+
+            // Reproducir video si está presente
+            const video = document.getElementById('loading-video');
+            if (video) {
+                video.currentTime = 0;
+                video.play().catch(function () { });
+            }
+
+            // Rotación de pasos cada 2.3 segundos
+            let currentStep = 0;
+            if (stepLabel) stepLabel.textContent = steps[0];
+
+            clearInterval(stepInterval);
+            stepInterval = setInterval(() => {
+                currentStep = (currentStep + 1) % steps.length;
+                if (stepText && stepLabel) {
+                    stepText.style.opacity = '0';
+                    setTimeout(() => {
+                        stepLabel.textContent = steps[currentStep];
+                        stepText.style.opacity = '1';
+                    }, 200);
+                }
+            }, 2300);
+        }
+
+        function stopLoading() {
+            if (overlay) {
+                overlay.classList.remove('is-active');
+                overlay.setAttribute('aria-hidden', 'true');
+            }
+            const video = document.getElementById('loading-video');
+            if (video) {
+                video.pause();
+            }
+            clearInterval(stepInterval);
+            studyButtons.forEach(btn => {
+                btn.style.pointerEvents = '';
+                btn.style.opacity = '';
+            });
+        }
+
+        studyButtons.forEach(btn => {
+            btn.addEventListener('click', function (e) {
+                const code = this.getAttribute('data-codigo') || '';
+                const tema = this.getAttribute('data-tema') || '';
+                startLoading(code, tema);
+            });
+        });
+
+        // Restaurar el estado si el estudiante vuelve atrás con el navegador
+        window.addEventListener('pageshow', function (event) {
+            stopLoading();
+        });
+    })();
+</script>
 {% endblock %}

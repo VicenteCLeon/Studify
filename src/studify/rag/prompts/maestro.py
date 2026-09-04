@@ -82,7 +82,7 @@ PERFIL = PromptTemplate(
     "- Narrativo: {peso_narrativo} %\n"
     "- Práctico: {peso_practico} %\n\n"
     "Extensión del contenido: aproximadamente {palabras_texto} palabras "
-    "(mínimo {palabras_min}, máximo {palabras_max}).\n"
+    "(mínimo {palabras_min}, máximo {palabras_max}). Sé conciso en cada sección para no sobrepasar el límite máximo.\n"
     "Recursos visuales (bloques `tabla` o `esquema`): {recursos_visuales}.\n"
     # No se nombran tipos de bloque acá: con p_K ≥ 40% la tabla 11.1 cuenta
     # tres componentes prácticos —ejemplo aplicado, secuencia paso a paso y
@@ -167,10 +167,13 @@ INSTRUCCION_POR_DIRECTIVA = {
         "ordenados y accionables."
     ),
     "actividad_aplicada": (
-        "La actividad de cierre debe ser de tipo `intentalo_tu`: un ejercicio "
-        "que el estudiante resuelve por su cuenta, con la resolución esperada "
-        "en `retroalimentacion`."
+        "La actividad de cierre debe ser de práctica activa e interactiva: genera una baraja de "
+        "tipo `flashcards` (3 a 5 tarjetas de Active Recall con `anverso` y `reverso`), o un "
+        "cuestionario de tipo `quiz_multi` (3 a 5 preguntas con `alternativas`, `indice_correcta` y "
+        "`explicacion`). Si el tema requiere resolución procedimental abierta, puede ser `intentalo_tu`."
     ),
+
+
 }
 
 # --- Bloque 3: formato --------------------------------------------------------
@@ -196,11 +199,22 @@ ESQUEMA_JSON = """{
     "cuerpo": "un caso concreto donde se aplica el concepto"
   },
   "actividad": {
-    "tipo": "quiz_mc | intentalo_tu",
-    "pregunta": "string: la pregunta de comprobación",
+    "tipo": "quiz_mc | intentalo_tu | flashcards | quiz_multi",
+    "pregunta": "string: la pregunta o instrucción de la actividad",
     "alternativas": ["solo en quiz_mc: 4 alternativas distintas"],
     "indice_correcta": "solo en quiz_mc: entero, la primera es 0",
-    "retroalimentacion": "string: la retroalimentación, explica por qué"
+    "retroalimentacion": "solo en quiz_mc o intentalo_tu: string con la explicación",
+    "tarjetas": [
+      { "anverso": "string: concepto o desafío frontal", "reverso": "string: explicación o solución al dorso" }
+    ],
+    "preguntas": [
+      {
+        "enunciado": "string: enunciado de la pregunta",
+        "alternativas": ["string", "string", "string", "string"],
+        "indice_correcta": 0,
+        "explicacion": "string: por qué es la correcta"
+      }
+    ]
   },
   "fuentes": [
     { "id_fragmento": 0, "documento": "string", "pagina": 0 }
@@ -227,10 +241,9 @@ SECUENCIA = (
     "abajo.\n"
     "5. **Ejemplo o aplicación** (`ejemplo`): un caso concreto donde el "
     "concepto se usa.\n"
-    "6. **Pregunta de comprobación** (`actividad.pregunta`): comprueba si "
-    "entendió el concepto central.\n"
-    "7. **Retroalimentación** (`actividad.retroalimentacion`): explica por qué "
-    "la respuesta correcta lo es.\n"
+    "6. **Actividad de cierre** (`actividad`): comprueba o ejercita activamente "
+    "el aprendizaje.\n"
+    "7. **Retroalimentación**: explica y fundamenta las respuestas correctas.\n"
 )
 
 FORMATO = PromptTemplate(
@@ -249,10 +262,11 @@ FORMATO = PromptTemplate(
     "- `activacion` es una pregunta y lleva signo de interrogación.\n"
     "- La suma de palabras de `activacion`, `concepto_central`, "
     "`representacion_adaptativa` y `ejemplo` está entre {palabras_min} y "
-    "{palabras_max}.\n"
+    "{palabras_max} (máximo estricto: {palabras_max} palabras; sé directo y conciso para no superarlo).\n"
     "- `actividad` está presente y sus campos corresponden a su `tipo`: "
-    "`quiz_mc` lleva `alternativas` e `indice_correcta`; `intentalo_tu` no "
-    "lleva ninguno de los dos.\n"
+    "`quiz_mc` lleva `alternativas` e `indice_correcta`; `intentalo_tu` lleva `retroalimentacion`; "
+    "`flashcards` lleva `tarjetas` (3 a 5 tarjetas con `anverso` y `reverso`); "
+    "`quiz_multi` lleva `preguntas` (3 a 5 preguntas con `enunciado`, `alternativas`, `indice_correcta` y `explicacion`).\n"
     "- Cada `id_fragmento` de `fuentes` es uno de los entregados arriba.\n"
     "- Todo el texto está en español."
 )

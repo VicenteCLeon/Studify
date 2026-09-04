@@ -123,6 +123,66 @@ def test_intentalo_tu_bien_formado_se_acepta():
     assert validar_capsula(datos).es_valida
 
 
+def test_flashcards_bien_formadas_se_aceptan():
+    """Actividad de práctica activa para perfiles kinestésicos."""
+    datos = capsula_valida()
+    datos["actividad"] = {
+        "tipo": "flashcards",
+        "pregunta": "Repasa los conceptos clave girando cada tarjeta:",
+        "tarjetas": [
+            {"anverso": "¿Qué es 1FN?", "reverso": "Eliminar atributos multivaluados y valores no atómicos."},
+            {"anverso": "¿Qué es 2FN?", "reverso": "Estar en 1FN y que no existan dependencias parciales."},
+            {"anverso": "¿Qué es 3FN?", "reverso": "Estar en 2FN y que no existan dependencias transitivas."},
+        ],
+    }
+
+    assert validar_capsula(datos).es_valida
+
+
+def test_flashcards_con_menos_de_3_se_rechaza():
+    datos = capsula_valida()
+    datos["actividad"] = {
+        "tipo": "flashcards",
+        "tarjetas": [
+            {"anverso": "¿Qué es 1FN?", "reverso": "Valores atómicos."},
+        ],
+    }
+
+    resultado = validar_capsula(datos)
+    assert not resultado.es_valida
+    assert any("entre 3 y 5" in e for e in resultado.errores)
+
+
+def test_quiz_multi_bien_formado_se_acepta():
+    """Cuestionario formativo paso a paso para perfiles kinestésicos."""
+    datos = capsula_valida()
+    datos["actividad"] = {
+        "tipo": "quiz_multi",
+        "preguntas": [
+            {
+                "enunciado": "¿Qué anomalía previene la 2FN?",
+                "alternativas": ["Dependencias parciales", "Valores nulos", "Claves foráneas redundantes"],
+                "indice_correcta": 0,
+                "explicacion": "La 2FN exige que todo atributo no clave dependa de la clave completa.",
+            },
+            {
+                "enunciado": "¿Cuándo se produce una dependencia transitiva?",
+                "alternativas": ["A -> B y B -> C", "A -> A", "No depende de nada"],
+                "indice_correcta": 0,
+                "explicacion": "Ocurre cuando un atributo depende de otro no clave.",
+            },
+            {
+                "enunciado": "¿Cuál es el primer paso para normalizar?",
+                "alternativas": ["Alcanzar 1FN", "Crear índices", "Definir vistas"],
+                "indice_correcta": 0,
+                "explicacion": "1FN garantiza atomicidad de atributos.",
+            },
+        ],
+    }
+
+    assert validar_capsula(datos).es_valida
+
+
 # --- Bloques de contenido ----------------------------------------------------
 
 

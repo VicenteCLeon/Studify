@@ -11,4 +11,29 @@
     {% if retroalimentacion %}
     <div class="mt-2">{{ retroalimentacion }}</div>
     {% endif %}
+
+    {% if detalles %}
+    <div class="mt-4 flex flex-col gap-2">
+        {% for d in detalles %}
+        <div style="background: rgba(255,255,255,0.7); border-radius: 0.5rem; padding: 0.75rem 1rem; border: 1px solid var(--border-color); text-align: left;">
+            <div class="flex justify-between items-center mb-1">
+                <strong>{{ d.enunciado }}</strong>
+                <span class="badge {{ 'badge-success' if d.es_correcta else 'badge-danger' }}" style="font-size: 0.75rem;">
+                    {{ '✓ Correcto' if d.es_correcta else '✗ Incorrecto' }}
+                </span>
+            </div>
+            {% if not d.es_correcta and d.correcta_texto %}
+            <div class="text-sm mt-1" style="color: var(--text-main);">
+                <strong>Respuesta correcta:</strong> {{ d.correcta_texto }}
+            </div>
+            {% endif %}
+            {% if d.explicacion %}
+            <div class="text-xs text-muted mt-1">
+                💡 {{ d.explicacion }}
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
 </div>

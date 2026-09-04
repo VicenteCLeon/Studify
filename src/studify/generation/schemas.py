@@ -70,7 +70,7 @@ TipoBloque = Literal[
     "glosario",
 ]
 
-TipoActividad = Literal["quiz_mc", "intentalo_tu"]
+TipoActividad = Literal["quiz_mc", "intentalo_tu", "flashcards", "quiz_multi"]
 
 # Cuántas alternativas admite un ítem de selección múltiple. El prompt pide 4
 # (es lo que muestra el plan §3), pero se aceptan 3–5 para no gastar un reintento
@@ -173,33 +173,66 @@ class BloqueContenido(BaseModel):
         return total
 
 
+class TarjetaFlashcard(BaseModel):
+    """Una tarjeta interactiva de memorización y práctica activa (Active Recall)."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    anverso: str = Field(min_length=1, description="Pregunta, concepto o desafío frontal")
+    reverso: str = Field(min_length=1, description="Explicación, solución o concepto clave al dorso")
+
+
+class PreguntaQuiz(BaseModel):
+    """Una pregunta individual de un cuestionario formativo ampliado."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    enunciado: str = Field(min_length=1)
+    alternativas: list[str] = Field(min_length=2, max_length=5)
+    indice_correcta: int
+    explicacion: str = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def validar_pregunta(self) -> "PreguntaQuiz":
+        if not 0 <= self.indice_correcta < len(self.alternativas):
+            raise ValueError(
+                f"'indice_correcta' = {self.indice_correcta} está fuera del rango "
+                f"de alternativas (0–{len(self.alternativas) - 1})"
+            )
+        normalizadas = [a.strip().lower() for a in self.alternativas]
+        if len(set(normalizadas)) != len(normalizadas):
+            raise ValueError(f"la pregunta tiene alternativas repetidas: {self.alternativas}")
+        return self
+
+
 class Actividad(BaseModel):
     """La actividad de cierre, obligatoria (regla 4 del plan §3).
 
-    Dos formas, según el perfil: `quiz_mc` para comprobar comprensión y
-    `intentalo_tu` para el componente aplicado que pide la tabla 11.1 cuando
-    `p_K ≥ 40%` (directiva `actividad_aplicada` de `vark/rules.py`).
+    Cuatro formas según el perfil pedagógico:
+    - `quiz_mc`: ítem único de selección múltiple (para perfiles generales).
+    - `intentalo_tu`: ejercicio abierto con resolución contrastable.
+    - `flashcards`: baraja interactiva de 3 a 5 tarjetas para perfiles kinestésicos.
+    - `quiz_multi`: cuestionario ampliado de 3 a 5 preguntas formativas con explicación.
     """
 
     model_config = ConfigDict(extra="ignore")
 
     tipo: TipoActividad
-    pregunta: str = Field(min_length=1)
+    pregunta: str = ""
     alternativas: list[str] = Field(default_factory=list)
     indice_correcta: int | None = None
-    retroalimentacion: str = Field(min_length=1)
+    retroalimentacion: str = ""
+    tarjetas: list[TarjetaFlashcard] = Field(default_factory=list)
+    preguntas: list[PreguntaQuiz] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def coherente_con_el_tipo(self) -> "Actividad":
-        """Cada tipo de actividad usa un subconjunto distinto de los campos.
-
-        Se rechaza la mezcla en vez de ignorar los campos sobrantes porque
-        significa que el modelo se confundió de formato, y eso el bucle de
-        reparación sí lo puede corregir con el error a la vista. Dejarlo pasar
-        produciría un `intentalo_tu` con alternativas que la UI mostraría como
-        quiz sin respuesta correcta.
-        """
+        """Cada tipo de actividad usa un subconjunto distinto de los campos."""
         if self.tipo == "quiz_mc":
+            if not self.pregunta.strip():
+                raise ValueError("un 'quiz_mc' requiere 'pregunta'")
+            if not self.retroalimentacion.strip():
+                raise ValueError("un 'quiz_mc' requiere 'retroalimentacion'")
             if not (MIN_ALTERNATIVAS <= len(self.alternativas) <= MAX_ALTERNATIVAS):
                 raise ValueError(
                     f"un 'quiz_mc' necesita entre {MIN_ALTERNATIVAS} y "
@@ -208,8 +241,6 @@ class Actividad(BaseModel):
                 )
             normalizadas = [a.strip().lower() for a in self.alternativas]
             if len(set(normalizadas)) != len(normalizadas):
-                # Dos alternativas iguales significan dos respuestas correctas:
-                # el estudiante puede marcar la "incorrecta" y tener razón.
                 raise ValueError(f"el quiz tiene alternativas repetidas: {self.alternativas}")
             if self.indice_correcta is None:
                 raise ValueError("un 'quiz_mc' necesita 'indice_correcta'")
@@ -219,7 +250,11 @@ class Actividad(BaseModel):
                     f"rango de las {len(self.alternativas)} alternativas (0–"
                     f"{len(self.alternativas) - 1})"
                 )
-        else:
+        elif self.tipo == "intentalo_tu":
+            if not self.pregunta.strip():
+                raise ValueError("un 'intentalo_tu' requiere 'pregunta'")
+            if not self.retroalimentacion.strip():
+                raise ValueError("un 'intentalo_tu' requiere 'retroalimentacion'")
             if self.alternativas:
                 raise ValueError(
                     "un 'intentalo_tu' es de respuesta abierta: no lleva "
@@ -228,6 +263,22 @@ class Actividad(BaseModel):
                 )
             if self.indice_correcta is not None:
                 raise ValueError("un 'intentalo_tu' no lleva 'indice_correcta'")
+        elif self.tipo == "flashcards":
+            if not (3 <= len(self.tarjetas) <= 5):
+                raise ValueError(
+                    f"una actividad 'flashcards' requiere entre 3 y 5 tarjetas; "
+                    f"llegaron {len(self.tarjetas)}"
+                )
+            if not self.pregunta.strip():
+                self.pregunta = "Pon a prueba tu aprendizaje activo volteando cada tarjeta de repaso."
+        elif self.tipo == "quiz_multi":
+            if not (3 <= len(self.preguntas) <= 5):
+                raise ValueError(
+                    f"un 'quiz_multi' requiere entre 3 y 5 preguntas; "
+                    f"llegaron {len(self.preguntas)}"
+                )
+            if not self.pregunta.strip():
+                self.pregunta = "Cuestionario formativo de práctica interactiva."
         return self
 
 

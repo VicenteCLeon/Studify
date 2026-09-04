@@ -799,3 +799,394 @@ details>div {
   justify-content: space-between;
   align-items: center;
 }
+
+/* ==========================================================================
+   Pantalla de Carga y Feedback Adaptativo (Senior UI/UX)
+   ========================================================================== */
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.3s;
+}
+
+.loading-overlay.is-active {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.loading-backdrop {
+  position: absolute;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.loading-card {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 480px;
+  background-color: var(--bg-surface);
+  border-radius: 1.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(226, 232, 240, 0.8);
+  padding: 2.5rem 2rem 2rem;
+  text-align: center;
+  transform: scale(0.94) translateY(12px);
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.loading-overlay.is-active .loading-card {
+  transform: scale(1) translateY(0);
+}
+
+.loading-video-container {
+  width: 100%;
+  max-width: 380px;
+  max-height: 220px;
+  margin: 0 auto 1.5rem auto;
+  border-radius: 1rem;
+  overflow: hidden;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 0 0 1.5px rgba(79, 70, 229, 0.25);
+  background: #0f172a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.loading-video {
+  width: 100%;
+  height: 100%;
+  max-height: 220px;
+  object-fit: cover;
+  display: block;
+}
+
+.loading-icon-wrapper {
+  position: relative;
+  width: 76px;
+  height: 76px;
+  margin: 0 auto 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loading-spinner-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 4px solid var(--primary-light);
+  border-top-color: var(--primary);
+  border-right-color: var(--success);
+  animation: loading-spin 1.1s cubic-bezier(0.55, 0.15, 0.45, 0.85) infinite;
+}
+
+.loading-icon-sparkle {
+  color: var(--primary);
+  animation: loading-pulse 2s ease-in-out infinite;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loading-title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 0.6rem;
+  font-family: var(--font-heading);
+}
+
+.loading-topic-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: var(--primary-light);
+  color: var(--primary);
+  padding: 0.4rem 0.85rem;
+  border-radius: var(--radius-full);
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  max-width: 100%;
+}
+
+.loading-code {
+  background-color: var(--primary);
+  color: #ffffff;
+  padding: 0.15rem 0.45rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.loading-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 280px;
+}
+
+.loading-progress-track {
+  height: 6px;
+  width: 100%;
+  background-color: var(--border-color);
+  border-radius: 9999px;
+  overflow: hidden;
+  margin-bottom: 1.25rem;
+  position: relative;
+}
+
+.loading-progress-bar {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 40%;
+  background: linear-gradient(90deg, var(--primary) 0%, var(--success) 100%);
+  border-radius: 9999px;
+  animation: loading-progress 2.2s ease-in-out infinite;
+}
+
+.loading-steps-container {
+  min-height: 2rem;
+  margin-bottom: 1.25rem;
+}
+
+.loading-step-text {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: opacity 0.2s ease;
+}
+
+.loading-step-bullet {
+  color: var(--success);
+  font-size: 0.75rem;
+  animation: loading-blink 1.2s infinite ease-in-out;
+}
+
+.loading-disclaimer {
+  font-size: 0.775rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+  margin: 0;
+  border-top: 1px solid var(--border-color);
+  padding-top: 1rem;
+}
+
+@keyframes loading-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes loading-pulse {
+  0%, 100% {
+    transform: scale(0.9);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.12);
+    opacity: 1;
+  }
+}
+
+@keyframes loading-progress {
+  0% {
+    left: -40%;
+    width: 30%;
+  }
+  50% {
+    left: 25%;
+    width: 65%;
+  }
+  100% {
+    left: 100%;
+    width: 30%;
+  }
+}
+
+@keyframes loading-blink {
+  0%, 100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* ==========================================================================
+   Flashcards Interactivas 3D (Perfil Kinestésico / Active Recall)
+   ========================================================================== */
+.flashcards-container {
+  max-width: 600px;
+  margin: 1.5rem auto;
+}
+
+.flashcard-wrapper {
+  perspective: 1000px;
+  width: 100%;
+  min-height: 250px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.flashcard-inner {
+  position: relative;
+  width: 100%;
+  min-height: 250px;
+  text-align: center;
+  transition: transform 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-style: preserve-3d;
+}
+
+.flashcard-inner.is-flipped {
+  transform: rotateY(180deg);
+}
+
+.flashcard-face {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  border-radius: 1rem;
+  padding: 2.25rem 1.75rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid var(--border-color);
+  box-shadow: var(--shadow-md);
+  box-sizing: border-box;
+}
+
+.flashcard-front {
+  background: linear-gradient(145deg, var(--bg-surface), #f1f5f9);
+  color: var(--text-main);
+}
+
+.flashcard-back {
+  background: linear-gradient(145deg, #f0fdf4, #dcfce7);
+  color: #14532d;
+  transform: rotateY(180deg);
+  border-color: #86efac;
+}
+
+.flashcard-badge {
+  display: inline-block;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  margin-bottom: 1rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--radius-full);
+}
+
+.flashcard-front .flashcard-badge {
+  background-color: var(--primary-light);
+  color: var(--primary);
+}
+
+.flashcard-back .flashcard-badge {
+  background-color: #bbf7d0;
+  color: #166534;
+}
+
+.flashcard-text {
+  font-size: 1.15rem;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.flashcard-hint {
+  font-size: 0.8rem;
+  color: var(--text-light);
+  margin-top: 1.25rem;
+}
+
+.flashcard-back .flashcard-hint {
+  color: #16a34a;
+}
+
+.flashcard-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 1.25rem;
+  gap: 0.75rem;
+}
+
+.flashcard-counter {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.flashcard-progress-track {
+  height: 5px;
+  background-color: var(--border-color);
+  border-radius: 9999px;
+  margin-top: 1.25rem;
+  overflow: hidden;
+}
+
+.flashcard-progress-fill {
+  height: 100%;
+  background-color: var(--primary);
+  border-radius: 9999px;
+  transition: width 0.3s ease;
+}
+
+/* ==========================================================================
+   Cuestionario Multi-Pregunta (Quiz Kinestésico)
+   ========================================================================== */
+.multi-quiz-item {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+  margin-bottom: 1.25rem;
+  transition: var(--transition);
+}
+
+.multi-quiz-item:hover {
+  border-color: var(--primary-light);
+}
+
+.multi-quiz-number {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--primary);
+  text-transform: uppercase;
+  margin-bottom: 0.35rem;
+}
+
+.multi-quiz-question {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: var(--text-main);
+}
+

@@ -43,6 +43,10 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 STATIC_DIR = os.path.join(BASE_DIR, "web", "static")
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
+PUBLIC_DIR = os.path.join(BASE_DIR, "public")
+if os.path.exists(PUBLIC_DIR):
+    app.mount("/public", StaticFiles(directory=PUBLIC_DIR), name="public")
+
 @app.get("/", include_in_schema=False)
 def index():
     return RedirectResponse(url="/student/vark")

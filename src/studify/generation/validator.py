@@ -234,15 +234,17 @@ def _error_exceso_de_palabras(capsula: Microcapsula, palabras: int, maximo: int)
     etiqueta, palabras_de_la_parte = max(partes, key=lambda par: par[1])
     return (
         f"el contenido tiene {palabras} palabras y el máximo es {maximo}: sobran "
-        f"{exceso}. La parte más extensa es {etiqueta}, con {palabras_de_la_parte} "
-        f"palabras — recórtala primero. No agregues contenido nuevo ni reordenes "
-        f"lo que ya está bien: solo acorta lo que sobra."
+        f"{exceso}. Debes recortar al menos {exceso + 15} palabras en total para asegurar "
+        f"que la suma total quede estrictamente por debajo de {maximo}. "
+        f"La parte más extensa es {etiqueta}, con {palabras_de_la_parte} "
+        f"palabras — recórtala primero y sintetiza de forma concisa las demás secciones "
+        f"(concepto_central, representacion_adaptativa y ejemplo). "
+        f"No agregues contenido nuevo ni reordenes lo que ya está bien: solo acorta y resume lo que sobra."
     )
 
 
 def validar(
     crudo: str | dict,
-    *,
     fragmentos: Sequence[FragmentoRecuperado],
     palabras_objetivo: int | None = None,
 ) -> ResultadoValidacion:
