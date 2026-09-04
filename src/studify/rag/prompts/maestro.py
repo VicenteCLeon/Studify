@@ -56,10 +56,7 @@ CONTEXTO = PromptTemplate(
 )
 
 FRAGMENTO = PromptTemplate(
-    "### id_fragmento: {id_fragmento}\n"
-    "Procedencia: {cita}\n"
-    "Tipo de material: {tipo}\n\n"
-    "{texto}\n"
+    "### id_fragmento: {id_fragmento}\nProcedencia: {cita}\nTipo de material: {tipo}\n\n{texto}\n"
 )
 
 # --- Bloque 2: perfil ---------------------------------------------------------
@@ -98,15 +95,11 @@ PERFIL = PromptTemplate(
 # Cómo se redacta cada tono de la tabla 17.4. Es lo único de este bloque que
 # habla de estilo; todo lo demás son bloques concretos que hay que construir.
 DESCRIPCION_TONO = {
-    "oral": (
-        "conversacional, dirigiéndote al estudiante de tú, como si lo "
-        "explicaras en voz alta"
-    ),
+    "oral": ("conversacional, dirigiéndote al estudiante de tú, como si lo explicaras en voz alta"),
     "formal": "preciso y académico, con la terminología exacta de la disciplina",
     "practico": "directo y orientado a la acción, centrado en qué hacer y cómo",
     "espacial": (
-        "organizado por relaciones entre conceptos, señalando qué contiene o "
-        "depende de qué"
+        "organizado por relaciones entre conceptos, señalando qué contiene o depende de qué"
     ),
     "mixto": (
         "equilibrado: explicación clara, terminología precisa y aplicación "
@@ -128,8 +121,7 @@ INSTRUCCION_POR_DIRECTIVA = {
         "primera fila sean los encabezados de columna."
     ),
     "estructura_jerarquica": (
-        "Ordena los bloques de lo general a lo particular y ponle `encabezado` "
-        "a cada uno."
+        "Ordena los bloques de lo general a lo particular y ponle `encabezado` a cada uno."
     ),
     "recurso_visual_complementario": (
         "Incluye al menos un bloque `tabla` o `esquema` que resuma "
@@ -146,10 +138,7 @@ INSTRUCCION_POR_DIRECTIVA = {
         "Cierra el contenido con un bloque `glosario` cuyo cuerpo sea una lista "
         "de entradas «término: definición»."
     ),
-    "tono_oral": (
-        "Redacta en segunda persona y con frases cortas, como una explicación "
-        "hablada."
-    ),
+    "tono_oral": ("Redacta en segunda persona y con frases cortas, como una explicación hablada."),
     "analogias_cotidianas": (
         "Incluye un bloque `analogia` que compare el concepto principal con una "
         "situación cotidiana."
@@ -159,21 +148,15 @@ INSTRUCCION_POR_DIRECTIVA = {
         "prosa, y respóndela a continuación."
     ),
     "ejemplo_resuelto": (
-        "Incluye un bloque `ejemplo_resuelto` con un caso concreto desarrollado "
-        "de principio a fin."
+        "Incluye un bloque `ejemplo_resuelto` con un caso concreto desarrollado de principio a fin."
     ),
     "paso_a_paso": (
         "Incluye un bloque `lista_pasos` cuyo cuerpo sea una lista de pasos "
         "ordenados y accionables."
     ),
     "actividad_aplicada": (
-        "La actividad de cierre debe ser de práctica activa e interactiva: genera una baraja de "
-        "tipo `flashcards` (3 a 5 tarjetas de Active Recall con `anverso` y `reverso`), o un "
-        "cuestionario de tipo `quiz_multi` (3 a 5 preguntas con `alternativas`, `indice_correcta` y "
-        "`explicacion`). Si el tema requiere resolución procedimental abierta, puede ser `intentalo_tu`."
+        "La actividad de cierre debe ser de práctica activa e interactiva obligatoriamente: cuando el perfil es kinestésico (o p_K >= 40%), el tipo de actividad DEBE SER `flashcards_y_quiz` conteniendo AMBAS cosas: entre 3 y 5 tarjetas interactivas (`tarjetas` con `anverso` y `reverso`) Y entre 3 y 5 preguntas de opción múltiple (`preguntas` con `enunciado`, `alternativas`, `indice_correcta` y `explicacion`). Si el perfil no es predominantemente kinestésico, se puede usar `flashcards`, `quiz_multi` o `quiz_mc`."
     ),
-
-
 }
 
 # --- Bloque 3: formato --------------------------------------------------------
@@ -199,7 +182,7 @@ ESQUEMA_JSON = """{
     "cuerpo": "un caso concreto donde se aplica el concepto"
   },
   "actividad": {
-    "tipo": "quiz_mc | intentalo_tu | flashcards | quiz_multi",
+    "tipo": "quiz_mc | intentalo_tu | flashcards | quiz_multi | flashcards_y_quiz",
     "pregunta": "string: la pregunta o instrucción de la actividad",
     "alternativas": ["solo en quiz_mc: 4 alternativas distintas"],
     "indice_correcta": "solo en quiz_mc: entero, la primera es 0",
@@ -266,7 +249,8 @@ FORMATO = PromptTemplate(
     "- `actividad` está presente y sus campos corresponden a su `tipo`: "
     "`quiz_mc` lleva `alternativas` e `indice_correcta`; `intentalo_tu` lleva `retroalimentacion`; "
     "`flashcards` lleva `tarjetas` (3 a 5 tarjetas con `anverso` y `reverso`); "
-    "`quiz_multi` lleva `preguntas` (3 a 5 preguntas con `enunciado`, `alternativas`, `indice_correcta` y `explicacion`).\n"
+    "`quiz_multi` lleva `preguntas` (3 a 5 preguntas con `enunciado`, `alternativas`, `indice_correcta` y `explicacion`); "
+    "`flashcards_y_quiz` lleva AMBAS cosas: `tarjetas` (3 a 5) Y `preguntas` (3 a 5).\n"
     "- Cada `id_fragmento` de `fuentes` es uno de los entregados arriba.\n"
     "- Todo el texto está en español."
 )

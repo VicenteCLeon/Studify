@@ -110,9 +110,7 @@ def test_reparto_del_residuo_favorece_al_resto_mayor():
     El método del resto mayor debe asignárselo a un canal con parte truncada,
     nunca al canal en cero.
     """
-    _, p = calificar(
-        [Seleccion(1, "a", "V"), Seleccion(2, "a", "A"), Seleccion(3, "a", "R")]
-    )
+    _, p = calificar([Seleccion(1, "a", "V"), Seleccion(2, "a", "A"), Seleccion(3, "a", "R")])
     assert p.total == D("100")
     assert p.k == D("0.00")
     assert sorted([p.v, p.a, p.r]) == [D("33.33"), D("33.33"), D("33.34")]
@@ -178,26 +176,20 @@ def test_pk_sobre_40_exige_los_tres_componentes_practicos():
     """Tabla 11.1, fila 5: ejemplo aplicado + paso a paso + "inténtalo tú"."""
     config = aplicar_reglas(perfil(20, 20, 15, 45))
     assert config.componentes_practicos == 3
-    assert {"ejemplo_resuelto", "paso_a_paso", "actividad_aplicada"} <= set(
-        config.directivas
-    )
+    assert {"ejemplo_resuelto", "paso_a_paso", "actividad_aplicada"} <= set(config.directivas)
 
 
 def test_pr_sobre_40_prioriza_densidad_textual_y_glosario():
     """Tabla 11.1, fila 3."""
     config = aplicar_reglas(perfil(10, 20, 50, 20))
-    assert {"encabezados_jerarquicos", "definiciones_exactas", "glosario"} <= set(
-        config.directivas
-    )
+    assert {"encabezados_jerarquicos", "definiciones_exactas", "glosario"} <= set(config.directivas)
     assert config.tono_narrativo == "formal"
 
 
 def test_pa_sobre_40_activa_tono_conversacional():
     """Tabla 11.1, fila 4."""
     config = aplicar_reglas(perfil(10, 50, 20, 20))
-    assert {"tono_oral", "analogias_cotidianas", "preguntas_reflexivas"} <= set(
-        config.directivas
-    )
+    assert {"tono_oral", "analogias_cotidianas", "preguntas_reflexivas"} <= set(config.directivas)
     assert config.tono_narrativo == "oral"
 
 
@@ -255,9 +247,11 @@ def test_directivas_no_tienen_duplicados():
         assert len(directivas) == len(set(directivas))
 
 
-def test_audio_activo_queda_fuera_de_alcance():
-    """Decisión 2 de PLAN_DESARROLLO.md §6: no hay TTS en el stack del cap. 14."""
-    assert aplicar_reglas(perfil(0, 100, 0, 0)).audio_activo is False
+def test_audio_activo_se_activa_para_perfil_auditivo():
+    """Con p_A >= 25%, el canal auditivo activa la síntesis de voz XTTS-v2."""
+    assert aplicar_reglas(perfil(0, 100, 0, 0)).audio_activo is True
+    assert aplicar_reglas(perfil(0, 25, 0, 75)).audio_activo is True
+    assert aplicar_reglas(perfil(100, 0, 0, 0)).audio_activo is False
 
 
 # --- Cap. 17.2 / 11.1: jerarquía de canales ---------------------------------
@@ -311,9 +305,7 @@ def test_canal_dominante_lejano_deja_el_perfil_unimodal():
     assert config.jerarquia.es_unimodal
     assert config.jerarquia.etiqueta == "K"
     assert config.tono_narrativo == "practico"
-    assert {"ejemplo_resuelto", "paso_a_paso", "actividad_aplicada"} <= set(
-        config.directivas
-    )
+    assert {"ejemplo_resuelto", "paso_a_paso", "actividad_aplicada"} <= set(config.directivas)
 
 
 def test_tres_canales_a_diferencia_minima_son_multimodal():
@@ -327,7 +319,7 @@ def test_tres_canales_a_diferencia_minima_son_multimodal():
 
 
 def test_perfil_plano_sin_dominante_si_recibe_tono_mixto():
-    """"Mixto" queda reservado para los perfiles genuinamente equilibrados."""
+    """ "Mixto" queda reservado para los perfiles genuinamente equilibrados."""
     assert aplicar_reglas(perfil(25, 25, 25, 25)).tono_narrativo == "mixto"
 
 
@@ -348,9 +340,7 @@ def test_jerarquia_usa_orden_por_puntaje_como_el_cap_16_4():
 
 def test_jerarquia_es_determinista_ante_empate():
     """Un empate debe resolverse siempre igual, o los tests serían intermitentes."""
-    assert derivar(perfil(25, 25, 25, 25)).jerarquia == derivar(
-        perfil(25, 25, 25, 25)
-    ).jerarquia
+    assert derivar(perfil(25, 25, 25, 25)).jerarquia == derivar(perfil(25, 25, 25, 25)).jerarquia
 
 
 def test_perfil_por_defecto_del_sistema_es_k_a():

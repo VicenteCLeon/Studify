@@ -130,9 +130,18 @@ def test_flashcards_bien_formadas_se_aceptan():
         "tipo": "flashcards",
         "pregunta": "Repasa los conceptos clave girando cada tarjeta:",
         "tarjetas": [
-            {"anverso": "¿Qué es 1FN?", "reverso": "Eliminar atributos multivaluados y valores no atómicos."},
-            {"anverso": "¿Qué es 2FN?", "reverso": "Estar en 1FN y que no existan dependencias parciales."},
-            {"anverso": "¿Qué es 3FN?", "reverso": "Estar en 2FN y que no existan dependencias transitivas."},
+            {
+                "anverso": "¿Qué es 1FN?",
+                "reverso": "Eliminar atributos multivaluados y valores no atómicos.",
+            },
+            {
+                "anverso": "¿Qué es 2FN?",
+                "reverso": "Estar en 1FN y que no existan dependencias parciales.",
+            },
+            {
+                "anverso": "¿Qué es 3FN?",
+                "reverso": "Estar en 2FN y que no existan dependencias transitivas.",
+            },
         ],
     }
 
@@ -153,6 +162,67 @@ def test_flashcards_con_menos_de_3_se_rechaza():
     assert any("entre 3 y 5" in e for e in resultado.errores)
 
 
+def test_flashcards_y_quiz_bien_formadas_se_aceptan():
+    """Actividad práctica completa (Flashcards + Quiz) para perfiles kinestésicos."""
+    datos = capsula_valida()
+    datos["actividad"] = {
+        "tipo": "flashcards_y_quiz",
+        "pregunta": "Repaso interactivo y cuestionario formativo:",
+        "tarjetas": [
+            {"anverso": "¿Qué es 1FN?", "reverso": "Valores atómicos."},
+            {"anverso": "¿Qué es 2FN?", "reverso": "Sin dependencias parciales."},
+            {"anverso": "¿Qué es 3FN?", "reverso": "Sin dependencias transitivas."},
+        ],
+        "preguntas": [
+            {
+                "enunciado": "¿Qué elimina la 1FN?",
+                "alternativas": ["Valores no atómicos", "Claves primarias", "Tablas relacionales"],
+                "indice_correcta": 0,
+                "explicacion": "La 1FN exige valores atómicos en cada celda.",
+            },
+            {
+                "enunciado": "¿Qué exige la 2FN?",
+                "alternativas": [
+                    "Dependencia funcional completa",
+                    "Dependencia transitiva",
+                    "Valores repetidos",
+                ],
+                "indice_correcta": 0,
+                "explicacion": "Los atributos no clave deben depender de la clave primaria completa.",
+            },
+            {
+                "enunciado": "¿Qué busca la 3FN?",
+                "alternativas": [
+                    "Eliminar dependencias transitivas",
+                    "Duplicar datos",
+                    "Eliminar claves",
+                ],
+                "indice_correcta": 0,
+                "explicacion": "Evita que un atributo no clave dependa de otro no clave.",
+            },
+        ],
+    }
+
+    assert validar_capsula(datos).es_valida
+
+
+def test_flashcards_y_quiz_sin_preguntas_se_rechaza():
+    datos = capsula_valida()
+    datos["actividad"] = {
+        "tipo": "flashcards_y_quiz",
+        "tarjetas": [
+            {"anverso": "¿Qué es 1FN?", "reverso": "Valores atómicos."},
+            {"anverso": "¿Qué es 2FN?", "reverso": "Sin dependencias parciales."},
+            {"anverso": "¿Qué es 3FN?", "reverso": "Sin dependencias transitivas."},
+        ],
+        "preguntas": [],
+    }
+
+    resultado = validar_capsula(datos)
+    assert not resultado.es_valida
+    assert any("preguntas" in e for e in resultado.errores)
+
+
 def test_quiz_multi_bien_formado_se_acepta():
     """Cuestionario formativo paso a paso para perfiles kinestésicos."""
     datos = capsula_valida()
@@ -161,7 +231,11 @@ def test_quiz_multi_bien_formado_se_acepta():
         "preguntas": [
             {
                 "enunciado": "¿Qué anomalía previene la 2FN?",
-                "alternativas": ["Dependencias parciales", "Valores nulos", "Claves foráneas redundantes"],
+                "alternativas": [
+                    "Dependencias parciales",
+                    "Valores nulos",
+                    "Claves foráneas redundantes",
+                ],
                 "indice_correcta": 0,
                 "explicacion": "La 2FN exige que todo atributo no clave dependa de la clave completa.",
             },
@@ -234,8 +308,14 @@ def test_los_campos_desconocidos_se_ignoran_en_vez_de_rechazarse():
 
 @pytest.mark.parametrize(
     "paso",
-    ["objetivo_aprendizaje", "activacion", "concepto_central",
-     "representacion_adaptativa", "ejemplo", "actividad"],
+    [
+        "objetivo_aprendizaje",
+        "activacion",
+        "concepto_central",
+        "representacion_adaptativa",
+        "ejemplo",
+        "actividad",
+    ],
 )
 def test_cada_paso_de_la_estructura_es_obligatorio(paso):
     """Ninguno de los siete pasos puede faltar.
@@ -446,9 +526,7 @@ def test_la_procedencia_la_afirma_el_sistema_no_el_modelo():
     verificable la trazabilidad del cap. 13.
     """
     datos = capsula_valida()
-    datos["fuentes"] = [
-        {"id_fragmento": 162, "documento": "Otro apunte cualquiera", "pagina": 99}
-    ]
+    datos["fuentes"] = [{"id_fragmento": 162, "documento": "Otro apunte cualquiera", "pagina": 99}]
 
     resultado = validar_capsula(datos)
 

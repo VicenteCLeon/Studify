@@ -70,7 +70,7 @@ TipoBloque = Literal[
     "glosario",
 ]
 
-TipoActividad = Literal["quiz_mc", "intentalo_tu", "flashcards", "quiz_multi"]
+TipoActividad = Literal["quiz_mc", "intentalo_tu", "flashcards", "quiz_multi", "flashcards_y_quiz"]
 
 # Cuántas alternativas admite un ítem de selección múltiple. El prompt pide 4
 # (es lo que muestra el plan §3), pero se aceptan 3–5 para no gastar un reintento
@@ -179,7 +179,9 @@ class TarjetaFlashcard(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
     anverso: str = Field(min_length=1, description="Pregunta, concepto o desafío frontal")
-    reverso: str = Field(min_length=1, description="Explicación, solución o concepto clave al dorso")
+    reverso: str = Field(
+        min_length=1, description="Explicación, solución o concepto clave al dorso"
+    )
 
 
 class PreguntaQuiz(BaseModel):
@@ -270,7 +272,9 @@ class Actividad(BaseModel):
                     f"llegaron {len(self.tarjetas)}"
                 )
             if not self.pregunta.strip():
-                self.pregunta = "Pon a prueba tu aprendizaje activo volteando cada tarjeta de repaso."
+                self.pregunta = (
+                    "Pon a prueba tu aprendizaje activo volteando cada tarjeta de repaso."
+                )
         elif self.tipo == "quiz_multi":
             if not (3 <= len(self.preguntas) <= 5):
                 raise ValueError(
@@ -279,6 +283,19 @@ class Actividad(BaseModel):
                 )
             if not self.pregunta.strip():
                 self.pregunta = "Cuestionario formativo de práctica interactiva."
+        elif self.tipo == "flashcards_y_quiz":
+            if not (3 <= len(self.tarjetas) <= 5):
+                raise ValueError(
+                    f"una actividad 'flashcards_y_quiz' requiere entre 3 y 5 tarjetas; "
+                    f"llegaron {len(self.tarjetas)}"
+                )
+            if not (3 <= len(self.preguntas) <= 5):
+                raise ValueError(
+                    f"una actividad 'flashcards_y_quiz' requiere entre 3 y 5 preguntas en el quiz; "
+                    f"llegaron {len(self.preguntas)}"
+                )
+            if not self.pregunta.strip():
+                self.pregunta = "Sesión práctica kinestésica: Repaso activo con tarjetas interactivas y cuestionario formativo."
         return self
 
 

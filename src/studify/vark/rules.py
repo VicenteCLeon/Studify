@@ -218,10 +218,7 @@ def aplicar_reglas(perfil: PerfilVark) -> ConfiguracionGenerada:
         recursos_visuales=_cantidad_recursos_visuales(p["V"]),
         palabras_texto=_palabras_objetivo(pesos),
         componentes_practicos=_cantidad_componentes_practicos(p["K"]),
-        # Fuera de alcance del prototipo: no hay TTS en el stack del cap. 14.
-        # El canal auditivo se atiende con redacción conversacional (tono oral).
-        # Decisión 2 de PLAN_DESARROLLO.md §6.
-        audio_activo=False,
+        audio_activo=p["A"] >= UMBRAL_VISUAL_MEDIO,
         tono_narrativo=_tono(perfil, jerarquia),
         canales_activos="".join(jerarquia.canales_activos),
         jerarquia=jerarquia,

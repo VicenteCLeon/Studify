@@ -39,6 +39,34 @@ tiene su `
             <p class="pregunta-activacion">{{ capsula.activacion }}</p>
         </div>
 
+        {% set es_auditivo = (capsula and capsula.configuracion and capsula.configuracion.audio_activo) or (perfil_simulado == 'Auditivo') or (audio_activo) %}
+        {% if es_auditivo %}
+        {% set widget_id = capsula.id_capsula if (capsula and capsula.id_capsula) else 'sim' %}
+        <div class="capsule-auditory-widget my-4">
+            <form id="audio-form-{{ widget_id }}">
+                <input type="hidden" name="texto_override" value="{{ capsula.activacion }} {{ capsula.concepto_central }}">
+            </form>
+            <div id="audio-widget-{{ widget_id }}"
+                 hx-post="/student/viewer/{{ capsula.id_capsula if (capsula and capsula.id_capsula) else 0 }}/generate-audio"
+                 hx-trigger="load"
+                 hx-include="#audio-form-{{ widget_id }}"
+                 hx-swap="innerHTML">
+                
+                <div class="audio-generating-box p-6 border rounded-lg text-center" style="background-color: var(--bg-surface); border: 1px solid var(--border-color);">
+                    <div class="equalizer-loader mb-3">
+                        <span class="eq-bar"></span>
+                        <span class="eq-bar"></span>
+                        <span class="eq-bar"></span>
+                        <span class="eq-bar"></span>
+                        <span class="eq-bar"></span>
+                    </div>
+                    <div class="font-semibold text-primary mb-1">🎙️ Sintetizando audio neuronal con XTTS-v2...</div>
+                    <p class="text-xs text-muted mb-0">Generando la narración hablada para tu perfil Auditivo. Por favor espera unos segundos.</p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
         <div class="capsule-content">
             <div class="bloque bloque-concepto">
                 <h3 class="mb-2">Concepto central</h3>
@@ -134,6 +162,38 @@ tiene su `
             </div>
 
             {% elif actividad.tipo == 'quiz_multi' %}
+            <div class="flex flex-col gap-4 mb-4">
+                {% for preg in actividad.preguntas %}
+                <div class="multi-quiz-item">
+                    <div class="multi-quiz-number">Pregunta {{ loop.index }}</div>
+                    <div class="multi-quiz-question">{{ preg.enunciado }}</div>
+                    <div class="radio-group mb-2">
+                        {% for alternativa in preg.alternativas %}
+                        <label class="radio-option" style="background-color: var(--bg-surface);">
+                            <input type="radio" disabled {% if loop.index0==preg.indice_correcta %}checked{% endif %}>
+                            <span>{{ alternativa }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                    <div class="text-xs text-muted mt-2">💡 Explicación: {{ preg.explicacion }}</div>
+                </div>
+                {% endfor %}
+            </div>
+
+            {% elif actividad.tipo == 'flashcards_y_quiz' %}
+            <h4 class="mb-3 text-primary font-semibold">🃏 Tarjetas de Memorización Activa (Flashcards)</h4>
+            <div class="flex flex-col gap-3 mb-6">
+                {% for tarjeta in actividad.tarjetas %}
+                <div class="p-3"
+                    style="background-color: var(--bg-surface); border: 1px solid var(--border-color); border-radius: var(--radius-md);">
+                    <div class="text-sm font-semibold text-primary mb-1">Tarjeta {{ loop.index }}</div>
+                    <div><strong>Anverso:</strong> {{ tarjeta.anverso }}</div>
+                    <div class="mt-1 text-muted"><strong>Reverso:</strong> {{ tarjeta.reverso }}</div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <h4 class="mb-3 text-primary font-semibold">📝 Cuestionario Formativo Práctico (Quiz)</h4>
             <div class="flex flex-col gap-4 mb-4">
                 {% for preg in actividad.preguntas %}
                 <div class="multi-quiz-item">
@@ -282,13 +342,14 @@ tiene su `
                 <input type="hidden" name="answer" id="multi-quiz-answer-val" value="">
                 <div class="flex flex-col gap-4 mb-6">
                     {% for preg in actividad.preguntas %}
+                    {% set preg_idx = loop.index0 %}
                     <div class="multi-quiz-item">
                         <div class="multi-quiz-number">Pregunta {{ loop.index }} de {{ loop.length }}</div>
                         <div class="multi-quiz-question">{{ preg.enunciado }}</div>
                         <div class="radio-group">
                             {% for alternativa in preg.alternativas %}
                             <label class="radio-option" style="background-color: var(--bg-surface);">
-                                <input type="radio" name="preg_{{ preg.indice }}" value="{{ loop.index0 }}" required>
+                                <input type="radio" name="preg_{{ preg_idx }}" value="{{ loop.index0 }}" required>
                                 <span>{{ alternativa }}</span>
                             </label>
                             {% endfor %}
@@ -314,6 +375,130 @@ tiene su `
                     }
                 }
                 document.getElementById('multi-quiz-answer-val').value = answers.join(',');
+            }
+            </script>
+
+            {% elif actividad.tipo == 'flashcards_y_quiz' %}
+            <div class="mb-6">
+                <h4 class="mb-3 text-primary font-semibold">🃏 Paso 1: Repaso Activo con Tarjetas Interactivas</h4>
+                <div class="flashcards-container" id="flashcards-widget">
+                    <div class="flashcard-wrapper" id="flashcard-card" onclick="toggleFlip()">
+                        <div class="flashcard-inner" id="flashcard-inner">
+                            <div class="flashcard-face flashcard-front">
+                                <span class="flashcard-badge">Concepto / Pregunta</span>
+                                <div class="flashcard-text" id="fc-front-text">Cargando tarjeta...</div>
+                                <div class="flashcard-hint">Toca o haz clic para voltear ↺</div>
+                            </div>
+                            <div class="flashcard-face flashcard-back">
+                                <span class="flashcard-badge">Explicación Clave</span>
+                                <div class="flashcard-text" id="fc-back-text">Cargando respuesta...</div>
+                                <div class="flashcard-hint">Toca o haz clic para voltear ↺</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flashcard-progress-track">
+                        <div class="flashcard-progress-fill" id="fc-progress" style="width: 20%;"></div>
+                    </div>
+
+                    <div class="flashcard-controls mb-4">
+                        <button type="button" class="btn btn-outline text-sm" onclick="prevCard()" id="btn-fc-prev">←
+                            Anterior</button>
+                        <span class="flashcard-counter" id="fc-counter">1 / {{ actividad.tarjetas | length }}</span>
+                        <button type="button" class="btn btn-outline text-sm" onclick="nextCard()"
+                            id="btn-fc-next">Siguiente →</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-8 pt-6" style="border-top: 1px solid var(--border-color);">
+                <h4 class="mb-3 text-primary font-semibold">📝 Paso 2: Evaluación Práctica Formativa</h4>
+                <form hx-post="/student/viewer/{{ capsula.id_capsula }}/submit" hx-target="#feedback-result"
+                    hx-swap="innerHTML" onsubmit="prepareMultiQuizAnswers(event, this)">
+                    <input type="hidden" name="answer" id="multi-quiz-answer-val" value="">
+                    <div class="flex flex-col gap-4 mb-6">
+                        {% for preg in actividad.preguntas %}
+                        {% set preg_idx = loop.index0 %}
+                        <div class="multi-quiz-item">
+                            <div class="multi-quiz-number">Pregunta {{ loop.index }} de {{ loop.length }}</div>
+                            <div class="multi-quiz-question">{{ preg.enunciado }}</div>
+                            <div class="radio-group">
+                                {% for alternativa in preg.alternativas %}
+                                <label class="radio-option" style="background-color: var(--bg-surface);">
+                                    <input type="radio" name="preg_{{ preg_idx }}" value="{{ loop.index0 }}" required>
+                                    <span>{{ alternativa }}</span>
+                                </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">
+                        Revisar Cuestionario Completo
+                        <span class="htmx-indicator ml-2">…</span>
+                    </button>
+                </form>
+            </div>
+
+            <script>
+                (function () {
+                    const tarjetas = {{ actividad.tarjetas | tojson | safe
+                }};
+                let currentIdx = 0;
+                const inner = document.getElementById('flashcard-inner');
+                const frontText = document.getElementById('fc-front-text');
+                const backText = document.getElementById('fc-back-text');
+                const counter = document.getElementById('fc-counter');
+                const progress = document.getElementById('fc-progress');
+                const btnPrev = document.getElementById('btn-fc-prev');
+                const btnNext = document.getElementById('btn-fc-next');
+
+                function updateCard() {
+                    if (!tarjetas || tarjetas.length === 0) return;
+                    if (inner) inner.classList.remove('is-flipped');
+                    setTimeout(() => {
+                        const t = tarjetas[currentIdx];
+                        if (frontText) frontText.textContent = t.anverso;
+                        if (backText) backText.textContent = t.reverso;
+                        if (counter) counter.textContent = `${currentIdx + 1} / ${tarjetas.length}`;
+                        if (progress) progress.style.width = `${((currentIdx + 1) / tarjetas.length) * 100}%`;
+                        if (btnPrev) btnPrev.disabled = (currentIdx === 0);
+                        if (btnNext) btnNext.disabled = (currentIdx === tarjetas.length - 1);
+                    }, 120);
+                }
+
+                window.toggleFlip = function () {
+                    if (inner) inner.classList.toggle('is-flipped');
+                };
+
+                window.prevCard = function () {
+                    if (currentIdx > 0) {
+                        currentIdx--;
+                        updateCard();
+                    }
+                };
+
+                window.nextCard = function () {
+                    if (currentIdx < tarjetas.length - 1) {
+                        currentIdx++;
+                        updateCard();
+                    }
+                };
+
+                updateCard();
+            }) ();
+
+            function prepareMultiQuizAnswers(event, form) {
+                const total = {{ actividad.preguntas | length
+            }};
+            const answers = [];
+            for (let i = 0; i < total; i++) {
+                const selected = form.querySelector(`input[name="preg_${i}"]:checked`);
+                if (selected) {
+                    answers.push(selected.value);
+                }
+            }
+            document.getElementById('multi-quiz-answer-val').value = answers.join(',');
             }
             </script>
             {% endif %}

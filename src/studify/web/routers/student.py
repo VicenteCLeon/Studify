@@ -17,6 +17,7 @@ from html import escape
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from pydantic import ValidationError
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from studify.api.routers.capsules import (
@@ -34,6 +35,7 @@ from studify.api.schemas import (
 )
 from studify.api.schemas_capsulas import CapsulaIn, InteraccionQuizIn
 from studify.db.models import (
+    DiagnosticoVark,
     Estudiante,
     MicrocapsulaGenerada,
     ObjetivoAprendizaje,
@@ -175,9 +177,7 @@ def _respuestas_desde_formulario(marcadas: tuple[list[str], ...]) -> list[Respue
         limpias = [letra.strip().lower() for letra in letras if letra.strip()]
         for letra in limpias:
             if letra not in LETRAS:
-                raise ValueError(
-                    f"el ítem {numero} trae una alternativa desconocida: '{letra}'"
-                )
+                raise ValueError(f"el ítem {numero} trae una alternativa desconocida: '{letra}'")
         if len(set(limpias)) != len(limpias):
             raise ValueError(f"el ítem {numero} trae alternativas repetidas")
         respuestas.append(RespuestaItemIn(num_pregunta=numero, alternativas=limpias))
@@ -223,9 +223,7 @@ def _error(mensaje: str) -> HTMLResponse:
     ejecutaría: es la vía clásica de XSS reflejado, y aquí además hay una cookie
     de sesión que robar.
     """
-    return HTMLResponse(
-        f'<div class="alerta alerta-error" role="alert">{escape(mensaje)}</div>'
-    )
+    return HTMLResponse(f'<div class="alerta alerta-error" role="alert">{escape(mensaje)}</div>')
 
 
 # --- Perfil -------------------------------------------------------------------
@@ -287,9 +285,7 @@ def get_profile(request: Request, db: Session = Depends(get_db)):
         "modalidad": _modalidad(jerarquia),
         "explicacion": explicacion,
         "config": {
-            "recursos_visuales": fila.recursos_visuales
-            if fila
-            else config.recursos_visuales,
+            "recursos_visuales": fila.recursos_visuales if fila else config.recursos_visuales,
             "palabras_texto": fila.palabras_texto if fila else config.palabras_texto,
             "componentes_practicos": fila.componentes_practicos
             if fila
@@ -404,9 +400,20 @@ def get_viewer(
         )
     except HTTPException as exc:
         titulo, mensaje = _explicar_fallo(exc)
-        return _capsula_no_disponible(
-            request, objetivo=objetivo, titulo=titulo, mensaje=mensaje
+        return _capsula_no_disponible(request, objetivo=objetivo, titulo=titulo, mensaje=mensaje)
+
+    diag = db.scalars(
+        select(DiagnosticoVark)
+        .where(DiagnosticoVark.id_estudiante == id_estudiante)
+        .order_by(DiagnosticoVark.id_diagnostico.desc())
+    ).first()
+    audio_activo = False
+    if diag:
+        p = PerfilVark(
+            v=diag.porcentaje_v, a=diag.porcentaje_a, r=diag.porcentaje_r, k=diag.porcentaje_k
         )
+        config = aplicar_reglas(p)
+        audio_activo = config.audio_activo
 
     return templates.TemplateResponse(
         request=request,
@@ -415,6 +422,7 @@ def get_viewer(
             "objetivo": objetivo,
             "capsula": capsula,
             "bloques": _preparar_bloques(capsula.bloques_legibles()),
+            "audio_activo": audio_activo,
             # `indice_correcta` y `retroalimentacion` NO viajan al navegador: si
             # fueran al HTML, la respuesta correcta estaría en el código fuente
             # de la página y el quiz dejaría de medir nada.
@@ -436,6 +444,75 @@ def get_viewer(
                 ],
             },
         },
+    )
+
+
+@router.post("/viewer/{id_capsula}/generate-audio", response_class=HTMLResponse)
+def generate_capsule_audio(
+    request: Request,
+    id_capsula: int,
+    texto_override: str = Form(default=""),
+    db: Session = Depends(get_db),
+):
+    """Genera (o recupera) el audio narrativo con XTTS-v2 en local."""
+    import hashlib
+    from html import escape
+    from pathlib import Path
+
+    from studify.media.audio import generar_audio
+
+    public_audio_dir = Path("src/studify/public/audio")
+    public_audio_dir.mkdir(parents=True, exist_ok=True)
+
+    texto = texto_override.strip()
+    if not texto and id_capsula > 0:
+        fila = db.get(MicrocapsulaGenerada, id_capsula)
+        if fila and fila.contenido_json:
+            concepto = fila.contenido_json.get("concepto_central", "")
+            activacion = fila.contenido_json.get("activacion", "")
+            texto = f"{activacion} {concepto}".strip()
+
+    if not texto:
+        texto = "Esta es una microcápsula adaptativa sintetizada con IA para el canal auditivo."
+
+    if id_capsula > 0:
+        filename = f"capsula_{id_capsula}.wav"
+    else:
+        h = hashlib.md5(texto.encode("utf-8")).hexdigest()[:8]
+        filename = f"capsula_sim_{h}.wav"
+
+    audio_file = public_audio_dir / filename
+    web_audio_url = f"/public/audio/{filename}"
+
+    if not audio_file.exists():
+        try:
+            generar_audio(texto, audio_file)
+        except Exception as exc:
+            logger.error("Error al generar audio XTTS-v2: %s", exc)
+            return HTMLResponse(
+                f'<div class="alerta alerta-error">Error al generar audio XTTS-v2: {escape(str(exc))}</div>'
+            )
+
+    return HTMLResponse(
+        f'''
+        <div class="audio-player-card p-4 rounded-lg bg-surface border border-color shadow-sm my-4">
+            <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-2">
+                    <span class="badge badge-primary">🎧 Audio XTTS-v2</span>
+                    <span class="text-sm font-semibold text-primary">Resumen Narrativo Auditivo</span>
+                </div>
+                <span class="text-xs text-muted">Clonación Neuronal Activa</span>
+            </div>
+            <audio controls autoplay style="width: 100%; border-radius: var(--radius-md); outline: none;" class="mb-2">
+                <source src="{web_audio_url}" type="audio/wav">
+                Tu navegador no soporta el reproductor de audio HTML5.
+            </audio>
+            <div class="flex items-center justify-between text-xs text-muted">
+                <span>💡 Sintetizado localmente mediante XTTS-v2</span>
+                <a href="{web_audio_url}" download class="text-primary font-semibold hover:underline">Descargar Audio WAV</a>
+            </div>
+        </div>
+        '''
     )
 
 
@@ -487,7 +564,7 @@ def submit_activity(
             retroalimentacion="Has ejercitado el recuerdo activo (Active Recall) de los conceptos fundamentales. ¡Excelente trabajo de práctica kinestésica!",
         )
 
-    if quiz.get("tipo") == "quiz_multi":
+    if quiz.get("tipo") in ("quiz_multi", "flashcards_y_quiz"):
         preguntas = quiz.get("preguntas") or []
         if not preguntas:
             return _error("Esta cápsula no tiene preguntas configuradas.")
@@ -502,18 +579,20 @@ def submit_activity(
             correcta_idx = preg.get("indice_correcta", 0)
             alts = preg.get("alternativas") or []
             seleccion = int(partes[i]) if (i < len(partes) and partes[i].isdigit()) else -1
-            es_correcta = (seleccion == correcta_idx)
+            es_correcta = seleccion == correcta_idx
             if es_correcta:
                 aciertos += 1
             corr_txt = alts[correcta_idx] if 0 <= correcta_idx < len(alts) else ""
-            detalles.append({
-                "enunciado": preg.get("enunciado", f"Pregunta {i+1}"),
-                "es_correcta": es_correcta,
-                "correcta_texto": corr_txt,
-                "explicacion": preg.get("explicacion", ""),
-            })
+            detalles.append(
+                {
+                    "enunciado": preg.get("enunciado", f"Pregunta {i + 1}"),
+                    "es_correcta": es_correcta,
+                    "correcta_texto": corr_txt,
+                    "explicacion": preg.get("explicacion", ""),
+                }
+            )
 
-        todos_bien = (aciertos == len(preguntas))
+        todos_bien = aciertos == len(preguntas)
         _registrar_intento(db, fila, alternativa=None, acerto=todos_bien)
         return _feedback(
             request,
@@ -534,9 +613,7 @@ def submit_activity(
     acerto = int(answer) == indice_correcta
     _registrar_intento(db, fila, alternativa=int(answer), acerto=acerto)
 
-    correcta = (
-        alternativas[indice_correcta] if 0 <= indice_correcta < len(alternativas) else ""
-    )
+    correcta = alternativas[indice_correcta] if 0 <= indice_correcta < len(alternativas) else ""
     return _feedback(
         request,
         estado="ok" if acerto else "error",
@@ -575,9 +652,7 @@ def _registrar_intento(
             db=db,
         )
     except HTTPException:
-        logger.warning(
-            "no se pudo registrar el intento de la cápsula %s", fila.id_capsula
-        )
+        logger.warning("no se pudo registrar el intento de la cápsula %s", fila.id_capsula)
 
 
 def _preparar_bloques(contenido: list[BloqueContenido]) -> list[dict]:
