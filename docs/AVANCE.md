@@ -812,7 +812,7 @@ tres tandas, cada una cerrada con tests antes de pasar a la siguiente.
 ### Corrección de UI (la única solicitada): gráfico VARK de la cohorte
 
 Las barras usaban variables CSS que no existen en `style.css`
-(`--color-visual`/`--color-aural`/`--color-read`/`--color-kinesthetic`): salían transparentes,
+(`--color-visual`/`--color-auditivo`/`--color-read`/`--color-kinesthetic`): salían transparentes,
 con las etiquetas fuera del contenedor (`top: -25px`) y texto blanco sobre fondo blanco.
 Reemplazado por el mismo patrón de barras horizontales que ya usa `student/profile.html`, con
 los colores y nombres de canal tomados de `web/textos.py` (`_barras_cohorte` en `teacher.py`)
