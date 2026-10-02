@@ -1,58 +1,147 @@
+{% import "components/ui.html" as ui %}
+{%- set ruta = request.url.path -%}
 <!DOCTYPE html>
 <html lang="es">
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}RepasAi{% endblock %}</title>
-    <!-- Google Fonts -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>{% block title %}RepasAi · Aprende a tu manera{% endblock %}</title>
+    <meta name="description" content="RepasAi: microcápsulas de estudio generadas con IA, adaptadas a tu perfil de aprendizaje VARK y ancladas al material de tu curso.">
+    <meta name="theme-color" content="#FBF8F3" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#11161B" media="(prefers-color-scheme: dark)">
+
+    {# Aplica el tema elegido antes del primer pintado: si esperara a app.js,
+       quien eligió modo oscuro vería un destello blanco en cada navegación. #}
+    <script>
+        (function () {
+            try {
+                var t = localStorage.getItem("repasai-theme");
+                if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
+            } catch (e) { }
+        })();
+    </script>
+
+    <link rel="icon" href="/static/img/favicon.svg" type="image/svg+xml">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700&display=swap"
-        rel="stylesheet">
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="/static/css/style.css">
-    <!-- HTMX -->
+    <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/app.css">
+    {# Temporal: reglas de las vistas que aún no migran al design system. #}
+    <link rel="stylesheet" href="/static/css/legacy.css">
+    {% block head %}{% endblock %}
+
     <script src="https://unpkg.com/htmx.org@1.9.10"
         integrity="sha384-D1Kt99CQMDuVetoL1lrYwg5t+9QdHe7NLX/SoJYkXDFfX37iInKRy5xLSi8nO7UC"
         crossorigin="anonymous"></script>
+    <script src="/static/js/app.js" defer></script>
 </head>
 
-<body>
-    <header class="app-header">
-        <div class="container">
-            <div class="brand">
-                <a href="/">RepasAi</a>
-            </div>
+<body class="{% block body_class %}{% endblock %}">
+    <a class="skip-link" href="#contenido">Saltar al contenido</a>
+
+    <header class="site-header">
+        <div class="container site-header-inner">
+            <a class="brand" href="/" aria-label="RepasAi, ir al inicio">
+                <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+                    <rect width="32" height="32" rx="9" fill="var(--primary)" />
+                    <g transform="rotate(-38 16 17)">
+                        <rect x="5.5" y="12" width="21" height="10" rx="5" fill="#FFFFFF" />
+                        <path d="M16 12h5.5a5 5 0 0 1 0 10H16z" fill="#F2795A" />
+                    </g>
+                    <path d="M24.5 4.5l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9z" fill="#FDEBE5" />
+                </svg>
+                <span class="brand-word">Repas<span>Ai</span></span>
+            </a>
+
+            <nav class="site-nav" aria-label="Principal">
+                <a href="/student/catalog" {% if ruta.startswith('/student/catalog') or ruta.startswith('/student/viewer') %}aria-current="page"{% endif %}>
+                    {{ ui.icon("layers") }}<span>Temas</span>
+                </a>
+                <a href="/student/profile" {% if ruta.startswith('/student/profile') or ruta.startswith('/student/vark') %}aria-current="page"{% endif %}>
+                    {{ ui.icon("circle-user") }}<span>Mi perfil</span>
+                </a>
+            </nav>
+
             {# Las pestañas del docente solo existen para quien pasó por
                /teacher/login. No es únicamente estético: `auth.requiere_docente`
                cierra igual esas rutas, y mostrar enlaces que van a rebotar al
                login sería ofrecerle al estudiante una puerta que no es suya. #}
-            <nav class="nav-links">
-                <a href="/student/catalog">Temas</a>
-                <a href="/student/profile">Mi perfil</a>
+            {% if es_docente %}
+            <nav class="site-nav site-nav-docente" aria-label="Panel docente">
+                <a href="/teacher/curation" {% if ruta.startswith('/teacher/curation') %}aria-current="page"{% endif %}>
+                    {{ ui.icon("folder-check") }}<span>Curación</span>
+                </a>
+                <a href="/teacher/analytics" {% if ruta.startswith('/teacher/analytics') %}aria-current="page"{% endif %}>
+                    {{ ui.icon("chart-column") }}<span>Analíticas</span>
+                </a>
+                <a href="/teacher/simulator" {% if ruta.startswith('/teacher/simulator') %}aria-current="page"{% endif %}>
+                    {{ ui.icon("flask-conical") }}<span>Simulador</span>
+                </a>
+            </nav>
+            {% endif %}
+
+            <div class="site-actions">
+                <button type="button" class="btn btn-ghost btn-icon btn-sm theme-toggle" data-theme-toggle
+                    aria-label="Cambiar tema" aria-pressed="false">
+                    {{ ui.icon("moon", cls="theme-icon-moon") }}
+                    {{ ui.icon("sun", cls="theme-icon-sun") }}
+                </button>
                 {% if es_docente %}
-                <a href="/teacher/curation">Curación</a>
-                <a href="/teacher/analytics">Analíticas</a>
-                <a href="/teacher/simulator">Simulador</a>
                 <form method="post" action="/teacher/logout" class="nav-form">
-                    <button type="submit" class="btn btn-outline btn-nav">Salir</button>
+                    <button type="submit" class="btn btn-secondary btn-sm">
+                        {{ ui.icon("log-out") }}<span>Salir</span>
+                    </button>
                 </form>
                 {% else %}
-                <a href="/teacher/login" class="btn btn-outline btn-nav">Soy docente</a>
+                <a href="/teacher/login" class="btn btn-ghost btn-sm">
+                    {{ ui.icon("graduation-cap") }}<span>Soy docente</span>
+                </a>
                 {% endif %}
-            </nav>
+            </div>
         </div>
     </header>
 
-    <main class="main-content">
+    <main id="contenido" class="site-main" tabindex="-1">
+        {% block main %}
         <div class="container">
             {% block content %}
             {% endblock %}
         </div>
+        {% endblock %}
     </main>
 
+    <footer class="site-footer">
+        <div class="container site-footer-inner">
+            <div class="stack stack-sm">
+                <span class="brand-word brand-word-sm">Repas<span>Ai</span></span>
+                <p class="text-sm text-muted">
+                    Microcápsulas de estudio adaptadas a tu forma de aprender,
+                    construidas solo con el material de tu curso.
+                </p>
+            </div>
+            <p class="text-xs text-soft">
+                {{ ui.icon("shield-check", cls="icon-sm") }}
+                Cada cápsula cita los fragmentos y páginas de los que sale.
+            </p>
+        </div>
+    </footer>
+
+    {# Navegación inferior en móvil: los destinos del estudiante quedan al
+       alcance del pulgar. En escritorio la reemplaza el header. #}
+    <nav class="tabbar" aria-label="Navegación rápida">
+        <a href="/" {% if ruta == '/' %}aria-current="page"{% endif %}>
+            {{ ui.icon("house") }}<span>Inicio</span>
+        </a>
+        <a href="/student/catalog" {% if ruta.startswith('/student/catalog') or ruta.startswith('/student/viewer') %}aria-current="page"{% endif %}>
+            {{ ui.icon("layers") }}<span>Temas</span>
+        </a>
+        <a href="/student/profile" {% if ruta.startswith('/student/profile') or ruta.startswith('/student/vark') %}aria-current="page"{% endif %}>
+            {{ ui.icon("circle-user") }}<span>Perfil</span>
+        </a>
+    </nav>
+
+    {% block scripts %}{% endblock %}
 </body>
 
 </html>

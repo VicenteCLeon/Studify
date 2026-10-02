@@ -1,229 +1,15 @@
-:root {
-  /* Color Palette - Premium Greyscale & Blue */
-  --bg-color: #f8fafc;
-  --bg-surface: #ffffff;
-  --bg-surface-hover: #f1f5f9;
+/* ==========================================================================
+   legacy.css — TEMPORAL
+   --------------------------------------------------------------------------
+   Reglas de pantalla del style.css anterior que todavía usan las vistas que
+   aún no se migran al design system (app.css). Cada etapa del rediseño borra
+   de acá la sección de la vista que migra; cuando quede vacío, se elimina el
+   archivo y su <link> en base.html. No agregar reglas nuevas aquí.
+   Los var(--…) antiguos resuelven a los tokens nuevos vía los alias de app.css.
+   ========================================================================== */
 
-  --text-main: #0f172a;
-  --text-muted: #64748b;
-  --text-light: #94a3b8;
 
-  --primary: #2563eb;
-  --primary-hover: #1d4ed8;
-  --primary-light: #eff6ff;
-
-  --success: #10b981;
-  --success-bg: #d1fae5;
-  --danger: #ef4444;
-  --danger-bg: #fee2e2;
-  --warning: #f59e0b;
-  --warning-bg: #fef3c7;
-
-  --border-color: #e2e8f0;
-  --border-color-focus: #93c5fd;
-
-  --radius-md: 0.5rem;
-  --radius-lg: 1rem;
-  --radius-full: 9999px;
-
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-
-  --font-sans: 'Inter', system-ui, sans-serif;
-  --font-heading: 'Outfit', 'Inter', system-ui, sans-serif;
-
-  --transition: all 0.2s ease-in-out;
-}
-
-/* Reset & Basics */
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-body {
-  font-family: var(--font-sans);
-  color: var(--text-main);
-  line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
-  /* Fondo de marca: textura de íconos educativos + dos brillos de color
-     (verde arriba-izq., azul abajo-der.) sobre un degradado casi blanco.
-     Viene de docs/School Background.dc.html. background-attachment: fixed
-     para que se vea igual y quieto en toda la web, no repetido por página.
-     El header tiene su propio fondo sólido (--bg-surface), así que la
-     textura solo se nota detrás del contenido. */
-  background-color: var(--bg-color);
-  background-image:
-    url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%27340%27%20height%3D%27340%27%20viewBox%3D%270%200%20340%20340%27%3E%0A%3Cg%20fill%3D%27none%27%20stroke%3D%27%235aa06e%27%20stroke-width%3D%273%27%20stroke-linecap%3D%27round%27%20opacity%3D%270.4%27%3E%0A%20%20%3Cg%20transform%3D%27translate(40%2C50)%20rotate(-10)%27%3E%0A%20%20%20%20%3Crect%20x%3D%270%27%20y%3D%270%27%20width%3D%2746%27%20height%3D%2734%27%20rx%3D%272%27%2F%3E%0A%20%20%20%20%3Cline%20x1%3D%2723%27%20y1%3D%270%27%20x2%3D%2723%27%20y2%3D%2734%27%2F%3E%0A%20%20%20%20%3Cline%20x1%3D%276%27%20y1%3D%279%27%20x2%3D%2718%27%20y2%3D%279%27%2F%3E%0A%20%20%20%20%3Cline%20x1%3D%276%27%20y1%3D%2717%27%20x2%3D%2718%27%20y2%3D%2717%27%2F%3E%0A%20%20%3C%2Fg%3E%0A%20%20%3Cg%20transform%3D%27translate(150%2C220)%20rotate(-10)%27%3E%0A%20%20%20%20%3Crect%20x%3D%270%27%20y%3D%270%27%20width%3D%2746%27%20height%3D%2734%27%20rx%3D%272%27%2F%3E%0A%20%20%20%20%3Cline%20x1%3D%2723%27%20y1%3D%270%27%20x2%3D%2723%27%20y2%3D%2734%27%2F%3E%0A%20%20%20%20%3Cline%20x1%3D%276%27%20y1%3D%279%27%20x2%3D%2718%27%20y2%3D%279%27%2F%3E%0A%20%20%20%20%3Cline%20x1%3D%276%27%20y1%3D%2717%27%20x2%3D%2718%27%20y2%3D%2717%27%2F%3E%0A%20%20%3C%2Fg%3E%0A%3C%2Fg%3E%0A%3Cg%20fill%3D%27none%27%20stroke%3D%27%235b8ec4%27%20stroke-width%3D%273%27%20stroke-linecap%3D%27round%27%20opacity%3D%270.4%27%3E%0A%20%20%3Cg%20transform%3D%27translate(230%2C60)%20rotate(35)%27%3E%0A%20%20%20%20%3Crect%20x%3D%270%27%20y%3D%270%27%20width%3D%279%27%20height%3D%2760%27%20rx%3D%272%27%2F%3E%0A%20%20%20%20%3Cpolygon%20points%3D%270%2C60%209%2C60%204.5%2C72%27%2F%3E%0A%20%20%3C%2Fg%3E%0A%20%20%3Cg%20transform%3D%27translate(60%2C190)%20rotate(35)%27%3E%0A%20%20%20%20%3Crect%20x%3D%270%27%20y%3D%270%27%20width%3D%279%27%20height%3D%2760%27%20rx%3D%272%27%2F%3E%0A%20%20%20%20%3Cpolygon%20points%3D%270%2C60%209%2C60%204.5%2C72%27%2F%3E%0A%20%20%3C%2Fg%3E%0A%3C%2Fg%3E%0A%3Cg%20fill%3D%27none%27%20stroke%3D%27%235aa06e%27%20stroke-width%3D%272.5%27%20opacity%3D%270.35%27%3E%0A%20%20%3Cg%20transform%3D%27translate(250%2C150)%20rotate(-18)%27%3E%0A%20%20%20%20%3Crect%20x%3D%270%27%20y%3D%270%27%20width%3D%2770%27%20height%3D%2716%27%20rx%3D%271%27%2F%3E%0A%20%20%20%20%3Cline%20x1%3D%2710%27%20y1%3D%270%27%20x2%3D%2710%27%20y2%3D%276%27%2F%3E%0A%20%20%20%20%3Cline%20x1%3D%2722%27%20y1%3D%270%27%20x2%3D%2722%27%20y2%3D%276%27%2F%3E%0A%20%20%20%20%3Cline%20x1%3D%2734%27%20y1%3D%270%27%20x2%3D%2734%27%20y2%3D%276%27%2F%3E%0A%20%20%20%20%3Cline%20x1%3D%2746%27%20y1%3D%270%27%20x2%3D%2746%27%20y2%3D%276%27%2F%3E%0A%20%20%20%20%3Cline%20x1%3D%2758%27%20y1%3D%270%27%20x2%3D%2758%27%20y2%3D%276%27%2F%3E%0A%20%20%3C%2Fg%3E%0A%3C%2Fg%3E%0A%3Cg%20fill%3D%27none%27%20stroke%3D%27%235b8ec4%27%20stroke-width%3D%272.5%27%20opacity%3D%270.35%27%3E%0A%20%20%3Ccircle%20cx%3D%27110%27%20cy%3D%27120%27%20r%3D%2724%27%2F%3E%0A%20%20%3Cellipse%20cx%3D%27110%27%20cy%3D%27120%27%20rx%3D%2710%27%20ry%3D%2724%27%2F%3E%0A%20%20%3Cline%20x1%3D%2786%27%20y1%3D%27120%27%20x2%3D%27134%27%20y2%3D%27120%27%2F%3E%0A%3C%2Fg%3E%0A%3Cg%20fill%3D%27%235aa06e%27%20opacity%3D%270.35%27%20font-family%3D%27Georgia%2C%20serif%27%20font-size%3D%2730%27%3E%0A%20%20%3Ctext%20x%3D%27270%27%20y%3D%27300%27%3EA%3C%2Ftext%3E%0A%3C%2Fg%3E%0A%3Cg%20fill%3D%27%235b8ec4%27%20opacity%3D%270.35%27%20font-family%3D%27Georgia%2C%20serif%27%20font-size%3D%2730%27%3E%0A%20%20%3Ctext%20x%3D%2710%27%20y%3D%27300%27%3E3%3C%2Ftext%3E%0A%3C%2Fg%3E%0A%3C%2Fsvg%3E"),
-    radial-gradient(circle at 12% 15%, rgba(90, 160, 110, 0.22), rgba(90, 160, 110, 0) 60%),
-    radial-gradient(circle at 88% 85%, rgba(91, 142, 196, 0.20), rgba(91, 142, 196, 0) 60%),
-    linear-gradient(160deg, #f3f9f7 0%, #eaf2ef 55%, #e7f1ee 100%);
-  background-repeat: repeat, no-repeat, no-repeat, no-repeat;
-  background-size: 340px 340px, 900px 900px, 900px 900px, cover;
-  background-position: 0 0, 0% 0%, 100% 100%, center;
-  background-attachment: fixed, fixed, fixed, fixed;
-}
-
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  font-family: var(--font-heading);
-  font-weight: 600;
-  line-height: 1.2;
-  color: var(--text-main);
-}
-
-a {
-  color: var(--primary);
-  text-decoration: none;
-  transition: var(--transition);
-}
-
-a:hover {
-  color: var(--primary-hover);
-}
-
-/* Layout */
-.container {
-  width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 1.5rem;
-}
-
-.main-content {
-  padding: 3rem 0;
-  min-height: calc(100vh - 80px);
-  /* Assuming header is 80px */
-}
-
-/* Header */
-.app-header {
-  background-color: var(--bg-surface);
-  border-bottom: 1px solid var(--border-color);
-  padding: 1rem 0;
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  box-shadow: var(--shadow-sm);
-}
-
-.app-header .container {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.brand {
-  font-family: var(--font-heading);
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--primary);
-  letter-spacing: -0.5px;
-}
-
-.nav-links {
-  display: flex;
-  gap: 1.5rem;
-  /* La barra mezcla enlaces con el botón de acceso/salida del docente, y sin
-     esto el botón —más alto que el texto— empuja la fila y desalinea todo. */
-  align-items: center;
-}
-
-.nav-links a {
-  color: var(--text-muted);
-  font-weight: 500;
-}
-
-.nav-links a:hover,
-.nav-links a.active {
-  color: var(--primary);
-}
-
-/* El logout es un <form> (un POST, no un enlace: cerrar sesión cambia estado y
-   no debe dispararse desde una precarga del navegador). El form es un bloque y
-   rompería la fila flex si no se neutraliza acá. */
-.nav-form {
-  display: flex;
-  margin: 0;
-}
-
-/* Botón dentro de la barra: mismo alto visual que los enlaces vecinos. */
-.btn-nav {
-  padding: 0.35rem 0.9rem;
-  font-size: 0.875rem;
-}
-
-.nav-links a.btn-nav {
-  color: var(--primary);
-}
-
-/* Typography Helpers */
-.text-center {
-  text-align: center;
-}
-
-.text-muted {
-  color: var(--text-muted);
-}
-
-.text-sm {
-  font-size: 0.875rem;
-}
-
-.text-lg {
-  font-size: 1.125rem;
-}
-
-.mb-1 {
-  margin-bottom: 0.25rem;
-}
-
-.mb-2 {
-  margin-bottom: 0.5rem;
-}
-
-.mb-4 {
-  margin-bottom: 1rem;
-}
-
-.mb-6 {
-  margin-bottom: 1.5rem;
-}
-
-.mb-8 {
-  margin-bottom: 2rem;
-}
-
-.mt-4 {
-  margin-top: 1rem;
-}
-
-.mt-8 {
-  margin-top: 2rem;
-}
-
-/* Components - Cards */
-.card {
-  background-color: var(--bg-surface);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-md);
-  padding: 2rem;
-  border: 1px solid var(--border-color);
-  transition: var(--transition);
-}
-
-.card:hover {
-  box-shadow: var(--shadow-lg);
-}
-
+/* ---- Login docente ---- */
 /* Tarjeta del login del docente: angosta y centrada, para que la pantalla se
    lea como una puerta y no como una vista más del panel. */
 .card-login {
@@ -231,118 +17,8 @@ a:hover {
   margin: 3rem auto;
 }
 
-/* Components - Buttons */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.75rem 1.5rem;
-  font-size: 1rem;
-  font-weight: 500;
-  border-radius: var(--radius-md);
-  border: none;
-  cursor: pointer;
-  transition: var(--transition);
-  font-family: var(--font-sans);
-}
 
-.btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.btn-primary {
-  background-color: var(--primary);
-  color: white;
-}
-
-.btn-primary:hover:not(:disabled) {
-  background-color: var(--primary-hover);
-  transform: translateY(-1px);
-}
-
-.btn-block {
-  width: 100%;
-}
-
-.btn-outline {
-  background-color: transparent;
-  color: var(--primary);
-  border: 1px solid var(--primary);
-}
-
-.btn-outline:hover:not(:disabled) {
-  background-color: var(--primary-light);
-}
-
-/* Components - Forms */
-.form-group {
-  margin-bottom: 1.5rem;
-}
-
-.form-label {
-  display: block;
-  font-weight: 500;
-  margin-bottom: 0.5rem;
-  color: var(--text-main);
-}
-
-.form-control {
-  width: 100%;
-  padding: 0.75rem 1rem;
-  font-size: 1rem;
-  font-family: var(--font-sans);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  background-color: var(--bg-surface);
-  color: var(--text-main);
-  transition: var(--transition);
-}
-
-.form-control:focus {
-  outline: none;
-  border-color: var(--border-color-focus);
-  box-shadow: 0 0 0 3px var(--primary-light);
-}
-
-/* Radio & Checkbox styling */
-.radio-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.radio-option {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-  padding: 1rem;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition: var(--transition);
-}
-
-.radio-option:hover {
-  background-color: var(--bg-surface-hover);
-}
-
-.radio-option input[type="radio"],
-.radio-option input[type="checkbox"] {
-  margin-top: 0.25rem;
-  cursor: pointer;
-  flex-shrink: 0;
-  accent-color: var(--primary);
-}
-
-/* El instrumento VARK admite marcar varias alternativas por ítem (cap. 10), así
-   que la opción marcada se destaca: sin señal visual, con 16 ítems de 4 opciones
-   es fácil perder la cuenta de lo ya respondido. */
-.radio-option:has(input:checked) {
-  border-color: var(--primary);
-  background-color: var(--primary-light);
-}
-
+/* ---- Cuestionario VARK ---- */
 .numero-item {
   display: inline-flex;
   align-items: center;
@@ -378,25 +54,7 @@ a:hover {
   margin-bottom: 0;
 }
 
-/* Avisos de formulario devueltos por HTMX */
-.alerta {
-  padding: 1rem;
-  border-radius: var(--radius-md);
-  border: 1px solid transparent;
-}
-
-.alerta-ok {
-  background-color: var(--success-bg);
-  color: var(--success);
-  border-color: var(--success);
-}
-
-.alerta-error {
-  background-color: var(--danger-bg);
-  color: var(--danger);
-  border-color: var(--danger);
-}
-
+/* ---- Simulador: comparación + Perfil: configuración ---- */
 /* Comparación V/A/R/K del simulador docente: cuatro columnas, una por canal.
    `minmax(280px, 1fr)` deja las cuatro en una fila en una pantalla ancha y las
    apila en una angosta — sin scroll horizontal, que en una tabla de 4 cápsulas
@@ -464,12 +122,7 @@ a:hover {
   color: var(--text-muted);
 }
 
-.alerta-info {
-  background-color: var(--primary-light);
-  color: var(--primary);
-  border-color: var(--border-color-focus);
-}
-
+/* ---- Visor: bloques, glosario, fuentes · Curación: fragmento ---- */
 /* Bloques de la microcápsula (contrato de generation/schemas.py) */
 .bloque {
   margin-bottom: 1.5rem;
@@ -551,137 +204,7 @@ a:hover {
   overflow: hidden;
 }
 
-.font-medium {
-  font-weight: 500;
-}
-
-.text-primary {
-  color: var(--primary);
-}
-
-.ml-2 {
-  margin-left: 0.5rem;
-}
-
-.mt-2 {
-  margin-top: 0.5rem;
-}
-
-.py-8 {
-  padding-top: 2rem;
-  padding-bottom: 2rem;
-}
-
-/* Tables */
-.table-container {
-  overflow-x: auto;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border-color);
-}
-
-.table {
-  width: 100%;
-  border-collapse: collapse;
-  text-align: left;
-}
-
-.table th,
-.table td {
-  padding: 1rem;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.table th {
-  background-color: var(--bg-surface-hover);
-  font-weight: 600;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  font-size: 0.75rem;
-  letter-spacing: 0.05em;
-}
-
-.table tr:last-child td {
-  border-bottom: none;
-}
-
-.table tbody tr:hover {
-  background-color: var(--bg-surface-hover);
-}
-
-/* Utilities */
-.flex {
-  display: flex;
-}
-
-.flex-col {
-  flex-direction: column;
-}
-
-.items-center {
-  align-items: center;
-}
-
-.justify-between {
-  justify-content: space-between;
-}
-
-.justify-center {
-  justify-content: center;
-}
-
-.gap-4 {
-  gap: 1rem;
-}
-
-.gap-2 {
-  gap: 0.5rem;
-}
-
-/* Badges */
-.badge {
-  display: inline-block;
-  padding: 0.25rem 0.5rem;
-  border-radius: var(--radius-full);
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-.badge-success {
-  background-color: var(--success-bg);
-  color: var(--success);
-}
-
-.badge-danger {
-  background-color: var(--danger-bg);
-  color: var(--danger);
-}
-
-.badge-warning {
-  background-color: var(--warning-bg);
-  color: var(--warning);
-}
-
-.badge-primary {
-  background-color: var(--primary-light);
-  color: var(--primary);
-}
-
-/* Progress Bars */
-.progress-container {
-  width: 100%;
-  background-color: var(--border-color);
-  border-radius: var(--radius-full);
-  height: 1rem;
-  overflow: hidden;
-}
-
-.progress-bar {
-  height: 100%;
-  background-color: var(--primary);
-  border-radius: var(--radius-full);
-  transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
+/* ---- Visor: cápsula ---- */
 /* Microcapsule Viewer */
 .capsule-header {
   border-bottom: 1px solid var(--border-color);
@@ -731,29 +254,16 @@ a:hover {
   border: 1px solid var(--border-color-focus);
 }
 
-/* HTMX Loading State */
-.htmx-indicator {
-  opacity: 0;
-  transition: opacity 200ms ease-in;
-}
-
-.htmx-request .htmx-indicator {
-  opacity: 1;
-}
-
-.htmx-request.htmx-indicator {
-  opacity: 1;
-}
-
+/* ---- Catálogo: acordeones ---- */
 /* Cascade List (Details) */
-details {
+details:not(.accordion) {
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   margin-bottom: 0.5rem;
   background-color: var(--bg-surface);
 }
 
-summary {
+details:not(.accordion) > summary {
   padding: 1rem;
   font-weight: 600;
   cursor: pointer;
@@ -763,18 +273,18 @@ summary {
   justify-content: space-between;
 }
 
-summary::after {
+details:not(.accordion) > summary::after {
   content: '▼';
   font-size: 0.8rem;
   color: var(--text-muted);
   transition: transform 0.2s;
 }
 
-details[open] summary::after {
+details[open]:not(.accordion) > summary::after {
   transform: rotate(180deg);
 }
 
-details>div {
+details:not(.accordion) > div {
   padding: 1rem;
   border-top: 1px solid var(--border-color);
 }
@@ -800,6 +310,7 @@ details>div {
   align-items: center;
 }
 
+/* ---- Catálogo: overlay · Visor: flashcards, multi-quiz, audio ---- */
 /* ==========================================================================
    Pantalla de Carga y Feedback Adaptativo (Senior UI/UX)
    ========================================================================== */
@@ -1225,4 +736,3 @@ details>div {
     opacity: 1;
   }
 }
-

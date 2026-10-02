@@ -485,6 +485,275 @@ hr {
 }
 
 
+/* --- 4.1 Shell de la app: header, navegación, footer, tabbar ------------ */
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-header);
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  -webkit-backdrop-filter: saturate(1.4) blur(14px);
+  backdrop-filter: saturate(1.4) blur(14px);
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+}
+
+.site-header-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-6);
+  min-height: var(--header-h);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  text-decoration: none;
+  color: var(--text);
+  border-radius: var(--radius-md);
+}
+
+.brand:hover {
+  color: var(--text);
+}
+
+.brand-mark {
+  width: 2rem;
+  height: 2rem;
+  transition: transform var(--dur-slow) var(--ease-spring);
+}
+
+.brand:hover .brand-mark {
+  transform: rotate(-8deg) scale(1.06);
+}
+
+.brand-word {
+  font-family: var(--font-display);
+  font-size: 1.375rem;
+  font-weight: var(--fw-bold);
+  letter-spacing: -0.02em;
+  line-height: 1;
+  color: var(--text);
+}
+
+.brand-word > span {
+  color: var(--accent-text);
+}
+
+.brand-word-sm {
+  font-size: 1.125rem;
+}
+
+.site-nav {
+  display: none;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.site-nav a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.5rem 0.85rem;
+  border-radius: var(--radius-full);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--text-muted);
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    color var(--dur-fast) var(--ease-out),
+    background-color var(--dur-fast) var(--ease-out);
+  --icon-size: 1.05rem;
+}
+
+.site-nav a:hover {
+  color: var(--text);
+  background: var(--surface-sunken);
+}
+
+.site-nav a[aria-current="page"] {
+  color: var(--primary-text);
+  background: var(--primary-soft);
+}
+
+.site-nav a:focus-visible {
+  border-radius: var(--radius-full);
+}
+
+/* Las pestañas del docente: en móvil, una franja propia desplazable bajo el
+   header; en escritorio, un grupo separado por una línea. */
+.site-nav-docente {
+  display: flex;
+  order: 3;
+  width: calc(100% + 2 * var(--gutter));
+  margin-inline: calc(-1 * var(--gutter));
+  padding: var(--space-2) var(--gutter);
+  overflow-x: auto;
+  border-top: 1px solid var(--border);
+  scrollbar-width: none;
+}
+
+.site-nav-docente::-webkit-scrollbar {
+  display: none;
+}
+
+.site-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-left: auto;
+}
+
+.nav-form {
+  display: inline-flex;
+}
+
+/* Botón de tema: muestra la luna en claro y el sol en oscuro. */
+/* Selectores con .theme-toggle para ganarle a .icon, que viene después. */
+.theme-toggle .theme-icon-sun { display: none; }
+
+:root[data-theme="dark"] .theme-toggle .theme-icon-sun { display: inline-block; }
+:root[data-theme="dark"] .theme-toggle .theme-icon-moon { display: none; }
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .theme-toggle .theme-icon-sun { display: inline-block; }
+  :root:not([data-theme="light"]) .theme-toggle .theme-icon-moon { display: none; }
+}
+
+.site-main {
+  padding-block: var(--space-8) var(--space-16);
+  min-height: calc(100vh - var(--header-h));
+  min-height: calc(100dvh - var(--header-h));
+}
+
+.site-main:focus {
+  outline: none;
+}
+
+.site-footer {
+  border-top: 1px solid var(--border);
+  background: var(--bg-subtle);
+  padding-block: var(--space-8);
+  /* Deja sitio a la tabbar fija en móvil. */
+  padding-bottom: calc(var(--space-8) + var(--tabbar-h) + env(safe-area-inset-bottom, 0px));
+}
+
+.site-footer-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-4) var(--space-8);
+}
+
+.site-footer-inner p {
+  max-width: 40ch;
+}
+
+.site-footer .icon {
+  display: inline-block;
+  vertical-align: -0.15em;
+  margin-right: 0.2rem;
+}
+
+.tabbar {
+  position: fixed;
+  inset: auto 0 0 0;
+  z-index: var(--z-tabbar);
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  height: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px));
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  -webkit-backdrop-filter: saturate(1.4) blur(14px);
+  backdrop-filter: saturate(1.4) blur(14px);
+  border-top: 1px solid var(--border);
+  box-shadow: 0 -6px 20px rgb(0 0 0 / 0.04);
+}
+
+.tabbar a {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  font-size: 0.6875rem;
+  font-weight: var(--fw-semibold);
+  letter-spacing: 0.01em;
+  color: var(--text-soft);
+  text-decoration: none;
+  --icon-size: 1.375rem;
+  transition: color var(--dur-fast) var(--ease-out);
+}
+
+.tabbar a[aria-current="page"] {
+  color: var(--primary-text);
+}
+
+.tabbar a[aria-current="page"]::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 2rem;
+  height: 3px;
+  margin-left: -1rem;
+  border-radius: 0 0 3px 3px;
+  background: var(--primary);
+}
+
+.tabbar a:focus-visible {
+  outline-offset: -4px;
+}
+
+@media (min-width: 820px) {
+  .site-header-inner {
+    flex-wrap: nowrap;
+  }
+
+  .site-nav {
+    display: flex;
+  }
+
+  .site-nav-docente {
+    order: 0;
+    width: auto;
+    margin: 0;
+    padding: 0 0 0 var(--space-4);
+    overflow: visible;
+    border-top: 0;
+    border-left: 1px solid var(--border);
+  }
+
+  .tabbar {
+    display: none;
+  }
+
+  .site-footer {
+    padding-bottom: var(--space-8);
+  }
+
+  .site-main {
+    padding-block: var(--space-12) var(--space-20);
+  }
+}
+
+/* En pantallas muy angostas el "Soy docente" queda solo con su ícono. */
+@media (max-width: 380px) {
+  .site-actions .btn span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+}
+
+
 /* ==========================================================================
    5. COMPONENTES
    ========================================================================== */
@@ -543,7 +812,10 @@ hr {
   line-height: 1.2;
   text-align: center;
   text-decoration: none;
-  white-space: nowrap;
+  /* Puede partir línea antes que desbordar la pantalla en móvil. */
+  white-space: normal;
+  text-wrap: balance;
+  max-width: 100%;
   color: var(--btn-fg);
   background: var(--btn-bg);
   border: 1.5px solid var(--btn-border);
