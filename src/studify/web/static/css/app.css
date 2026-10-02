@@ -1,0 +1,1595 @@
+/* ==========================================================================
+   RepasAi — Design system
+   --------------------------------------------------------------------------
+   Un único archivo, ordenado por capas. Cada capa solo usa lo de las capas
+   anteriores:
+
+     1. Tokens ............ colores, tipografía, espacio, radios, sombras, motion
+     2. Tema oscuro ....... redefinición de los tokens de color
+     3. Base .............. reset, elementos HTML, foco, selección
+     4. Layout ............ container, stack, cluster, grid, page-header
+     5. Componentes ....... botones, tarjetas, badges, VARK, alertas, forms…
+     6. Pantallas ......... estilos propios de cada vista (al final del archivo)
+     7. Utilidades ........ helpers de una sola propiedad
+     8. Motion ............ animaciones y prefers-reduced-motion
+
+   Convenciones y catálogo: docs/DESIGN_SYSTEM.md
+   ========================================================================== */
+
+
+/* ==========================================================================
+   1. TOKENS
+   ========================================================================== */
+
+:root {
+  color-scheme: light;
+
+  /* --- Superficies (papel cálido) --------------------------------------- */
+  --bg: #FBF8F3;
+  --bg-subtle: #F4EFE6;
+  --surface: #FFFFFF;
+  --surface-raised: #FFFFFF;
+  --surface-sunken: #F4EFE6;
+  --border: #E7E0D4;
+  --border-strong: #D3C9B8;
+
+  /* --- Texto (tinta) ---------------------------------------------------- */
+  --text: #1F2933;
+  --text-muted: #56606B;
+  --text-soft: #646D78;
+
+  /* --- Marca ------------------------------------------------------------ */
+  /* Primario: verde azulado. Continúa el verde/azul de la marca original y
+     transmite calma y confianza sin sonar corporativo. */
+  --primary: #0F766E;
+  --primary-hover: #0B5F59;
+  --primary-active: #094D48;
+  --primary-soft: #E3F4F1;
+  --primary-soft-strong: #C7E9E3;
+  --primary-text: #0F766E;
+  --primary-contrast: #FFFFFF;
+
+  /* Acento: coral "marcador". Se usa poco: CTA destacados, subrayados,
+     énfasis. Nunca como color de texto sobre blanco (usar --accent-text). */
+  --accent: #F2795A;
+  --accent-hover: #E8603C;
+  --accent-soft: #FDEBE5;
+  --accent-text: #B5452A;
+  --accent-contrast: #1F2933;
+
+  /* --- Estados ---------------------------------------------------------- */
+  --success: #1F9D61;
+  --success-soft: #E5F5EB;
+  --success-text: #17703F;
+  --danger: #D9443B;
+  --danger-soft: #FCEBE9;
+  --danger-text: #B42A24;
+  --warning: #E09A1F;
+  --warning-soft: #FDF1D9;
+  --warning-text: #8F4D06;
+  --info: var(--primary);
+  --info-soft: var(--primary-soft);
+  --info-text: var(--primary-text);
+
+  /* --- Dimensiones VARK ------------------------------------------------- */
+  /* Cada canal: color de marca (gráficos, ≥3:1), texto (≥4.5:1) y tinte. */
+  --vark-v: #2F6FE4;
+  --vark-v-text: #1E52B8;
+  --vark-v-soft: #E7EFFD;
+  --vark-a: #C27D0E;
+  --vark-a-text: #8A5300;
+  --vark-a-soft: #FDF2DD;
+  --vark-r: #7C54D9;
+  --vark-r-text: #5D37B5;
+  --vark-r-soft: #F0EAFC;
+  --vark-k: #1F9D61;
+  --vark-k-text: #13714A;
+  --vark-k-soft: #E2F4EA;
+
+  /* --- Tipografía ------------------------------------------------------- */
+  --font-display: "Fraunces", "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  --font-body: "Figtree", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, "Cascadia Code", "SF Mono", Consolas, monospace;
+
+  --fs-xs: 0.75rem;
+  --fs-sm: 0.875rem;
+  --fs-base: 1rem;
+  --fs-md: 1.0625rem;
+  --fs-lg: 1.125rem;
+  --fs-xl: 1.25rem;
+  --fs-2xl: clamp(1.375rem, 1.2rem + 0.8vw, 1.625rem);
+  --fs-3xl: clamp(1.75rem, 1.4rem + 1.6vw, 2.25rem);
+  --fs-4xl: clamp(2.125rem, 1.5rem + 3vw, 3.25rem);
+
+  --lh-tight: 1.15;
+  --lh-snug: 1.35;
+  --lh-base: 1.6;
+
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+
+  --measure: 68ch;
+
+  /* --- Espaciado (escala de 4 px) -------------------------------------- */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-20: 5rem;
+
+  /* --- Radios ----------------------------------------------------------- */
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1.125rem;
+  --radius-xl: 1.5rem;
+  --radius-full: 9999px;
+
+  /* --- Sombras (tintadas cálidas, sutiles) ----------------------------- */
+  --shadow-xs: 0 1px 2px rgb(60 45 20 / 0.06);
+  --shadow-sm: 0 1px 2px rgb(60 45 20 / 0.05), 0 2px 6px rgb(60 45 20 / 0.05);
+  --shadow-md: 0 2px 4px rgb(60 45 20 / 0.05), 0 8px 20px rgb(60 45 20 / 0.08);
+  --shadow-lg: 0 4px 8px rgb(60 45 20 / 0.06), 0 18px 40px rgb(60 45 20 / 0.12);
+
+  /* --- Foco ------------------------------------------------------------- */
+  --focus-ring: 0 0 0 3px var(--bg), 0 0 0 5px var(--primary);
+
+  /* --- Motion ----------------------------------------------------------- */
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+  --dur-fast: 120ms;
+  --dur-base: 200ms;
+  --dur-slow: 360ms;
+
+  /* --- Layout ----------------------------------------------------------- */
+  --container: 1160px;
+  --container-narrow: 760px;
+  --gutter: clamp(1rem, 0.6rem + 2vw, 2rem);
+  --header-h: 64px;
+  --tabbar-h: 64px;
+  --z-header: 30;
+  --z-tabbar: 30;
+  --z-overlay: 100;
+
+  /* --- Alias de los nombres anteriores ---------------------------------- */
+  /* Los usan estilos y fragmentos HTML que aún no se migran; apuntan a los
+     tokens nuevos para que hereden el modo oscuro. */
+  --bg-color: var(--bg);
+  --bg-surface: var(--surface);
+  --bg-surface-hover: var(--surface-sunken);
+  --text-main: var(--text);
+  --text-light: var(--text-soft);
+  --primary-light: var(--primary-soft);
+  --success-bg: var(--success-soft);
+  --danger-bg: var(--danger-soft);
+  --warning-bg: var(--warning-soft);
+  --border-color: var(--border);
+  --border-color-focus: var(--primary);
+  --font-sans: var(--font-body);
+  --font-heading: var(--font-display);
+  --transition: all var(--dur-base) var(--ease-out);
+}
+
+
+/* ==========================================================================
+   2. TEMA OSCURO
+   Se activa por preferencia del sistema salvo que el usuario haya elegido
+   claro, o explícitamente con [data-theme="dark"] (toggle del header).
+   Los dos bloques deben mantenerse idénticos.
+   ========================================================================== */
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #11161B;
+    --bg-subtle: #151B21;
+    --surface: #182028;
+    --surface-raised: #1E2730;
+    --surface-sunken: #0D1216;
+    --border: #2A343E;
+    --border-strong: #3A4651;
+    --text: #E9ECEF;
+    --text-muted: #AAB4BF;
+    --text-soft: #8D98A4;
+    --primary: #2CC5B1;
+    --primary-hover: #4FD6C4;
+    --primary-active: #7BE3D5;
+    --primary-soft: #123A37;
+    --primary-soft-strong: #18504B;
+    --primary-text: #4FD6C4;
+    --primary-contrast: #05231F;
+    --accent: #FF8E70;
+    --accent-hover: #FFA68D;
+    --accent-soft: #3A2620;
+    --accent-text: #FF9F85;
+    --accent-contrast: #1A1210;
+    --success: #4CC98A;
+    --success-soft: #13301F;
+    --success-text: #5AD08E;
+    --danger: #FF7468;
+    --danger-soft: #3A1C1A;
+    --danger-text: #FF8A80;
+    --warning: #F2B24A;
+    --warning-soft: #3A2C14;
+    --warning-text: #F5B961;
+    --vark-v: #6E9EFF;
+    --vark-v-text: #8DB3FF;
+    --vark-v-soft: #1A2A47;
+    --vark-a: #F2B24A;
+    --vark-a-text: #F5C06A;
+    --vark-a-soft: #3A2E17;
+    --vark-r: #A88BFA;
+    --vark-r-text: #BBA3FF;
+    --vark-r-soft: #2A2346;
+    --vark-k: #4CC98A;
+    --vark-k-text: #6DD7A1;
+    --vark-k-soft: #16352A;
+    --shadow-xs: 0 1px 2px rgb(0 0 0 / 0.4);
+    --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.35), 0 2px 6px rgb(0 0 0 / 0.25);
+    --shadow-md: 0 2px 4px rgb(0 0 0 / 0.3), 0 8px 20px rgb(0 0 0 / 0.35);
+    --shadow-lg: 0 4px 8px rgb(0 0 0 / 0.35), 0 18px 40px rgb(0 0 0 / 0.45);
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #11161B;
+  --bg-subtle: #151B21;
+  --surface: #182028;
+  --surface-raised: #1E2730;
+  --surface-sunken: #0D1216;
+  --border: #2A343E;
+  --border-strong: #3A4651;
+  --text: #E9ECEF;
+  --text-muted: #AAB4BF;
+  --text-soft: #8D98A4;
+  --primary: #2CC5B1;
+  --primary-hover: #4FD6C4;
+  --primary-active: #7BE3D5;
+  --primary-soft: #123A37;
+  --primary-soft-strong: #18504B;
+  --primary-text: #4FD6C4;
+  --primary-contrast: #05231F;
+  --accent: #FF8E70;
+  --accent-hover: #FFA68D;
+  --accent-soft: #3A2620;
+  --accent-text: #FF9F85;
+  --accent-contrast: #1A1210;
+  --success: #4CC98A;
+  --success-soft: #13301F;
+  --success-text: #5AD08E;
+  --danger: #FF7468;
+  --danger-soft: #3A1C1A;
+  --danger-text: #FF8A80;
+  --warning: #F2B24A;
+  --warning-soft: #3A2C14;
+  --warning-text: #F5B961;
+  --vark-v: #6E9EFF;
+  --vark-v-text: #8DB3FF;
+  --vark-v-soft: #1A2A47;
+  --vark-a: #F2B24A;
+  --vark-a-text: #F5C06A;
+  --vark-a-soft: #3A2E17;
+  --vark-r: #A88BFA;
+  --vark-r-text: #BBA3FF;
+  --vark-r-soft: #2A2346;
+  --vark-k: #4CC98A;
+  --vark-k-text: #6DD7A1;
+  --vark-k-soft: #16352A;
+  --shadow-xs: 0 1px 2px rgb(0 0 0 / 0.4);
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.35), 0 2px 6px rgb(0 0 0 / 0.25);
+  --shadow-md: 0 2px 4px rgb(0 0 0 / 0.3), 0 8px 20px rgb(0 0 0 / 0.35);
+  --shadow-lg: 0 4px 8px rgb(0 0 0 / 0.35), 0 18px 40px rgb(0 0 0 / 0.45);
+}
+
+
+/* ==========================================================================
+   3. BASE
+   ========================================================================== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+* {
+  margin: 0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  scroll-padding-top: calc(var(--header-h) + var(--space-4));
+}
+
+body {
+  min-height: 100vh;
+  min-height: 100dvh;
+  font-family: var(--font-body);
+  font-size: var(--fs-base);
+  line-height: var(--lh-base);
+  color: var(--text);
+  background-color: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-tight);
+  color: var(--text);
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+  font-variation-settings: "opsz" 72;
+}
+
+h1 { font-size: var(--fs-3xl); }
+h2 { font-size: var(--fs-2xl); }
+h3 { font-size: var(--fs-xl); line-height: var(--lh-snug); }
+h4 { font-size: var(--fs-lg); line-height: var(--lh-snug); }
+h5, h6 { font-size: var(--fs-base); font-family: var(--font-body); font-weight: var(--fw-bold); }
+
+p, li, dd, td {
+  text-wrap: pretty;
+}
+
+a {
+  color: var(--primary-text);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+  transition: color var(--dur-fast) var(--ease-out);
+}
+
+a:hover {
+  color: var(--primary-hover);
+}
+
+img, svg, video {
+  display: block;
+  max-width: 100%;
+}
+
+button, input, select, textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+code, kbd {
+  font-family: var(--font-mono);
+  font-size: 0.875em;
+  padding: 0.1em 0.4em;
+  border-radius: 0.375rem;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+}
+
+hr {
+  border: 0;
+  border-top: 1px solid var(--border);
+}
+
+::selection {
+  background: var(--primary-soft-strong);
+  color: var(--text);
+}
+
+/* Foco visible solo con teclado; el ratón no deja anillos. */
+:focus {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 3px;
+  border-radius: var(--radius-sm);
+}
+
+[hidden] {
+  display: none !important;
+}
+
+
+/* ==========================================================================
+   4. LAYOUT
+   ========================================================================== */
+
+.container {
+  width: 100%;
+  max-width: var(--container);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+.container-narrow {
+  max-width: var(--container-narrow);
+}
+
+/* Columna vertical con separación uniforme. */
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--stack-gap, var(--space-4));
+}
+
+.stack-sm { --stack-gap: var(--space-2); }
+.stack-lg { --stack-gap: var(--space-8); }
+
+/* Fila que se envuelve: chips, botones, metadatos. */
+.cluster {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--cluster-gap, var(--space-3));
+}
+
+.cluster-sm { --cluster-gap: var(--space-2); }
+
+/* Grilla automática: tantas columnas como quepan con un mínimo dado. */
+.auto-grid {
+  display: grid;
+  gap: var(--grid-gap, var(--space-4));
+  grid-template-columns: repeat(auto-fill, minmax(min(var(--grid-min, 16rem), 100%), 1fr));
+}
+
+/* Encabezado de página: eyebrow + título + bajada. */
+.page-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-8);
+}
+
+.page-header p {
+  color: var(--text-muted);
+  max-width: var(--measure);
+  font-size: var(--fs-md);
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--primary-text);
+}
+
+.section {
+  padding-block: var(--space-12);
+}
+
+.prose {
+  max-width: var(--measure);
+  font-size: var(--fs-md);
+  line-height: 1.7;
+}
+
+.prose > * + * {
+  margin-top: 0.9em;
+}
+
+
+/* ==========================================================================
+   5. COMPONENTES
+   ========================================================================== */
+
+/* --- 5.1 Íconos ---------------------------------------------------------- */
+/* <svg class="icon"><use href="/static/icons/sprite.svg#i-eye"></use></svg>
+   El sprite define solo trazos: color y grosor se heredan de acá. */
+.icon {
+  width: var(--icon-size, 1.25rem);
+  height: var(--icon-size, 1.25rem);
+  flex-shrink: 0;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.icon-sm { --icon-size: 1rem; }
+.icon-lg { --icon-size: 1.5rem; }
+.icon-xl { --icon-size: 2rem; }
+
+/* Ícono dentro de un círculo/cuadrado tintado. */
+.icon-tile {
+  --tile-size: 2.5rem;
+  display: inline-grid;
+  place-items: center;
+  width: var(--tile-size);
+  height: var(--tile-size);
+  border-radius: var(--radius-md);
+  background: var(--primary-soft);
+  color: var(--primary-text);
+  flex-shrink: 0;
+}
+
+.icon-tile-lg { --tile-size: 3.25rem; --icon-size: 1.5rem; border-radius: var(--radius-lg); }
+
+
+/* --- 5.2 Botones --------------------------------------------------------- */
+.btn {
+  --btn-bg: var(--surface);
+  --btn-fg: var(--text);
+  --btn-border: var(--border-strong);
+  --btn-bg-hover: var(--surface-sunken);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 2.75rem; /* 44 px: objetivo táctil mínimo */
+  padding: 0.625rem 1.125rem;
+  font-family: var(--font-body);
+  font-size: var(--fs-base);
+  font-weight: var(--fw-semibold);
+  line-height: 1.2;
+  text-align: center;
+  text-decoration: none;
+  white-space: nowrap;
+  color: var(--btn-fg);
+  background: var(--btn-bg);
+  border: 1.5px solid var(--btn-border);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  user-select: none;
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out);
+}
+
+.btn:hover {
+  background: var(--btn-bg-hover);
+  color: var(--btn-fg);
+}
+
+.btn:active {
+  transform: translateY(1px) scale(0.985);
+}
+
+.btn:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-radius: var(--radius-full);
+}
+
+.btn:disabled,
+.btn[aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-primary {
+  --btn-bg: var(--primary);
+  --btn-fg: var(--primary-contrast);
+  --btn-border: var(--primary);
+  --btn-bg-hover: var(--primary-hover);
+  box-shadow: var(--shadow-xs);
+}
+
+.btn-primary:hover {
+  border-color: var(--primary-hover);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-accent {
+  --btn-bg: var(--accent);
+  --btn-fg: var(--accent-contrast);
+  --btn-border: var(--accent);
+  --btn-bg-hover: var(--accent-hover);
+  box-shadow: var(--shadow-xs);
+}
+
+.btn-accent:hover {
+  border-color: var(--accent-hover);
+  box-shadow: var(--shadow-sm);
+}
+
+/* .btn-outline se conserva como alias de secundario. */
+.btn-secondary,
+.btn-outline {
+  --btn-bg: transparent;
+  --btn-fg: var(--text);
+  --btn-border: var(--border-strong);
+  --btn-bg-hover: var(--surface-sunken);
+}
+
+.btn-ghost {
+  --btn-bg: transparent;
+  --btn-fg: var(--text-muted);
+  --btn-border: transparent;
+  --btn-bg-hover: var(--surface-sunken);
+}
+
+.btn-ghost:hover {
+  --btn-fg: var(--text);
+}
+
+.btn-success {
+  --btn-bg: var(--success-soft);
+  --btn-fg: var(--success-text);
+  --btn-border: transparent;
+  --btn-bg-hover: color-mix(in srgb, var(--success-soft) 70%, var(--success) 30%);
+}
+
+.btn-danger {
+  --btn-bg: var(--danger-soft);
+  --btn-fg: var(--danger-text);
+  --btn-border: transparent;
+  --btn-bg-hover: color-mix(in srgb, var(--danger-soft) 75%, var(--danger) 25%);
+}
+
+.btn-sm {
+  min-height: 2.25rem;
+  padding: 0.4rem 0.875rem;
+  font-size: var(--fs-sm);
+  --icon-size: 1rem;
+}
+
+.btn-lg {
+  min-height: 3.25rem;
+  padding: 0.875rem 1.625rem;
+  font-size: var(--fs-lg);
+}
+
+.btn-block {
+  display: flex;
+  width: 100%;
+}
+
+.btn-icon {
+  padding: 0;
+  width: 2.75rem;
+  min-width: 2.75rem;
+}
+
+.btn-icon.btn-sm {
+  width: 2.25rem;
+  min-width: 2.25rem;
+}
+
+
+/* --- 5.3 Tarjetas -------------------------------------------------------- */
+.card {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: clamp(1.125rem, 0.8rem + 1.5vw, 1.75rem);
+  box-shadow: var(--shadow-sm);
+}
+
+.card-flat {
+  box-shadow: none;
+}
+
+.card-sunken {
+  background: var(--surface-sunken);
+  box-shadow: none;
+}
+
+/* Tarjeta clicable: se eleva al pasar el puntero. */
+.card-interactive {
+  transition:
+    transform var(--dur-base) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out),
+    border-color var(--dur-base) var(--ease-out);
+}
+
+.card-interactive:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--border-strong);
+}
+
+.card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-4);
+}
+
+.card-title {
+  font-size: var(--fs-xl);
+}
+
+.card-subtitle {
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+}
+
+
+/* --- 5.4 Badges y chips -------------------------------------------------- */
+.badge {
+  --badge-bg: var(--surface-sunken);
+  --badge-fg: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.65rem;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  line-height: 1.5;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  color: var(--badge-fg);
+  background: var(--badge-bg);
+  border-radius: var(--radius-full);
+  --icon-size: 0.875rem;
+}
+
+.badge-primary { --badge-bg: var(--primary-soft); --badge-fg: var(--primary-text); }
+.badge-accent  { --badge-bg: var(--accent-soft);  --badge-fg: var(--accent-text); }
+.badge-success { --badge-bg: var(--success-soft); --badge-fg: var(--success-text); }
+.badge-danger  { --badge-bg: var(--danger-soft);  --badge-fg: var(--danger-text); }
+.badge-warning { --badge-bg: var(--warning-soft); --badge-fg: var(--warning-text); }
+.badge-neutral { --badge-bg: var(--surface-sunken); --badge-fg: var(--text-muted); }
+
+.badge-outline {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--border-strong);
+}
+
+
+/* --- 5.5 Dimensiones VARK ------------------------------------------------ */
+/* Cualquier elemento con data-canal="V|A|R|K" expone --canal, --canal-text y
+   --canal-soft. Así un mismo componente se tiñe según el canal sin variantes
+   duplicadas. Siempre acompañar el color con ícono y nombre: el color nunca
+   es la única señal. */
+[data-canal="V"], [data-canal="v"] { --canal: var(--vark-v); --canal-text: var(--vark-v-text); --canal-soft: var(--vark-v-soft); }
+[data-canal="A"], [data-canal="a"] { --canal: var(--vark-a); --canal-text: var(--vark-a-text); --canal-soft: var(--vark-a-soft); }
+[data-canal="R"], [data-canal="r"] { --canal: var(--vark-r); --canal-text: var(--vark-r-text); --canal-soft: var(--vark-r-soft); }
+[data-canal="K"], [data-canal="k"] { --canal: var(--vark-k); --canal-text: var(--vark-k-text); --canal-soft: var(--vark-k-soft); }
+
+.vark-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.75rem 0.25rem 0.4rem;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--canal-text);
+  background: var(--canal-soft);
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+  --icon-size: 1rem;
+}
+
+.vark-chip .vark-letter,
+.vark-letter {
+  display: inline-grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: var(--radius-full);
+  background: var(--canal);
+  color: var(--surface);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+  line-height: 1;
+}
+
+.vark-chip-sm {
+  font-size: var(--fs-xs);
+  padding: 0.15rem 0.6rem 0.15rem 0.3rem;
+}
+
+.vark-chip-sm .vark-letter {
+  width: 1.25rem;
+  height: 1.25rem;
+  font-size: 0.6875rem;
+}
+
+.vark-tile {
+  background: var(--canal-soft);
+  color: var(--canal-text);
+}
+
+
+/* --- 5.6 Alertas --------------------------------------------------------- */
+/* Las clases .alerta-* son contrato: las emiten routers y las buscan tests. */
+.alerta {
+  --alert-bg: var(--info-soft);
+  --alert-fg: var(--info-text);
+  --alert-accent: var(--primary);
+  display: block;
+  position: relative;
+  padding: var(--space-4) var(--space-5);
+  padding-left: calc(var(--space-5) + 4px);
+  border-radius: var(--radius-md);
+  background: var(--alert-bg);
+  color: var(--text);
+  font-size: var(--fs-sm);
+  line-height: 1.55;
+  border: 1px solid color-mix(in srgb, var(--alert-accent) 22%, transparent);
+  animation: rise-in var(--dur-slow) var(--ease-out) both;
+}
+
+.alerta::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  border-radius: var(--radius-md) 0 0 var(--radius-md);
+  background: var(--alert-accent);
+}
+
+.alerta > strong:first-child,
+.alerta .alerta-titulo {
+  color: var(--alert-fg);
+}
+
+.alerta-ok      { --alert-bg: var(--success-soft); --alert-fg: var(--success-text); --alert-accent: var(--success); }
+.alerta-error   { --alert-bg: var(--danger-soft);  --alert-fg: var(--danger-text);  --alert-accent: var(--danger); }
+.alerta-warning { --alert-bg: var(--warning-soft); --alert-fg: var(--warning-text); --alert-accent: var(--warning); }
+.alerta-info    { --alert-bg: var(--info-soft);    --alert-fg: var(--info-text);    --alert-accent: var(--primary); }
+
+/* Variante con ícono a la izquierda (macro alert()). */
+.alerta-con-icono {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+}
+
+.alerta-con-icono > .icon {
+  color: var(--alert-fg);
+  margin-top: 0.1rem;
+}
+
+.alerta-cuerpo {
+  flex: 1;
+  min-width: 0;
+}
+
+.alerta a {
+  color: var(--alert-fg);
+  font-weight: var(--fw-semibold);
+}
+
+
+/* --- 5.7 Formularios ----------------------------------------------------- */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-5);
+}
+
+.form-label {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--text);
+}
+
+.form-hint {
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+
+.form-control {
+  display: block;
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0.625rem 0.875rem;
+  font-size: var(--fs-base);
+  line-height: 1.4;
+  color: var(--text);
+  background: var(--surface);
+  border: 1.5px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out);
+}
+
+.form-control::placeholder {
+  color: var(--text-soft);
+  opacity: 1;
+}
+
+.form-control:hover {
+  border-color: color-mix(in srgb, var(--border-strong) 60%, var(--text-soft));
+}
+
+.form-control:focus,
+.form-control:focus-visible {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 18%, transparent);
+}
+
+textarea.form-control {
+  min-height: 7rem;
+  resize: vertical;
+  line-height: var(--lh-base);
+}
+
+select.form-control {
+  appearance: none;
+  padding-right: 2.5rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2378818c' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.875rem center;
+  background-size: 1rem;
+}
+
+input[type="file"].form-control {
+  padding: 0.45rem;
+  cursor: pointer;
+}
+
+input[type="file"].form-control::file-selector-button {
+  margin-right: var(--space-3);
+  padding: 0.4rem 0.9rem;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--primary-soft);
+  color: var(--primary-text);
+  font-weight: var(--fw-semibold);
+  cursor: pointer;
+}
+
+.form-grid {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fill, minmax(min(14rem, 100%), 1fr));
+}
+
+.form-grid .form-group {
+  margin-bottom: 0;
+}
+
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+fieldset {
+  border: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+/* Opción seleccionable tipo tarjeta (casillas y radios).
+   .radio-group / .radio-option se conservan por compatibilidad. */
+.radio-group,
+.choice-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.radio-option,
+.choice {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: 0.875rem 1rem;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  line-height: 1.45;
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    background-color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out);
+}
+
+.radio-option:hover,
+.choice:hover {
+  border-color: var(--border-strong);
+  background: var(--bg-subtle);
+}
+
+.radio-option:active,
+.choice:active {
+  transform: scale(0.995);
+}
+
+.radio-option input,
+.choice input {
+  appearance: none;
+  flex-shrink: 0;
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-top: 0.1rem;
+  border: 2px solid var(--border-strong);
+  background: var(--surface);
+  display: grid;
+  place-items: center;
+  transition: all var(--dur-fast) var(--ease-out);
+  cursor: pointer;
+}
+
+.radio-option input[type="checkbox"],
+.choice input[type="checkbox"] {
+  border-radius: 0.375rem;
+}
+
+.radio-option input[type="radio"],
+.choice input[type="radio"] {
+  border-radius: 50%;
+}
+
+.radio-option input::before,
+.choice input::before {
+  content: "";
+  width: 0.65rem;
+  height: 0.65rem;
+  transform: scale(0);
+  transition: transform var(--dur-base) var(--ease-spring);
+  background: var(--primary-contrast);
+}
+
+.radio-option input[type="checkbox"]::before,
+.choice input[type="checkbox"]::before {
+  clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+}
+
+.radio-option input[type="radio"]::before,
+.choice input[type="radio"]::before {
+  border-radius: 50%;
+  width: 0.5rem;
+  height: 0.5rem;
+}
+
+.radio-option input:checked,
+.choice input:checked {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.radio-option input:checked::before,
+.choice input:checked::before {
+  transform: scale(1);
+}
+
+.radio-option:has(input:checked),
+.choice:has(input:checked) {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+}
+
+.radio-option:has(input:focus-visible),
+.choice:has(input:focus-visible) {
+  box-shadow: var(--focus-ring);
+}
+
+.radio-option:has(input:disabled),
+.choice:has(input:disabled) {
+  cursor: default;
+}
+
+.radio-option:has(input:disabled):hover,
+.choice:has(input:disabled):hover {
+  background: var(--surface);
+  border-color: var(--border);
+}
+
+.radio-option:has(input:disabled:checked),
+.choice:has(input:disabled:checked) {
+  background: var(--success-soft);
+  border-color: var(--success);
+}
+
+.radio-option:has(input:disabled:checked) input,
+.choice:has(input:disabled:checked) input {
+  background: var(--success);
+  border-color: var(--success);
+}
+
+
+/* --- 5.8 Tablas ---------------------------------------------------------- */
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  -webkit-overflow-scrolling: touch;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-sm);
+  text-align: left;
+}
+
+.table th,
+.table td {
+  padding: 0.75rem 1rem;
+  vertical-align: top;
+  border-bottom: 1px solid var(--border);
+}
+
+.table th {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  background: var(--bg-subtle);
+  white-space: nowrap;
+}
+
+.table tr:last-child td {
+  border-bottom: 0;
+}
+
+.table tbody tr {
+  transition: background-color var(--dur-fast) var(--ease-out);
+}
+
+.table tbody tr:hover {
+  background: var(--bg-subtle);
+}
+
+/* En pantallas angostas, cada fila se apila como tarjeta. Cada <td> declara
+   su encabezado con data-label. */
+@media (max-width: 720px) {
+  .table-stack thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  .table-stack,
+  .table-stack tbody,
+  .table-stack tr,
+  .table-stack td {
+    display: block;
+    width: 100%;
+  }
+
+  .table-stack tr {
+    padding: var(--space-3) var(--space-4);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .table-stack tr:last-child {
+    border-bottom: 0;
+  }
+
+  .table-stack td {
+    padding: var(--space-1) 0;
+    border: 0;
+  }
+
+  .table-stack td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-bold);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-soft);
+    margin-bottom: 0.15rem;
+  }
+
+  .table-container:has(.table-stack) {
+    overflow-x: visible;
+  }
+}
+
+
+/* --- 5.9 Progreso -------------------------------------------------------- */
+.progress-container,
+.progress {
+  width: 100%;
+  height: 0.625rem;
+  background: var(--surface-sunken);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.progress-bar,
+.progress-fill {
+  height: 100%;
+  width: 0;
+  background: var(--bar-color, var(--primary));
+  border-radius: var(--radius-full);
+  transition: width var(--dur-slow) var(--ease-out);
+}
+
+.progress[data-canal] .progress-fill {
+  --bar-color: var(--canal);
+}
+
+
+/* --- 5.10 Acordeón (details/summary) ------------------------------------ */
+.accordion {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.accordion + .accordion {
+  margin-top: var(--space-3);
+}
+
+.accordion > summary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+  cursor: pointer;
+  list-style: none;
+  font-weight: var(--fw-semibold);
+  transition: background-color var(--dur-fast) var(--ease-out);
+}
+
+.accordion > summary::-webkit-details-marker {
+  display: none;
+}
+
+.accordion > summary:hover {
+  background: var(--bg-subtle);
+}
+
+.accordion > summary:focus-visible {
+  outline-offset: -3px;
+}
+
+.accordion > summary .accordion-chevron {
+  margin-left: auto;
+  color: var(--text-soft);
+  transition: transform var(--dur-base) var(--ease-out);
+}
+
+.accordion[open] > summary .accordion-chevron {
+  transform: rotate(180deg);
+}
+
+.accordion-body {
+  padding: 0 var(--space-5) var(--space-5);
+}
+
+
+/* --- 5.11 Carga: spinner, skeleton e indicadores HTMX ------------------ */
+.spinner {
+  --spinner-size: 1.125rem;
+  display: inline-block;
+  width: var(--spinner-size);
+  height: var(--spinner-size);
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+/* HTMX añade .htmx-request al elemento que pide (o al hx-indicator). */
+.htmx-indicator {
+  display: none;
+}
+
+.htmx-request .htmx-indicator,
+.htmx-request.htmx-indicator {
+  display: inline-flex;
+}
+
+/* Un botón que dispara la petición se atenúa y no admite doble clic. */
+.htmx-request.btn,
+.htmx-request .btn[type="submit"],
+form.htmx-request button[type="submit"] {
+  pointer-events: none;
+  opacity: 0.75;
+}
+
+/* Mientras pide, se ocultan las piezas marcadas como "en reposo". */
+.htmx-request .idle-only {
+  display: none;
+}
+
+.skeleton {
+  display: block;
+  background: linear-gradient(
+    90deg,
+    var(--surface-sunken) 0%,
+    color-mix(in srgb, var(--surface-sunken) 50%, var(--surface)) 50%,
+    var(--surface-sunken) 100%
+  );
+  background-size: 200% 100%;
+  border-radius: var(--radius-sm);
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+.skeleton-line {
+  height: 0.85rem;
+  margin-block: 0.45rem;
+}
+
+.skeleton-title {
+  height: 1.6rem;
+  width: 60%;
+  margin-bottom: var(--space-4);
+}
+
+
+/* --- 5.12 Estados vacíos y de error ------------------------------------- */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-3);
+  padding: var(--space-10) var(--space-4);
+  max-width: 34rem;
+  margin-inline: auto;
+}
+
+.empty-state .icon-tile {
+  --tile-size: 4rem;
+  --icon-size: 1.75rem;
+  border-radius: var(--radius-xl);
+  margin-bottom: var(--space-2);
+}
+
+.empty-state p {
+  color: var(--text-muted);
+}
+
+.empty-state .cluster {
+  justify-content: center;
+  margin-top: var(--space-3);
+}
+
+.empty-state-danger .icon-tile {
+  background: var(--danger-soft);
+  color: var(--danger-text);
+}
+
+.empty-state-warning .icon-tile {
+  background: var(--warning-soft);
+  color: var(--warning-text);
+}
+
+
+/* --- 5.13 Estadística / dato -------------------------------------------- */
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-4);
+  background: var(--surface-sunken);
+  border-radius: var(--radius-md);
+}
+
+.stat-value {
+  font-family: var(--font-display);
+  font-size: var(--fs-2xl);
+  font-weight: var(--fw-semibold);
+  line-height: 1.1;
+  color: var(--text);
+}
+
+.stat-label {
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+
+
+/* --- 5.14 Enlace "volver" ----------------------------------------------- */
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-6);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--text-muted);
+  text-decoration: none;
+  --icon-size: 1rem;
+}
+
+.back-link:hover {
+  color: var(--text);
+}
+
+.back-link .icon {
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+
+.back-link:hover .icon {
+  transform: translateX(-3px);
+}
+
+
+/* --- 5.15 Accesibilidad -------------------------------------------------- */
+.visually-hidden,
+.sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+.skip-link {
+  position: absolute;
+  left: var(--space-4);
+  top: -100px;
+  z-index: calc(var(--z-overlay) + 1);
+  padding: var(--space-3) var(--space-4);
+  background: var(--primary);
+  color: var(--primary-contrast);
+  font-weight: var(--fw-semibold);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+}
+
+.skip-link:focus {
+  top: var(--space-3);
+  color: var(--primary-contrast);
+}
+
+
+/* ==========================================================================
+   6. PANTALLAS
+   (cada vista agrega aquí su sección)
+   ========================================================================== */
+
+
+/* ==========================================================================
+   7. UTILIDADES
+   ========================================================================== */
+
+.text-center { text-align: center; }
+.text-muted { color: var(--text-muted); }
+.text-soft { color: var(--text-soft); }
+.text-primary { color: var(--primary-text); }
+.text-accent { color: var(--accent-text); }
+.text-success { color: var(--success-text); }
+.text-danger { color: var(--danger-text); }
+.text-xs { font-size: var(--fs-xs); }
+.text-sm { font-size: var(--fs-sm); }
+.text-md { font-size: var(--fs-md); }
+.text-lg { font-size: var(--fs-lg); }
+.text-xl { font-size: var(--fs-xl); }
+.font-display { font-family: var(--font-display); }
+.font-medium { font-weight: var(--fw-medium); }
+.font-semibold { font-weight: var(--fw-semibold); }
+.font-bold { font-weight: var(--fw-bold); }
+.tabular { font-variant-numeric: tabular-nums; }
+.nowrap { white-space: nowrap; }
+
+.flex { display: flex; }
+.flex-col { flex-direction: column; }
+.flex-wrap { flex-wrap: wrap; }
+.flex-1 { flex: 1; min-width: 0; }
+.items-center { align-items: center; }
+.items-start { align-items: flex-start; }
+.justify-between { justify-content: space-between; }
+.justify-center { justify-content: center; }
+.gap-1 { gap: var(--space-1); }
+.gap-2 { gap: var(--space-2); }
+.gap-3 { gap: var(--space-3); }
+.gap-4 { gap: var(--space-4); }
+.gap-6 { gap: var(--space-6); }
+
+.m-0 { margin: 0; }
+.mx-auto { margin-inline: auto; }
+.mt-1 { margin-top: var(--space-1); }
+.mt-2 { margin-top: var(--space-2); }
+.mt-3 { margin-top: var(--space-3); }
+.mt-4 { margin-top: var(--space-4); }
+.mt-6 { margin-top: var(--space-6); }
+.mt-8 { margin-top: var(--space-8); }
+.mb-0 { margin-bottom: 0; }
+.mb-1 { margin-bottom: var(--space-1); }
+.mb-2 { margin-bottom: var(--space-2); }
+.mb-3 { margin-bottom: var(--space-3); }
+.mb-4 { margin-bottom: var(--space-4); }
+.mb-6 { margin-bottom: var(--space-6); }
+.mb-8 { margin-bottom: var(--space-8); }
+.ml-2 { margin-left: var(--space-2); }
+.my-4 { margin-block: var(--space-4); }
+.py-8 { padding-block: var(--space-8); }
+.pt-6 { padding-top: var(--space-6); }
+.p-3 { padding: var(--space-3); }
+.p-4 { padding: var(--space-4); }
+.p-6 { padding: var(--space-6); }
+
+.w-full { width: 100%; }
+.max-w-measure { max-width: var(--measure); }
+
+
+/* ==========================================================================
+   8. MOTION
+   ========================================================================== */
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes shimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes pop-in {
+  0% { opacity: 0; transform: scale(0.94); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* Entrada escalonada: .reveal en hijos; --i fija el orden. */
+.reveal {
+  animation: rise-in var(--dur-slow) var(--ease-out) both;
+  animation-delay: calc(var(--i, 0) * 60ms);
+}
+
+/* Contenido que llega por HTMX entra con un fundido breve. */
+.htmx-added {
+  animation: fade-in var(--dur-base) var(--ease-out);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    animation-delay: 0ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* Indicadores de carga: en vez de girar, laten suavemente (sin movimiento). */
+  .spinner {
+    animation: none !important;
+    border-right-color: currentColor;
+    opacity: 0.6;
+  }
+
+  .skeleton {
+    animation: none !important;
+  }
+}

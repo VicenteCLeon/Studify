@@ -1,0 +1,104 @@
+{# Componentes de interfaz reutilizables. Uso:
+
+     {% import "components/ui.html" as ui %}
+     {{ ui.icon("eye") }}
+     {% call ui.alert("error", "No se pudo guardar") %}Texto del aviso{% endcall %}
+
+   Los macros solo arman marcado: el estilo vive en static/css/app.css y el
+   catálogo completo está en docs/DESIGN_SYSTEM.md. Nada de lo que reciben se
+   marca como seguro, así que todo texto (incluido el que escribe el modelo)
+   sigue escapado por Jinja. #}
+
+{% set SPRITE = "/static/icons/sprite.svg" %}
+
+{# Ícono y nombre de cada dimensión VARK. El nombre sale de
+   `textos.NOMBRE_CANAL` (global de Jinja) para que la pantalla y el copy no
+   puedan divergir; el ícono es pura presentación y vive acá. #}
+{% set ICONO_CANAL = {"V": "eye", "A": "headphones", "R": "book-open", "K": "hand"} %}
+
+
+{# Ícono del sprite. Decorativo por defecto (aria-hidden); con `label` pasa a
+   ser una imagen con nombre accesible. #}
+{% macro icon(name, label=None, cls="") -%}
+<svg class="icon {{ cls }}" {% if label %}role="img" aria-label="{{ label }}"{% else %}aria-hidden="true"{% endif %} focusable="false"><use href="{{ SPRITE }}#i-{{ name }}"></use></svg>
+{%- endmacro %}
+
+
+{# Chip de una dimensión VARK: letra en círculo + nombre, teñido por canal.
+   `canal` es la letra (V/A/R/K, cualquier caja). #}
+{% macro vark_chip(canal, nombre=None, size="", con_icono=False) -%}
+{%- set letra = canal | upper -%}
+<span class="vark-chip {% if size %}vark-chip-{{ size }}{% endif %}" data-canal="{{ letra }}">
+    {%- if con_icono %}{{ icon(ICONO_CANAL[letra]) }}{% else %}<span class="vark-letter" aria-hidden="true">{{ letra }}</span>{% endif -%}
+    <span>{{ nombre or NOMBRE_CANAL[letra] }}</span>
+</span>
+{%- endmacro %}
+
+
+{# Ícono de un canal dentro de un recuadro teñido. #}
+{% macro vark_tile(canal, size="") -%}
+{%- set letra = canal | upper -%}
+<span class="icon-tile vark-tile {% if size %}icon-tile-{{ size }}{% endif %}" data-canal="{{ letra }}">{{ icon(ICONO_CANAL[letra]) }}</span>
+{%- endmacro %}
+
+
+{% macro vark_icon_name(canal) -%}{{ ICONO_CANAL[canal | upper] }}{%- endmacro %}
+
+
+{# Badge simple. variant: primary | accent | success | danger | warning | neutral #}
+{% macro badge(texto, variant="neutral", icono=None) -%}
+<span class="badge badge-{{ variant }}">{% if icono %}{{ icon(icono) }}{% endif %}{{ texto }}</span>
+{%- endmacro %}
+
+
+{# Aviso con ícono. kind: ok | error | warning | info. El cuerpo va en el
+   bloque {% call %}. Los errores se anuncian con role="alert"; el resto con
+   role="status" para no interrumpir al lector de pantalla. #}
+{% macro alert(kind="info", titulo=None) -%}
+{%- set iconos = {"ok": "circle-check", "error": "circle-x", "warning": "triangle-alert", "info": "info"} -%}
+<div class="alerta alerta-{{ kind }} alerta-con-icono" role="{{ 'alert' if kind == 'error' else 'status' }}">
+    {{ icon(iconos.get(kind, "info")) }}
+    <div class="alerta-cuerpo">
+        {% if titulo %}<strong class="alerta-titulo">{{ titulo }}</strong>{% endif %}
+        {% if caller %}<div{% if titulo %} class="mt-1"{% endif %}>{{ caller() }}</div>{% endif %}
+    </div>
+</div>
+{%- endmacro %}
+
+
+{# Estado vacío o de error: ícono grande, título y explicación (cuerpo del call).
+   tone: "" | danger | warning #}
+{% macro empty_state(icono, titulo, tone="", heading="h2") -%}
+<div class="empty-state {% if tone %}empty-state-{{ tone }}{% endif %}">
+    <span class="icon-tile">{{ icon(icono) }}</span>
+    <{{ heading }} class="text-xl">{{ titulo }}</{{ heading }}>
+    {% if caller %}{{ caller() }}{% endif %}
+</div>
+{%- endmacro %}
+
+
+{# Encabezado de página. El cuerpo opcional (call) va bajo la bajada. #}
+{% macro page_header(titulo, bajada=None, eyebrow=None, eyebrow_icon=None) -%}
+<header class="page-header">
+    {% if eyebrow %}<span class="eyebrow">{% if eyebrow_icon %}{{ icon(eyebrow_icon, cls="icon-sm") }}{% endif %}{{ eyebrow }}</span>{% endif %}
+    <h1>{{ titulo }}</h1>
+    {% if bajada %}<p>{{ bajada }}</p>{% endif %}
+    {% if caller %}{{ caller() }}{% endif %}
+</header>
+{%- endmacro %}
+
+
+{# Barra de progreso accesible. `valor` en 0–100. #}
+{% macro progress(valor, etiqueta, canal=None) -%}
+<div class="progress" role="progressbar" aria-label="{{ etiqueta }}"
+     aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ valor | float | round(1) }}"
+     {% if canal %}data-canal="{{ canal | upper }}"{% endif %}>
+    <div class="progress-fill" style="width: {{ valor }}%;"></div>
+</div>
+{%- endmacro %}
+
+
+{# Spinner inline para indicadores HTMX. #}
+{% macro spinner(etiqueta="Cargando") -%}
+<span class="spinner" role="status" aria-label="{{ etiqueta }}"></span>
+{%- endmacro %}

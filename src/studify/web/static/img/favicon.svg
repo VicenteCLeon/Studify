@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Marca de RepasAi: una cápsula (la microcápsula) en dos mitades —
+       primario y acento— con un destello. Misma geometría que el logo del header. -->
+  <rect width="32" height="32" rx="9" fill="#0F766E"/>
+  <g transform="rotate(-38 16 17)">
+    <rect x="5.5" y="12" width="21" height="10" rx="5" fill="#FFFFFF"/>
+    <path d="M16 12h5.5a5 5 0 0 1 0 10H16z" fill="#F2795A"/>
+  </g>
+  <path d="M24.5 4.5l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9z" fill="#FDEBE5"/>
+</svg>

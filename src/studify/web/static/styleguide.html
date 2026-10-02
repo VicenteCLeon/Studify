@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guía de estilo · RepasAi</title>
+<!-- Referencia viva del design system (docs/DESIGN_SYSTEM.md). No la enlaza
+     ninguna vista: se abre a mano en /static/styleguide.html. -->
+<script>(function(){try{var t=localStorage.getItem("repasai-theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t;}catch(e){}})();</script>
+<link rel="icon" href="/static/img/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/app.css">
+<script src="/static/js/app.js" defer></script>
+<style>
+  .sg-section { padding-block: var(--space-10); border-bottom: 1px solid var(--border); }
+  .sg-section > h2 { margin-bottom: var(--space-6); }
+  .sg-swatches { display: grid; gap: var(--space-3); grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr)); }
+  .sg-swatch { border-radius: var(--radius-md); border: 1px solid var(--border); overflow: hidden; background: var(--surface); font-size: var(--fs-xs); }
+  .sg-swatch > div { height: 3.5rem; }
+  .sg-swatch > span { display: block; padding: var(--space-2) var(--space-3); color: var(--text-muted); font-family: var(--font-mono); }
+  .sg-row { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; margin-bottom: var(--space-4); }
+  .sg-top { display: flex; justify-content: space-between; align-items: center; padding-block: var(--space-6); }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="sg-top">
+    <span class="eyebrow">RepasAi · design system</span>
+    <button type="button" class="btn btn-ghost btn-icon" data-theme-toggle aria-label="Cambiar tema">
+      <svg class="icon" aria-hidden="true"><use href="/static/icons/sprite.svg#i-moon"></use></svg>
+    </button>
+  </div>
+
+  <header class="page-header">
+    <span class="eyebrow"><svg class="icon icon-sm" aria-hidden="true"><use href="/static/icons/sprite.svg#i-sparkles"></use></svg>Fundamentos</span>
+    <h1>Aprende a tu manera, en minutos</h1>
+    <p>Fraunces para títulos, Figtree para texto. Medida de lectura de 68 caracteres, interlineado 1,6 y escala tipográfica fluida.</p>
+  </header>
+
+  <section class="sg-section">
+    <h2>Color</h2>
+    <div class="sg-swatches">
+      <div class="sg-swatch"><div style="background:var(--bg)"></div><span>--bg</span></div>
+      <div class="sg-swatch"><div style="background:var(--surface)"></div><span>--surface</span></div>
+      <div class="sg-swatch"><div style="background:var(--surface-sunken)"></div><span>--surface-sunken</span></div>
+      <div class="sg-swatch"><div style="background:var(--text)"></div><span>--text</span></div>
+      <div class="sg-swatch"><div style="background:var(--primary)"></div><span>--primary</span></div>
+      <div class="sg-swatch"><div style="background:var(--primary-soft)"></div><span>--primary-soft</span></div>
+      <div class="sg-swatch"><div style="background:var(--accent)"></div><span>--accent</span></div>
+      <div class="sg-swatch"><div style="background:var(--accent-soft)"></div><span>--accent-soft</span></div>
+      <div class="sg-swatch"><div style="background:var(--success)"></div><span>--success</span></div>
+      <div class="sg-swatch"><div style="background:var(--danger)"></div><span>--danger</span></div>
+      <div class="sg-swatch"><div style="background:var(--warning)"></div><span>--warning</span></div>
+    </div>
+    <h3 class="mt-8 mb-4">Dimensiones VARK</h3>
+    <div class="sg-row">
+      <span class="vark-chip" data-canal="V"><span class="vark-letter" aria-hidden="true">V</span><span>Visual</span></span>
+      <span class="vark-chip" data-canal="A"><span class="vark-letter" aria-hidden="true">A</span><span>Auditivo</span></span>
+      <span class="vark-chip" data-canal="R"><span class="vark-letter" aria-hidden="true">R</span><span>Lectura / Escritura</span></span>
+      <span class="vark-chip" data-canal="K"><span class="vark-letter" aria-hidden="true">K</span><span>Kinestésico</span></span>
+    </div>
+    <div class="sg-row">
+      <span class="icon-tile vark-tile" data-canal="V"><svg class="icon" aria-hidden="true"><use href="/static/icons/sprite.svg#i-eye"></use></svg></span>
+      <span class="icon-tile vark-tile" data-canal="A"><svg class="icon" aria-hidden="true"><use href="/static/icons/sprite.svg#i-headphones"></use></svg></span>
+      <span class="icon-tile vark-tile" data-canal="R"><svg class="icon" aria-hidden="true"><use href="/static/icons/sprite.svg#i-book-open"></use></svg></span>
+      <span class="icon-tile vark-tile" data-canal="K"><svg class="icon" aria-hidden="true"><use href="/static/icons/sprite.svg#i-hand"></use></svg></span>
+      <span class="vark-chip vark-chip-sm" data-canal="V"><svg class="icon" aria-hidden="true"><use href="/static/icons/sprite.svg#i-eye"></use></svg><span>Visual</span></span>
+      <span class="vark-chip vark-chip-sm" data-canal="K"><svg class="icon" aria-hidden="true"><use href="/static/icons/sprite.svg#i-hand"></use></svg><span>Kinestésico</span></span>
+    </div>
+    <div class="stack stack-sm" style="max-width: 28rem">
+      <div class="progress" data-canal="K"><div class="progress-fill" style="width: 42%"></div></div>
+      <div class="progress" data-canal="A"><div class="progress-fill" style="width: 28%"></div></div>
+      <div class="progress" data-canal="R"><div class="progress-fill" style="width: 18%"></div></div>
+      <div class="progress" data-canal="V"><div class="progress-fill" style="width: 12%"></div></div>
+    </div>
+  </section>
+
+  <section class="sg-section">
+    <h2>Botones y badges</h2>
+    <div class="sg-row">
+      <button class="btn btn-primary">Descubre tu estilo <svg class="icon" aria-hidden="true"><use href="/static/icons/sprite.svg#i-arrow-right"></use></svg></button>
+      <button class="btn btn-accent">Empezar ahora</button>
+      <button class="btn btn-secondary">Secundario</button>
+      <button class="btn btn-ghost">Fantasma</button>
+      <button class="btn btn-primary" disabled>Deshabilitado</button>
+    </div>
+    <div class="sg-row">
+      <button class="btn btn-success btn-sm"><svg class="icon" aria-hidden="true"><use href="/static/icons/sprite.svg#i-check"></use></svg>Validar</button>
+      <button class="btn btn-danger btn-sm"><svg class="icon" aria-hidden="true"><use href="/static/icons/sprite.svg#i-x"></use></svg>Descartar</button>
+      <button class="btn btn-primary btn-lg">Grande</button>
+      <button class="btn btn-secondary btn-icon" aria-label="Buscar"><svg class="icon" aria-hidden="true"><use href="/static/icons/sprite.svg#i-search"></use></svg></button>
+      <button class="btn btn-primary htmx-request">Generando <span class="spinner htmx-indicator"></span></button>
+    </div>
+    <div class="sg-row">
+      <span class="badge badge-primary">OA-U1-01</span>
+      <span class="badge badge-accent"><svg class="icon" aria-hidden="true"><use href="/static/icons/sprite.svg#i-sparkles"></use></svg>Generada para ti</span>
+      <span class="badge badge-success">validado</span>
+      <span class="badge badge-danger">descartado</span>
+      <span class="badge badge-warning">pendiente</span>
+      <span class="badge badge-neutral">neutro</span>
+    </div>
+  </section>
+
+  <section class="sg-section">
+    <h2>Avisos</h2>
+    <div class="stack">
+      <div class="alerta alerta-ok alerta-con-icono" role="status"><svg class="icon" aria-hidden="true"><use href="/static/icons/sprite.svg#i-circle-check"></use></svg><div class="alerta-cuerpo"><strong class="alerta-titulo">¡Correcto!</strong><div class="mt-1">La clave primaria compuesta exige que cada atributo dependa de toda la clave.</div></div></div>
+      <div class="alerta alerta-error alerta-con-icono" role="alert"><svg class="icon" aria-hidden="true"><use href="/static/icons/sprite.svg#i-circle-x"></use></svg><div class="alerta-cuerpo"><strong class="alerta-titulo">No es esa</strong><div class="mt-1">Revisa qué atributos dependen solo de parte de la clave.</div></div></div>
+      <div class="alerta alerta-warning alerta-con-icono" role="status"><svg class="icon" aria-hidden="true"><use href="/static/icons/sprite.svg#i-triangle-alert"></use></svg><div class="alerta-cuerpo">Material escaso para este tema.</div></div>
+      <div class="alerta alerta-info">Aviso simple, sin ícono (lo que devuelven los routers).</div>
+    </div>
+  </section>
+
+  <section class="sg-section">
+    <h2>Formularios</h2>
+    <div class="form-grid" style="max-width: 48rem">
+      <div class="form-group"><label class="form-label" for="sg1">Carrera</label><input class="form-control" id="sg1" placeholder="Ej.: Ingeniería Civil Informática"></div>
+      <div class="form-group"><label class="form-label" for="sg2">Rango etario</label><select class="form-control" id="sg2"><option>Prefiero no decirlo</option></select></div>
+    </div>
+    <div class="choice-group mt-4" style="max-width: 36rem">
+      <label class="choice"><input type="checkbox" checked><span>Ver un diagrama o un mapa conceptual</span></label>
+      <label class="choice"><input type="checkbox"><span>Escuchar una explicación del profesor</span></label>
+      <label class="choice"><input type="radio" name="sgr"><span>Radio sin marcar</span></label>
+      <label class="choice"><input type="radio" name="sgr" checked disabled><span>Respuesta correcta (simulador)</span></label>
+    </div>
+  </section>
+
+  <section class="sg-section">
+    <h2>Tabla, acordeón y carga</h2>
+    <div class="table-container mb-6">
+      <table class="table table-stack">
+        <thead><tr><th>Tema</th><th>Alumnos</th><th>Acierto</th></tr></thead>
+        <tbody>
+          <tr><td data-label="Tema">Segunda forma normal</td><td data-label="Alumnos">12</td><td data-label="Acierto">74%</td></tr>
+          <tr><td data-label="Tema">Notación O grande</td><td data-label="Alumnos">9</td><td data-label="Acierto">41%</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <details class="accordion" open>
+      <summary>Bases de Datos <svg class="icon accordion-chevron" aria-hidden="true"><use href="/static/icons/sprite.svg#i-chevron-down"></use></svg></summary>
+      <div class="accordion-body text-muted">Contenido del acordeón.</div>
+    </details>
+    <details class="accordion">
+      <summary>Diseño de UX <svg class="icon accordion-chevron" aria-hidden="true"><use href="/static/icons/sprite.svg#i-chevron-down"></use></svg></summary>
+      <div class="accordion-body">Otro contenido.</div>
+    </details>
+    <div class="card mt-6" style="max-width: 32rem">
+      <span class="skeleton skeleton-title"></span>
+      <span class="skeleton skeleton-line" style="width: 92%"></span>
+      <span class="skeleton skeleton-line" style="width: 84%"></span>
+      <span class="skeleton skeleton-line" style="width: 66%"></span>
+    </div>
+  </section>
+
+  <section class="sg-section">
+    <h2>Estados vacíos y datos</h2>
+    <div class="card">
+      <div class="empty-state">
+        <span class="icon-tile"><svg class="icon" aria-hidden="true"><use href="/static/icons/sprite.svg#i-inbox"></use></svg></span>
+        <h3 class="text-xl">Todavía no hay temas disponibles</h3>
+        <p>Un tema aparece cuando un docente valida el material que lo respalda.</p>
+      </div>
+    </div>
+    <div class="auto-grid mt-6" style="--grid-min: 10rem">
+      <div class="stat"><span class="stat-value">220</span><span class="stat-label">palabras de contenido</span></div>
+      <div class="stat"><span class="stat-value">2</span><span class="stat-label">recursos visuales</span></div>
+      <div class="stat"><span class="stat-value">3</span><span class="stat-label">componentes prácticos</span></div>
+    </div>
+  </section>
+</div>
+</body>
+</html>

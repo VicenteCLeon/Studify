@@ -4,7 +4,7 @@ from typing import Any
 from fastapi import Request
 from fastapi.templating import Jinja2Templates
 
-from studify.web import sesion
+from studify.web import sesion, textos
 
 # Obtener ruta absoluta para evitar problemas al ejecutar desde distintos directorios
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -26,3 +26,9 @@ def _contexto_global(request: Request) -> dict[str, Any]:
 templates = Jinja2Templates(
     directory=TEMPLATES_DIR, context_processors=[_contexto_global]
 )
+
+# Constantes de presentación que los macros de `components/` necesitan aun
+# cuando se importan sin contexto. El nombre de cada canal sale del mismo
+# `textos` que usan los routers, así un chip VARK no puede decir algo distinto
+# de la barra del perfil.
+templates.env.globals["NOMBRE_CANAL"] = textos.NOMBRE_CANAL
