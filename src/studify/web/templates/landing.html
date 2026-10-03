@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+{% import "components/ui.html" as ui %}
+
+{% block title %}RepasAi · Estudia en cápsulas hechas a tu manera{% endblock %}
+{% block body_class %}page-landing{% endblock %}
+
+{# La landing va a ancho completo: cada sección arma su propio container. #}
+{% block main %}
+
+<section class="hero" aria-labelledby="hero-titulo">
+    <div class="container hero-grid">
+        <div class="hero-copy">
+            <span class="eyebrow reveal" style="--i: 0">{{ ui.icon("sparkles", cls="icon-sm") }}Micro-aprendizaje adaptativo</span>
+            <h1 id="hero-titulo" class="hero-title reveal" style="--i: 1">
+                Estudia en cápsulas hechas <span class="marker">a tu manera</span>
+            </h1>
+            <p class="hero-lead reveal" style="--i: 2">
+                RepasAi descubre cómo aprendes mejor —viendo, escuchando, leyendo o
+                haciendo— y convierte el material de tu curso en microcápsulas de
+                3 a 7 minutos, pensadas para ti.
+            </p>
+            <div class="cluster hero-ctas reveal" style="--i: 3">
+                {% if con_sesion %}
+                <a href="/student/catalog" class="btn btn-primary btn-lg">
+                    Seguir estudiando {{ ui.icon("arrow-right") }}
+                </a>
+                <a href="/student/profile" class="btn btn-secondary btn-lg">Ver mi perfil</a>
+                {% else %}
+                <a href="/student/vark" class="btn btn-primary btn-lg">
+                    Descubre tu estilo {{ ui.icon("arrow-right") }}
+                </a>
+                <a href="#como-funciona" class="btn btn-ghost btn-lg">Cómo funciona</a>
+                {% endif %}
+            </div>
+            {% if not con_sesion %}
+            <ul class="hero-facts reveal" style="--i: 4" aria-label="Datos del cuestionario">
+                <li>{{ ui.icon("list-checks", cls="icon-sm") }}16 situaciones cotidianas</li>
+                <li>{{ ui.icon("clock", cls="icon-sm") }}Unos 5 minutos</li>
+                <li>{{ ui.icon("shield-check", cls="icon-sm") }}Sin crear cuenta</li>
+            </ul>
+            {% endif %}
+        </div>
+
+        {# Ilustración de una cápsula hecha con los mismos componentes de la
+           app. Es decorativa: el lector de pantalla ya tiene el texto de arriba. #}
+        <div class="hero-visual" aria-hidden="true">
+            <div class="mock mock-capsula">
+                <div class="cluster cluster-sm mb-3">
+                    <span class="badge badge-primary">BD-U3-02</span>
+                    <span class="badge badge-accent">{{ ui.icon("sparkles") }}Generada para ti</span>
+                </div>
+                <p class="mock-titulo">Dependencias funcionales</p>
+                <div class="mock-activacion">
+                    <span class="mock-paso">{{ ui.icon("lightbulb", cls="icon-sm") }}Para partir</span>
+                    <p>Si con tu RUT se sabe tu nombre, ¿también se sabe tu nota en cada ramo?</p>
+                </div>
+                <span class="mock-line" style="width: 94%"></span>
+                <span class="mock-line" style="width: 86%"></span>
+                <span class="mock-line" style="width: 62%"></span>
+                <div class="mock-fuente">
+                    {{ ui.icon("quote", cls="icon-sm") }}
+                    <span><strong>Apunte Bases de Datos</strong> · p. 12</span>
+                </div>
+            </div>
+
+            <div class="mock mock-perfil">
+                <p class="mock-perfil-titulo">Tu perfil</p>
+                {% for letra, valor in [("K", 46), ("V", 24), ("A", 18), ("R", 12)] %}
+                <div class="mock-barra" data-canal="{{ letra }}">
+                    <span class="vark-letter">{{ letra }}</span>
+                    <span class="mock-barra-track"><span style="width: {{ valor * 2 }}%"></span></span>
+                </div>
+                {% endfor %}
+            </div>
+
+            <span class="mock-chip mock-chip-1">{{ ui.vark_chip("V", size="sm", con_icono=True) }}</span>
+            <span class="mock-chip mock-chip-2">{{ ui.vark_chip("A", size="sm", con_icono=True) }}</span>
+        </div>
+    </div>
+</section>
+
+<section class="section landing-vark" aria-labelledby="vark-titulo">
+    <div class="container">
+        <header class="section-header">
+            <span class="eyebrow">El modelo VARK</span>
+            <h2 id="vark-titulo">Cuatro formas de aprender. Tú eres una mezcla.</h2>
+            <p>
+                Tu perfil no es una etiqueta: es un porcentaje en cada canal. RepasAi
+                combina los cuatro en la proporción que te acomoda.
+            </p>
+        </header>
+
+        {% set canales = [
+            ("V", "Tablas comparativas y esquemas que muestran cómo se conectan las ideas."),
+            ("A", "Explicaciones en tono de conversación, analogías cotidianas y la cápsula narrada en audio."),
+            ("R", "Definiciones precisas, encabezados claros y un glosario con los términos clave."),
+            ("K", "Ejemplos resueltos, pasos concretos y práctica activa con tarjetas y quiz."),
+        ] %}
+        <ul class="vark-grid" role="list">
+            {% for letra, texto in canales %}
+            <li class="vark-card" data-canal="{{ letra }}">
+                {{ ui.vark_tile(letra, size="lg") }}
+                <h3>{{ NOMBRE_CANAL[letra] }}</h3>
+                <p>{{ texto }}</p>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</section>
+
+<section class="section landing-pasos" id="como-funciona" aria-labelledby="pasos-titulo">
+    <div class="container">
+        <header class="section-header">
+            <span class="eyebrow">Cómo funciona</span>
+            <h2 id="pasos-titulo">De cero a repasar en tres pasos</h2>
+        </header>
+
+        <ol class="pasos" role="list">
+            <li class="paso">
+                <span class="paso-num" aria-hidden="true">1</span>
+                <span class="icon-tile">{{ ui.icon("list-checks") }}</span>
+                <h3>Responde el cuestionario</h3>
+                <p>16 situaciones de la vida universitaria. Marca todas las opciones que te representen, o ninguna.</p>
+            </li>
+            <li class="paso">
+                <span class="paso-num" aria-hidden="true">2</span>
+                <span class="icon-tile">{{ ui.icon("layers") }}</span>
+                <h3>Elige un tema de tu curso</h3>
+                <p>Solo aparecen temas con material que un docente ya revisó y validó.</p>
+            </li>
+            <li class="paso">
+                <span class="paso-num" aria-hidden="true">3</span>
+                <span class="icon-tile">{{ ui.icon("sparkles") }}</span>
+                <h3>Estudia tu microcápsula</h3>
+                <p>Una pregunta para activar, el concepto, un ejemplo y una actividad de cierre. En minutos.</p>
+            </li>
+        </ol>
+    </div>
+</section>
+
+<section class="section landing-confianza" aria-labelledby="confianza-titulo">
+    <div class="container confianza-grid">
+        <div class="stack">
+            <span class="eyebrow">{{ ui.icon("shield-check", cls="icon-sm") }}Trazabilidad</span>
+            <h2 id="confianza-titulo">Sin inventos: cada cápsula cita su fuente</h2>
+            <p class="text-muted text-md">
+                La IA no escribe de memoria. Cada cápsula se arma solo con fragmentos
+                del material oficial de tu curso, validados por un docente, y muestra
+                de qué documento y de qué página sale cada idea. Si un tema todavía no
+                tiene material revisado, RepasAi prefiere no ofrecerlo antes que
+                improvisar.
+            </p>
+        </div>
+        <div class="confianza-demo" aria-hidden="true">
+            <p class="eyebrow mb-3">Referencias</p>
+            <div class="mock-ref">
+                <span class="mock-ref-num">1</span>
+                <div><strong>Apunte Bases de Datos</strong><span>Página 12 · fragmento #34</span></div>
+            </div>
+            <div class="mock-ref">
+                <span class="mock-ref-num">2</span>
+                <div><strong>Guía de ejercicios Unidad 3</strong><span>Página 4 · fragmento #41</span></div>
+            </div>
+            <p class="mock-ref-sello">{{ ui.icon("circle-check", cls="icon-sm") }}Citas verificadas contra la base de datos</p>
+        </div>
+    </div>
+</section>
+
+<section class="section landing-cta" aria-labelledby="cta-titulo">
+    <div class="container">
+        <div class="cta-band">
+            <h2 id="cta-titulo">¿Listo para tu primera cápsula?</h2>
+            <p>Descubre tu estilo en unos minutos y empieza a repasar con contenido hecho para ti.</p>
+            {% if con_sesion %}
+            <a href="/student/catalog" class="btn btn-accent btn-lg">Elegir un tema {{ ui.icon("arrow-right") }}</a>
+            {% else %}
+            <a href="/student/vark" class="btn btn-accent btn-lg">Empezar ahora {{ ui.icon("arrow-right") }}</a>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+{% endblock %}

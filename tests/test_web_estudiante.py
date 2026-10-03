@@ -94,6 +94,29 @@ def test_vark_admite_seleccion_multiple_y_blanco(cliente):
     assert "<input type=\"radio\"" not in html
 
 
+# --- Portada ------------------------------------------------------------------
+
+
+def test_portada_sin_sesion_invita_al_cuestionario(cliente):
+    respuesta = cliente.get("/", follow_redirects=False)
+
+    assert respuesta.status_code == 200
+    assert 'href="/student/vark"' in respuesta.text
+    assert "Descubre tu estilo" in respuesta.text
+    assert "Seguir estudiando" not in respuesta.text
+
+
+def test_portada_con_sesion_lleva_al_catalogo(cliente):
+    """Quien ya respondió el cuestionario no tiene que volver a pasar por él."""
+    cliente.cookies.set(sesion.COOKIE_ESTUDIANTE, f"7.{sesion._firma(7)}")
+
+    respuesta = cliente.get("/")
+
+    assert respuesta.status_code == 200
+    assert "Seguir estudiando" in respuesta.text
+    assert 'href="/student/catalog"' in respuesta.text
+
+
 # --- Sesión -------------------------------------------------------------------
 
 

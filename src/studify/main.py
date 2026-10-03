@@ -5,14 +5,16 @@ Arranque:  uvicorn studify.main:app --reload --app-dir src
 
 import os
 
-from fastapi import FastAPI
-from fastapi.responses import RedirectResponse
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
 
 from studify.api.routers import capsules, diagnostics, knowledge
 from studify.config import get_settings
 from studify.db.session import engine
+from studify.web import sesion
+from studify.web.deps import templates
 from studify.web.routers import auth, student, teacher
 
 settings = get_settings()
@@ -47,9 +49,18 @@ PUBLIC_DIR = os.path.join(BASE_DIR, "public")
 if os.path.exists(PUBLIC_DIR):
     app.mount("/public", StaticFiles(directory=PUBLIC_DIR), name="public")
 
-@app.get("/", include_in_schema=False)
-def index():
-    return RedirectResponse(url="/student/vark")
+@app.get("/", include_in_schema=False, response_class=HTMLResponse)
+def index(request: Request):
+    """Portada de RepasAi: qué es, cómo funciona y el botón para empezar.
+
+    Solo lee si hay sesión para elegir el llamado a la acción: quien ya
+    respondió el cuestionario sigue al catálogo; quien no, va a responderlo.
+    """
+    return templates.TemplateResponse(
+        request=request,
+        name="landing.html",
+        context={"con_sesion": sesion.estudiante_actual(request) is not None},
+    )
 
 @app.get("/health", tags=["infra"])
 def health() -> dict:

@@ -1739,6 +1739,516 @@ form.htmx-request button[type="submit"] {
    (cada vista agrega aquí su sección)
    ========================================================================== */
 
+/* --- Compartido entre pantallas ----------------------------------------- */
+.section-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  max-width: 42rem;
+  margin-bottom: var(--space-10);
+}
+
+.section-header p {
+  color: var(--text-muted);
+  font-size: var(--fs-md);
+}
+
+/* Subrayado tipo marcador (acento) para resaltar una frase del título. */
+.marker {
+  background-image: linear-gradient(
+    transparent 62%,
+    color-mix(in srgb, var(--accent) 45%, transparent) 62%,
+    color-mix(in srgb, var(--accent) 45%, transparent) 92%,
+    transparent 92%
+  );
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  padding-inline: 0.08em;
+}
+
+/* Textura escolar de la marca original como decoración teñida por tema. */
+.textura::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-color: var(--primary);
+  -webkit-mask: url("/static/img/textura-escolar.svg") repeat 0 0 / 340px 340px;
+  mask: url("/static/img/textura-escolar.svg") repeat 0 0 / 340px 340px;
+  opacity: 0.09;
+  pointer-events: none;
+}
+
+
+/* --- 6.1 Landing --------------------------------------------------------- */
+.page-landing .site-main {
+  padding-block: 0;
+}
+
+.hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  padding-block: var(--space-12) var(--space-16);
+}
+
+/* La textura se desvanece hacia los bordes para no competir con el texto. */
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-color: var(--primary);
+  -webkit-mask:
+    url("/static/img/textura-escolar.svg") repeat 0 0 / 340px 340px,
+    radial-gradient(ellipse 70% 70% at 70% 40%, #000 0%, transparent 75%);
+  -webkit-mask-composite: source-in;
+  mask:
+    url("/static/img/textura-escolar.svg") repeat 0 0 / 340px 340px,
+    radial-gradient(ellipse 70% 70% at 70% 40%, #000 0%, transparent 75%);
+  mask-composite: intersect;
+  opacity: 0.12;
+}
+
+.hero::after {
+  content: "";
+  position: absolute;
+  z-index: -2;
+  inset: -20% -10% auto auto;
+  width: min(48rem, 90vw);
+  aspect-ratio: 1;
+  background: radial-gradient(circle, color-mix(in srgb, var(--primary) 16%, transparent), transparent 65%);
+  pointer-events: none;
+}
+
+.hero-grid {
+  display: grid;
+  gap: var(--space-12);
+  align-items: center;
+}
+
+.hero-copy {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  max-width: 36rem;
+}
+
+.hero-title {
+  font-size: var(--fs-4xl);
+  line-height: 1.05;
+  letter-spacing: -0.025em;
+  font-variation-settings: "opsz" 144;
+}
+
+.hero-lead {
+  font-size: var(--fs-lg);
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.hero-ctas {
+  margin-top: var(--space-2);
+}
+
+.hero-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-5);
+  padding: 0;
+  list-style: none;
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+
+.hero-facts li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.hero-facts .icon {
+  color: var(--primary-text);
+}
+
+/* Ilustración: tarjetas superpuestas hechas con componentes reales. */
+.hero-visual {
+  position: relative;
+  min-height: 26rem;
+  max-width: 30rem;
+  width: 100%;
+  margin-inline: auto;
+}
+
+.mock {
+  position: absolute;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+  padding: var(--space-5);
+}
+
+.mock-capsula {
+  inset: 0 2.5rem auto 0;
+  transform: rotate(-2deg);
+  animation: rise-in var(--dur-slow) var(--ease-out) both 200ms, float 7s ease-in-out infinite 1s;
+}
+
+.mock-titulo {
+  font-family: var(--font-display);
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-semibold);
+  line-height: 1.2;
+  margin-bottom: var(--space-3);
+}
+
+.mock-activacion {
+  padding: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--accent-soft);
+  font-size: var(--fs-sm);
+  line-height: 1.45;
+}
+
+.mock-paso {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 0.2rem;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent-text);
+}
+
+.mock-line {
+  display: block;
+  height: 0.6rem;
+  margin-block: 0.55rem;
+  border-radius: var(--radius-full);
+  background: var(--surface-sunken);
+}
+
+.mock-fuente {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+  padding-top: var(--space-3);
+  border-top: 1px dashed var(--border-strong);
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+}
+
+.mock-fuente .icon {
+  color: var(--primary-text);
+}
+
+.mock-perfil {
+  right: 0;
+  bottom: 0;
+  width: 13.5rem;
+  padding: var(--space-4);
+  transform: rotate(2.5deg);
+  animation: rise-in var(--dur-slow) var(--ease-out) both 380ms, float 8s ease-in-out infinite 1.6s;
+}
+
+.mock-perfil-titulo {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: var(--space-3);
+}
+
+.mock-barra {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.mock-barra .vark-letter {
+  width: 1.35rem;
+  height: 1.35rem;
+  font-size: 0.6875rem;
+}
+
+.mock-barra-track {
+  flex: 1;
+  height: 0.5rem;
+  border-radius: var(--radius-full);
+  background: var(--surface-sunken);
+  overflow: hidden;
+}
+
+.mock-barra-track > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--canal);
+}
+
+.mock-chip {
+  position: absolute;
+  filter: drop-shadow(0 6px 14px rgb(0 0 0 / 0.12));
+  animation: pop-in var(--dur-slow) var(--ease-spring) both;
+}
+
+.mock-chip .vark-chip {
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1.5px var(--canal-soft);
+}
+
+.mock-chip-1 { top: -0.75rem; right: 0; animation-delay: 600ms; }
+.mock-chip-2 { bottom: 1.75rem; left: 0.5rem; animation-delay: 750ms; }
+
+@keyframes float {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -6px; }
+}
+
+/* VARK */
+.landing-vark {
+  background: var(--bg-subtle);
+  border-block: 1px solid var(--border);
+}
+
+.vark-grid {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(min(15rem, 100%), 1fr));
+  padding: 0;
+  list-style: none;
+}
+
+.vark-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-6);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition:
+    transform var(--dur-base) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out);
+}
+
+.vark-card::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 4px;
+  background: var(--canal);
+}
+
+.vark-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+}
+
+.vark-card h3 {
+  font-size: var(--fs-xl);
+}
+
+.vark-card p {
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+  line-height: 1.55;
+}
+
+/* Pasos */
+.pasos {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(min(16rem, 100%), 1fr));
+  padding: 0;
+  list-style: none;
+  counter-reset: none;
+}
+
+.paso {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-6);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+}
+
+.paso-num {
+  position: absolute;
+  top: var(--space-4);
+  right: var(--space-5);
+  font-family: var(--font-display);
+  font-size: 3rem;
+  font-weight: var(--fw-bold);
+  line-height: 1;
+  color: var(--primary-soft-strong);
+}
+
+.paso h3 {
+  font-size: var(--fs-xl);
+}
+
+.paso p {
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+}
+
+/* Confianza */
+.confianza-grid {
+  display: grid;
+  gap: var(--space-10);
+  align-items: center;
+}
+
+.confianza-demo {
+  padding: var(--space-6);
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-md);
+}
+
+.mock-ref {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.mock-ref div {
+  display: flex;
+  flex-direction: column;
+  font-size: var(--fs-sm);
+}
+
+.mock-ref span:not(.mock-ref-num) {
+  color: var(--text-muted);
+  font-size: var(--fs-xs);
+}
+
+.mock-ref-num {
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: var(--radius-sm);
+  background: var(--primary-soft);
+  color: var(--primary-text);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+}
+
+.mock-ref-sello {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: var(--space-4);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  color: var(--success-text);
+}
+
+/* CTA final */
+.landing-cta {
+  padding-top: 0;
+}
+
+.cta-band {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-12) var(--space-6);
+  border-radius: var(--radius-xl);
+  text-align: center;
+  background: var(--primary);
+  color: var(--primary-contrast);
+}
+
+.cta-band::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-color: var(--primary-contrast);
+  -webkit-mask: url("/static/img/textura-escolar.svg") repeat 0 0 / 340px 340px;
+  mask: url("/static/img/textura-escolar.svg") repeat 0 0 / 340px 340px;
+  opacity: 0.12;
+}
+
+.cta-band h2 {
+  color: inherit;
+  font-size: var(--fs-3xl);
+}
+
+.cta-band p {
+  max-width: 34rem;
+  opacity: 0.9;
+  font-size: var(--fs-md);
+}
+
+.cta-band .btn {
+  margin-top: var(--space-2);
+}
+
+.cta-band .btn:focus-visible {
+  box-shadow: 0 0 0 3px var(--primary), 0 0 0 5px var(--primary-contrast);
+}
+
+@media (min-width: 900px) {
+  .hero {
+    padding-block: var(--space-20);
+  }
+
+  .hero-grid {
+    grid-template-columns: 1.1fr 1fr;
+  }
+
+  .confianza-grid {
+    grid-template-columns: 1.2fr 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-visual {
+    min-height: 24rem;
+  }
+
+  .mock-capsula {
+    inset: 0 1rem auto 0;
+  }
+
+  .mock-perfil {
+    width: 12rem;
+  }
+
+  .mock-chip-2 {
+    display: none;
+  }
+
+  .hero-ctas .btn {
+    flex: 1 1 100%;
+  }
+}
+
 
 /* ==========================================================================
    7. UTILIDADES
