@@ -1,525 +1,413 @@
 {# La microcápsula renderizada. La incluyen dos vistas con contextos opuestos:
 
-- `student/viewer.html`, donde el estudiante responde la actividad y las
-claves del quiz (`indice_correcta`, `retroalimentacion`) NO viajan al
-navegador; y
-- el simulador del docente, que necesita exactamente lo contrario: ver la
-alternativa correcta y la retroalimentación para juzgar si la actividad
-evalúa el objetivo, sin responder nada.
+   - `student/viewer.html`, donde el estudiante responde la actividad y las
+     claves del quiz (`indice_correcta`, `retroalimentacion`) NO viajan al
+     navegador; y
+   - el simulador del docente, que necesita exactamente lo contrario: ver la
+     alternativa correcta y la retroalimentación para juzgar si la actividad
+     evalúa el objetivo, sin responder nada (por eso, en simulación, este
+     parcial no tiene ningún formulario).
 
-Esa diferencia es todo lo que decide `es_simulacion`. Es un partial y no una
-página porque el simulador lo inyecta con HTMX dentro de una pantalla que ya
-tiene su `
+   Esa diferencia es todo lo que decide `es_simulacion`. Es un parcial y no una
+   página porque el simulador lo inyecta con HTMX dentro de una pantalla que ya
+   tiene su cabecera.
 
-<head>` y su cabecera. #}
-    <div class="card" style="max-width: 900px; margin: 0 auto;">
+   Usa <div> y no <header> para los encabezados internos: el test del
+   simulador comprueba que el parcial no traiga "<head" (página completa
+   incrustada), y "<header" contiene esa subcadena.
 
-        <div class="capsule-header">
-            <h1 class="mb-2">{{ capsula.titulo }}</h1>
-            <p class="text-muted mb-4">{{ capsula.objetivo_aprendizaje }}</p>
-            <div class="flex gap-2" style="flex-wrap: wrap;">
-                <span class="badge badge-primary">{{ objetivo.codigo_objetivo }}</span>
-                <span class="badge badge-success">{{ objetivo.asignatura }} · {{ objetivo.unidad }}</span>
-                {% if es_simulacion %}
-                <span class="badge badge-warning">Simulación · perfil {{ perfil_simulado }} 100%</span>
-                {% elif capsula.origen == 'generada' %}
-                <span class="badge badge-warning">Generada para ti</span>
-                {% else %}
-                <span class="badge badge-warning">Recuperada de caché</span>
-                {% endif %}
+   Las etiquetas `<ol class="lista-bloque">`, `<table class="table">` y
+   `<dl class="glosario">` son contrato con los tests del visor: cada tipo de
+   bloque del esquema se dibuja con la estructura HTML que le corresponde. #}
+{% import "components/ui.html" as ui %}
+
+{%- set uid = capsula.id_capsula if (capsula and capsula.id_capsula) else 'sim' -%}
+{%- set refs = referencias if referencias is defined and referencias else [] -%}
+
+{% set ROTULO_BLOQUE = {
+    "lista_pasos": ("list-ordered", "Paso a paso"),
+    "tabla": ("table", "Tabla comparativa"),
+    "esquema": ("network", "Esquema"),
+    "analogia": ("message-circle", "Analogía"),
+    "ejemplo_resuelto": ("pen-line", "Ejemplo resuelto"),
+    "glosario": ("book-open", "Glosario"),
+} %}
+{% set ROTULO_ACTIVIDAD = {
+    "quiz_mc": "Selección única",
+    "intentalo_tu": "Inténtalo tú",
+    "flashcards": "Tarjetas de repaso",
+    "quiz_multi": "Cuestionario",
+    "flashcards_y_quiz": "Tarjetas + cuestionario",
+} %}
+
+
+{# --- Piezas reutilizadas por varios tipos de actividad ------------------- #}
+
+{% macro flashcards(tarjetas, id) -%}
+{# Sin JS se ve la lista completa; con JS, el mazo interactivo que lee los
+   textos de esa misma lista (sin duplicarlos en un JSON). #}
+<div class="flashcards" data-flashcards id="fc-{{ id }}">
+    <ol class="flashcards-lista" data-fc-lista>
+        {% for t in tarjetas %}
+        <li>
+            <span class="fc-anverso">{{ t.anverso }}</span>
+            <span class="fc-reverso">{{ t.reverso }}</span>
+        </li>
+        {% endfor %}
+    </ol>
+
+    <div class="flashcards-mazo js-only">
+        <button type="button" class="flashcard" data-fc-card aria-pressed="false">
+            <span class="flashcard-cara flashcard-frente">
+                <span class="flashcard-etiqueta">{{ ui.icon("lightbulb", cls="icon-sm") }}Pregunta</span>
+                <span class="flashcard-texto" data-fc-front></span>
+                <span class="flashcard-ayuda">{{ ui.icon("rotate-ccw", cls="icon-sm") }}Toca para ver la respuesta</span>
+            </span>
+            <span class="flashcard-cara flashcard-reverso" aria-hidden="true">
+                <span class="flashcard-etiqueta">{{ ui.icon("circle-check", cls="icon-sm") }}Respuesta</span>
+                <span class="flashcard-texto" data-fc-back></span>
+                <span class="flashcard-ayuda">{{ ui.icon("rotate-ccw", cls="icon-sm") }}Toca para volver</span>
+            </span>
+        </button>
+
+        <div class="flashcards-controles">
+            <button type="button" class="btn btn-secondary btn-icon" data-fc-prev aria-label="Tarjeta anterior">{{ ui.icon("arrow-left") }}</button>
+            <div class="flashcards-progreso">
+                <span class="flashcards-contador" data-fc-counter>1 / {{ tarjetas | length }}</span>
+                <div class="progress" aria-hidden="true"><div class="progress-fill" data-fc-fill></div></div>
             </div>
+            <button type="button" class="btn btn-secondary btn-icon" data-fc-next aria-label="Tarjeta siguiente">{{ ui.icon("arrow-right") }}</button>
         </div>
+        <p class="visually-hidden" aria-live="polite" data-fc-live></p>
+    </div>
+</div>
+{%- endmacro %}
 
-        {# Pasos 2 y 3 de la estructura pedagógica. Van fuera del bucle de bloques
-        porque no son bloques tipados: son campos propios del contrato, y que la
-        activación aparezca siempre antes del concepto es parte del diseño, no
-        algo que decida el orden en que el modelo devolvió una lista. #}
-        <div class="capsule-activation">
-            <p class="paso-etiqueta">Para partir</p>
-            <p class="pregunta-activacion">{{ capsula.activacion }}</p>
-        </div>
 
-        {% set es_auditivo = (capsula and capsula.configuracion and capsula.configuracion.audio_activo) or (perfil_simulado == 'Auditivo') or (audio_activo) %}
-        {% if es_auditivo %}
-        {% set widget_id = capsula.id_capsula if (capsula and capsula.id_capsula) else 'sim' %}
-        <div class="capsule-auditory-widget my-4">
-            <form id="audio-form-{{ widget_id }}">
-                <input type="hidden" name="texto_override" value="{{ capsula.activacion }} {{ capsula.concepto_central }}">
-            </form>
-            <div id="audio-widget-{{ widget_id }}"
-                 hx-post="/student/viewer/{{ capsula.id_capsula if (capsula and capsula.id_capsula) else 0 }}/generate-audio"
-                 hx-trigger="load"
-                 hx-include="#audio-form-{{ widget_id }}"
-                 hx-swap="innerHTML">
-                
-                <div class="audio-generating-box p-6 border rounded-lg text-center" style="background-color: var(--bg-surface); border: 1px solid var(--border-color);">
-                    <div class="equalizer-loader mb-3">
-                        <span class="eq-bar"></span>
-                        <span class="eq-bar"></span>
-                        <span class="eq-bar"></span>
-                        <span class="eq-bar"></span>
-                        <span class="eq-bar"></span>
-                    </div>
-                    <div class="font-semibold text-primary mb-1">🎙️ Sintetizando audio neuronal con XTTS-v2...</div>
-                    <p class="text-xs text-muted mb-0">Generando la narración hablada para tu perfil Auditivo. Por favor espera unos segundos.</p>
-                </div>
-            </div>
-        </div>
-        {% endif %}
+{% macro opciones_simuladas(alternativas, correcta) -%}
+<div class="choice-group">
+    {% for alternativa in alternativas %}
+    <label class="choice">
+        <input type="radio" disabled {% if loop.index0 == correcta %}checked{% endif %}>
+        <span class="flex-1">{{ alternativa }}</span>
+        {% if loop.index0 == correcta %}<span class="badge badge-success">{{ ui.icon("check") }}Correcta</span>{% endif %}
+    </label>
+    {% endfor %}
+</div>
+{%- endmacro %}
 
-        <div class="capsule-content">
-            <div class="bloque bloque-concepto">
-                <h3 class="mb-2">Concepto central</h3>
-                <p>{{ capsula.concepto_central }}</p>
-            </div>
 
-            {% for bloque in bloques %}
-            <div class="bloque bloque-{{ bloque.tipo }}">
-                {% if bloque.encabezado %}
-                <h3 class="mb-2">{{ bloque.encabezado }}</h3>
-                {% endif %}
+{% macro preguntas_simuladas(preguntas) -%}
+<ol class="quiz-lista" role="list">
+    {% for preg in preguntas %}
+    <li class="quiz-item">
+        <p class="quiz-num">Pregunta {{ loop.index }} de {{ loop.length }}</p>
+        <p class="quiz-enunciado">{{ preg.enunciado }}</p>
+        {{ opciones_simuladas(preg.alternativas, preg.indice_correcta) }}
+        <p class="quiz-explicacion">{{ ui.icon("lightbulb", cls="icon-sm") }}<span>{{ preg.explicacion }}</span></p>
+    </li>
+    {% endfor %}
+</ol>
+{%- endmacro %}
 
-                {% if bloque.forma == 'texto' %}
-                <p>{{ bloque.cuerpo }}</p>
 
-                {% elif bloque.forma == 'lista' %}
-                {% if bloque.ordenada %}
-                <ol class="lista-bloque">
-                    {% for elemento in bloque.cuerpo %}<li>{{ elemento }}</li>{% endfor %}
-                </ol>
-                {% else %}
-                <ul class="lista-bloque">
-                    {% for elemento in bloque.cuerpo %}<li>{{ elemento }}</li>{% endfor %}
-                </ul>
-                {% endif %}
-
-                {% elif bloque.forma == 'filas' %}
-                {% if bloque.tipo == 'glosario' %}
-                <dl class="glosario">
-                    {% for fila in bloque.cuerpo %}
-                    <dt>{{ fila[0] }}</dt>
-                    <dd>{{ fila[1:] | join(' ') }}</dd>
+{% macro quiz_multi_form(preguntas, id_capsula) -%}
+{# Las respuestas viajan juntas en `answer` ("0,2,1"), que es lo que espera
+   el servidor; app.js las arma en htmx:configRequest a partir de los radios. #}
+<form hx-post="/student/viewer/{{ id_capsula }}/submit" hx-target="#feedback-result" hx-swap="innerHTML"
+      data-multiquiz data-total="{{ preguntas | length }}">
+    <input type="hidden" name="answer" value="">
+    <ol class="quiz-lista" role="list">
+        {% for preg in preguntas %}
+        {% set preg_idx = loop.index0 %}
+        <li class="quiz-item">
+            <fieldset>
+                <legend>
+                    <span class="quiz-num">Pregunta {{ loop.index }} de {{ loop.length }}</span>
+                    <span class="quiz-enunciado">{{ preg.enunciado }}</span>
+                </legend>
+                <div class="choice-group">
+                    {% for alternativa in preg.alternativas %}
+                    <label class="choice">
+                        <input type="radio" name="preg_{{ preg_idx }}" value="{{ loop.index0 }}" required>
+                        <span>{{ alternativa }}</span>
+                    </label>
                     {% endfor %}
-                </dl>
-                {% else %}
-                <div class="table-container">
-                    <table class="table">
-                        {% for fila in bloque.cuerpo %}
-                        {% if loop.first %}
-                        <thead>
-                            <tr>{% for celda in fila %}<th>{{ celda }}</th>{% endfor %}</tr>
-                        </thead>
-                        <tbody>
-                            {% else %}
-                            <tr>{% for celda in fila %}<td>{{ celda }}</td>{% endfor %}</tr>
-                            {% endif %}
-                            {% endfor %}
-                        </tbody>
-                    </table>
                 </div>
-                {% endif %}
-                {% endif %}
-            </div>
-            {% endfor %}
-        </div>
+            </fieldset>
+        </li>
+        {% endfor %}
+    </ol>
+    <button type="submit" class="btn btn-primary btn-block">
+        <span class="idle-only">{{ ui.icon("clipboard-check") }}</span>Revisar mis respuestas
+        <span class="htmx-indicator">{{ ui.spinner("Revisando") }}</span>
+    </button>
+</form>
+{%- endmacro %}
 
-        <div class="capsule-activity" id="activity-container">
-            <h3 class="mb-4">Actividad de Cierre</h3>
-            <p class="mb-4">{{ actividad.pregunta }}</p>
 
+<article class="capsula" aria-labelledby="capsula-titulo">
+
+    {# --- Paso 1: objetivo ------------------------------------------------ #}
+    <div class="capsula-head">
+        <div class="cluster cluster-sm">
+            <span class="badge badge-primary">{{ objetivo.codigo_objetivo }}</span>
+            <span class="badge badge-neutral">{{ objetivo.asignatura }} · {{ objetivo.unidad }}</span>
             {% if es_simulacion %}
-            {# Vista del Docente en el Simulador: ve las respuestas y explicaciones #}
-            {% if actividad.tipo == 'quiz_mc' %}
-            <div class="radio-group mb-4">
-                {% for alternativa in actividad.alternativas %}
-                <label class="radio-option" style="background-color: var(--bg-surface);">
-                    <input type="radio" disabled {% if loop.index0==actividad.indice_correcta %}checked{% endif %}>
-                    <span>{{ alternativa }}</span>
-                </label>
-                {% endfor %}
-            </div>
-            <div class="alerta alerta-info" role="status">
-                <strong>Retroalimentación configurada:</strong>
-                <div class="mt-2">{{ actividad.retroalimentacion }}</div>
-            </div>
+            <span class="badge badge-warning">{{ ui.icon("flask-conical") }}Simulación · perfil {{ perfil_simulado }} 100%</span>
+            {% elif capsula.origen == 'generada' %}
+            <span class="badge badge-accent">{{ ui.icon("sparkles") }}Generada para ti</span>
+            {% else %}
+            <span class="badge badge-neutral">{{ ui.icon("database") }}Recuperada de caché</span>
+            {% endif %}
+        </div>
+        <h1 id="capsula-titulo" class="capsula-titulo">{{ capsula.titulo }}</h1>
+        <p class="capsula-objetivo">
+            {{ ui.icon("target") }}
+            <span><strong>Objetivo de aprendizaje.</strong> {{ capsula.objetivo_aprendizaje }}</span>
+        </p>
+    </div>
 
-            {% elif actividad.tipo == 'intentalo_tu' %}
-            <div class="alerta alerta-info" role="status">
-                <strong>Respuesta esperada para el estudiante:</strong>
-                <div class="mt-2">{{ actividad.retroalimentacion }}</div>
-            </div>
+    <nav class="capsula-indice" aria-label="Partes de la cápsula">
+        <ol role="list">
+            <li><a href="#paso-activacion">{{ ui.icon("lightbulb", cls="icon-sm") }}Para partir</a></li>
+            <li><a href="#paso-concepto">{{ ui.icon("file-text", cls="icon-sm") }}Concepto</a></li>
+            <li><a href="#paso-desarrollo">{{ ui.icon("layers", cls="icon-sm") }}Desarrollo</a></li>
+            <li><a href="#paso-actividad">{{ ui.icon("clipboard-check", cls="icon-sm") }}Actividad</a></li>
+            <li><a href="#paso-fuentes">{{ ui.icon("quote", cls="icon-sm") }}Fuentes</a></li>
+        </ol>
+    </nav>
 
-            {% elif actividad.tipo == 'flashcards' %}
-            <div class="flex flex-col gap-3 mb-4">
-                {% for tarjeta in actividad.tarjetas %}
-                <div class="p-3"
-                    style="background-color: var(--bg-surface); border: 1px solid var(--border-color); border-radius: var(--radius-md);">
-                    <div class="text-sm font-semibold text-primary mb-1">Tarjeta {{ loop.index }}</div>
-                    <div><strong>Anverso:</strong> {{ tarjeta.anverso }}</div>
-                    <div class="mt-1 text-muted"><strong>Reverso:</strong> {{ tarjeta.reverso }}</div>
+    {# --- Paso 2: activación. Fuera del bucle de bloques porque no es un
+       bloque tipado: es un campo propio del contrato, y que aparezca siempre
+       antes del concepto es parte del diseño pedagógico. --------------------- #}
+    <section id="paso-activacion" class="capsula-activacion" aria-labelledby="activacion-titulo">
+        <p id="activacion-titulo" class="paso-rotulo">{{ ui.icon("lightbulb", cls="icon-sm") }}Para partir</p>
+        <p class="pregunta-activacion">{{ capsula.activacion }}</p>
+        <p class="capsula-activacion-pista">Piensa tu respuesta un momento antes de seguir leyendo.</p>
+    </section>
+
+    {# --- Narración para el perfil auditivo ------------------------------- #}
+    {% set es_auditivo = (capsula and capsula.configuracion and capsula.configuracion.audio_activo) or (perfil_simulado == 'Auditivo') or (audio_activo) %}
+    {% if es_auditivo %}
+    <section class="capsula-audio" aria-label="Narración en audio">
+        <div id="audio-widget-{{ uid }}"
+             hx-post="/student/viewer/{{ capsula.id_capsula if (capsula and capsula.id_capsula) else 0 }}/generate-audio"
+             hx-trigger="load"
+             hx-vals='{{ {"texto_override": capsula.activacion ~ " " ~ capsula.concepto_central} | tojson }}'
+             hx-swap="innerHTML">
+            <div class="audio-generando" data-canal="A" role="status">
+                <div class="equalizer" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
+                <div>
+                    <p class="audio-player-titulo">Preparando la narración…</p>
+                    <p class="audio-player-sub">Sintetizando el audio de tu cápsula con XTTS-v2. Puedes empezar a leer mientras tanto.</p>
                 </div>
-                {% endfor %}
             </div>
+        </div>
+    </section>
+    {% endif %}
 
-            {% elif actividad.tipo == 'quiz_multi' %}
-            <div class="flex flex-col gap-4 mb-4">
-                {% for preg in actividad.preguntas %}
-                <div class="multi-quiz-item">
-                    <div class="multi-quiz-number">Pregunta {{ loop.index }}</div>
-                    <div class="multi-quiz-question">{{ preg.enunciado }}</div>
-                    <div class="radio-group mb-2">
-                        {% for alternativa in preg.alternativas %}
-                        <label class="radio-option" style="background-color: var(--bg-surface);">
-                            <input type="radio" disabled {% if loop.index0==preg.indice_correcta %}checked{% endif %}>
-                            <span>{{ alternativa }}</span>
-                        </label>
-                        {% endfor %}
-                    </div>
-                    <div class="text-xs text-muted mt-2">💡 Explicación: {{ preg.explicacion }}</div>
-                </div>
-                {% endfor %}
-            </div>
+    {# --- Paso 3: concepto central ---------------------------------------- #}
+    <section id="paso-concepto" class="capsula-seccion" aria-labelledby="concepto-titulo">
+        <h2 id="concepto-titulo" class="capsula-h2">Concepto central</h2>
+        <p class="capsula-concepto">{{ capsula.concepto_central }}</p>
+    </section>
 
-            {% elif actividad.tipo == 'flashcards_y_quiz' %}
-            <h4 class="mb-3 text-primary font-semibold">🃏 Tarjetas de Memorización Activa (Flashcards)</h4>
-            <div class="flex flex-col gap-3 mb-6">
-                {% for tarjeta in actividad.tarjetas %}
-                <div class="p-3"
-                    style="background-color: var(--bg-surface); border: 1px solid var(--border-color); border-radius: var(--radius-md);">
-                    <div class="text-sm font-semibold text-primary mb-1">Tarjeta {{ loop.index }}</div>
-                    <div><strong>Anverso:</strong> {{ tarjeta.anverso }}</div>
-                    <div class="mt-1 text-muted"><strong>Reverso:</strong> {{ tarjeta.reverso }}</div>
-                </div>
-                {% endfor %}
-            </div>
-
-            <h4 class="mb-3 text-primary font-semibold">📝 Cuestionario Formativo Práctico (Quiz)</h4>
-            <div class="flex flex-col gap-4 mb-4">
-                {% for preg in actividad.preguntas %}
-                <div class="multi-quiz-item">
-                    <div class="multi-quiz-number">Pregunta {{ loop.index }}</div>
-                    <div class="multi-quiz-question">{{ preg.enunciado }}</div>
-                    <div class="radio-group mb-2">
-                        {% for alternativa in preg.alternativas %}
-                        <label class="radio-option" style="background-color: var(--bg-surface);">
-                            <input type="radio" disabled {% if loop.index0==preg.indice_correcta %}checked{% endif %}>
-                            <span>{{ alternativa }}</span>
-                        </label>
-                        {% endfor %}
-                    </div>
-                    <div class="text-xs text-muted mt-2">💡 Explicación: {{ preg.explicacion }}</div>
-                </div>
-                {% endfor %}
-            </div>
+    {# --- Pasos 4 y 5: representación adaptativa y ejemplo --------------- #}
+    <section id="paso-desarrollo" class="capsula-seccion capsula-bloques" aria-label="Desarrollo">
+        {% for bloque in bloques %}
+        <div class="bloque bloque-{{ bloque.tipo }}">
+            {% if bloque.tipo in ROTULO_BLOQUE %}
+            <p class="bloque-rotulo">{{ ui.icon(ROTULO_BLOQUE[bloque.tipo][0], cls="icon-sm") }}{{ ROTULO_BLOQUE[bloque.tipo][1] }}</p>
+            {% endif %}
+            {% if bloque.encabezado %}
+            <h3 class="bloque-titulo">{{ bloque.encabezado }}</h3>
             {% endif %}
 
+            {% if bloque.forma == 'texto' %}
+            <p>{{ bloque.cuerpo }}</p>
+
+            {% elif bloque.forma == 'lista' %}
+            {% if bloque.ordenada %}
+            <ol class="lista-bloque">
+                {% for elemento in bloque.cuerpo %}<li>{{ elemento }}</li>{% endfor %}
+            </ol>
             {% else %}
-            {# Vista del Estudiante #}
-            {% if actividad.tipo == 'quiz_mc' %}
-            <form hx-post="/student/viewer/{{ capsula.id_capsula }}/submit" hx-target="#feedback-result"
-                hx-swap="innerHTML">
-                <div class="radio-group mb-6">
+            <ul class="lista-bloque">
+                {% for elemento in bloque.cuerpo %}<li>{{ elemento }}</li>{% endfor %}
+            </ul>
+            {% endif %}
+
+            {% elif bloque.forma == 'filas' %}
+            {% if bloque.tipo == 'glosario' %}
+            <dl class="glosario">
+                {% for fila in bloque.cuerpo %}
+                <div class="glosario-item">
+                    <dt>{{ fila[0] }}</dt>
+                    <dd>{{ fila[1:] | join(' ') }}</dd>
+                </div>
+                {% endfor %}
+            </dl>
+            {% else %}
+            <div class="table-container" tabindex="0" role="region" aria-label="{{ bloque.encabezado or 'Tabla' }}">
+                <table class="table">
+                    {% for fila in bloque.cuerpo %}
+                    {% if loop.first %}
+                    <thead>
+                        <tr>{% for celda in fila %}<th scope="col">{{ celda }}</th>{% endfor %}</tr>
+                    </thead>
+                    <tbody>
+                    {% else %}
+                        <tr>{% for celda in fila %}<td>{{ celda }}</td>{% endfor %}</tr>
+                    {% endif %}
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+            {% endif %}
+        </div>
+        {% endfor %}
+    </section>
+
+    {# --- Pasos 6 y 7: actividad de cierre y retroalimentación ------------ #}
+    <section id="paso-actividad" class="capsula-actividad" aria-labelledby="actividad-titulo">
+        <div class="capsula-actividad-head">
+            <span class="icon-tile">{{ ui.icon("clipboard-check") }}</span>
+            <div>
+                <h2 id="actividad-titulo" class="capsula-h2">Actividad de cierre</h2>
+                <span class="badge badge-neutral">{{ ROTULO_ACTIVIDAD.get(actividad.tipo, actividad.tipo) }}</span>
+            </div>
+        </div>
+
+        {% if actividad.tipo not in ('flashcards', 'quiz_multi', 'flashcards_y_quiz') %}
+        <p class="capsula-actividad-pregunta">{{ actividad.pregunta }}</p>
+        {% elif actividad.pregunta %}
+        <p class="capsula-actividad-intro">{{ actividad.pregunta }}</p>
+        {% endif %}
+
+        {% if es_simulacion %}
+        {# Vista del docente en el simulador: ve las respuestas y explicaciones. #}
+        {% if actividad.tipo == 'quiz_mc' %}
+        {{ opciones_simuladas(actividad.alternativas, actividad.indice_correcta) }}
+        {% call ui.alert("info", "Retroalimentación configurada") %}{{ actividad.retroalimentacion }}{% endcall %}
+
+        {% elif actividad.tipo == 'intentalo_tu' %}
+        {% call ui.alert("info", "Respuesta esperada para el estudiante") %}{{ actividad.retroalimentacion }}{% endcall %}
+
+        {% elif actividad.tipo == 'flashcards' %}
+        {{ flashcards(actividad.tarjetas, uid) }}
+
+        {% elif actividad.tipo == 'quiz_multi' %}
+        {{ preguntas_simuladas(actividad.preguntas) }}
+
+        {% elif actividad.tipo == 'flashcards_y_quiz' %}
+        <h3 class="actividad-paso">{{ ui.icon("layers", cls="icon-sm") }}Paso 1 · Repaso con tarjetas</h3>
+        {{ flashcards(actividad.tarjetas, uid) }}
+        <h3 class="actividad-paso">{{ ui.icon("list-checks", cls="icon-sm") }}Paso 2 · Cuestionario</h3>
+        {{ preguntas_simuladas(actividad.preguntas) }}
+        {% endif %}
+
+        {% else %}
+        {# Vista del estudiante. #}
+        {% if actividad.tipo == 'quiz_mc' %}
+        <form hx-post="/student/viewer/{{ capsula.id_capsula }}/submit" hx-target="#feedback-result" hx-swap="innerHTML">
+            <fieldset>
+                <legend class="visually-hidden">{{ actividad.pregunta }}</legend>
+                <div class="choice-group">
                     {% for alternativa in actividad.alternativas %}
-                    <label class="radio-option" style="background-color: var(--bg-surface);">
+                    <label class="choice">
                         <input type="radio" name="answer" value="{{ loop.index0 }}" required>
                         <span>{{ alternativa }}</span>
                     </label>
                     {% endfor %}
                 </div>
-                <div class="flex items-center gap-4">
-                    <button type="submit" class="btn btn-primary">
-                        Revisar Respuesta
-                        <span class="htmx-indicator ml-2">…</span>
-                    </button>
-                </div>
-            </form>
+            </fieldset>
+            <button type="submit" class="btn btn-primary">
+                <span class="idle-only">{{ ui.icon("check") }}</span>Revisar respuesta
+                <span class="htmx-indicator">{{ ui.spinner("Revisando") }}</span>
+            </button>
+        </form>
 
-            {% elif actividad.tipo == 'intentalo_tu' %}
-            <form hx-post="/student/viewer/{{ capsula.id_capsula }}/submit" hx-target="#feedback-result"
-                hx-swap="innerHTML">
-                <div class="form-group mb-4">
-                    <textarea class="form-control" name="answer" rows="4"
-                        placeholder="Escribe aquí tu resolución antes de contrastarla."></textarea>
-                </div>
-                <div class="flex items-center gap-4">
-                    <button type="submit" class="btn btn-primary">
-                        Ver la respuesta esperada
-                        <span class="htmx-indicator ml-2">…</span>
-                    </button>
-                </div>
-            </form>
-
-            {% elif actividad.tipo == 'flashcards' %}
-            <div class="flashcards-container" id="flashcards-widget">
-                <div class="flashcard-wrapper" id="flashcard-card" onclick="toggleFlip()">
-                    <div class="flashcard-inner" id="flashcard-inner">
-                        <div class="flashcard-face flashcard-front">
-                            <span class="flashcard-badge">Concepto / Pregunta</span>
-                            <div class="flashcard-text" id="fc-front-text">Cargando tarjeta...</div>
-                            <div class="flashcard-hint">Toca o haz clic para voltear ↺</div>
-                        </div>
-                        <div class="flashcard-face flashcard-back">
-                            <span class="flashcard-badge">Explicación Clave</span>
-                            <div class="flashcard-text" id="fc-back-text">Cargando respuesta...</div>
-                            <div class="flashcard-hint">Toca o haz clic para voltear ↺</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="flashcard-progress-track">
-                    <div class="flashcard-progress-fill" id="fc-progress" style="width: 20%;"></div>
-                </div>
-
-                <div class="flashcard-controls">
-                    <button type="button" class="btn btn-outline text-sm" onclick="prevCard()" id="btn-fc-prev">←
-                        Anterior</button>
-                    <span class="flashcard-counter" id="fc-counter">1 / {{ actividad.tarjetas | length }}</span>
-                    <button type="button" class="btn btn-outline text-sm" onclick="nextCard()"
-                        id="btn-fc-next">Siguiente →</button>
-                </div>
-
-                <form hx-post="/student/viewer/{{ capsula.id_capsula }}/submit" hx-target="#feedback-result"
-                    hx-swap="innerHTML" class="mt-6 text-center">
-                    <input type="hidden" name="answer" value="completado">
-                    <button type="submit" class="btn btn-primary" style="width: 100%;">
-                        ✓ Completar sesión de repaso activo
-                    </button>
-                </form>
+        {% elif actividad.tipo == 'intentalo_tu' %}
+        <form hx-post="/student/viewer/{{ capsula.id_capsula }}/submit" hx-target="#feedback-result" hx-swap="innerHTML">
+            <div class="form-group">
+                <label class="form-label" for="respuesta-{{ uid }}">Tu resolución</label>
+                <textarea class="form-control" id="respuesta-{{ uid }}" name="answer" rows="5"
+                          placeholder="Escribe aquí tu resolución antes de contrastarla."></textarea>
+                <p class="form-hint">No se corrige automáticamente: al enviar verás la respuesta esperada para compararla con la tuya.</p>
             </div>
+            <button type="submit" class="btn btn-primary">
+                <span class="idle-only">{{ ui.icon("eye") }}</span>Ver la respuesta esperada
+                <span class="htmx-indicator">{{ ui.spinner("Cargando") }}</span>
+            </button>
+        </form>
 
-            <script>
-                (function () {
-                    const tarjetas = {{ actividad.tarjetas | tojson | safe
-                }};
-                let currentIdx = 0;
-                const inner = document.getElementById('flashcard-inner');
-                const frontText = document.getElementById('fc-front-text');
-                const backText = document.getElementById('fc-back-text');
-                const counter = document.getElementById('fc-counter');
-                const progress = document.getElementById('fc-progress');
-                const btnPrev = document.getElementById('btn-fc-prev');
-                const btnNext = document.getElementById('btn-fc-next');
+        {% elif actividad.tipo == 'flashcards' %}
+        {{ flashcards(actividad.tarjetas, uid) }}
+        <form hx-post="/student/viewer/{{ capsula.id_capsula }}/submit" hx-target="#feedback-result" hx-swap="innerHTML"
+              class="flashcards-completar">
+            <input type="hidden" name="answer" value="completado">
+            <button type="submit" class="btn btn-primary btn-block">
+                <span class="idle-only">{{ ui.icon("circle-check") }}</span>Terminé el repaso
+                <span class="htmx-indicator">{{ ui.spinner("Guardando") }}</span>
+            </button>
+        </form>
 
-                function updateCard() {
-                    if (!tarjetas || tarjetas.length === 0) return;
-                    if (inner) inner.classList.remove('is-flipped');
-                    setTimeout(() => {
-                        const t = tarjetas[currentIdx];
-                        if (frontText) frontText.textContent = t.anverso;
-                        if (backText) backText.textContent = t.reverso;
-                        if (counter) counter.textContent = `${currentIdx + 1} / ${tarjetas.length}`;
-                        if (progress) progress.style.width = `${((currentIdx + 1) / tarjetas.length) * 100}%`;
-                        if (btnPrev) btnPrev.disabled = (currentIdx === 0);
-                        if (btnNext) btnNext.disabled = (currentIdx === tarjetas.length - 1);
-                    }, 120);
-                }
+        {% elif actividad.tipo == 'quiz_multi' %}
+        {{ quiz_multi_form(actividad.preguntas, capsula.id_capsula) }}
 
-                window.toggleFlip = function () {
-                    if (inner) inner.classList.toggle('is-flipped');
-                };
+        {% elif actividad.tipo == 'flashcards_y_quiz' %}
+        <h3 class="actividad-paso">{{ ui.icon("layers", cls="icon-sm") }}Paso 1 · Repasa con las tarjetas</h3>
+        {{ flashcards(actividad.tarjetas, uid) }}
+        <h3 class="actividad-paso">{{ ui.icon("list-checks", cls="icon-sm") }}Paso 2 · Pon a prueba lo que repasaste</h3>
+        {{ quiz_multi_form(actividad.preguntas, capsula.id_capsula) }}
+        {% endif %}
 
-                window.prevCard = function () {
-                    if (currentIdx > 0) {
-                        currentIdx--;
-                        updateCard();
-                    }
-                };
+        <div id="feedback-result" class="capsula-feedback" aria-live="polite"></div>
+        {% endif %}
+    </section>
 
-                window.nextCard = function () {
-                    if (currentIdx < tarjetas.length - 1) {
-                        currentIdx++;
-                        updateCard();
-                    }
-                };
-
-                updateCard();
-            }) ();
-            </script>
-
-            {% elif actividad.tipo == 'quiz_multi' %}
-            <form hx-post="/student/viewer/{{ capsula.id_capsula }}/submit" hx-target="#feedback-result"
-                hx-swap="innerHTML" onsubmit="prepareMultiQuizAnswers(event, this)">
-                <input type="hidden" name="answer" id="multi-quiz-answer-val" value="">
-                <div class="flex flex-col gap-4 mb-6">
-                    {% for preg in actividad.preguntas %}
-                    {% set preg_idx = loop.index0 %}
-                    <div class="multi-quiz-item">
-                        <div class="multi-quiz-number">Pregunta {{ loop.index }} de {{ loop.length }}</div>
-                        <div class="multi-quiz-question">{{ preg.enunciado }}</div>
-                        <div class="radio-group">
-                            {% for alternativa in preg.alternativas %}
-                            <label class="radio-option" style="background-color: var(--bg-surface);">
-                                <input type="radio" name="preg_{{ preg_idx }}" value="{{ loop.index0 }}" required>
-                                <span>{{ alternativa }}</span>
-                            </label>
-                            {% endfor %}
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-                <button type="submit" class="btn btn-primary" style="width: 100%;">
-                    Revisar Cuestionario Completo
-                    <span class="htmx-indicator ml-2">…</span>
-                </button>
-            </form>
-
-            <script>
-                function prepareMultiQuizAnswers(event, form) {
-                    const total = {{ actividad.preguntas | length
-                }};
-                const answers = [];
-                for (let i = 0; i < total; i++) {
-                    const selected = form.querySelector(`input[name="preg_${i}"]:checked`);
-                    if (selected) {
-                        answers.push(selected.value);
-                    }
-                }
-                document.getElementById('multi-quiz-answer-val').value = answers.join(',');
-            }
-            </script>
-
-            {% elif actividad.tipo == 'flashcards_y_quiz' %}
-            <div class="mb-6">
-                <h4 class="mb-3 text-primary font-semibold">🃏 Paso 1: Repaso Activo con Tarjetas Interactivas</h4>
-                <div class="flashcards-container" id="flashcards-widget">
-                    <div class="flashcard-wrapper" id="flashcard-card" onclick="toggleFlip()">
-                        <div class="flashcard-inner" id="flashcard-inner">
-                            <div class="flashcard-face flashcard-front">
-                                <span class="flashcard-badge">Concepto / Pregunta</span>
-                                <div class="flashcard-text" id="fc-front-text">Cargando tarjeta...</div>
-                                <div class="flashcard-hint">Toca o haz clic para voltear ↺</div>
-                            </div>
-                            <div class="flashcard-face flashcard-back">
-                                <span class="flashcard-badge">Explicación Clave</span>
-                                <div class="flashcard-text" id="fc-back-text">Cargando respuesta...</div>
-                                <div class="flashcard-hint">Toca o haz clic para voltear ↺</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="flashcard-progress-track">
-                        <div class="flashcard-progress-fill" id="fc-progress" style="width: 20%;"></div>
-                    </div>
-
-                    <div class="flashcard-controls mb-4">
-                        <button type="button" class="btn btn-outline text-sm" onclick="prevCard()" id="btn-fc-prev">←
-                            Anterior</button>
-                        <span class="flashcard-counter" id="fc-counter">1 / {{ actividad.tarjetas | length }}</span>
-                        <button type="button" class="btn btn-outline text-sm" onclick="nextCard()"
-                            id="btn-fc-next">Siguiente →</button>
-                    </div>
-                </div>
+    {# --- Referencias: la trazabilidad del cap. 13, a la vista ------------- #}
+    <section id="paso-fuentes" class="referencias" aria-labelledby="referencias-titulo">
+        <div class="referencias-head">
+            <span class="icon-tile">{{ ui.icon("shield-check") }}</span>
+            <div>
+                <h2 id="referencias-titulo" class="capsula-h2">Referencias</h2>
+                <p>
+                    Esta cápsula se construyó únicamente con
+                    {{ 'este fragmento' if (refs or capsula.fuentes) | length == 1 else 'estos fragmentos' }}
+                    del material institucional. RepasAi verifica cada cita contra la base de datos.
+                </p>
             </div>
-
-            <div class="mt-8 pt-6" style="border-top: 1px solid var(--border-color);">
-                <h4 class="mb-3 text-primary font-semibold">📝 Paso 2: Evaluación Práctica Formativa</h4>
-                <form hx-post="/student/viewer/{{ capsula.id_capsula }}/submit" hx-target="#feedback-result"
-                    hx-swap="innerHTML" onsubmit="prepareMultiQuizAnswers(event, this)">
-                    <input type="hidden" name="answer" id="multi-quiz-answer-val" value="">
-                    <div class="flex flex-col gap-4 mb-6">
-                        {% for preg in actividad.preguntas %}
-                        {% set preg_idx = loop.index0 %}
-                        <div class="multi-quiz-item">
-                            <div class="multi-quiz-number">Pregunta {{ loop.index }} de {{ loop.length }}</div>
-                            <div class="multi-quiz-question">{{ preg.enunciado }}</div>
-                            <div class="radio-group">
-                                {% for alternativa in preg.alternativas %}
-                                <label class="radio-option" style="background-color: var(--bg-surface);">
-                                    <input type="radio" name="preg_{{ preg_idx }}" value="{{ loop.index0 }}" required>
-                                    <span>{{ alternativa }}</span>
-                                </label>
-                                {% endfor %}
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                    <button type="submit" class="btn btn-primary" style="width: 100%;">
-                        Revisar Cuestionario Completo
-                        <span class="htmx-indicator ml-2">…</span>
-                    </button>
-                </form>
-            </div>
-
-            <script>
-                (function () {
-                    const tarjetas = {{ actividad.tarjetas | tojson | safe
-                }};
-                let currentIdx = 0;
-                const inner = document.getElementById('flashcard-inner');
-                const frontText = document.getElementById('fc-front-text');
-                const backText = document.getElementById('fc-back-text');
-                const counter = document.getElementById('fc-counter');
-                const progress = document.getElementById('fc-progress');
-                const btnPrev = document.getElementById('btn-fc-prev');
-                const btnNext = document.getElementById('btn-fc-next');
-
-                function updateCard() {
-                    if (!tarjetas || tarjetas.length === 0) return;
-                    if (inner) inner.classList.remove('is-flipped');
-                    setTimeout(() => {
-                        const t = tarjetas[currentIdx];
-                        if (frontText) frontText.textContent = t.anverso;
-                        if (backText) backText.textContent = t.reverso;
-                        if (counter) counter.textContent = `${currentIdx + 1} / ${tarjetas.length}`;
-                        if (progress) progress.style.width = `${((currentIdx + 1) / tarjetas.length) * 100}%`;
-                        if (btnPrev) btnPrev.disabled = (currentIdx === 0);
-                        if (btnNext) btnNext.disabled = (currentIdx === tarjetas.length - 1);
-                    }, 120);
-                }
-
-                window.toggleFlip = function () {
-                    if (inner) inner.classList.toggle('is-flipped');
-                };
-
-                window.prevCard = function () {
-                    if (currentIdx > 0) {
-                        currentIdx--;
-                        updateCard();
-                    }
-                };
-
-                window.nextCard = function () {
-                    if (currentIdx < tarjetas.length - 1) {
-                        currentIdx++;
-                        updateCard();
-                    }
-                };
-
-                updateCard();
-            }) ();
-
-            function prepareMultiQuizAnswers(event, form) {
-                const total = {{ actividad.preguntas | length
-            }};
-            const answers = [];
-            for (let i = 0; i < total; i++) {
-                const selected = form.querySelector(`input[name="preg_${i}"]:checked`);
-                if (selected) {
-                    answers.push(selected.value);
-                }
-            }
-            document.getElementById('multi-quiz-answer-val').value = answers.join(',');
-            }
-            </script>
-            {% endif %}
-
-            <div id="feedback-result" class="mt-4"></div>
-            {% endif %}
         </div>
 
-        <div class="fuentes mt-8">
-            <h3 class="mb-2 text-lg">Fuentes</h3>
-            <p class="text-sm text-muted mb-2">
-                Esta cápsula se construyó únicamente con estos fragmentos del material
-                institucional. El sistema verifica cada cita contra la base de datos.
-            </p>
-            <ul class="lista-fuentes">
-                {% for fuente in capsula.fuentes %}
-                <li>
-                    <span class="badge badge-primary">#{{ fuente.id_fragmento }}</span>
-                    {{ fuente.documento }}{% if fuente.pagina %}, p. {{ fuente.pagina }}{% endif %}
-                </li>
-                {% endfor %}
-            </ul>
-        </div>
-    </div>
+        <ol class="referencias-lista" role="list">
+            {% for ref in (refs or capsula.fuentes) %}
+            <li class="referencia">
+                <span class="referencia-num" aria-hidden="true">{{ ref.numero or loop.index }}</span>
+                <div class="referencia-cuerpo">
+                    <p class="referencia-doc">{{ ui.icon("file-text", cls="icon-sm") }}<span>{{ ref.documento }}</span></p>
+                    <p class="referencia-meta">
+                        {% if ref.pagina %}<span>Página {{ ref.pagina }}</span>{% endif %}
+                        <span>Fragmento #{{ ref.id_fragmento }}</span>
+                    </p>
+                    {% if ref.texto %}
+                    <blockquote class="referencia-extracto" data-extracto>
+                        <p>{{ ref.texto }}</p>
+                    </blockquote>
+                    <button type="button" class="btn btn-ghost btn-sm referencia-toggle js-only" data-extracto-toggle aria-expanded="false" hidden>
+                        <span data-extracto-label>Ver fragmento completo</span>{{ ui.icon("chevron-down", cls="icon-sm") }}
+                    </button>
+                    {% endif %}
+                </div>
+            </li>
+            {% endfor %}
+        </ol>
+
+        <p class="referencias-sello">
+            {{ ui.icon("circle-check", cls="icon-sm") }}
+            Citas verificadas: cada fragmento existe y fue validado por un docente.
+        </p>
+    </section>
+</article>

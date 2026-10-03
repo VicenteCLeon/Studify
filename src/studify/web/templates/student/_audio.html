@@ -1,0 +1,28 @@
+{# Reproductor de la narración (perfil auditivo). Lo pide la cápsula con
+   hx-trigger="load" a /student/viewer/{id}/generate-audio y HTMX lo pone en
+   lugar del indicador de carga. Va por plantilla y no por f-string para que el
+   mensaje de error —que puede citar texto de la excepción— salga escapado. #}
+{% import "components/ui.html" as ui %}
+{% if error %}
+{% call ui.alert("error", "No se pudo generar el audio") %}
+La cápsula se puede leer igual. Detalle técnico: {{ error }}
+{% endcall %}
+{% else %}
+<div class="audio-player" data-canal="A">
+    <div class="audio-player-head">
+        {{ ui.vark_tile("A") }}
+        <div class="flex-1">
+            <p class="audio-player-titulo">Escucha esta cápsula</p>
+            <p class="audio-player-sub">Narración de la activación y el concepto central, sintetizada con XTTS-v2.</p>
+        </div>
+    </div>
+    {# Sin autoplay: un audio que arranca solo interrumpe al lector de
+       pantalla y a quien estudia en un lugar público (WCAG 1.4.2). #}
+    <audio controls preload="metadata" class="audio-player-el" src="{{ url }}">
+        Tu navegador no puede reproducir audio. <a href="{{ url }}" download>Descárgalo aquí</a>.
+    </audio>
+    <a href="{{ url }}" download class="btn btn-ghost btn-sm audio-player-descarga">
+        {{ ui.icon("download") }}Descargar audio
+    </a>
+</div>
+{% endif %}

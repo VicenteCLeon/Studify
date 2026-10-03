@@ -37,6 +37,7 @@ from studify.api.schemas_capsulas import CapsulaIn, InteraccionQuizIn
 from studify.db.models import (
     DiagnosticoVark,
     Estudiante,
+    Fragmento,
     MicrocapsulaGenerada,
     ObjetivoAprendizaje,
 )
@@ -400,7 +401,15 @@ def get_viewer(
         )
     except HTTPException as exc:
         titulo, mensaje = _explicar_fallo(exc)
-        return _capsula_no_disponible(request, objetivo=objetivo, titulo=titulo, mensaje=mensaje)
+        return _capsula_no_disponible(
+            request,
+            objetivo=objetivo,
+            titulo=titulo,
+            mensaje=mensaje,
+            # Solo un fallo del modelo puede salir distinto al reintentar; sin
+            # material o sin credencial, ofrecer "intentar de nuevo" engaña.
+            reintentable=exc.status_code == 502,
+        )
 
     diag = db.scalars(
         select(DiagnosticoVark)
@@ -422,6 +431,7 @@ def get_viewer(
             "objetivo": objetivo,
             "capsula": capsula,
             "bloques": _preparar_bloques(capsula.bloques_legibles()),
+            "referencias": _referencias(db, capsula.fuentes),
             "audio_activo": audio_activo,
             # `indice_correcta` y `retroalimentacion` NO viajan al navegador: si
             # fueran al HTML, la respuesta correcta estaría en el código fuente
@@ -456,7 +466,6 @@ def generate_capsule_audio(
 ):
     """Genera (o recupera) el audio narrativo con XTTS-v2 en local."""
     import hashlib
-    from html import escape
     from pathlib import Path
 
     from studify.media.audio import generar_audio
@@ -489,30 +498,16 @@ def generate_capsule_audio(
             generar_audio(texto, audio_file)
         except Exception as exc:
             logger.error("Error al generar audio XTTS-v2: %s", exc)
-            return HTMLResponse(
-                f'<div class="alerta alerta-error">Error al generar audio XTTS-v2: {escape(str(exc))}</div>'
+            return templates.TemplateResponse(
+                request=request,
+                name="student/_audio.html",
+                context={"error": str(exc)},
             )
 
-    return HTMLResponse(
-        f'''
-        <div class="audio-player-card p-4 rounded-lg bg-surface border border-color shadow-sm my-4">
-            <div class="flex items-center justify-between mb-3">
-                <div class="flex items-center gap-2">
-                    <span class="badge badge-primary">🎧 Audio XTTS-v2</span>
-                    <span class="text-sm font-semibold text-primary">Resumen Narrativo Auditivo</span>
-                </div>
-                <span class="text-xs text-muted">Clonación Neuronal Activa</span>
-            </div>
-            <audio controls autoplay style="width: 100%; border-radius: var(--radius-md); outline: none;" class="mb-2">
-                <source src="{web_audio_url}" type="audio/wav">
-                Tu navegador no soporta el reproductor de audio HTML5.
-            </audio>
-            <div class="flex items-center justify-between text-xs text-muted">
-                <span>💡 Sintetizado localmente mediante XTTS-v2</span>
-                <a href="{web_audio_url}" download class="text-primary font-semibold hover:underline">Descargar Audio WAV</a>
-            </div>
-        </div>
-        '''
+    return templates.TemplateResponse(
+        request=request,
+        name="student/_audio.html",
+        context={"url": web_audio_url},
     )
 
 
@@ -684,6 +679,38 @@ def _preparar_bloques(contenido: list[BloqueContenido]) -> list[dict]:
     return preparados
 
 
+def _referencias(db: Session, fuentes) -> list[dict]:
+    """Las fuentes de la cápsula, numeradas y con el texto del fragmento citado.
+
+    La cita del contrato (`Fuente`) trae solo id, documento y página: mostrar
+    además el fragmento es lo que permite al estudiante comprobar de dónde sale
+    cada idea sin salir de la cápsula. Es una lectura por clave primaria de los
+    mismos fragmentos que `validator.py` ya verificó; no cambia nada de la
+    generación. Si un fragmento ya no estuviera (base reseteada), la referencia
+    se muestra igual, sin extracto.
+    """
+    ids = [fuente.id_fragmento for fuente in fuentes]
+    textos_por_id = {}
+    if ids:
+        textos_por_id = dict(
+            db.execute(
+                select(Fragmento.id_fragmento, Fragmento.contenido_texto).where(
+                    Fragmento.id_fragmento.in_(ids)
+                )
+            ).all()
+        )
+    return [
+        {
+            "numero": numero,
+            "id_fragmento": fuente.id_fragmento,
+            "documento": fuente.documento,
+            "pagina": fuente.pagina,
+            "texto": textos_por_id.get(fuente.id_fragmento),
+        }
+        for numero, fuente in enumerate(fuentes, start=1)
+    ]
+
+
 def _explicar_fallo(exc: HTTPException) -> tuple[str, str]:
     """Traduce el error del endpoint a algo que el estudiante entienda.
 
@@ -718,12 +745,17 @@ def _explicar_fallo(exc: HTTPException) -> tuple[str, str]:
 
 
 def _capsula_no_disponible(
-    request: Request, *, objetivo, titulo: str, mensaje: str
+    request: Request, *, objetivo, titulo: str, mensaje: str, reintentable: bool = False
 ) -> HTMLResponse:
     return templates.TemplateResponse(
         request=request,
         name="student/capsula_no_disponible.html",
-        context={"objetivo": objetivo, "titulo": titulo, "mensaje": mensaje},
+        context={
+            "objetivo": objetivo,
+            "titulo": titulo,
+            "mensaje": mensaje,
+            "reintentable": reintentable,
+        },
         status_code=200,
     )
 

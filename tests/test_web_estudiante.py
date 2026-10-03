@@ -623,11 +623,31 @@ def test_no_se_puede_sondear_la_respuesta_de_una_capsula_ajena(
 
 
 @necesita_bd
+def test_el_visor_muestra_el_texto_del_fragmento_citado(
+    cliente, db, estudiante_conectado, material, llm_falso
+):
+    """Las referencias no son solo documento y página: el estudiante puede leer
+    el fragmento exacto del que salió la cápsula sin dejar la pantalla."""
+    html = cliente.get(f"/student/viewer/{material['con_material'].id_objetivo}").text
+
+    fragmento = db.scalars(
+        select(Fragmento).where(
+            Fragmento.id_objetivo == material["con_material"].id_objetivo
+        )
+    ).one()
+    # Jinja escapa el texto: se compara contra la primera línea sin comillas.
+    primera_linea = fragmento.contenido_texto.strip().splitlines()[0][:60]
+    assert primera_linea in html
+
+
+@necesita_bd
 def test_un_tema_sin_material_no_intenta_generar(
     cliente, estudiante_conectado, material, llm_falso
 ):
     html = cliente.get(f"/student/viewer/{material['sin_material'].id_objetivo}").text
     assert "todavía no tiene material curado" in html
+    # Reintentar daría el mismo resultado: no se ofrece.
+    assert "Intentar de nuevo" not in html
 
 
 @necesita_bd

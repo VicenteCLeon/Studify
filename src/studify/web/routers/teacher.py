@@ -55,7 +55,7 @@ from studify.vark.scoring import CANALES, PerfilVark
 from studify.web import textos
 from studify.web.deps import templates
 from studify.web.routers import auth
-from studify.web.routers.student import _preparar_bloques
+from studify.web.routers.student import _preparar_bloques, _referencias
 
 # El guardián va acá, en el router, y no en cada handler: cualquier vista que se
 # agregue después al panel queda cerrada por el solo hecho de colgar de este
@@ -264,6 +264,7 @@ def post_simulator_generate(
             "objetivo": objetivo,
             "capsula": capsula,
             "bloques": columna["bloques"],
+            "referencias": _referencias(db, capsula.fuentes),
             "actividad": capsula.actividad,
             "es_simulacion": True,
             "perfil_simulado": textos.NOMBRE_CANAL[canal_vark],

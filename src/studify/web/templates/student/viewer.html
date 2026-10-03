@@ -1,11 +1,20 @@
 {% extends "base.html" %}
+{% import "components/ui.html" as ui %}
 
-{% block title %}{{ capsula.titulo }} - Studify{% endblock %}
+{% block title %}{{ capsula.titulo }} · RepasAi{% endblock %}
 
 {% block content %}
-<div class="mb-4">
-    <a href="/student/catalog" class="text-muted">← Volver al catálogo</a>
-</div>
+<div class="visor">
+    <a href="/student/catalog" class="back-link">{{ ui.icon("arrow-left") }}Volver a los temas</a>
 
-{% include "student/_capsula.html" %}
+    {% include "student/_capsula.html" %}
+
+    <div class="visor-pie">
+        <p class="text-muted">¿Terminaste? Sigue con otro tema o revisa cómo se adapta RepasAi a ti.</p>
+        <div class="cluster">
+            <a href="/student/catalog" class="btn btn-primary">{{ ui.icon("layers") }}Elegir otro tema</a>
+            <a href="/student/profile" class="btn btn-secondary">{{ ui.icon("circle-user") }}Ver mi perfil</a>
+        </div>
+    </div>
+</div>
 {% endblock %}

@@ -348,6 +348,121 @@
   window.addEventListener("pageshow", closeGenerando);
 
   // ------------------------------------------------------------------------
+  // Cápsula: tarjetas de repaso (flashcards)
+  // Lee los textos de la lista que el servidor ya dibujó (visible sin JS) y
+  // arma el mazo interactivo encima. Enter/Espacio voltea (es un <button>);
+  // las flechas cambian de tarjeta.
+  // ------------------------------------------------------------------------
+  function initFlashcards(root) {
+    const items = Array.from(root.querySelectorAll("[data-fc-lista] > li")).map((li) => ({
+      anverso: li.querySelector(".fc-anverso").textContent,
+      reverso: li.querySelector(".fc-reverso").textContent,
+    }));
+    if (!items.length) return;
+    const card = root.querySelector("[data-fc-card]");
+    const front = root.querySelector("[data-fc-front]");
+    const back = root.querySelector("[data-fc-back]");
+    const backFace = root.querySelector(".flashcard-reverso");
+    const frontFace = root.querySelector(".flashcard-frente");
+    const counter = root.querySelector("[data-fc-counter]");
+    const fill = root.querySelector("[data-fc-fill]");
+    const prev = root.querySelector("[data-fc-prev]");
+    const next = root.querySelector("[data-fc-next]");
+    const live = root.querySelector("[data-fc-live]");
+    let i = 0;
+    let flipped = false;
+
+    function setFlipped(value) {
+      flipped = value;
+      card.classList.toggle("is-flipped", flipped);
+      card.setAttribute("aria-pressed", String(flipped));
+      // Solo la cara visible se expone al lector de pantalla.
+      frontFace.setAttribute("aria-hidden", String(flipped));
+      backFace.setAttribute("aria-hidden", String(!flipped));
+      if (live) live.textContent = flipped ? `Respuesta: ${items[i].reverso}` : "";
+    }
+
+    function render() {
+      front.textContent = items[i].anverso;
+      back.textContent = items[i].reverso;
+      counter.textContent = `${i + 1} / ${items.length}`;
+      fill.style.width = `${((i + 1) / items.length) * 100}%`;
+      prev.disabled = i === 0;
+      next.disabled = i === items.length - 1;
+      card.setAttribute("aria-label", `Tarjeta ${i + 1} de ${items.length}. ${items[i].anverso}. Activa para voltear.`);
+      root.classList.toggle("is-last", i === items.length - 1);
+    }
+
+    function go(delta) {
+      const target = i + delta;
+      if (target < 0 || target >= items.length) return;
+      const swap = () => {
+        i = target;
+        render();
+        if (live) live.textContent = `Tarjeta ${i + 1} de ${items.length}`;
+      };
+      if (flipped) {
+        setFlipped(false);
+        // Espera a que la tarjeta vuelva antes de cambiar el texto.
+        setTimeout(swap, prefersReducedMotion() ? 0 : 220);
+      } else {
+        swap();
+      }
+    }
+
+    card.addEventListener("click", () => setFlipped(!flipped));
+    prev.addEventListener("click", () => go(-1));
+    next.addEventListener("click", () => go(1));
+    root.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowRight") { go(1); e.preventDefault(); }
+      else if (e.key === "ArrowLeft") { go(-1); e.preventDefault(); }
+    });
+
+    root.classList.add("is-ready");
+    render();
+    setFlipped(false);
+  }
+
+  // ------------------------------------------------------------------------
+  // Cápsula: cuestionario de varias preguntas
+  // El servidor espera todas las respuestas juntas en `answer` ("0,2,1").
+  // ------------------------------------------------------------------------
+  function initMultiQuiz(form) {
+    const total = Number(form.dataset.total) || 0;
+    form.addEventListener("htmx:configRequest", (e) => {
+      const answers = [];
+      for (let k = 0; k < total; k++) {
+        const sel = form.querySelector(`input[name="preg_${k}"]:checked`);
+        if (sel) answers.push(sel.value);
+      }
+      e.detail.parameters.answer = answers.join(",");
+    });
+  }
+
+  // ------------------------------------------------------------------------
+  // Referencias: extracto del fragmento recortado con "Ver completo"
+  // ------------------------------------------------------------------------
+  function initExtracto(quote) {
+    const btn = quote.parentElement.querySelector("[data-extracto-toggle]");
+    if (!btn) return;
+    quote.classList.add("is-clamped");
+    // Si el texto cabe entero, el botón sobra.
+    requestAnimationFrame(() => {
+      if (quote.scrollHeight <= quote.clientHeight + 2) {
+        quote.classList.remove("is-clamped");
+        return;
+      }
+      btn.hidden = false;
+      const label = btn.querySelector("[data-extracto-label]");
+      btn.addEventListener("click", () => {
+        const open = quote.classList.toggle("is-clamped") === false;
+        btn.setAttribute("aria-expanded", String(open));
+        label.textContent = open ? "Ver menos" : "Ver fragmento completo";
+      });
+    });
+  }
+
+  // ------------------------------------------------------------------------
   // Registro de módulos
   // ------------------------------------------------------------------------
   const modules = [
@@ -355,6 +470,9 @@
     ["[data-vark-stepper]", initVarkStepper],
     ["[data-catalog-filter]", initCatalogFilter],
     ["[data-study-link]", initStudyLink],
+    ["[data-flashcards]", initFlashcards],
+    ["[data-multiquiz]", initMultiQuiz],
+    ["[data-extracto]", initExtracto],
   ];
 
   function init(root) {

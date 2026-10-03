@@ -1,24 +1,38 @@
 {% extends "base.html" %}
+{% import "components/ui.html" as ui %}
 
-{% block title %}{{ titulo }} - Studify{% endblock %}
+{% block title %}{{ titulo }} · RepasAi{% endblock %}
 
 {% block content %}
-<div class="mb-4">
-    <a href="/student/catalog" class="text-muted">← Volver al catálogo</a>
-</div>
+<div class="visor">
+    <a href="/student/catalog" class="back-link">{{ ui.icon("arrow-left") }}Volver a los temas</a>
 
-<div class="card text-center" style="max-width: 640px; margin: 0 auto;">
-    <h1 class="mb-4">{{ titulo }}</h1>
-    {% if objetivo %}
-    <p class="mb-4">
-        <span class="badge badge-primary">{{ objetivo.codigo_objetivo }}</span>
-        <span class="badge badge-success">{{ objetivo.tema }}</span>
-    </p>
-    {% endif %}
-    <p class="text-muted mb-8">{{ mensaje }}</p>
-    <div class="flex justify-center gap-4">
-        <a href="/student/catalog" class="btn btn-primary">Elegir otro tema</a>
-        <a href="/teacher/curation" class="btn btn-outline">Panel de curación</a>
+    <div class="card card-flat no-disponible">
+        {% call ui.empty_state("triangle-alert", titulo, tone="warning", heading="h1") %}
+        {% if objetivo %}
+        <div class="cluster cluster-sm">
+            <span class="badge badge-primary">{{ objetivo.codigo_objetivo }}</span>
+            <span class="badge badge-neutral">{{ objetivo.tema }}</span>
+        </div>
+        {% endif %}
+        <p>{{ mensaje }}</p>
+        <div class="cluster">
+            {% if objetivo and reintentable %}
+            <a href="/student/viewer/{{ objetivo.id_objetivo }}" class="btn btn-primary"
+               data-study-link data-codigo="{{ objetivo.codigo_objetivo }}" data-tema="{{ objetivo.tema }}">
+                {{ ui.icon("refresh-cw") }}Intentar de nuevo
+            </a>
+            {% endif %}
+            <a href="/student/catalog" class="btn {{ 'btn-secondary' if objetivo and reintentable else 'btn-primary' }}">{{ ui.icon("layers") }}Elegir otro tema</a>
+            {# El panel de curación es la solución para "falta material", pero
+               solo tiene sentido ofrecérselo a quien puede entrar. #}
+            {% if es_docente %}
+            <a href="/teacher/curation" class="btn btn-ghost">{{ ui.icon("folder-check") }}Panel de curación</a>
+            {% endif %}
+        </div>
+        {% endcall %}
     </div>
 </div>
+
+{% if objetivo and reintentable %}{% include "components/_generando.html" %}{% endif %}
 {% endblock %}

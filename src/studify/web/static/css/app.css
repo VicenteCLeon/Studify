@@ -3217,6 +3217,892 @@ body.is-generando {
 }
 
 
+/* --- 6.6 Visor de microcápsula ------------------------------------------ */
+.visor {
+  max-width: 48rem;
+  margin-inline: auto;
+}
+
+.capsula {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-10);
+}
+
+.capsula-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.capsula-titulo {
+  font-size: var(--fs-4xl);
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+}
+
+.capsula-objetivo {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+  padding: var(--space-4) var(--space-5);
+  border-radius: var(--radius-md);
+  background: var(--surface-sunken);
+  color: var(--text-muted);
+  font-size: var(--fs-md);
+  line-height: 1.55;
+}
+
+.capsula-objetivo strong {
+  color: var(--text);
+}
+
+.capsula-objetivo .icon {
+  color: var(--primary-text);
+  margin-top: 0.15rem;
+}
+
+/* Índice de la cápsula: los pasos pedagógicos como chips navegables. */
+.capsula-indice {
+  position: sticky;
+  top: var(--header-h);
+  z-index: 4;
+  margin: calc(-1 * var(--space-6)) calc(-1 * var(--gutter)) 0;
+  padding: var(--space-2) var(--gutter);
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+}
+
+.capsula-indice ol {
+  display: flex;
+  gap: var(--space-2);
+  padding: 0;
+  margin: 0;
+  list-style: none;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.capsula-indice ol::-webkit-scrollbar {
+  display: none;
+}
+
+.capsula-indice a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.8rem;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--text-muted);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: all var(--dur-fast) var(--ease-out);
+}
+
+.capsula-indice a:hover {
+  color: var(--primary-text);
+  border-color: var(--primary);
+}
+
+@media (min-width: 820px) {
+  .capsula-indice {
+    margin-inline: 0;
+    padding-inline: 0;
+    border-bottom: 0;
+  }
+}
+
+.capsula [id^="paso-"] {
+  scroll-margin-top: calc(var(--header-h) + 4rem);
+}
+
+/* Paso 2: activación. Se destaca del cuerpo porque su función es que el
+   estudiante se detenga a pensar antes de leer la explicación. */
+.capsula-activacion {
+  position: relative;
+  padding: var(--space-6);
+  border-radius: var(--radius-lg);
+  background: var(--accent-soft);
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
+.paso-rotulo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: var(--space-2);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent-text);
+}
+
+.pregunta-activacion {
+  font-family: var(--font-display);
+  font-size: var(--fs-2xl);
+  font-weight: var(--fw-medium);
+  line-height: 1.3;
+  text-wrap: balance;
+}
+
+.capsula-activacion-pista {
+  margin-top: var(--space-3);
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+
+/* Paso 3 y siguientes */
+.capsula-h2 {
+  font-size: var(--fs-2xl);
+  margin-bottom: var(--space-3);
+}
+
+.capsula-concepto,
+.capsula-bloques p,
+.capsula-bloques li,
+.capsula-bloques dd {
+  font-size: var(--fs-md);
+  line-height: 1.75;
+}
+
+.capsula-concepto {
+  font-size: var(--fs-lg);
+}
+
+.capsula-bloques {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.bloque-rotulo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: var(--space-2);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--primary-text);
+}
+
+.bloque-titulo {
+  font-size: var(--fs-xl);
+  margin-bottom: var(--space-3);
+}
+
+.lista-bloque {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding-left: 1.4rem;
+}
+
+.lista-bloque li::marker {
+  color: var(--primary-text);
+  font-weight: var(--fw-bold);
+}
+
+/* Paso a paso: cada paso numerado en un círculo, unidos por una línea. */
+.bloque-lista_pasos ol.lista-bloque {
+  counter-reset: paso;
+  list-style: none;
+  padding-left: 0;
+  gap: 0;
+}
+
+.bloque-lista_pasos ol.lista-bloque li {
+  counter-increment: paso;
+  position: relative;
+  padding: 0 0 var(--space-5) 3rem;
+}
+
+.bloque-lista_pasos ol.lista-bloque li::before {
+  content: counter(paso);
+  position: absolute;
+  left: 0;
+  top: 0.15rem;
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: var(--primary);
+  color: var(--primary-contrast);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+}
+
+.bloque-lista_pasos ol.lista-bloque li:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  left: calc(1rem - 1px);
+  top: 2.4rem;
+  bottom: 0.2rem;
+  width: 2px;
+  background: var(--primary-soft-strong);
+}
+
+/* Analogía y ejemplo resuelto: el perfil los pide de forma explícita y se
+   distinguen del cuerpo para que la adaptación se vea a simple vista. */
+.bloque-analogia,
+.bloque-ejemplo_resuelto {
+  padding: var(--space-6);
+  border-radius: var(--radius-lg);
+}
+
+.bloque-analogia {
+  background: var(--vark-a-soft);
+  border: 1px solid color-mix(in srgb, var(--vark-a) 25%, transparent);
+}
+
+.bloque-analogia .bloque-rotulo {
+  color: var(--vark-a-text);
+}
+
+.bloque-ejemplo_resuelto {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  border-left: 4px solid var(--vark-k);
+}
+
+.bloque-ejemplo_resuelto .bloque-rotulo {
+  color: var(--vark-k-text);
+}
+
+/* Esquema: nodos con conector, como un árbol de conceptos. */
+.bloque-esquema .lista-bloque {
+  list-style: none;
+  padding-left: var(--space-4);
+  border-left: 2px solid var(--vark-v-soft);
+  gap: var(--space-2);
+}
+
+.bloque-esquema .lista-bloque li {
+  position: relative;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--vark-v-soft);
+}
+
+.bloque-esquema .lista-bloque li::before {
+  content: "";
+  position: absolute;
+  left: calc(-1 * var(--space-4) - 1px);
+  top: 50%;
+  width: var(--space-4);
+  height: 2px;
+  background: var(--vark-v-soft);
+}
+
+.bloque-esquema .bloque-rotulo,
+.bloque-tabla .bloque-rotulo {
+  color: var(--vark-v-text);
+}
+
+.bloque-tabla .table td,
+.bloque-tabla .table th {
+  font-size: var(--fs-sm);
+}
+
+/* Glosario: término y definición como fichas. */
+.glosario {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.glosario-item {
+  padding: var(--space-4) var(--space-5);
+  border-radius: var(--radius-md);
+  background: var(--vark-r-soft);
+}
+
+.glosario dt {
+  font-weight: var(--fw-bold);
+  color: var(--vark-r-text);
+}
+
+.glosario dd {
+  margin: var(--space-1) 0 0;
+  color: var(--text);
+}
+
+.bloque-glosario .bloque-rotulo {
+  color: var(--vark-r-text);
+}
+
+/* Audio */
+.audio-player,
+.audio-generando {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  border-radius: var(--radius-lg);
+  background: var(--canal-soft);
+  border: 1px solid color-mix(in srgb, var(--canal) 25%, transparent);
+}
+
+.audio-generando {
+  flex-direction: row;
+  align-items: center;
+}
+
+.audio-player-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.audio-player-head .icon-tile {
+  background: var(--surface);
+}
+
+.audio-player-titulo {
+  font-weight: var(--fw-bold);
+}
+
+.audio-player-sub {
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+
+.audio-player-el {
+  width: 100%;
+  border-radius: var(--radius-full);
+}
+
+.audio-player-descarga {
+  align-self: flex-start;
+}
+
+.equalizer {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 2rem;
+  flex-shrink: 0;
+}
+
+.equalizer span {
+  width: 5px;
+  height: 30%;
+  border-radius: var(--radius-full);
+  background: var(--canal);
+  animation: eq 0.9s ease-in-out infinite alternate;
+}
+
+.equalizer span:nth-child(2) { animation-delay: 0.15s; }
+.equalizer span:nth-child(3) { animation-delay: 0.3s; }
+.equalizer span:nth-child(4) { animation-delay: 0.45s; }
+.equalizer span:nth-child(5) { animation-delay: 0.6s; }
+
+@keyframes eq {
+  from { height: 25%; opacity: 0.5; }
+  to { height: 100%; opacity: 1; }
+}
+
+/* Actividad de cierre */
+.capsula-actividad {
+  padding: clamp(1.25rem, 0.8rem + 2vw, 2rem);
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-md);
+}
+
+.capsula-actividad-head {
+  display: flex;
+  gap: var(--space-4);
+  align-items: center;
+  margin-bottom: var(--space-5);
+}
+
+.capsula-actividad-head .capsula-h2 {
+  margin-bottom: var(--space-1);
+}
+
+.capsula-actividad-pregunta {
+  font-family: var(--font-display);
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-medium);
+  line-height: 1.35;
+  margin-bottom: var(--space-5);
+}
+
+.capsula-actividad-intro {
+  color: var(--text-muted);
+  margin-bottom: var(--space-5);
+}
+
+.capsula-actividad form .choice-group {
+  margin-bottom: var(--space-5);
+}
+
+.capsula-actividad > .alerta {
+  margin-top: var(--space-4);
+}
+
+.actividad-paso {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: var(--space-6) 0 var(--space-4);
+  font-family: var(--font-body);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-bold);
+  color: var(--primary-text);
+}
+
+.actividad-paso:first-of-type {
+  margin-top: 0;
+}
+
+.quiz-lista {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  padding: 0;
+  margin: 0 0 var(--space-6);
+  list-style: none;
+}
+
+.quiz-item legend {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin-bottom: var(--space-3);
+  padding: 0;
+}
+
+.quiz-num {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--primary-text);
+}
+
+.quiz-enunciado {
+  font-weight: var(--fw-semibold);
+  font-size: var(--fs-md);
+  line-height: 1.45;
+  margin-bottom: var(--space-3);
+}
+
+.quiz-item legend .quiz-enunciado {
+  margin-bottom: 0;
+}
+
+.quiz-explicacion {
+  display: flex;
+  gap: var(--space-2);
+  align-items: flex-start;
+  margin-top: var(--space-3);
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+
+.quiz-explicacion .icon {
+  margin-top: 0.15rem;
+  color: var(--warning-text);
+}
+
+.capsula-feedback:not(:empty) {
+  margin-top: var(--space-5);
+}
+
+.feedback .icon-lg {
+  margin-top: 0;
+}
+
+.feedback-titulo {
+  font-size: var(--fs-md);
+}
+
+.feedback-detalles {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: 0;
+  margin-top: var(--space-4);
+  list-style: none;
+}
+
+.feedback-detalle {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--danger);
+}
+
+.feedback-detalle.is-ok {
+  border-left-color: var(--success);
+}
+
+.feedback-detalle-top {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-2) var(--space-3);
+}
+
+.feedback-detalle-enunciado {
+  flex: 1 1 14rem;
+}
+
+.feedback-detalle-enunciado {
+  font-weight: var(--fw-semibold);
+}
+
+.feedback-detalle-correcta,
+.feedback-detalle-explicacion {
+  margin-top: var(--space-2);
+  font-size: var(--fs-sm);
+}
+
+.feedback-detalle-explicacion {
+  display: flex;
+  gap: var(--space-2);
+  color: var(--text-muted);
+}
+
+.feedback-detalle-explicacion .icon {
+  margin-top: 0.15rem;
+  color: var(--warning-text);
+}
+
+/* Flashcards */
+.flashcards {
+  margin-bottom: var(--space-5);
+}
+
+.flashcards-lista {
+  display: grid;
+  gap: var(--space-3);
+  padding-left: 1.4rem;
+}
+
+.flashcards-lista li {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.fc-anverso {
+  font-weight: var(--fw-semibold);
+}
+
+.fc-reverso {
+  color: var(--text-muted);
+}
+
+/* Con JS el mazo reemplaza a la lista (que queda como fuente de datos). */
+.flashcards.is-ready .flashcards-lista {
+  display: none;
+}
+
+.flashcards-mazo {
+  max-width: 34rem;
+  margin-inline: auto;
+}
+
+.flashcard {
+  position: relative;
+  display: block;
+  width: 100%;
+  min-height: 15rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  perspective: 1200px;
+  text-align: center;
+  cursor: pointer;
+  border-radius: var(--radius-xl);
+}
+
+.flashcard:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.flashcard-cara {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-8) var(--space-6);
+  border-radius: var(--radius-xl);
+  border: 1.5px solid var(--border);
+  box-shadow: var(--shadow-md);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  transition: transform 520ms var(--ease-out);
+}
+
+.flashcard-frente {
+  background: var(--surface);
+}
+
+.flashcard-reverso {
+  background: var(--vark-k-soft);
+  border-color: color-mix(in srgb, var(--vark-k) 35%, transparent);
+  transform: rotateY(180deg);
+}
+
+.flashcard.is-flipped .flashcard-frente {
+  transform: rotateY(-180deg);
+}
+
+.flashcard.is-flipped .flashcard-reverso {
+  transform: rotateY(0deg);
+}
+
+.flashcard-etiqueta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.7rem;
+  border-radius: var(--radius-full);
+  background: var(--primary-soft);
+  color: var(--primary-text);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.flashcard-reverso .flashcard-etiqueta {
+  background: var(--surface);
+  color: var(--vark-k-text);
+}
+
+.flashcard-texto {
+  font-family: var(--font-display);
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-medium);
+  line-height: 1.4;
+  color: var(--text);
+}
+
+.flashcard-ayuda {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: var(--fs-xs);
+  color: var(--text-soft);
+}
+
+.flashcards-controles {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-top: var(--space-5);
+}
+
+.flashcards-progreso {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.flashcards-contador {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.flashcards-progreso .progress {
+  height: 0.4rem;
+}
+
+.flashcards-completar {
+  margin-top: var(--space-5);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Sin giro: la tarjeta cambia de cara con un fundido. */
+  .flashcard-cara {
+    transform: none !important;
+    transition: opacity 0.01ms;
+  }
+
+  .flashcard-reverso,
+  .flashcard.is-flipped .flashcard-frente {
+    opacity: 0;
+  }
+
+  .flashcard.is-flipped .flashcard-reverso {
+    opacity: 1;
+  }
+}
+
+/* Referencias */
+.referencias {
+  padding: clamp(1.25rem, 0.8rem + 2vw, 2rem);
+  border-radius: var(--radius-xl);
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+}
+
+.referencias-head {
+  display: flex;
+  gap: var(--space-4);
+  align-items: flex-start;
+  margin-bottom: var(--space-5);
+}
+
+.referencias-head p {
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+  max-width: 52ch;
+}
+
+.referencias-lista {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.referencia {
+  display: flex;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.referencia-num {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius-sm);
+  background: var(--primary-soft);
+  color: var(--primary-text);
+  font-weight: var(--fw-bold);
+  font-size: var(--fs-sm);
+}
+
+.referencia-cuerpo {
+  flex: 1;
+  min-width: 0;
+}
+
+.referencia-doc {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  font-weight: var(--fw-semibold);
+  overflow-wrap: anywhere;
+}
+
+.referencia-doc .icon {
+  margin-top: 0.2rem;
+  color: var(--text-soft);
+}
+
+.referencia-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-3);
+  margin-top: var(--space-1);
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+}
+
+.referencia-meta span + span::before {
+  content: "·";
+  margin-right: var(--space-3);
+  color: var(--text-soft);
+}
+
+.referencia-extracto {
+  position: relative;
+  margin: var(--space-3) 0 0;
+  padding: var(--space-3) var(--space-4);
+  border-left: 3px solid var(--primary-soft-strong);
+  background: var(--bg-subtle);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  font-size: var(--fs-sm);
+  line-height: 1.6;
+  color: var(--text-muted);
+  white-space: pre-line;
+}
+
+.referencia-extracto.is-clamped {
+  max-height: 6.4em;
+  overflow: hidden;
+}
+
+.referencia-extracto.is-clamped::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 2.5em;
+  background: linear-gradient(transparent, var(--bg-subtle));
+}
+
+.referencia-toggle {
+  margin-top: var(--space-2);
+  padding-inline: var(--space-2);
+}
+
+.referencia-toggle[aria-expanded="true"] .icon {
+  transform: rotate(180deg);
+}
+
+.referencias-sello {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  color: var(--success-text);
+}
+
+/* Pie del visor y estado "no disponible" */
+.visor-pie {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin-top: var(--space-12);
+  padding-top: var(--space-8);
+  border-top: 1px solid var(--border);
+}
+
+.no-disponible {
+  margin-top: var(--space-4);
+}
+
+.no-disponible .empty-state h1 {
+  font-size: var(--fs-2xl);
+}
+
+
 /* ==========================================================================
    7. UTILIDADES
    ========================================================================== */
