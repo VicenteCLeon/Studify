@@ -47,12 +47,19 @@ from studify.generation.schemas import BloqueContenido
 from studify.vark import instrumento
 from studify.vark.rules import aplicar_reglas
 from studify.vark.scoring import PerfilVark
-from studify.web import sesion, textos
+from studify.web import consentimiento, sesion, textos
 from studify.web.deps import templates
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/student", tags=["web-student"])
+# Todas las vistas del estudiante exigen haber aceptado la versión vigente de
+# los Términos y la Política, salvo el cuestionario, que es donde se aceptan
+# (ver `web/consentimiento.py`).
+router = APIRouter(
+    prefix="/student",
+    tags=["web-student"],
+    dependencies=[Depends(consentimiento.exigir_vigente)],
+)
 
 LETRAS = ("a", "b", "c", "d")
 
@@ -115,9 +122,18 @@ def post_vark(
     rango_etario: str = Form(default=""),
     genero: str = Form(default=""),
     carrera: str = Form(default=""),
+    acepto: str = Form(default=""),
+    consiento_genero: str = Form(default=""),
     db: Session = Depends(get_db),
 ):
     """Califica el cuestionario de verdad y deja al estudiante conectado.
+
+    **Antes de calificar nada exige la aceptación** de los Términos y la
+    Política (la casilla del primer paso, que nunca viene marcada). El botón
+    del formulario ya queda deshabilitado sin ella, pero eso es del navegador:
+    sin esta comprobación un POST armado a mano crearía un estudiante sin
+    consentimiento registrado. Por la misma razón, el género —dato sensible—
+    solo se acepta con su casilla de consentimiento propia.
 
     Reutiliza `crear_diagnostico`, el handler de `POST /api/diagnosticos`: es la
     misma función, no una copia. Persiste en las cuatro entidades del módulo de
@@ -129,6 +145,17 @@ def post_vark(
     estudiante mirando un formulario que no reacciona.
     """
     marcadas = (q1, q2, q3, q4, q5, q6, q7, q8, q9, q10, q11, q12, q13, q14, q15, q16)
+
+    if acepto != "si":
+        return _error(
+            "Para calcular tu perfil tienes que aceptar los Términos y Condiciones "
+            "y la Política de Privacidad (la casilla del primer paso)."
+        )
+    if genero.strip() and consiento_genero != "si":
+        return _error(
+            "Elegiste un género, pero no marcaste la casilla que autoriza su uso. "
+            "Márcala o deja el género en «Prefiero no decirlo»: es opcional."
+        )
 
     try:
         respuestas = _respuestas_desde_formulario(marcadas)
@@ -157,6 +184,15 @@ def post_vark(
         resultado = crear_diagnostico(payload, db)
     except HTTPException as exc:
         return _error(str(exc.detail))
+
+    # El género solo se guardó si el estudiante es nuevo (`_armar_payload`
+    # ignora los datos personales de quien ya tiene sesión), y solo entonces
+    # hay un consentimiento de género que registrar.
+    consentimiento.registrar(
+        db,
+        resultado.id_estudiante,
+        genero=payload.estudiante is not None and payload.estudiante.genero is not None,
+    )
 
     # 204 + HX-Redirect: HTMX procesa la cabecera y navega, así la URL del
     # navegador queda en /student/profile y el botón «atrás» funciona.

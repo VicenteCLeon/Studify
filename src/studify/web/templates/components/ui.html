@@ -110,3 +110,23 @@
 {% macro placeholder(texto) -%}
 <mark class="placeholder">[PLACEHOLDER: {{ texto }}]</mark>
 {%- endmacro %}
+
+{# Casilla de aceptación de los Términos y la Política (marco legal). La usan el
+   primer paso del cuestionario y /aceptar. **Nunca viene marcada**, y el
+   servidor rechaza el envío sin ella: el `disabled` de los botones que la
+   esperan (`data-requiere-acepto`) es solo comodidad del navegador. Los enlaces
+   abren en otra pestaña para no perder lo respondido. #}
+{% macro casilla_aceptacion() -%}
+<label class="choice aceptacion-choice">
+    <input type="checkbox" name="acepto" value="si" data-acepto aria-describedby="acepto-ayuda">
+    <span class="flex-1">
+        Tengo <strong>18 años o más</strong> y acepto los
+        <a href="/terminos" target="_blank" rel="noopener">Términos y Condiciones<span class="visually-hidden"> (se abre en una pestaña nueva)</span></a>
+        y la
+        <a href="/privacidad" target="_blank" rel="noopener">Política de Privacidad<span class="visually-hidden"> (se abre en una pestaña nueva)</span></a>.
+    </span>
+</label>
+<p id="acepto-ayuda" class="form-hint aceptacion-ayuda" data-acepto-ayuda>
+    Marca la casilla para continuar. Guardamos qué versión aceptaste y cuándo.
+</p>
+{%- endmacro %}

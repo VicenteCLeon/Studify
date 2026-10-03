@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% import "components/ui.html" as ui %}
+
+{#
+  Volver a aceptar los documentos legales. Llega acá quien tiene sesión pero no
+  aceptó la versión vigente: los estudiantes anteriores al marco legal y todos
+  cada vez que sube una versión en `web/legal.py`. Es un <form> normal, no
+  HTMX: después de aceptar hay que navegar de vuelta a donde iba.
+#}
+
+{% block title %}Actualizamos nuestros documentos · RepasAi{% endblock %}
+{% block footer_class %}site-footer-compacto{% endblock %}
+
+{% block content %}
+<div class="aceptar">
+    {{ ui.page_header("Antes de seguir, revisa nuestros documentos",
+        "Para usar RepasAi necesitamos que aceptes la versión vigente de estos documentos. Tus cápsulas y tu perfil siguen intactos.",
+        "Marco legal", "shield-check") }}
+
+    <ul class="aceptar-docs" role="list">
+        {% for documento in pendientes %}
+        <li class="card aceptar-doc">
+            <span class="icon-tile">{{ ui.icon("file-text" if documento.clave == "terminos" else "shield-check") }}</span>
+            <div class="flex-1">
+                <a class="aceptar-doc-titulo" href="{{ documento.ruta }}" target="_blank" rel="noopener">
+                    {{ documento.titulo }}<span class="visually-hidden"> (se abre en una pestaña nueva)</span>
+                </a>
+                <p class="text-sm text-muted">Versión {{ documento.version }} · actualizada el {{ documento.actualizado_texto }}</p>
+            </div>
+        </li>
+        {% endfor %}
+    </ul>
+
+    <form method="post" action="/aceptar" class="aceptar-form stack" data-aceptacion>
+        <input type="hidden" name="next" value="{{ destino }}">
+        {% if error %}
+        {% call ui.alert("error") %}{{ error }}{% endcall %}
+        {% endif %}
+        {{ ui.casilla_aceptacion() }}
+        <div class="cluster">
+            <button type="submit" class="btn btn-primary btn-lg" data-requiere-acepto>
+                {{ ui.icon("circle-check") }}<span>Aceptar y continuar</span>
+            </button>
+        </div>
+        <p class="text-sm text-muted">
+            Si no estás de acuerdo, puedes dejar de usar RepasAi y pedir que eliminemos tus datos
+            (<a href="/privacidad#derechos">cómo ejercer tus derechos</a>).
+        </p>
+    </form>
+</div>
+{% endblock %}

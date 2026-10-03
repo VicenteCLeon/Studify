@@ -2468,6 +2468,15 @@ html:not(.js) .js-only {
   margin-bottom: var(--space-4);
 }
 
+/* Consentimiento del género: dentro del mismo fieldset, bajo los campos. */
+.genero-consentimiento {
+  margin-top: var(--space-4);
+}
+
+.vark-aceptacion {
+  margin-top: var(--space-6);
+}
+
 /* Pasos de pregunta */
 .vark-pregunta {
   display: flex;
@@ -4812,6 +4821,47 @@ body.is-generando {
     max-height: calc(100vh - var(--header-h) - var(--space-12));
     overflow-y: auto;
   }
+}
+
+/* Casilla de aceptación (cuestionario y /aceptar): misma tarjeta .choice que
+   las alternativas, con el texto un poco más marcado porque es un acuerdo. */
+.aceptacion-choice {
+  font-weight: var(--fw-medium);
+}
+
+.aceptacion-choice a {
+  color: var(--primary-text);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.aceptacion-ayuda {
+  margin-top: var(--space-2);
+}
+
+/* /aceptar */
+.aceptar {
+  max-width: 40rem;
+  margin-inline: auto;
+}
+
+.aceptar-docs {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0 0 var(--space-6);
+  padding: 0;
+  list-style: none;
+}
+
+.aceptar-doc {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.aceptar-doc-titulo {
+  font-weight: var(--fw-semibold);
+  color: var(--primary-text);
 }
 
 /* Dato pendiente de completar en un borrador legal: tiene que saltar a la

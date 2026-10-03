@@ -25,7 +25,7 @@ from studify.db.models import (
     ObjetivoAprendizaje,
 )
 from studify.main import app
-from studify.web import sesion
+from studify.web import consentimiento, sesion
 from studify.web.routers.teacher import _rendimiento_actividades
 from tests.conftest import USUARIO_DOCENTE, necesita_bd
 from tests.test_api_capsulas import TEXTO_LARGO
@@ -118,6 +118,10 @@ def escenario(db):
     )
     db.add_all([capsula, abierta])
     db.commit()
+    # Las vistas del estudiante exigen la aceptación vigente de los documentos
+    # legales; sin ella el visor mandaría a /aceptar en vez de responder.
+    for estudiante in (duenio, ajeno):
+        consentimiento.registrar(db, estudiante.id_estudiante)
 
     yield {
         "capsula": capsula,

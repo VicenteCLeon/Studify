@@ -92,7 +92,22 @@
     const vacio = form.querySelector("[data-vark-vacio]");
     const mapa = Array.from(form.querySelectorAll("[data-goto]"));
     const errorBox = form.querySelector("#form-error");
+    // Aceptación de Términos y Privacidad (primer paso). Sin ella no se avanza
+    // ni se envía; el servidor lo vuelve a comprobar igual.
+    const acepto = form.querySelector("[data-acepto]");
+    const requiereAcepto = Array.from(form.querySelectorAll("[data-requiere-acepto]"));
+    const accepted = () => !acepto || acepto.checked;
+    // El consentimiento del género solo tiene sentido si se eligió un género.
+    const genero = form.querySelector("[data-genero]");
+    const generoConsent = form.querySelector("[data-genero-consentimiento]");
     let current = 0;
+
+    function syncGenero() {
+      if (!genero || !generoConsent) return;
+      const elegido = genero.value !== "";
+      generoConsent.hidden = !elegido;
+      if (!elegido) generoConsent.querySelector("input").checked = false;
+    }
 
     const boxes = (i) => Array.from(steps[i].querySelectorAll('input[type="checkbox"]'));
     const isAnswered = (i) => boxes(i).some((b) => b.checked);
@@ -138,6 +153,13 @@
       const n = answeredCount();
       count.textContent = `${n} de ${total} respondidas`;
 
+      const ok = accepted();
+      const bloqueado = current === 0 && !ok;
+      nextBtn.disabled = bloqueado;
+      if (bloqueado) nextBtn.setAttribute("aria-describedby", "acepto-ayuda");
+      else nextBtn.removeAttribute("aria-describedby");
+      requiereAcepto.forEach((b) => { b.disabled = !ok; });
+
       if (current === 0) nextLabel.textContent = "Comenzar";
       else if (current === total) nextLabel.textContent = "Revisar";
       else nextLabel.textContent = isAnswered(current) ? "Siguiente" : "Saltar";
@@ -163,6 +185,8 @@
     }
 
     function show(i, opts = {}) {
+      // Un borrador restaurado o un salto del mapa no se saltan la aceptación.
+      if (i > 0 && !accepted()) i = 0;
       const dir = i >= current ? "next" : "prev";
       current = i;
       steps.forEach((s, k) => {
@@ -199,7 +223,8 @@
     nextBtn.addEventListener("click", () => current < last && show(current + 1));
     mapa.forEach((btn) => btn.addEventListener("click", () => show(Number(btn.dataset.goto))));
 
-    form.addEventListener("change", () => {
+    form.addEventListener("change", (e) => {
+      if (e.target === genero) syncGenero();
       // Un error del envío anterior ya no describe las respuestas actuales.
       if (errorBox) errorBox.innerHTML = "";
       updateMeta();
@@ -244,7 +269,21 @@
     });
 
     form.classList.add("is-stepper");
-    show(restore(), { instant: true });
+    const paso = restore();
+    syncGenero();
+    show(paso, { instant: true });
+  }
+
+  // ------------------------------------------------------------------------
+  // /aceptar: el botón espera a que se marque la casilla de aceptación.
+  // ------------------------------------------------------------------------
+  function initAceptacion(form) {
+    const box = form.querySelector("[data-acepto]");
+    const botones = Array.from(form.querySelectorAll("[data-requiere-acepto]"));
+    if (!box) return;
+    const sync = () => botones.forEach((b) => { b.disabled = !box.checked; });
+    box.addEventListener("change", sync);
+    sync();
   }
 
   // ------------------------------------------------------------------------
@@ -468,6 +507,7 @@
   const modules = [
     ["[data-theme-toggle]", initThemeToggle],
     ["[data-vark-stepper]", initVarkStepper],
+    ["[data-aceptacion]", initAceptacion],
     ["[data-catalog-filter]", initCatalogFilter],
     ["[data-study-link]", initStudyLink],
     ["[data-flashcards]", initFlashcards],

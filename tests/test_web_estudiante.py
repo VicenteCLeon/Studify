@@ -54,6 +54,11 @@ def limpiar_estudiantes(db):
     db.commit()
 
 
+# La casilla de aceptación de Términos y Privacidad del primer paso. Sin ella el
+# servidor rechaza el cuestionario (ver `tests/test_web_legal.py`).
+ACEPTA = {"acepto": "si"}
+
+
 def _id_de_la_cookie(cliente: TestClient) -> int:
     crudo = cliente.cookies.get(sesion.COOKIE_ESTUDIANTE)
     assert crudo is not None, "el cuestionario no dejó sesión iniciada"
@@ -164,7 +169,7 @@ def test_cookie_manipulada_se_ignora(cliente, valor):
 
 @necesita_bd
 def test_la_cookie_no_es_legible_por_scripts(cliente, limpiar_estudiantes):
-    respuesta = cliente.post("/student/vark", data={"q1": ["a"]})
+    respuesta = cliente.post("/student/vark", data={"q1": ["a"]} | ACEPTA)
     limpiar_estudiantes.append(_id_de_la_cookie(cliente))
 
     cabecera = respuesta.headers.get("set-cookie", "")
@@ -190,7 +195,7 @@ def test_el_cuestionario_persiste_el_diagnostico_completo(
     datos["q3"] = ["d", "c"]
     datos["carrera"] = "Ingeniería Civil Informática"
 
-    respuesta = cliente.post("/student/vark", data=datos)
+    respuesta = cliente.post("/student/vark", data=datos | ACEPTA)
 
     assert respuesta.status_code == 204
     assert respuesta.headers["HX-Redirect"] == "/student/profile"
@@ -231,7 +236,7 @@ def test_el_perfil_muestra_el_vector_y_la_configuracion_guardados(
     cliente, db, limpiar_estudiantes
 ):
     """La pantalla tiene que decir lo mismo que la base, no un valor de ejemplo."""
-    cliente.post("/student/vark", data={f"q{n}": ["c"] for n in range(1, 17)})
+    cliente.post("/student/vark", data={f"q{n}": ["c"] for n in range(1, 17)} | ACEPTA)
     id_estudiante = _id_de_la_cookie(cliente)
     limpiar_estudiantes.append(id_estudiante)
 
@@ -261,11 +266,11 @@ def test_responder_de_nuevo_agrega_un_diagnostico_al_mismo_estudiante(
     duplicados y las cápsulas de un mismo estudiante repartidas entre varios
     identificadores.
     """
-    cliente.post("/student/vark", data={f"q{n}": ["a"] for n in range(1, 17)})
+    cliente.post("/student/vark", data={f"q{n}": ["a"] for n in range(1, 17)} | ACEPTA)
     id_estudiante = _id_de_la_cookie(cliente)
     limpiar_estudiantes.append(id_estudiante)
 
-    cliente.post("/student/vark", data={f"q{n}": ["c"] for n in range(1, 17)})
+    cliente.post("/student/vark", data={f"q{n}": ["c"] for n in range(1, 17)} | ACEPTA)
 
     assert _id_de_la_cookie(cliente) == id_estudiante
     diagnosticos = db.scalars(
@@ -296,7 +301,7 @@ def test_entradas_invalidas_devuelven_aviso_html(cliente, datos, fragmento_del_m
     Un 422 dejaría al estudiante mirando un formulario que no reacciona, así que
     el error viaja como HTML con estado 200.
     """
-    respuesta = cliente.post("/student/vark", data=datos)
+    respuesta = cliente.post("/student/vark", data=datos | ACEPTA)
     assert respuesta.status_code == 200
     assert "alerta-error" in respuesta.text
     assert fragmento_del_mensaje in respuesta.text
@@ -309,7 +314,7 @@ def test_el_aviso_de_error_no_devuelve_lo_enviado_sin_escapar(cliente):
     script dentro de la página — y hay una cookie de sesión que robar.
     """
     respuesta = cliente.post(
-        "/student/vark", data={"q1": ["<script>alert(1)</script>"]}
+        "/student/vark", data={"q1": ["<script>alert(1)</script>"]} | ACEPTA
     )
     assert respuesta.status_code == 200
     assert "<script>" not in respuesta.text
@@ -510,7 +515,7 @@ def estudiante_conectado(cliente, limpiar_estudiantes):
     """Un estudiante con perfil kinestésico, creado por el propio cuestionario."""
     cliente.post(
         "/student/vark",
-        data={f"q{n}": ["d"] for n in range(1, 17)} | {"carrera": CARRERA_PRUEBA},
+        data={f"q{n}": ["d"] for n in range(1, 17)} | {"carrera": CARRERA_PRUEBA} | ACEPTA,
     )
     id_estudiante = _id_de_la_cookie(cliente)
     limpiar_estudiantes.append(id_estudiante)

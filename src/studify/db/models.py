@@ -53,6 +53,10 @@ ESTADOS_VALIDACION_FRAGMENTO = ("pendiente", "validado", "descartado")
 ESTADOS_VALIDACION_CAPSULA = ("generada", "validada", "rechazada")
 ESTADOS_OBJETIVO = ("activo", "inactivo", "en_revision")
 CANALES_VARK = ("V", "A", "R", "K")
+# Qué se acepta: los dos documentos legales y, aparte, el consentimiento expreso
+# para el dato sensible de género (Ley 21.719), que no puede ir incluido en la
+# aceptación general.
+CONSENTIMIENTOS = ("terminos", "privacidad", "genero")
 
 
 class Estudiante(Base):
@@ -82,6 +86,9 @@ class Estudiante(Base):
     )
     capsulas: Mapped[list["MicrocapsulaGenerada"]] = relationship(
         back_populates="estudiante"
+    )
+    aceptaciones: Mapped[list["AceptacionLegal"]] = relationship(
+        back_populates="estudiante", cascade="all, delete-orphan"
     )
 
 
@@ -470,6 +477,49 @@ class InteraccionQuiz(Base):
     capsula: Mapped["MicrocapsulaGenerada"] = relationship(
         back_populates="interacciones_quiz"
     )
+
+
+class AceptacionLegal(Base):
+    """Cuándo aceptó cada estudiante qué versión de cada documento legal.
+
+    No está en el modelo lógico del cap. 17: se agrega con el marco legal
+    (02-oct-2026) para poder **demostrar** el consentimiento —la Ley 21.719 pone
+    esa carga en el responsable— y para volver a pedirlo cuando cambia la
+    versión de los Términos o de la Política (`web/legal.py`).
+
+    - Una fila por aceptación, **nunca se actualiza**: aceptar la versión nueva
+      agrega otra fila y deja la anterior como historial.
+    - `documento = 'genero'` es el consentimiento expreso y separado para el dato
+      sensible de género; su `version` es la de la Política vigente al darlo.
+    - Cae con el estudiante (`ON DELETE CASCADE`): al ejercer la supresión no
+      queda un rastro que diga que esa persona existió.
+    - `aceptado_en` es `timestamptz`, que Postgres guarda en UTC.
+    """
+
+    __tablename__ = "aceptacion_legal"
+    __table_args__ = (
+        CheckConstraint(
+            "documento IN ('terminos', 'privacidad', 'genero')",
+            name="ck_aceptacion_documento",
+        ),
+        # Aceptar dos veces la misma versión (doble clic, dos pestañas) no
+        # agrega nada que demostrar.
+        UniqueConstraint(
+            "id_estudiante", "documento", "version", name="uq_aceptacion_estudiante_version"
+        ),
+    )
+
+    id_aceptacion: Mapped[int] = mapped_column(primary_key=True)
+    id_estudiante: Mapped[int] = mapped_column(
+        ForeignKey("estudiante.id_estudiante", ondelete="CASCADE"), index=True
+    )
+    documento: Mapped[str] = mapped_column(String(20))
+    version: Mapped[str] = mapped_column(String(20))
+    aceptado_en: Mapped[datetime] = mapped_column(
+        TS, server_default=func.now(), nullable=False
+    )
+
+    estudiante: Mapped["Estudiante"] = relationship(back_populates="aceptaciones")
 
 
 # Índice GIN para el full-text search en español que el retriever usa como

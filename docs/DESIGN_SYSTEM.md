@@ -177,7 +177,8 @@ en un `<symbol id="i-nombre" viewBox="0 0 24 24">` nuevo de `sprite.svg`, en ord
   | Atributo | Módulo |
   |---|---|
   | `data-theme-toggle` | botón de tema |
-  | `data-vark-stepper` | cuestionario de a una pregunta (con borrador en `sessionStorage`) |
+  | `data-vark-stepper` | cuestionario de a una pregunta (con borrador en `sessionStorage`); no avanza del paso 0 sin `[data-acepto]` y muestra el consentimiento del género solo si se eligió uno |
+  | `data-aceptacion` | formulario de `/aceptar`: los `[data-requiere-acepto]` esperan a la casilla `[data-acepto]` |
   | `data-catalog-filter` | buscador del catálogo |
   | `data-study-link` | abre "Generando tu cápsula…" al ir al visor |
   | `data-flashcards` | mazo de tarjetas (lee la lista que dibujó el servidor) |
@@ -197,6 +198,8 @@ en un `<symbol id="i-nombre" viewBox="0 0 24 24">` nuevo de `sprite.svg`, en ord
 
 Los tests y los routers dependen de este marcado. Cambiarlo rompe la suite o un flujo:
 
+- La casilla `name="acepto" value="si"` (macro `ui.casilla_aceptacion()`) y `name="consiento_genero"`:
+  el servidor las exige en `POST /student/vark` y `POST /aceptar`; nunca van marcadas de antemano.
 - Clases `alerta`, `alerta-ok`, `alerta-error`, `badge-success`, `badge-danger`, `badge-primary`
   (las emite `student._error()` y las buscan los tests).
 - En el visor, literal: `<ol class="lista-bloque">`, `<table class="table">`, `<dl class="glosario">`.
