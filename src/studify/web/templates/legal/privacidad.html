@@ -1,0 +1,371 @@
+{% extends "legal/_documento.html" %}
+{% import "components/ui.html" as ui %}
+{#
+  Política de Privacidad de RepasAi. Describe lo que el código hace hoy (ver la
+  auditoría de datos en docs/AVANCE.md): si cambia qué se guarda, qué se envía
+  al proveedor de IA o qué cookies hay, este texto tiene que cambiar con él y la
+  versión en `web/legal.py` tiene que subir.
+
+  Los datos que faltan van con `ui.placeholder(...)`; para completarlos,
+  reemplaza la llamada entera por el texto definitivo.
+#}
+{% set icono_documento = "shield-check" %}
+{% set secciones = [
+    ("responsable", "1. Responsable y contacto"),
+    ("datos", "2. Qué datos tratamos"),
+    ("finalidad", "3. Para qué los usamos y con qué base"),
+    ("perfilamiento", "4. Perfil de aprendizaje y decisiones automatizadas"),
+    ("proveedor-ia", "5. Proveedor de IA y transferencia internacional"),
+    ("terceros", "6. Con quién más se comparten"),
+    ("cookies", "7. Cookies y almacenamiento en tu navegador"),
+    ("conservacion", "8. Cuánto tiempo los conservamos"),
+    ("derechos", "9. Tus derechos y cómo ejercerlos"),
+    ("seguridad", "10. Seguridad y vulneraciones"),
+    ("menores", "11. Menores de edad"),
+    ("reclamos", "12. Reclamos ante la Agencia"),
+    ("cambios", "13. Cambios a esta política"),
+] %}
+
+{% block resumen %}
+<div class="legal-resumen">
+    {% call ui.alert("info", "En pocas palabras") %}
+    <ul>
+        <li><strong>No te pedimos nombre, correo ni RUT.</strong> Te reconocemos solo por un número guardado en una cookie de tu navegador.</li>
+        <li>Guardamos tus respuestas al cuestionario VARK, tu perfil, las cápsulas que abres y tus intentos en las actividades. La edad, el género y la carrera son <strong>opcionales</strong>.</li>
+        <li>Al proveedor de IA <strong>no le enviamos ningún dato tuyo</strong>: solo el material del curso y los parámetros de formato que salen de tu perfil, sin nada que te identifique.</li>
+        <li>Puedes pedir ver, corregir, llevarte o eliminar tus datos (sección 9).</li>
+    </ul>
+    {% endcall %}
+</div>
+{% endblock %}
+
+{% block documento %}
+<!-- BORRADOR: requiere revisión legal antes de publicación -->
+
+<p>
+    Esta política explica qué datos personales trata RepasAi, para qué, con quién se comparten y cuáles son
+    tus derechos. Está redactada conforme a la Ley N.º 19.628 sobre Protección de la Vida Privada, en su
+    texto modificado por la Ley N.º 21.719, que entra en vigencia el 1 de diciembre de 2026.
+</p>
+
+<section id="responsable" aria-labelledby="responsable-t">
+    <h2 id="responsable-t">1. Responsable y contacto</h2>
+    <p>
+        Responsable del tratamiento: {{ ui.placeholder("nombre(s) de los estudiantes autores, o la entidad que asuma como responsable") }},
+        autores de RepasAi, prototipo del proyecto de título de {{ ui.placeholder("carrera") }} de la Pontificia
+        Universidad Católica de Valparaíso. RepasAi no es un servicio oficial de la PUCV.
+        {{ ui.placeholder("confirmar con la profesora guía quién figura como responsable y si la PUCV tiene un rol en el tratamiento") }}
+    </p>
+    <p id="contacto">
+        Contacto para privacidad y ejercicio de derechos: {{ ui.placeholder("correo de contacto del proyecto") }}.
+    </p>
+</section>
+
+<section id="datos" aria-labelledby="datos-t">
+    <h2 id="datos-t">2. Qué datos tratamos</h2>
+    <div class="table-container">
+        <table class="table table-stack">
+            <caption class="visually-hidden">Datos que trata RepasAi</caption>
+            <thead>
+                <tr>
+                    <th scope="col">Dato</th>
+                    <th scope="col">De dónde sale</th>
+                    <th scope="col">¿Obligatorio?</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td data-label="Dato"><strong>Número de estudiante</strong> (identificador interno) y fecha de registro</td>
+                    <td data-label="De dónde sale">Se crea al enviar el cuestionario</td>
+                    <td data-label="¿Obligatorio?">Sí</td>
+                </tr>
+                <tr>
+                    <td data-label="Dato"><strong>Respuestas al cuestionario VARK</strong>: cada alternativa que marcaste en las 16 preguntas</td>
+                    <td data-label="De dónde sale">Tú, en el cuestionario</td>
+                    <td data-label="¿Obligatorio?">Sí (al menos una)</td>
+                </tr>
+                <tr>
+                    <td data-label="Dato"><strong>Perfil de aprendizaje</strong>: puntajes y porcentaje de cada dimensión V, A, R y K, y la configuración de contenido que se deriva de él</td>
+                    <td data-label="De dónde sale">Se calcula con tus respuestas</td>
+                    <td data-label="¿Obligatorio?">Sí</td>
+                </tr>
+                <tr>
+                    <td data-label="Dato"><strong>Rango de edad y carrera</strong></td>
+                    <td data-label="De dónde sale">Tú, en el cuestionario</td>
+                    <td data-label="¿Obligatorio?">No</td>
+                </tr>
+                <tr>
+                    <td data-label="Dato"><strong>Género con el que te identificas</strong> (dato sensible)</td>
+                    <td data-label="De dónde sale">Tú, en el cuestionario, solo si das tu consentimiento expreso para ello</td>
+                    <td data-label="¿Obligatorio?">No</td>
+                </tr>
+                <tr>
+                    <td data-label="Dato"><strong>Cápsulas</strong> que se generan para ti (tema, contenido, fecha y modelo de IA usado) y su audio narrado, si lo pides</td>
+                    <td data-label="De dónde sale">Se generan cuando abres un tema</td>
+                    <td data-label="¿Obligatorio?">Sí, para usar el servicio</td>
+                </tr>
+                <tr>
+                    <td data-label="Dato"><strong>Intentos en las actividades</strong>: alternativa elegida, si fue correcta y fecha</td>
+                    <td data-label="De dónde sale">Tus respuestas en las actividades</td>
+                    <td data-label="¿Obligatorio?">Sí, para usar el servicio</td>
+                </tr>
+                <tr>
+                    <td data-label="Dato"><strong>Aceptación de los documentos</strong>: qué versión de los Términos y de esta política aceptaste y cuándo</td>
+                    <td data-label="De dónde sale">La casilla de aceptación</td>
+                    <td data-label="¿Obligatorio?">Sí</td>
+                </tr>
+                <tr>
+                    <td data-label="Dato"><strong>Dirección IP</strong> y datos técnicos de cada petición (ruta, hora, resultado)</td>
+                    <td data-label="De dónde sale">Tu navegador, al conectarse</td>
+                    <td data-label="¿Obligatorio?">Sí (técnicamente necesario)</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <p>
+        <strong>No recolectamos</strong> tu nombre, correo, RUT, teléfono, fotografía ni tu ubicación, y no
+        usamos herramientas de analítica, publicidad ni rastreo.
+    </p>
+    <p>
+        Si respondiste el <strong>cuestionario piloto</strong> en Google Forms
+        ({{ ui.placeholder("período en que se aplicó") }}), tus respuestas, rango de edad, género, carrera y
+        año de carrera se incorporaron a RepasAi con el mismo tratamiento descrito aquí. El archivo importado
+        no incluye nombre ni correo. {{ ui.placeholder("indicar qué consentimiento se informó en ese formulario") }}
+    </p>
+    <p>
+        Aunque no sepamos tu nombre, estos datos <strong>siguen siendo datos personales</strong>: están
+        asociados a un identificador que te distingue, y algunas combinaciones (carrera, edad y género en un
+        curso pequeño) podrían permitir reconocerte. Por eso los tratamos con los mismos cuidados.
+    </p>
+</section>
+
+<section id="finalidad" aria-labelledby="finalidad-t">
+    <h2 id="finalidad-t">3. Para qué los usamos y con qué base</h2>
+    <ul>
+        <li>
+            <strong>Prestarte el servicio</strong>: calcular tu perfil, adaptar y generar tus cápsulas, guardar tu
+            avance y mostrártelo. Base: tu <strong>consentimiento</strong>, que das al marcar la casilla de
+            aceptación.
+        </li>
+        <li>
+            <strong>Evaluar el prototipo</strong> en el proyecto de título: medir con datos agregados si las
+            cápsulas adaptadas funcionan (por ejemplo, el porcentaje de aciertos al primer intento por tema o el
+            perfil promedio del curso). Base: tu <strong>consentimiento</strong>. En el informe del proyecto y en
+            cualquier presentación solo se usan resultados agregados o anonimizados, nunca datos que permitan
+            identificarte. {{ ui.placeholder("confirmar si habrá publicaciones o presentaciones fuera del informe de título") }}
+        </li>
+        <li>
+            <strong>Análisis por grupo</strong> con edad, género y carrera, solo si los entregaste. Nunca
+            intervienen en cómo se genera tu contenido. Para el género, la base es tu <strong>consentimiento
+            expreso y separado</strong>, porque la ley lo considera un dato sensible.
+        </li>
+        <li>
+            <strong>Seguridad</strong>: registrar intentos fallidos de acceso al panel docente y la IP de las
+            peticiones para detectar abusos. Base: el <strong>interés legítimo</strong> de proteger el servicio y
+            tus datos. {{ ui.placeholder("revisión legal: confirmar la base de licitud aplicable a los registros técnicos") }}
+        </li>
+    </ul>
+    <p>
+        El equipo docente del curso ({{ ui.placeholder("quiénes acceden al panel docente") }}) puede ver en su
+        panel las cápsulas generadas, identificadas solo por número de estudiante, y estadísticas agregadas del
+        curso. No usamos tus datos para otros fines ni los vendemos.
+    </p>
+</section>
+
+<section id="perfilamiento" aria-labelledby="perfilamiento-t">
+    <h2 id="perfilamiento-t">4. Perfil de aprendizaje y decisiones automatizadas</h2>
+    <p>
+        RepasAi elabora un <strong>perfil de aprendizaje</strong> con tus respuestas y lo usa, de forma
+        automatizada, para decidir el formato de tus cápsulas: cuánto texto, cuántas tablas o esquemas, si
+        incluye narración o qué tipo de actividad final tiene.
+    </p>
+    <p>
+        Esa decisión solo afecta <strong>cómo se presenta el material</strong>: no te califica, no decide tu
+        acceso a ningún tema (todos los estudiantes ven los mismos temas) y no produce efectos fuera de
+        RepasAi. Aun así, puedes oponerte a ella (sección 9) y volver a responder el cuestionario cuando quieras.
+    </p>
+</section>
+
+<section id="proveedor-ia" aria-labelledby="proveedor-ia-t">
+    <h2 id="proveedor-ia-t">5. Proveedor de IA y transferencia internacional</h2>
+    <p>
+        Las cápsulas las redacta el modelo <strong>deepseek-chat</strong> de <strong>DeepSeek</strong>, a través de
+        su API ({{ ui.placeholder("razón social del proveedor según sus términos vigentes") }}). Según sus propios
+        términos, el proveedor procesa la información en la República Popular China.
+        {{ ui.placeholder("verificar la ubicación del tratamiento y la política de uso de datos de la API vigente") }}
+    </p>
+    <p>Lo que <strong>sí</strong> le enviamos en cada generación:</p>
+    <ul>
+        <li>la asignatura, la unidad, el tema y la descripción del objetivo de aprendizaje;</li>
+        <li>los fragmentos del material del curso revisados por el equipo docente, con su documento y página;</li>
+        <li>instrucciones de formato derivadas de tu perfil: cuatro pesos de énfasis (texto, visual, narrativo y práctico), la extensión aproximada, el tono y qué tipo de bloques incluir.</li>
+    </ul>
+    <p>Lo que <strong>no</strong> le enviamos: tu número de estudiante, tu edad, género o carrera, tus respuestas al cuestionario, tus resultados en las actividades, tu IP ni ninguna cookie. La conexión la hace nuestro servidor, así que el proveedor no ve tu dirección IP.</p>
+    <p>
+        Como ese envío no contiene datos que te identifiquen, no constituye una transferencia internacional de
+        tus datos personales. Lo informamos igual por transparencia, porque los parámetros de formato sí salen
+        de tu perfil. {{ ui.placeholder("revisión legal: confirmar esta calificación") }}
+    </p>
+    <p>
+        Si cambiamos de proveedor de IA, actualizaremos esta sección y su versión.
+    </p>
+    <p>
+        La <strong>narración de audio</strong> la genera un modelo de voz (XTTS-v2) que corre en nuestro propio
+        servidor: el texto no sale a ningún tercero. La voz es sintética, creada a partir de una grabación de
+        referencia de {{ ui.placeholder("de quién es la voz de referencia y constancia de su consentimiento") }}.
+    </p>
+</section>
+
+<section id="terceros" aria-labelledby="terceros-t">
+    <h2 id="terceros-t">6. Con quién más se comparten</h2>
+    <p>
+        Con nadie más. Las tipografías, los íconos y las bibliotecas de la página se sirven desde nuestro propio
+        servidor, de modo que ningún tercero (como Google Fonts o una red de distribución de contenido) recibe tu
+        IP al abrir RepasAi.
+    </p>
+    <p>
+        Los datos se almacenan en una base de datos PostgreSQL en {{ ui.placeholder("dónde se aloja: servidor, proveedor de hosting y país") }}.
+        {{ ui.placeholder("si hay proveedor de hosting, identificarlo como encargado del tratamiento") }}
+    </p>
+    <p>Solo entregaríamos datos a una autoridad cuando una ley o una resolución judicial lo exija.</p>
+</section>
+
+<section id="cookies" aria-labelledby="cookies-t">
+    <h2 id="cookies-t">7. Cookies y almacenamiento en tu navegador</h2>
+    <p>
+        Usamos solo lo necesario para que el servicio funcione. No hay cookies de terceros, de analítica ni de
+        publicidad, y por eso no te mostramos un aviso de cookies.
+    </p>
+    <div class="table-container">
+        <table class="table table-stack">
+            <caption class="visually-hidden">Cookies y almacenamiento local de RepasAi</caption>
+            <thead>
+                <tr>
+                    <th scope="col">Nombre</th>
+                    <th scope="col">Tipo</th>
+                    <th scope="col">Para qué</th>
+                    <th scope="col">Duración</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td data-label="Nombre"><code>id_estudiante</code></td>
+                    <td data-label="Tipo">Cookie propia, esencial</td>
+                    <td data-label="Para qué">Recordar cuál es tu perfil. Va firmada para que nadie pueda hacerse pasar por otro estudiante y no la puede leer ningún script de la página.</td>
+                    <td data-label="Duración">30 días</td>
+                </tr>
+                <tr>
+                    <td data-label="Nombre"><code>docente</code></td>
+                    <td data-label="Tipo">Cookie propia, esencial</td>
+                    <td data-label="Para qué">Solo para el equipo docente: mantener abierta la sesión del panel.</td>
+                    <td data-label="Duración">12 horas</td>
+                </tr>
+                <tr>
+                    <td data-label="Nombre"><code>repasai-theme</code></td>
+                    <td data-label="Tipo">Almacenamiento local (localStorage)</td>
+                    <td data-label="Para qué">Recordar si elegiste modo claro u oscuro. No sale de tu navegador.</td>
+                    <td data-label="Duración">Hasta que la borres</td>
+                </tr>
+                <tr>
+                    <td data-label="Nombre"><code>repasai-vark-borrador</code></td>
+                    <td data-label="Tipo">Almacenamiento de sesión (sessionStorage)</td>
+                    <td data-label="Para qué">Guardar tus respuestas a medio camino si recargas la página del cuestionario. No sale de tu navegador hasta que lo envías.</td>
+                    <td data-label="Duración">Se borra al enviar el cuestionario o cerrar la pestaña</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section id="conservacion" aria-labelledby="conservacion-t">
+    <h2 id="conservacion-t">8. Cuánto tiempo los conservamos</h2>
+    <ul>
+        <li>
+            <strong>Perfil, respuestas, cápsulas, intentos y aceptaciones</strong>: mientras dure el proyecto de
+            título y hasta {{ ui.placeholder("plazo máximo, p. ej. la fecha de cierre del proyecto o N meses después") }}.
+            Después los eliminaremos o los anonimizaremos de forma irreversible para conservar solo estadísticas.
+        </li>
+        <li>Si pides eliminar tus datos, los borramos antes, salvo que una ley nos obligue a conservar algo.</li>
+        <li>
+            <strong>Registros técnicos</strong> (IP y peticiones): {{ ui.placeholder("plazo según el hosting; hoy no se guardan en archivo, solo en la consola del servidor") }}.
+        </li>
+        <li>Las <strong>cookies</strong> duran lo indicado en la sección 7.</li>
+    </ul>
+</section>
+
+<section id="derechos" aria-labelledby="derechos-t">
+    <h2 id="derechos-t">9. Tus derechos y cómo ejercerlos</h2>
+    <p>Tienes derecho a:</p>
+    <ul>
+        <li><strong>Acceso</strong>: saber qué datos tuyos tenemos y cómo los tratamos.</li>
+        <li><strong>Rectificación</strong>: corregir datos inexactos o incompletos.</li>
+        <li><strong>Supresión</strong>: pedir que eliminemos tus datos.</li>
+        <li><strong>Oposición</strong>: oponerte a un tratamiento, incluido el uso automatizado de tu perfil para adaptar las cápsulas.</li>
+        <li><strong>Portabilidad</strong>: recibir tus datos en un formato estructurado y de uso común.</li>
+        <li><strong>Bloqueo</strong>: pedir que suspendamos temporalmente el tratamiento mientras se resuelve una solicitud tuya.</li>
+    </ul>
+    <p>
+        También puedes <strong>retirar tu consentimiento</strong> en cualquier momento, sin que eso afecte lo
+        tratado antes. Ejercer tus derechos es gratuito.
+    </p>
+    <h3>Cómo ejercerlos</h3>
+    <p>
+        Escríbenos a {{ ui.placeholder("correo de contacto del proyecto") }} indicando qué derecho quieres
+        ejercer. Te responderemos en un plazo de {{ ui.placeholder("plazo de respuesta conforme a la Ley 21.719") }}.
+    </p>
+    <p>
+        <strong>Cómo te identificamos.</strong> Como no te pedimos nombre ni correo, la única forma de saber qué
+        datos son tuyos es la sesión de tu navegador. Si borraste la cookie o cambiaste de dispositivo, puede que
+        no podamos encontrar tus datos: en ese caso te explicaremos por qué no pudimos atender la solicitud.
+    </p>
+</section>
+
+<section id="seguridad" aria-labelledby="seguridad-t">
+    <h2 id="seguridad-t">10. Seguridad y vulneraciones</h2>
+    <p>Las medidas que existen hoy en RepasAi son:</p>
+    <ul>
+        <li><strong>Minimización</strong>: no pedimos nombre, correo ni RUT, y los datos sociodemográficos son opcionales.</li>
+        <li><strong>Sesiones firmadas</strong>: las cookies llevan una firma criptográfica (HMAC-SHA256), no son legibles por scripts de la página y no se envían desde sitios de terceros.</li>
+        <li><strong>Control de acceso</strong>: cada estudiante solo puede ver y usar sus propios datos; el panel docente exige credencial, tiene un freno contra intentos repetidos y su sesión vence a las 12 horas.</li>
+        <li><strong>Sin terceros en la página</strong>: no se cargan recursos de otros dominios.</li>
+        <li><strong>Al proveedor de IA no llegan datos personales</strong> (sección 5).</li>
+    </ul>
+    <p>
+        {{ ui.placeholder("completar según el despliegue: cifrado en tránsito (HTTPS), cifrado y respaldos de la base de datos, quién tiene acceso al servidor y credenciales cambiadas respecto de las de demostración") }}
+    </p>
+    <p>
+        Ningún sistema es completamente seguro. Si ocurre una vulneración de seguridad que afecte tus datos, la
+        notificaremos a la Agencia de Protección de Datos Personales y, cuando la ley lo exija, también a los
+        afectados. Como no tenemos tu correo, el aviso a los titulares será mediante un aviso visible en RepasAi
+        y por los canales del curso. {{ ui.placeholder("procedimiento interno y plazos de notificación conforme a la Ley 21.719") }}
+    </p>
+</section>
+
+<section id="menores" aria-labelledby="menores-t">
+    <h2 id="menores-t">11. Menores de edad</h2>
+    <p>
+        RepasAi está dirigido a personas de <strong>18 años o más</strong>, y al aceptar declaras cumplir esa
+        edad. No tratamos a sabiendas datos de menores de edad. Si te enteras de que un menor de 18 años usó
+        RepasAi, escríbenos y eliminaremos sus datos.
+    </p>
+</section>
+
+<section id="reclamos" aria-labelledby="reclamos-t">
+    <h2 id="reclamos-t">12. Reclamos ante la Agencia</h2>
+    <p>
+        Si consideras que no respetamos tus derechos o que tratamos tus datos en contra de la ley, puedes
+        reclamar ante la <strong>Agencia de Protección de Datos Personales</strong>.
+        {{ ui.placeholder("sitio web y canal de reclamos de la Agencia, y si se exige reclamar primero ante el responsable") }}
+        Te agradeceremos que antes nos escribas, para intentar resolverlo directamente.
+    </p>
+</section>
+
+<section id="cambios" aria-labelledby="cambios-t">
+    <h2 id="cambios-t">13. Cambios a esta política</h2>
+    <p>
+        Si cambiamos qué datos tratamos, para qué o con quién los compartimos, publicaremos una nueva versión
+        con su número y fecha al inicio de esta página y te pediremos que la aceptes antes de seguir usando
+        RepasAi.
+    </p>
+</section>
+{% endblock %}

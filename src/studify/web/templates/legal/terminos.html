@@ -1,0 +1,265 @@
+{% extends "legal/_documento.html" %}
+{% import "components/ui.html" as ui %}
+{#
+  Términos y Condiciones de RepasAi. Es el texto editable: los datos que faltan
+  van con `ui.placeholder(...)`; para completarlos, reemplaza la llamada entera
+  por el texto definitivo. Si el cambio es de fondo, sube la versión en
+  `web/legal.py` para que se vuelva a pedir la aceptación.
+#}
+{% set icono_documento = "file-text" %}
+{% set secciones = [
+    ("quienes-somos", "1. Quiénes somos y qué es RepasAi"),
+    ("aceptacion", "2. Aceptación de estos términos"),
+    ("requisitos", "3. Quién puede usar RepasAi"),
+    ("como-funciona", "4. Cómo funciona el servicio"),
+    ("contenido-ia", "5. Contenido generado con IA"),
+    ("perfil-vark", "6. El perfil VARK es orientativo"),
+    ("uso-aceptable", "7. Uso aceptable"),
+    ("propiedad-intelectual", "8. Propiedad intelectual y fuentes"),
+    ("tal-cual", "9. Prototipo entregado «tal cual»"),
+    ("responsabilidad", "10. Limitación de responsabilidad"),
+    ("suspension", "11. Suspensión y eliminación del acceso"),
+    ("cambios", "12. Cambios a estos términos"),
+    ("ley-aplicable", "13. Ley aplicable y jurisdicción"),
+    ("contacto", "14. Contacto"),
+] %}
+
+{% block resumen %}
+<div class="legal-resumen">
+    {% call ui.alert("info", "En pocas palabras") %}
+    <ul>
+        <li>RepasAi es un <strong>prototipo académico</strong> de un proyecto de título, gratuito y sin fines comerciales.</li>
+        <li>Las cápsulas las <strong>genera una IA</strong> y pueden tener errores: no reemplazan tus clases, tu material oficial ni la evaluación de tu docente.</li>
+        <li>Tu perfil VARK es <strong>una orientación</strong> sobre cómo prefieres estudiar, no un diagnóstico.</li>
+    </ul>
+    {% endcall %}
+</div>
+{% endblock %}
+
+{% block documento %}
+<!-- BORRADOR: requiere revisión legal antes de publicación -->
+
+<section id="quienes-somos" aria-labelledby="quienes-somos-t">
+    <h2 id="quienes-somos-t">1. Quiénes somos y qué es RepasAi</h2>
+    <p>
+        RepasAi es un prototipo desarrollado por {{ ui.placeholder("nombres de los estudiantes autores") }},
+        estudiantes de {{ ui.placeholder("carrera") }} de la Pontificia Universidad Católica de Valparaíso
+        (PUCV), como parte de su proyecto de título, bajo la guía de {{ ui.placeholder("nombre de la profesora guía") }}.
+    </p>
+    <p>
+        RepasAi <strong>no es un servicio oficial de la PUCV</strong> ni una oferta institucional de la
+        universidad: es un trabajo académico de sus autores. {{ ui.placeholder("confirmar con la profesora guía esta descripción y si la PUCV debe mencionarse de otra forma") }}
+    </p>
+    <p>
+        Su propósito es evaluar, dentro del proyecto de título, si las microcápsulas de estudio adaptadas al
+        perfil de aprendizaje ayudan a repasar los contenidos de {{ ui.placeholder("asignatura(s) en que se usa") }}.
+        Es <strong>gratuito y sin fines comerciales</strong>.
+    </p>
+</section>
+
+<section id="aceptacion" aria-labelledby="aceptacion-t">
+    <h2 id="aceptacion-t">2. Aceptación de estos términos</h2>
+    <p>
+        Para usar RepasAi debes aceptar estos Términos y la <a href="/privacidad">Política de Privacidad</a>
+        marcando la casilla que aparece antes de empezar el cuestionario. La casilla nunca viene marcada y
+        no puedes continuar sin marcarla.
+    </p>
+    <p>
+        Guardamos qué versión aceptaste y cuándo (en hora UTC). Si cambiamos alguno de los dos documentos
+        de forma importante, te pediremos que vuelvas a aceptarlos antes de seguir usando el servicio.
+    </p>
+    <p>Si no estás de acuerdo con estos términos, no uses RepasAi.</p>
+</section>
+
+<section id="requisitos" aria-labelledby="requisitos-t">
+    <h2 id="requisitos-t">3. Quién puede usar RepasAi</h2>
+    <p>
+        RepasAi está pensado para estudiantes universitarios de {{ ui.placeholder("curso, asignatura o carrera habilitada") }}
+        y para su equipo docente.
+    </p>
+    <p>
+        <strong>Debes tener 18 años o más.</strong> No está dirigido a menores de edad. Si eres menor de 18,
+        no lo uses. Si nos enteramos de que un menor de edad lo usó, eliminaremos sus datos (ver la
+        <a href="/privacidad#menores">Política de Privacidad</a>).
+    </p>
+    <p>
+        No necesitas crear una cuenta ni dar tu nombre, correo o RUT. Tu navegador recuerda tu sesión con
+        una cookie: si la borras o cambias de dispositivo, RepasAi no podrá reconocerte y tendrás que
+        responder el cuestionario de nuevo.
+    </p>
+</section>
+
+<section id="como-funciona" aria-labelledby="como-funciona-t">
+    <h2 id="como-funciona-t">4. Cómo funciona el servicio</h2>
+    <ol>
+        <li>Respondes un cuestionario de 16 situaciones basado en el modelo VARK (visual, auditivo, lectura/escritura y kinestésico).</li>
+        <li>Con tus respuestas calculamos tu perfil: el porcentaje de cada una de las cuatro dimensiones.</li>
+        <li>
+            Cuando abres un tema, un modelo de inteligencia artificial redacta una microcápsula usando
+            <strong>solo fragmentos del material del curso</strong> revisados por el equipo docente, y la
+            adapta a tu perfil. Cada cápsula cita los fragmentos y páginas de los que sale.
+        </li>
+        <li>Si tu perfil es auditivo, la cápsula puede incluir una narración con una voz sintética generada por computador.</li>
+        <li>Las cápsulas terminan con una actividad (preguntas, tarjetas o ejercicios). Guardamos tus intentos para medir si el prototipo funciona.</li>
+    </ol>
+</section>
+
+<section id="contenido-ia" aria-labelledby="contenido-ia-t">
+    <h2 id="contenido-ia-t">5. Contenido generado con IA</h2>
+    <p>
+        Las microcápsulas, sus actividades y sus retroalimentaciones las produce un modelo de lenguaje
+        (inteligencia artificial generativa). Aunque se le entrega solo material revisado del curso y el
+        sistema verifica que cite fragmentos reales, <strong>el contenido puede ser inexacto, incompleto,
+        estar desactualizado o equivocarse</strong>, incluso cuando parece seguro.
+    </p>
+    <ul>
+        <li><strong>No sustituye la enseñanza formal</strong>: ni tus clases, ni tus docentes, ni la bibliografía oficial del curso.</li>
+        <li>
+            <strong>No es una evaluación académica.</strong> Los resultados de las actividades no son notas
+            ni reemplazan la evaluación de tu docente, y no se usan para calificarte.
+            {{ ui.placeholder("confirmar con el equipo docente que los resultados no se usan en la calificación") }}
+        </li>
+        <li><strong>Verifica siempre</strong> con tu material oficial antes de estudiar algo como cierto. Cada cápsula te muestra de qué fragmento y página sale cada idea, para que puedas contrastarla.</li>
+        <li>La narración de audio usa una <strong>voz sintética</strong>: no es la voz de un docente hablando en vivo.</li>
+    </ul>
+    <p>
+        Si encuentras un error en una cápsula, avísanos por el canal de <a href="#contacto">contacto</a>:
+        nos ayuda a mejorar el material y el prototipo.
+    </p>
+</section>
+
+<section id="perfil-vark" aria-labelledby="perfil-vark-t">
+    <h2 id="perfil-vark-t">6. El perfil VARK es orientativo</h2>
+    <p>
+        Tu perfil describe <strong>cómo prefieres recibir información</strong> según tus propias respuestas a
+        un cuestionario breve. Es una orientación para adaptar el formato de las cápsulas y nada más:
+    </p>
+    <ul>
+        <li>no es un diagnóstico psicológico, psicopedagógico ni médico;</li>
+        <li>no mide tu inteligencia, tu capacidad ni tu rendimiento;</li>
+        <li>no debe usarse para tomar decisiones sobre ti fuera de RepasAi.</li>
+    </ul>
+    <p>
+        Puedes volver a responder el cuestionario cuando quieras: las cápsulas siguientes se adaptan a tu
+        perfil más reciente.
+    </p>
+</section>
+
+<section id="uso-aceptable" aria-labelledby="uso-aceptable-t">
+    <h2 id="uso-aceptable-t">7. Uso aceptable</h2>
+    <p>Al usar RepasAi te comprometes a no:</p>
+    <ul>
+        <li>usar la sesión, la cookie o los datos de otra persona, ni intentar ver o modificar información que no es tuya;</li>
+        <li>intentar acceder al panel docente sin autorización, eludir los controles de acceso o probar contraseñas;</li>
+        <li>atacar, sobrecargar o automatizar peticiones al servicio (por ejemplo, para generar cápsulas en masa);</li>
+        <li>ingresar en los formularios datos personales de terceros o información que no corresponda;</li>
+        <li>copiar, redistribuir o publicar el material del curso o las cápsulas fuera del contexto académico del curso;</li>
+        <li>usar RepasAi con fines comerciales o presentar las cápsulas como trabajo propio en una evaluación.</li>
+    </ul>
+</section>
+
+<section id="propiedad-intelectual" aria-labelledby="propiedad-intelectual-t">
+    <h2 id="propiedad-intelectual-t">8. Propiedad intelectual y fuentes</h2>
+    <h3>Material del curso</h3>
+    <p>
+        Los documentos con los que se construyen las cápsulas (apuntes, guías, presentaciones y otros) son
+        de sus autores o titulares. RepasAi los usa con fines exclusivamente académicos y
+        {{ ui.placeholder("base de uso: p. ej., material aportado o autorizado por el equipo docente del curso") }}.
+        Por eso cada cápsula <strong>cita el documento y la página</strong> de cada fragmento que usa: la
+        atribución es parte del diseño.
+    </p>
+    <p>
+        Si eres titular de algún material y crees que se está usando sin autorización, escríbenos por el
+        canal de <a href="#contacto">contacto</a> y lo retiraremos mientras lo revisamos.
+    </p>
+    <h3>Cápsulas generadas</h3>
+    <p>
+        Las cápsulas son material de estudio derivado del material del curso. Puedes usarlas para tu estudio
+        personal; no las redistribuyas fuera del curso. {{ ui.placeholder("definir la titularidad o licencia de las cápsulas generadas") }}
+    </p>
+    <h3>El software y sus componentes</h3>
+    <p>
+        El código de RepasAi es de sus autores {{ ui.placeholder("licencia del código, si se publica") }}.
+        Usa componentes de terceros bajo sus propias licencias: las tipografías Figtree y Fraunces (SIL Open
+        Font License 1.1), los íconos de Lucide (licencia ISC), la biblioteca HTMX (licencia BSD de cero
+        cláusulas) y el modelo de voz XTTS-v2 de Coqui, cuya licencia (Coqui Public Model License) solo
+        permite usos no comerciales. {{ ui.placeholder("verificar las licencias de las dependencias restantes y los términos de uso del proveedor de IA sobre el contenido generado") }}
+    </p>
+</section>
+
+<section id="tal-cual" aria-labelledby="tal-cual-t">
+    <h2 id="tal-cual-t">9. Prototipo entregado «tal cual»</h2>
+    <p>
+        RepasAi es un prototipo en desarrollo y se ofrece <strong>«tal cual» y «según disponibilidad»</strong>,
+        sin garantías de ningún tipo: no garantizamos que funcione sin interrupciones ni errores, que esté
+        siempre disponible, ni que el contenido sea exacto o adecuado para un fin determinado.
+    </p>
+    <p>
+        Podemos cambiar, pausar o dar por terminado el servicio en cualquier momento, en particular al
+        concluir el proyecto de título. {{ ui.placeholder("fecha estimada de término del piloto") }}
+    </p>
+</section>
+
+<section id="responsabilidad" aria-labelledby="responsabilidad-t">
+    <h2 id="responsabilidad-t">10. Limitación de responsabilidad</h2>
+    <p>
+        En la máxima medida que permite la legislación chilena, los autores de RepasAi no responden por los
+        daños que se deriven del uso del servicio o de la imposibilidad de usarlo, incluidos los que
+        resulten de confiar en contenido generado por IA sin contrastarlo con el material oficial, ni por
+        decisiones académicas tomadas a partir de las cápsulas o del perfil VARK.
+    </p>
+    <p>
+        Esta limitación <strong>no se aplica</strong> a los daños causados con dolo o culpa grave, ni a la
+        responsabilidad que la ley no permite excluir, incluidas las obligaciones sobre protección de datos
+        personales descritas en la <a href="/privacidad">Política de Privacidad</a>.
+        {{ ui.placeholder("revisión legal: alcance de esta cláusula según la ley chilena y si aplica la Ley 19.496 del Consumidor a un servicio gratuito") }}
+    </p>
+</section>
+
+<section id="suspension" aria-labelledby="suspension-t">
+    <h2 id="suspension-t">11. Suspensión y eliminación del acceso</h2>
+    <p>
+        Si usas RepasAi en contra de estos términos —en especial de la sección de <a href="#uso-aceptable">uso
+        aceptable</a>—, podemos invalidar tu sesión, bloquear el acceso desde tu dispositivo o eliminar los
+        datos asociados a ella. Cuando sea posible, lo haremos de forma proporcional a la falta.
+    </p>
+    <p>
+        Como RepasAi no tiene cuentas con correo, no siempre podremos avisarte antes. Si crees que se trató
+        de un error, escríbenos por el canal de <a href="#contacto">contacto</a>.
+    </p>
+    <p>
+        Tú también puedes dejar de usar RepasAi cuando quieras y pedir que eliminemos tus datos, como se
+        explica en la <a href="/privacidad#derechos">Política de Privacidad</a>.
+    </p>
+</section>
+
+<section id="cambios" aria-labelledby="cambios-t">
+    <h2 id="cambios-t">12. Cambios a estos términos</h2>
+    <p>
+        Podemos actualizar estos términos. Cada versión lleva número y fecha al inicio de esta página. Si el
+        cambio es importante, te pediremos que aceptes la nueva versión antes de seguir usando el servicio;
+        si no la aceptas, puedes dejar de usarlo y pedir que eliminemos tus datos.
+    </p>
+</section>
+
+<section id="ley-aplicable" aria-labelledby="ley-aplicable-t">
+    <h2 id="ley-aplicable-t">13. Ley aplicable y jurisdicción</h2>
+    <p>
+        Estos términos se rigen por las leyes de la República de Chile. Cualquier controversia se someterá a
+        {{ ui.placeholder("tribunales competentes, p. ej. los tribunales ordinarios de justicia de la ciudad de …") }}.
+    </p>
+    <p>
+        Lo anterior no limita tu derecho a reclamar ante la Agencia de Protección de Datos Personales por
+        materias de datos personales, como se explica en la <a href="/privacidad#reclamos">Política de
+        Privacidad</a>.
+    </p>
+</section>
+
+<section id="contacto" aria-labelledby="contacto-t">
+    <h2 id="contacto-t">14. Contacto</h2>
+    <p>
+        Para consultas sobre estos términos, avisos de errores en las cápsulas o reclamos sobre el material,
+        escríbenos a {{ ui.placeholder("correo de contacto del proyecto") }}.
+    </p>
+</section>
+{% endblock %}

@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% import "components/ui.html" as ui %}
+{#
+  Layout de los documentos legales. Cada documento (terminos.html,
+  privacidad.html) define arriba `secciones`, la lista (id, título) con la que
+  se arma la tabla de contenidos, y escribe su texto en `documento`. Cada
+  sección del texto lleva el mismo `id` que su entrada en `secciones`:
+  `tests/test_web_legal.py` falla si alguna no calza.
+
+  La versión y la fecha salen de `web/legal.py`, no de acá: la aceptación del
+  estudiante se guarda contra esa versión.
+#}
+
+{% block title %}{{ documento.titulo }} · RepasAi{% endblock %}
+{% block body_class %}page-legal{% endblock %}
+
+{% block content %}
+<div class="legal">
+    <header class="page-header legal-header">
+        <span class="eyebrow">{{ ui.icon(icono_documento, cls="icon-sm") }}Marco legal</span>
+        <h1>{{ documento.titulo }}</h1>
+        <p class="legal-meta">
+            <span>Versión {{ documento.version }}</span>
+            <span class="legal-meta-sep" aria-hidden="true">·</span>
+            <span>Última actualización: <time datetime="{{ documento.actualizado.isoformat() }}">{{ documento.actualizado_texto }}</time></span>
+        </p>
+        {% block resumen %}{% endblock %}
+    </header>
+
+    <div class="legal-layout">
+        <nav class="legal-toc" aria-labelledby="legal-toc-titulo">
+            <h2 id="legal-toc-titulo" class="legal-toc-titulo">Contenido</h2>
+            <ol role="list">
+                {% for id, titulo in secciones %}
+                <li><a href="#{{ id }}">{{ titulo }}</a></li>
+                {% endfor %}
+            </ol>
+            <p class="legal-toc-otro">
+                {% if documento.clave == "terminos" %}
+                {{ ui.icon("shield-check", cls="icon-sm") }}<a href="/privacidad">Política de Privacidad</a>
+                {% else %}
+                {{ ui.icon("file-text", cls="icon-sm") }}<a href="/terminos">Términos y Condiciones</a>
+                {% endif %}
+            </p>
+        </nav>
+
+        <article class="legal-doc">
+            {% block documento %}{% endblock %}
+        </article>
+    </div>
+</div>
+{% endblock %}

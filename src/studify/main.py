@@ -15,7 +15,7 @@ from studify.config import get_settings
 from studify.db.session import engine
 from studify.web import sesion
 from studify.web.deps import templates
-from studify.web.routers import auth, student, teacher
+from studify.web.routers import auth, legal, student, teacher
 
 settings = get_settings()
 
@@ -40,6 +40,8 @@ app.include_router(student.router)
 # router abierto y no quedar detrás del guardián del panel.
 app.include_router(auth.router)
 app.include_router(teacher.router)
+# Términos y Privacidad: públicas, se leen antes de aceptar.
+app.include_router(legal.router)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 STATIC_DIR = os.path.join(BASE_DIR, "web", "static")

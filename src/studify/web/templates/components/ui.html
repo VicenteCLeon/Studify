@@ -102,3 +102,11 @@
 {% macro spinner(etiqueta="Cargando") -%}
 <span class="spinner" role="status" aria-label="{{ etiqueta }}"></span>
 {%- endmacro %}
+
+{# Dato que falta completar en un documento legal. Se ve resaltado en la página
+   y el texto `[PLACEHOLDER: …]` queda literal en el HTML, así que basta un grep
+   para encontrar los pendientes. Para completarlo, reemplaza la llamada entera
+   por el texto definitivo. #}
+{% macro placeholder(texto) -%}
+<mark class="placeholder">[PLACEHOLDER: {{ texto }}]</mark>
+{%- endmacro %}

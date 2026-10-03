@@ -51,7 +51,7 @@ web/
 
 0. **Fuentes** (`@font-face`) · 1. **Tokens** (`:root`) · 2. **Tema oscuro** · 3. **Base** (reset, elementos HTML, foco) ·
 4. **Layout** (container, stack, cluster, shell de la app) · 5. **Componentes** ·
-6. **Pantallas** (una sección por vista: 6.1 landing … 6.7 panel docente) ·
+6. **Pantallas** (una sección por vista: 6.1 landing … 6.7 panel docente · 6.8 documentos legales) ·
 7. **Utilidades** · 8. **Motion** (keyframes y `prefers-reduced-motion`).
 
 Estilos nuevos de una vista van en su sección de la capa 6; si algo se repite en dos vistas,
@@ -146,6 +146,7 @@ Macros en `templates/components/ui.html` (`{% import "components/ui.html" as ui 
 | `ui.page_header(titulo, bajada, eyebrow, eyebrow_icon)` | Encabezado de página. |
 | `ui.progress(valor, etiqueta, canal=None)` | Barra con `role="progressbar"`. |
 | `ui.spinner(etiqueta)` | Spinner para indicadores HTMX. |
+| `ui.placeholder(texto)` | Dato pendiente en un documento legal: `<mark>` resaltado con el texto literal `[PLACEHOLDER: …]`, que se encuentra con un grep. |
 
 Clases de componente más usadas (capa 5 de `app.css`):
 
@@ -155,6 +156,11 @@ Clases de componente más usadas (capa 5 de `app.css`):
 - **Datos:** `.table-container` > `.table`; con `.table-stack` + `data-label` en cada `<td>`, la tabla se apila como tarjetas bajo 720 px.
 - **Otros:** `.accordion` (`<details>`), `.skeleton`, `.empty-state`, `.back-link`, `.eyebrow`, `.marker`.
 - **Layout:** `.container`, `.stack`, `.cluster`, `.auto-grid` (`--grid-min`).
+- **Footer legal:** está en `base.html` y aparece en todas las páginas (enlaces a Términos, Privacidad,
+  derechos y contacto, más el aviso de IA). Una vista de flujo enfocado lo pide discreto con
+  `{% block footer_class %}site-footer-compacto{% endblock %}`, como el cuestionario y el visor.
+- **Documentos legales:** extienden `legal/_documento.html`, definen `secciones` (id, título) para la
+  tabla de contenidos y usan `ui.placeholder()` para lo que falta. Versión y fecha: `web/legal.py`.
 
 Para agregar un ícono: copiar el contenido interior del SVG de [lucide.dev](https://lucide.dev)
 en un `<symbol id="i-nombre" viewBox="0 0 24 24">` nuevo de `sprite.svg`, en orden alfabético.

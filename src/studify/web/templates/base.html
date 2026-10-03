@@ -115,19 +115,39 @@
         {% endblock %}
     </main>
 
-    <footer class="site-footer">
+    {# Footer legal, en todas las páginas. Las vistas de flujo enfocado
+       (cuestionario, cápsula) lo piden compacto con `footer_class`: siguen
+       teniendo los enlaces y el aviso de IA, sin la presentación de la marca. #}
+    <footer class="site-footer {% block footer_class %}{% endblock %}">
         <div class="container site-footer-inner">
-            <div class="stack stack-sm">
+            <div class="site-footer-brand stack stack-sm">
                 <span class="brand-word brand-word-sm">Repas<span>Ai</span></span>
                 <p class="text-sm text-muted">
                     Microcápsulas de estudio adaptadas a tu forma de aprender,
                     construidas solo con el material de tu curso.
                 </p>
             </div>
-            <p class="text-xs text-soft">
-                {{ ui.icon("shield-check", cls="icon-sm") }}
-                Cada cápsula cita los fragmentos y páginas de los que sale.
-            </p>
+
+            <nav class="site-footer-legal" aria-label="Legal y privacidad">
+                <ul role="list">
+                    <li><a href="/terminos" {% if ruta == '/terminos' %}aria-current="page"{% endif %}>Términos</a></li>
+                    <li><a href="/privacidad" {% if ruta == '/privacidad' %}aria-current="page"{% endif %}>Privacidad</a></li>
+                    <li><a href="/privacidad#derechos">Ejercer mis derechos</a></li>
+                    <li><a href="/privacidad#contacto">Contacto</a></li>
+                </ul>
+            </nav>
+
+            <div class="site-footer-avisos">
+                <p class="site-footer-ia">
+                    {{ ui.icon("sparkles", cls="icon-sm") }}
+                    Las cápsulas son generadas con IA y pueden contener errores; verifica con tu material oficial.
+                </p>
+                <p class="site-footer-traza text-xs text-soft">
+                    {{ ui.icon("shield-check", cls="icon-sm") }}
+                    Cada cápsula cita los fragmentos y páginas de los que sale.
+                    Prototipo académico de un proyecto de título de estudiantes de la PUCV; no es un servicio oficial de la universidad.
+                </p>
+            </div>
         </div>
     </footer>
 
