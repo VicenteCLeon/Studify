@@ -2250,6 +2250,325 @@ form.htmx-request button[type="submit"] {
 }
 
 
+/* --- 6.2 Cuestionario VARK --------------------------------------------- */
+/* Foco: sin tabbar inferior, la navegación del cuestionario ocupa ese lugar. */
+.page-vark .tabbar {
+  display: none;
+}
+
+.page-vark .site-footer {
+  padding-bottom: var(--space-8);
+}
+
+.vark-wrap {
+  max-width: 44rem;
+  margin-inline: auto;
+}
+
+/* Sin JS no hay stepper: se esconden sus controles y se ven todos los pasos. */
+html:not(.js) .js-only {
+  display: none !important;
+}
+
+.vark-progress {
+  position: sticky;
+  top: var(--header-h);
+  z-index: 5;
+  margin: calc(-1 * var(--space-4)) calc(-1 * var(--gutter)) var(--space-6);
+  padding: var(--space-3) var(--gutter);
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+
+.vark-progress-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-3);
+  margin-bottom: var(--space-2);
+  font-size: var(--fs-sm);
+}
+
+.vark-progress-label {
+  font-weight: var(--fw-semibold);
+}
+
+.vark-progress-count {
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.vark-step {
+  border: 0;
+  padding: 0;
+  margin: 0 0 var(--space-12);
+  min-width: 0;
+}
+
+.vark-form.is-stepper .vark-step {
+  margin-bottom: 0;
+  min-height: 22rem;
+}
+
+.vark-form.is-stepper .vark-step.enter-next {
+  animation: step-in-next var(--dur-slow) var(--ease-out) both;
+}
+
+.vark-form.is-stepper .vark-step.enter-prev {
+  animation: step-in-prev var(--dur-slow) var(--ease-out) both;
+}
+
+@keyframes step-in-next {
+  from { opacity: 0; transform: translateX(24px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes step-in-prev {
+  from { opacity: 0; transform: translateX(-24px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Paso 0 */
+.vark-intro .page-header {
+  margin-bottom: var(--space-6);
+}
+
+.vark-reglas {
+  display: grid;
+  gap: var(--space-3);
+  padding: 0;
+  margin-bottom: var(--space-8);
+  list-style: none;
+}
+
+.vark-reglas li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+
+.vark-reglas strong {
+  color: var(--text);
+}
+
+.vark-reglas .icon-tile {
+  --tile-size: 2.25rem;
+  --icon-size: 1.1rem;
+}
+
+.vark-datos {
+  padding: var(--space-5);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.vark-datos legend {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-2);
+  margin-left: calc(-1 * var(--space-2));
+  font-weight: var(--fw-semibold);
+}
+
+.vark-datos .form-hint {
+  margin-bottom: var(--space-4);
+}
+
+/* Pasos de pregunta */
+.vark-pregunta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: 0;
+  margin-bottom: var(--space-2);
+}
+
+.vark-num {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--primary-text);
+}
+
+/* Con stepper, la barra superior ya dice "Pregunta N de 16": el número de la
+   leyenda queda solo para lectores de pantalla. */
+.vark-form.is-stepper .vark-num {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.vark-enunciado {
+  font-family: var(--font-display);
+  font-size: var(--fs-2xl);
+  font-weight: var(--fw-semibold);
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+.vark-ayuda {
+  margin-bottom: var(--space-5);
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+
+.vark-choice {
+  padding: 1rem 1.125rem;
+  font-size: var(--fs-md);
+  align-items: center;
+}
+
+.vark-choice input {
+  margin-top: 0;
+}
+
+.choice-key {
+  display: none;
+  font-size: var(--fs-xs);
+  color: var(--text-soft);
+  background: var(--surface-sunken);
+}
+
+/* El atajo de teclado solo tiene sentido con teclado y puntero fino. */
+@media (hover: hover) and (pointer: fine) {
+  .js .choice-key {
+    display: inline-block;
+  }
+}
+
+/* Revisión */
+.vark-review-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  text-align: center;
+  margin-bottom: var(--space-6);
+}
+
+.vark-review-head h2 {
+  font-size: var(--fs-3xl);
+}
+
+.vark-mapa-titulo {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--text-muted);
+  text-align: center;
+  margin-bottom: var(--space-3);
+}
+
+.vark-mapa {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: var(--space-2);
+  max-width: 30rem;
+  margin: 0 auto var(--space-6);
+}
+
+.vark-mapa-item {
+  aspect-ratio: 1;
+  min-height: 2.5rem;
+  display: grid;
+  place-items: center;
+  border: 1.5px dashed var(--border-strong);
+  border-radius: var(--radius-md);
+  background: transparent;
+  font-weight: var(--fw-semibold);
+  font-size: var(--fs-sm);
+  color: var(--text-soft);
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out);
+}
+
+.vark-mapa-item:hover {
+  transform: translateY(-2px);
+  background: var(--surface-sunken);
+}
+
+.vark-mapa-item.is-answered {
+  border-style: solid;
+  border-color: var(--primary);
+  background: var(--primary-soft);
+  color: var(--primary-text);
+}
+
+.vark-sin-respuestas {
+  margin-bottom: var(--space-4);
+}
+
+.vark-error:not(:empty) {
+  margin-bottom: var(--space-4);
+}
+
+/* Con JS, el botón de envío solo aparece en la revisión. */
+.vark-form.is-stepper .vark-submit {
+  margin-top: var(--space-2);
+}
+
+.vark-nav {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin: var(--space-8) calc(-1 * var(--gutter)) 0;
+  padding: var(--space-3) var(--gutter) calc(var(--space-3) + env(safe-area-inset-bottom, 0px));
+  background: color-mix(in srgb, var(--bg) 90%, transparent);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border-top: 1px solid var(--border);
+}
+
+.vark-nav .btn {
+  flex: 1;
+  max-width: 12rem;
+}
+
+.vark-nav [data-vark-next] {
+  margin-left: auto;
+}
+
+.vark-form.is-final .vark-nav {
+  justify-content: flex-start;
+}
+
+@media (min-width: 820px) {
+  .vark-nav {
+    position: static;
+    margin-inline: 0;
+    padding-inline: 0;
+    background: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  .vark-progress {
+    margin-inline: 0;
+    padding-inline: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .vark-mapa {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    max-width: 16rem;
+  }
+}
+
+
 /* ==========================================================================
    7. UTILIDADES
    ========================================================================== */

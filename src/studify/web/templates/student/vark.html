@@ -1,79 +1,153 @@
 {% extends "base.html" %}
+{% import "components/ui.html" as ui %}
 
-{% block title %}Cuestionario VARK - Studify{% endblock %}
+{% block title %}Cuestionario VARK · RepasAi{% endblock %}
+{% block body_class %}page-vark{% endblock %}
 
 {% block content %}
-<div class="card" style="max-width: 860px; margin: 0 auto;">
-    <div class="text-center mb-6">
-        <h1 class="mb-2">Descubre tu Estilo de Aprendizaje</h1>
-        <p class="text-muted">
-            {{ items | length }} situaciones cotidianas. <strong>Puedes marcar más de una
-                alternativa</strong> en cada una, y <strong>dejar en blanco</strong> las que no
-            te representen: ambas cosas son parte del instrumento y no afectan la validez
-            de tu perfil.
-        </p>
-    </div>
+{# Un solo <form> con los 16 ítems, igual que antes: el stepper es solo una
+   capa de app.js que muestra un paso a la vez. Sin JS se ven todos juntos y
+   el envío es idéntico. Las casillas mandan letras (a–d), nunca canales: la
+   traducción a V/A/R/K la hace el servidor (cap. 17.1), así que ninguna
+   alternativa se tiñe con el color de un canal. #}
+<div class="vark-wrap">
+    <form id="vark-form" class="vark-form"
+          hx-post="/student/vark" hx-target="#form-error" hx-swap="innerHTML" hx-indicator="#enviando"
+          data-vark-stepper data-total="{{ items | length }}">
 
-    <form hx-post="/student/vark" hx-target="#form-error" hx-swap="innerHTML" hx-indicator="#enviando">
-
-        <fieldset class="bloque-datos mb-8">
-            <legend class="form-label">Antes de empezar (opcional)</legend>
-            <p class="text-sm text-muted mb-4">
-                Solo se usa para el análisis agregado de resultados. Nunca interviene en
-                cómo se genera tu contenido.
-            </p>
-            <div class="grid-datos">
-                <div class="form-group">
-                    <label class="form-label text-sm" for="rango_etario">Rango etario</label>
-                    <select class="form-control" name="rango_etario" id="rango_etario">
-                        <option value="">Prefiero no decirlo</option>
-                        <option>18 - 20 años</option>
-                        <option>21 - 23 años</option>
-                        <option>24 - 26 años</option>
-                        <option>27 años o más</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label class="form-label text-sm" for="genero">Género</label>
-                    <select class="form-control" name="genero" id="genero">
-                        <option value="">Prefiero no decirlo</option>
-                        <option>Femenino</option>
-                        <option>Masculino</option>
-                        <option>No Binario / otra identidad</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label class="form-label text-sm" for="carrera">Carrera</label>
-                    <input class="form-control" type="text" name="carrera" id="carrera" maxlength="80"
-                        placeholder="Ej.: Ingeniería Civil Informática">
-                </div>
+        <div class="vark-progress js-only">
+            <div class="vark-progress-top">
+                <span class="vark-progress-label" data-vark-label>Antes de empezar</span>
+                <span class="vark-progress-count" data-vark-count>0 de {{ items | length }} respondidas</span>
             </div>
-        </fieldset>
+            <div class="progress" aria-hidden="true"><div class="progress-fill" data-vark-fill></div></div>
+        </div>
+        <p class="visually-hidden" aria-live="polite" data-vark-live></p>
 
+        {# --- Paso 0: presentación y datos opcionales ---------------------- #}
+        <section class="vark-step vark-intro" data-step="0" aria-labelledby="vark-titulo">
+            <header class="page-header">
+                <span class="eyebrow">{{ ui.icon("list-checks", cls="icon-sm") }}Cuestionario VARK</span>
+                <h1 id="vark-titulo" tabindex="-1" data-step-focus>Descubre cómo aprendes mejor</h1>
+                <p>
+                    {{ items | length }} situaciones de la vida universitaria. Con tus
+                    respuestas armamos tu perfil y adaptamos cada microcápsula a él.
+                </p>
+            </header>
+
+            <ul class="vark-reglas" role="list">
+                <li>
+                    <span class="icon-tile">{{ ui.icon("list-checks") }}</span>
+                    <span><strong>Puedes marcar más de una alternativa</strong> en cada situación.</span>
+                </li>
+                <li>
+                    <span class="icon-tile">{{ ui.icon("arrow-right") }}</span>
+                    <span><strong>Puedes dejar en blanco</strong> las que no te representen.</span>
+                </li>
+                <li>
+                    <span class="icon-tile">{{ ui.icon("circle-check") }}</span>
+                    <span>No hay respuestas correctas: ambas cosas son parte del instrumento y no afectan la validez de tu perfil.</span>
+                </li>
+            </ul>
+
+            <fieldset class="vark-datos">
+                <legend>Antes de empezar <span class="badge badge-neutral">Opcional</span></legend>
+                <p class="form-hint">
+                    Solo se usa para el análisis agregado de resultados. Nunca interviene
+                    en cómo se genera tu contenido.
+                </p>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label" for="rango_etario">Rango etario</label>
+                        <select class="form-control" name="rango_etario" id="rango_etario">
+                            <option value="">Prefiero no decirlo</option>
+                            <option>18 - 20 años</option>
+                            <option>21 - 23 años</option>
+                            <option>24 - 26 años</option>
+                            <option>27 años o más</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="genero">Género</label>
+                        <select class="form-control" name="genero" id="genero">
+                            <option value="">Prefiero no decirlo</option>
+                            <option>Femenino</option>
+                            <option>Masculino</option>
+                            <option>No Binario / otra identidad</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="carrera">Carrera</label>
+                        <input class="form-control" type="text" name="carrera" id="carrera" maxlength="80"
+                               placeholder="Ej.: Ingeniería Civil Informática" autocomplete="off">
+                    </div>
+                </div>
+            </fieldset>
+        </section>
+
+        {# --- Pasos 1–16: un ítem por paso --------------------------------- #}
         {% for item in items %}
-        <div class="form-group mb-8">
-            <label class="form-label text-lg mb-4">
-                <span class="numero-item">{{ item.numero }}</span> {{ item.enunciado }}
-            </label>
-            <div class="radio-group">
+        <fieldset class="vark-step vark-item" data-step="{{ item.numero }}" id="item-{{ item.numero }}">
+            <legend class="vark-pregunta" tabindex="-1" data-step-focus>
+                <span class="vark-num">Pregunta {{ item.numero }} de {{ items | length }}</span>
+                <span class="vark-enunciado">{{ item.enunciado }}</span>
+            </legend>
+            <p class="vark-ayuda">Marca todas las que te representen, o ninguna.</p>
+            <div class="choice-group">
                 {% for letra, texto in item.alternativas %}
-                <label class="radio-option">
+                <label class="choice vark-choice">
                     <input type="checkbox" name="q{{ item.numero }}" value="{{ letra }}">
-                    <span>{{ texto }}</span>
+                    <span class="flex-1">{{ texto }}</span>
+                    <kbd class="choice-key" aria-hidden="true">{{ loop.index }}</kbd>
                 </label>
                 {% endfor %}
             </div>
-        </div>
+        </fieldset>
         {% endfor %}
 
-        <div id="form-error" class="mb-4"></div>
+        {# --- Paso final: revisión y envío --------------------------------- #}
+        <section class="vark-step vark-review" data-step="{{ items | length + 1 }}" aria-labelledby="vark-review-titulo">
+            <div class="vark-review-head">
+                <span class="icon-tile icon-tile-lg">{{ ui.icon("sparkles") }}</span>
+                <h2 id="vark-review-titulo" tabindex="-1" data-step-focus>¿Todo listo?</h2>
+                <p class="text-muted js-only" data-vark-resumen>
+                    Revisa tus respuestas antes de calcular tu perfil.
+                </p>
+            </div>
 
-        <div class="flex justify-center mt-8">
-            <button type="submit" class="btn btn-primary">
-                Descubrir mi Perfil
-                <span id="enviando" class="htmx-indicator ml-2">…</span>
+            <div class="js-only">
+                <p class="vark-mapa-titulo">Toca una pregunta para volver a ella</p>
+                <div class="vark-mapa" role="group" aria-label="Preguntas del cuestionario">
+                    {% for item in items %}
+                    <button type="button" class="vark-mapa-item" data-goto="{{ item.numero }}"
+                            aria-label="Pregunta {{ item.numero }}">{{ item.numero }}</button>
+                    {% endfor %}
+                </div>
+                <div class="vark-sin-respuestas" data-vark-vacio hidden>
+                    {% call ui.alert("warning", "Aún no marcas ninguna alternativa") %}
+                    Puedes dejar preguntas en blanco, pero necesitas al menos una
+                    selección para calcular tu perfil.
+                    {% endcall %}
+                </div>
+            </div>
+
+            <div id="form-error" class="vark-error"></div>
+
+            <button type="submit" class="btn btn-primary btn-lg btn-block vark-submit">
+                <span class="idle-only">{{ ui.icon("sparkles") }}</span>
+                <span>Descubrir mi perfil</span>
+                <span id="enviando" class="htmx-indicator">{{ ui.spinner("Calculando tu perfil") }}</span>
             </button>
-        </div>
+        </section>
+
+        <nav class="vark-nav js-only" aria-label="Navegación del cuestionario">
+            <button type="button" class="btn btn-secondary" data-vark-prev>
+                {{ ui.icon("arrow-left") }}<span>Anterior</span>
+            </button>
+            <button type="button" class="btn btn-primary" data-vark-next>
+                <span data-vark-next-label>Comenzar</span>{{ ui.icon("arrow-right") }}
+            </button>
+        </nav>
     </form>
 </div>
 {% endblock %}
