@@ -26,15 +26,18 @@
     </script>
 
     <link rel="icon" href="/static/img/favicon.svg" type="image/svg+xml">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&display=swap" rel="stylesheet">
+    {# Fuentes y HTMX se sirven desde /static, no desde Google Fonts ni unpkg:
+       ningún tercero recibe la IP del estudiante al abrir una página (es lo que
+       declara /privacidad). Se precargan las dos fuentes del texto latino para
+       que no esperen a que el navegador lea app.css. #}
+    <link rel="preload" href="/static/fonts/figtree-latin.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/static/fonts/fraunces-latin.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="/static/css/app.css">
     {% block head %}{% endblock %}
 
-    <script src="https://unpkg.com/htmx.org@1.9.10"
-        integrity="sha384-D1Kt99CQMDuVetoL1lrYwg5t+9QdHe7NLX/SoJYkXDFfX37iInKRy5xLSi8nO7UC"
-        crossorigin="anonymous"></script>
+    {# El mismo htmx 1.9.10 que servía unpkg: el SRI calza byte a byte. #}
+    <script src="/static/vendor/htmx-1.9.10.min.js"
+        integrity="sha384-D1Kt99CQMDuVetoL1lrYwg5t+9QdHe7NLX/SoJYkXDFfX37iInKRy5xLSi8nO7UC"></script>
     <script src="/static/js/app.js" defer></script>
 </head>
 

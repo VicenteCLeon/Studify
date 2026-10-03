@@ -106,6 +106,25 @@ def test_portada_sin_sesion_invita_al_cuestionario(cliente):
     assert "Seguir estudiando" not in respuesta.text
 
 
+def test_ninguna_pagina_carga_recursos_de_terceros(cliente):
+    """Fuentes y HTMX salen de /static: ningún tercero recibe la IP del estudiante.
+
+    Es lo que declara la política de privacidad. Volver a enlazar Google Fonts
+    o un CDN obligaría a cambiarla, y este test lo hace visible.
+    """
+    html = cliente.get("/").text
+    for origen in ("googleapis", "gstatic", "unpkg", "jsdelivr", "cdnjs"):
+        assert origen not in html, origen
+
+    for recurso in (
+        "/static/vendor/htmx-1.9.10.min.js",
+        "/static/fonts/figtree-latin.woff2",
+        "/static/fonts/fraunces-latin.woff2",
+    ):
+        assert recurso in html
+        assert cliente.get(recurso).status_code == 200, recurso
+
+
 def test_portada_con_sesion_lleva_al_catalogo(cliente):
     """Quien ya respondió el cuestionario no tiene que volver a pasar por él."""
     cliente.cookies.set(sesion.COOKIE_ESTUDIANTE, f"7.{sesion._firma(7)}")

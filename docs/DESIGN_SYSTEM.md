@@ -32,6 +32,8 @@ web/
 ├─ static/
 │  ├─ css/app.css          # TODO el CSS, ordenado por capas (ver §3)
 │  ├─ js/app.js            # comportamiento, sin dependencias (ver §6)
+│  ├─ vendor/htmx-1.9.10.min.js  # HTMX servido localmente (mismo SRI que unpkg)
+│  ├─ fonts/               # Figtree y Fraunces variables (woff2) + licencias OFL
 │  ├─ icons/sprite.svg     # 54 íconos de Lucide (ISC) como <symbol>
 │  ├─ img/favicon.svg      # marca: cápsula en dos mitades
 │  ├─ img/textura-escolar.svg  # textura de la marca original, monocroma (máscara CSS)
@@ -47,7 +49,7 @@ web/
 
 `app.css` está en **capas**; cada una solo usa lo de las anteriores:
 
-1. **Tokens** (`:root`) · 2. **Tema oscuro** · 3. **Base** (reset, elementos HTML, foco) ·
+0. **Fuentes** (`@font-face`) · 1. **Tokens** (`:root`) · 2. **Tema oscuro** · 3. **Base** (reset, elementos HTML, foco) ·
 4. **Layout** (container, stack, cluster, shell de la app) · 5. **Componentes** ·
 6. **Pantallas** (una sección por vista: 6.1 landing … 6.7 panel docente) ·
 7. **Utilidades** · 8. **Motion** (keyframes y `prefers-reduced-motion`).
@@ -80,7 +82,10 @@ texto sobre un relleno sólido de marca → `--*-contrast`.
 ### Tipografía
 
 - **Display:** *Fraunces* (serif con eje óptico) para `h1`–`h4`, cifras grandes y la activación.
-- **Texto:** *Figtree* para todo lo demás. Ambas desde Google Fonts, con fallback de sistema.
+- **Texto:** *Figtree* para todo lo demás. Ambas **servidas desde `static/fonts/`** (versiones
+  variables, subconjuntos latin y latin-ext, licencia OFL), con fallback de sistema. No se
+  enlaza Google Fonts ni ningún CDN: la política de privacidad declara que ningún tercero
+  recibe la IP del estudiante, y `test_ninguna_pagina_carga_recursos_de_terceros` lo vigila.
 - Escala fluida: `--fs-xs` (12) · `sm` (14) · `base` (16) · `md` (17) · `lg` · `xl` · `2xl` · `3xl` · `4xl` (`clamp()`).
 - Lectura larga: `--measure: 68ch`, interlineado 1,6–1,75.
 
