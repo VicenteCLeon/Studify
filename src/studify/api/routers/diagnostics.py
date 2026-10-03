@@ -32,8 +32,30 @@ from studify.vark.scoring import (
     Seleccion,
     calificar,
 )
+from studify.web.routers import auth
 
 router = APIRouter(prefix="/api/diagnosticos", tags=["diagnósticos"])
+
+
+def solo_su_diagnostico(
+    id_diagnostico: int,
+    solicitante: int | None = Depends(auth.estudiante_o_docente_api),
+    db: Session = Depends(get_db),
+) -> None:
+    """El estudiante lee **su** diagnóstico; el docente, cualquiera.
+
+    El id es correlativo, así que sin esto bastaba recorrer números para leer
+    el perfil VARK de toda la cohorte. Al ajeno se le responde 404 y no 403:
+    un 403 confirmaría que ese diagnóstico existe.
+    """
+    if solicitante is None:
+        return
+    diagnostico = db.get(DiagnosticoVark, id_diagnostico)
+    if diagnostico is None or diagnostico.id_estudiante != solicitante:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"no existe el diagnóstico {id_diagnostico}",
+        )
 
 
 def _armar_respuesta(
@@ -84,6 +106,11 @@ def _armar_respuesta(
     response_model=DiagnosticoOut,
     status_code=status.HTTP_201_CREATED,
     summary="Califica el cuestionario VARK y devuelve la configuración de contenido",
+    # El estudiante responde el cuestionario en `/student/vark`, que llama a
+    # esta función directamente, sin pasar por HTTP. Por acá queda para el
+    # docente y los scripts: abierto, cualquiera podía crear estudiantes en la
+    # base sin pasar por la pantalla donde se informa qué se hace con sus datos.
+    dependencies=[Depends(auth.requiere_docente_api)],
 )
 def crear_diagnostico(payload: DiagnosticoIn, db: Session = Depends(get_db)) -> DiagnosticoOut:
     """Flujo del cap. 10: 16 ítems → puntajes → vector porcentual → configuración.
@@ -183,6 +210,7 @@ def crear_diagnostico(payload: DiagnosticoIn, db: Session = Depends(get_db)) -> 
     "/{id_diagnostico}",
     response_model=DiagnosticoOut,
     summary="Recupera un diagnóstico ya calculado",
+    dependencies=[Depends(solo_su_diagnostico)],
 )
 def obtener_diagnostico(id_diagnostico: int, db: Session = Depends(get_db)) -> DiagnosticoOut:
     """Devuelve el diagnóstico persistido con su jerarquía recalculada.

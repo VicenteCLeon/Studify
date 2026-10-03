@@ -77,6 +77,43 @@ router_docente = APIRouter(
     dependencies=[Depends(auth.requiere_docente_api)],
 )
 
+
+# --- Quién puede tocar cada cápsula -------------------------------------------
+#
+# Generar, leer y responder una cápsula es del estudiante, pero **solo la suya**.
+# Antes el dueño lo declaraba el cliente (`id_estudiante` en el cuerpo, o el id
+# correlativo de la URL), así que cualquiera podía leer cápsulas ajenas o pedir
+# generaciones —que se le pagan al LLM— a nombre de otro. Ahora el dueño sale de
+# la cookie firmada; el docente (cookie del panel o HTTP Basic) puede con todas.
+
+
+def para_si_mismo(
+    payload: CapsulaIn,
+    solicitante: int | None = Depends(auth.estudiante_o_docente_api),
+) -> None:
+    if solicitante is not None and payload.id_estudiante != solicitante:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="solo puedes pedir cápsulas para tu propia sesión",
+        )
+
+
+def solo_su_capsula(
+    id_capsula: int,
+    solicitante: int | None = Depends(auth.estudiante_o_docente_api),
+    db: Session = Depends(get_db),
+) -> None:
+    """Al ajeno, 404 y no 403: un 403 confirmaría que esa cápsula existe."""
+    if solicitante is None:
+        return
+    capsula = db.get(MicrocapsulaGenerada, id_capsula)
+    if capsula is None or capsula.id_estudiante != solicitante:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"no existe la cápsula {id_capsula}",
+        )
+
+
 # Longitud de `microcapsula_generada.titulo` (tabla 17.8). El contrato ya limita
 # el título a 10 palabras, pero diez palabras largas caben igual sobre 150
 # caracteres y el INSERT fallaría con un error de base de datos en vez de
@@ -207,6 +244,7 @@ def _buscar_en_cache(
     response_model=CapsulaOut,
     status_code=status.HTTP_201_CREATED,
     summary="Genera (o recupera del caché) la microcápsula de un objetivo",
+    dependencies=[Depends(para_si_mismo)],
 )
 def crear_capsula(
     payload: CapsulaIn,
@@ -384,6 +422,7 @@ def listar_capsulas(
     "/{id_capsula}",
     response_model=CapsulaOut,
     summary="Recupera una cápsula ya generada",
+    dependencies=[Depends(solo_su_capsula)],
 )
 def obtener_capsula(id_capsula: int, db: Session = Depends(get_db)) -> CapsulaOut:
     fila = db.get(MicrocapsulaGenerada, id_capsula)
@@ -465,6 +504,7 @@ def _persistir(
     response_model=InteraccionQuizOut,
     status_code=status.HTTP_201_CREATED,
     summary="Registra un intento del estudiante en la actividad de la cápsula",
+    dependencies=[Depends(solo_su_capsula)],
 )
 def registrar_quiz(
     id_capsula: int, payload: InteraccionQuizIn, db: Session = Depends(get_db)

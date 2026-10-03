@@ -27,7 +27,7 @@ from studify.db.models import (
 from studify.main import app
 from studify.web import sesion
 from studify.web.routers.teacher import _rendimiento_actividades
-from tests.conftest import necesita_bd
+from tests.conftest import USUARIO_DOCENTE, necesita_bd
 from tests.test_api_capsulas import TEXTO_LARGO
 
 pytestmark = necesita_bd
@@ -54,8 +54,12 @@ CONTENIDO = [{"tipo": "parrafo", "cuerpo": TEXTO_LARGO}]
 
 
 @pytest.fixture
-def http():
-    return TestClient(app)
+def http(clave_docente):
+    """Con credencial de docente: estos tests miden la numeración de intentos,
+    no quién puede responder (eso lo prueba `test_api_capsulas.py`)."""
+    cliente = TestClient(app)
+    cliente.auth = (USUARIO_DOCENTE, clave_docente)
+    return cliente
 
 
 @pytest.fixture

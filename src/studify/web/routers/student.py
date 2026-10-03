@@ -464,22 +464,42 @@ def generate_capsule_audio(
     texto_override: str = Form(default=""),
     db: Session = Depends(get_db),
 ):
-    """Genera (o recupera) el audio narrativo con XTTS-v2 en local."""
+    """Genera (o recupera) el audio narrativo con XTTS-v2 en local.
+
+    **Quién puede pedirlo.** La síntesis clona una voz real y ocupa la GPU por
+    decenas de segundos, así que no queda abierta:
+
+    - una cápsula guardada (`id_capsula > 0`) la narra solo su dueño o el
+      docente, y **siempre con el texto de la base**: `texto_override` se
+      ignora, porque si no cualquiera con sesión podría hacerle decir a esa voz
+      lo que quisiera;
+    - la cápsula del simulador (`id_capsula == 0`) no está en la base, así que
+      su texto viene en el formulario; por eso es solo del docente.
+    """
     import hashlib
     from pathlib import Path
 
     from studify.media.audio import generar_audio
 
-    public_audio_dir = Path("src/studify/public/audio")
-    public_audio_dir.mkdir(parents=True, exist_ok=True)
-
-    texto = texto_override.strip()
-    if not texto and id_capsula > 0:
+    es_docente = sesion.es_docente(request)
+    texto = ""
+    if id_capsula > 0:
         fila = db.get(MicrocapsulaGenerada, id_capsula)
-        if fila and fila.contenido_json:
+        if fila is None or (
+            not es_docente and fila.id_estudiante != sesion.estudiante_actual(request)
+        ):
+            raise HTTPException(status_code=404, detail=f"no existe la cápsula {id_capsula}")
+        if fila.contenido_json:
             concepto = fila.contenido_json.get("concepto_central", "")
             activacion = fila.contenido_json.get("activacion", "")
             texto = f"{activacion} {concepto}".strip()
+    else:
+        if not es_docente:
+            raise HTTPException(status_code=403, detail="el audio del simulador es del docente")
+        texto = texto_override.strip()
+
+    public_audio_dir = Path("src/studify/public/audio")
+    public_audio_dir.mkdir(parents=True, exist_ok=True)
 
     if not texto:
         texto = "Esta es una microcápsula adaptativa sintetizada con IA para el canal auditivo."

@@ -194,6 +194,42 @@ def requiere_docente_api(
     )
 
 
+def estudiante_o_docente_api(
+    request: Request,
+    credenciales: HTTPBasicCredentials | None = Depends(_basic),
+) -> int | None:
+    """Quién llama a un endpoint de `/api` que tiene dueño.
+
+    Devuelve el `id_estudiante` de la cookie, o `None` si quien llama es el
+    docente (por cookie del panel o por HTTP Basic). **No decide si puede**:
+    eso depende del recurso —el diagnóstico, la cápsula—, así que lo resuelve
+    la dependencia de cada endpoint comparando el dueño con lo que devuelve
+    esta. Sin ninguna de las dos credenciales responde 401.
+
+    Existe porque esos endpoints eran anónimos y el dueño lo declaraba el
+    propio cliente (`id_estudiante` en el cuerpo, o un id correlativo en la
+    URL): bastaba recorrer números para leer el perfil VARK de toda la cohorte
+    o generar cápsulas —y gastar créditos del LLM— a nombre de otro.
+    """
+    if sesion.es_docente(request):
+        return None
+
+    if credenciales:
+        # Mismo camino que el resto de `/api` del docente, con su freno de
+        # fuerza bruta: una clave incorrecta no puede caer acá a "anónimo".
+        requiere_docente_api(request, credenciales)
+        return None
+
+    id_estudiante = sesion.estudiante_actual(request)
+    if id_estudiante is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Esta operación requiere la sesión del estudiante o credenciales de docente.",
+            headers={"WWW-Authenticate": "Basic"},
+        )
+    return id_estudiante
+
+
 def _pantalla_login(
     request: Request,
     destino: str,

@@ -164,43 +164,95 @@ def test_todas_las_rutas_del_panel_exigen_sesion():
     assert not desprotegidas, f"rutas del panel sin guardián: {desprotegidas}"
 
 
-def test_solo_lo_del_estudiante_queda_abierto_en_la_api():
-    """Cierra el pendiente n.º 17: `/api/*` estaba abierto entero.
+def _llamables(dependant) -> set:
+    """Todas las dependencias de una ruta, incluidas las anidadas.
 
-    La lista blanca se escribe **explícita** a propósito. Es la única forma de
-    que agregar un endpoint nuevo a `/api` sea una decisión consciente: si cuelga
-    del router abierto sin estar acá, este test falla y obliga a justificar por
-    qué un anónimo puede llamarlo. Al revés —afirmar solo que «las de curación
-    están cerradas»— un endpoint nuevo y desprotegido pasaría inadvertido.
-
-    Los que quedan abiertos son los que un front del estudiante necesita sin
-    credencial de docente: responder el cuestionario, ver su perfil, elegir tema,
-    pedir su cápsula y responder el quiz.
+    `solo_su_capsula` cuelga de `estudiante_o_docente_api`, así que mirar solo
+    el primer nivel no vería el guardián.
     """
-    abiertas_esperadas = {
-        ("POST", "/api/diagnosticos"),
+    encontrados = set()
+    pendientes = list(dependant.dependencies)
+    while pendientes:
+        dep = pendientes.pop()
+        encontrados.add(dep.call)
+        pendientes.extend(dep.dependencies)
+    return encontrados
+
+
+def test_la_api_separa_lo_abierto_lo_del_dueno_y_lo_del_docente():
+    """Cierra el pendiente n.º 17 y la auditoría de datos del 02-oct-2026.
+
+    Las listas se escriben **explícitas** a propósito. Es la única forma de que
+    agregar un endpoint nuevo a `/api` sea una decisión consciente: si cuelga
+    de un router sin guardián y no está acá, este test falla y obliga a
+    justificar por qué un anónimo puede llamarlo.
+
+    - **Abierto**: solo el catálogo de temas, que no tiene datos de nadie.
+    - **Del dueño o del docente**: lo que tiene `id_estudiante`. Antes era
+      anónimo y el dueño lo declaraba el cliente, así que recorriendo ids se
+      leía el perfil VARK de toda la cohorte.
+    - `POST /api/diagnosticos` pasó al docente: el estudiante se diagnostica
+      por `/student/vark`, que no usa HTTP para esto.
+    """
+    abiertas_esperadas = {("GET", "/api/catalogo")}
+    del_dueno_esperadas = {
         ("GET", "/api/diagnosticos/{id_diagnostico}"),
-        ("GET", "/api/catalogo"),
         ("POST", "/api/capsulas"),
         ("GET", "/api/capsulas/{id_capsula}"),
         ("POST", "/api/capsulas/{id_capsula}/quiz"),
     }
 
-    abiertas_reales = set()
+    abiertas_reales, del_dueno_reales = set(), set()
     for ruta in rutas_montadas():
         if not ruta.path.startswith("/api"):
             continue
-        llamables = {dep.call for dep in ruta.dependant.dependencies}
-        if auth.requiere_docente_api in llamables:
+        llamables = _llamables(ruta.dependant)
+        if auth.requiere_docente_api in llamables and (
+            auth.estudiante_o_docente_api not in llamables
+        ):
             continue
+        destino = (
+            del_dueno_reales if auth.estudiante_o_docente_api in llamables else abiertas_reales
+        )
         for metodo in ruta.methods - {"HEAD", "OPTIONS"}:
-            abiertas_reales.add((metodo, ruta.path))
+            destino.add((metodo, ruta.path))
 
     assert abiertas_reales == abiertas_esperadas, (
-        f"de más (anónimo puede llamarlas): {sorted(abiertas_reales - abiertas_esperadas)}; "
-        f"de menos (se cerró algo del estudiante): "
-        f"{sorted(abiertas_esperadas - abiertas_reales)}"
+        f"abiertas de más: {sorted(abiertas_reales - abiertas_esperadas)}; "
+        f"de menos: {sorted(abiertas_esperadas - abiertas_reales)}"
     )
+    assert del_dueno_reales == del_dueno_esperadas, (
+        f"del dueño de más: {sorted(del_dueno_reales - del_dueno_esperadas)}; "
+        f"de menos: {sorted(del_dueno_esperadas - del_dueno_reales)}"
+    )
+
+
+def test_los_endpoints_con_dueno_rechazan_al_anonimo(http):
+    """Sin cookie del estudiante ni del docente, 401 antes de tocar la base."""
+    assert http.get("/api/diagnosticos/1").status_code == 401
+    assert http.get("/api/capsulas/1").status_code == 401
+    cuerpo = {"id_estudiante": 1, "id_objetivo": 1}
+    assert http.post("/api/capsulas", json=cuerpo).status_code == 401
+    assert http.post(
+        "/api/capsulas/1/quiz", json={"id_estudiante": 1, "alternativa_seleccionada": 0}
+    ).status_code == 401
+    assert http.post("/api/diagnosticos", json={"respuestas": []}).status_code == 401
+
+
+def test_no_se_pide_una_capsula_a_nombre_de_otro(http):
+    """Con sesión de estudiante, el `id_estudiante` del cuerpo tiene que ser el suyo."""
+    http.cookies.set(sesion.COOKIE_ESTUDIANTE, f"7.{sesion._firma(7)}")
+
+    respuesta = http.post("/api/capsulas", json={"id_estudiante": 8, "id_objetivo": 1})
+
+    assert respuesta.status_code == 403
+
+
+def test_el_audio_del_simulador_es_del_docente(http):
+    """El simulador manda su propio texto: abierto, cualquiera haría hablar a la voz clonada."""
+    respuesta = http.post("/student/viewer/0/generate-audio", data={"texto_override": "hola"})
+
+    assert respuesta.status_code == 403
 
 
 # --- Login --------------------------------------------------------------------

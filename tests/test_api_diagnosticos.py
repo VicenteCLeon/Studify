@@ -14,8 +14,19 @@ from sqlalchemy import func, select, text
 from studify.db.models import Estudiante
 from studify.db.session import SessionLocal, engine
 from studify.main import app
+from studify.web import sesion
+from tests.conftest import CLAVE_DOCENTE, USUARIO_DOCENTE
 
+# `POST /api/diagnosticos` es del docente desde la auditoría de datos del
+# 02-oct-2026 (el estudiante se diagnostica por `/student/vark`), así que este
+# cliente presenta la credencial por HTTP Basic, como lo haría un script.
 client = TestClient(app)
+client.auth = (USUARIO_DOCENTE, CLAVE_DOCENTE)
+
+
+@pytest.fixture(autouse=True)
+def _credencial_del_docente(clave_docente):
+    """Fija la credencial que presenta `client` (ver conftest)."""
 
 
 def _hay_base_de_datos() -> bool:
@@ -299,3 +310,39 @@ def test_get_devuelve_el_mismo_perfil_que_el_post():
 @necesita_bd
 def test_get_de_diagnostico_inexistente_da_404():
     assert client.get("/api/diagnosticos/99999999").status_code == 404
+
+
+# --- Quién puede leer un diagnóstico (auditoría de datos, 02-oct-2026) -------
+
+
+def _cliente_de(id_estudiante: int) -> TestClient:
+    """Un navegador con la cookie del estudiante y sin credencial de docente."""
+    navegador = TestClient(app)
+    navegador.cookies.set(
+        sesion.COOKIE_ESTUDIANTE, f"{id_estudiante}.{sesion._firma(id_estudiante)}"
+    )
+    return navegador
+
+
+@necesita_bd
+def test_el_estudiante_lee_su_diagnostico_y_no_el_ajeno():
+    """Antes cualquiera recorría ids correlativos y leía el perfil de la cohorte."""
+    cuerpo = {"estudiante": {}, "respuestas": respuestas_kinestesicas()}
+    mio = client.post("/api/diagnosticos", json=cuerpo).json()
+    ajeno = client.post("/api/diagnosticos", json=cuerpo).json()
+
+    navegador = _cliente_de(mio["id_estudiante"])
+
+    assert navegador.get(f"/api/diagnosticos/{mio['id_diagnostico']}").status_code == 200
+    # 404 y no 403: un 403 confirmaría que el diagnóstico existe.
+    assert navegador.get(f"/api/diagnosticos/{ajeno['id_diagnostico']}").status_code == 404
+
+
+def test_el_estudiante_no_crea_diagnosticos_por_la_api():
+    navegador = _cliente_de(7)
+
+    respuesta = navegador.post(
+        "/api/diagnosticos", json={"estudiante": {}, "respuestas": respuestas_kinestesicas()}
+    )
+
+    assert respuesta.status_code == 401

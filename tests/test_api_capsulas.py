@@ -32,6 +32,7 @@ from studify.db.models import (
 from studify.main import app
 from studify.vark.rules import aplicar_reglas
 from studify.vark.scoring import PerfilVark
+from studify.web import sesion
 from tests.conftest import USUARIO_DOCENTE, necesita_bd
 
 pytestmark = necesita_bd
@@ -108,8 +109,31 @@ def cliente_falso():
 
 
 @pytest.fixture
-def http():
-    return TestClient(app)
+def http(clave_docente):
+    """Cliente con la credencial del docente por HTTP Basic.
+
+    Desde la auditoría de datos (02-oct-2026) generar y leer cápsulas exige ser
+    su dueño o el docente. Estos tests prueban el motor —caché, regeneración,
+    errores—, no quién puede llamarlo; eso lo prueban los de más abajo con la
+    cookie del estudiante.
+    """
+    cliente = TestClient(app)
+    cliente.auth = (USUARIO_DOCENTE, clave_docente)
+    return cliente
+
+
+@pytest.fixture
+def navegador_de():
+    """Un navegador con la cookie firmada de un estudiante, sin credencial de docente."""
+
+    def _crear(id_estudiante: int) -> TestClient:
+        cliente = TestClient(app)
+        cliente.cookies.set(
+            sesion.COOKIE_ESTUDIANTE, f"{id_estudiante}.{sesion._firma(id_estudiante)}"
+        )
+        return cliente
+
+    return _crear
 
 
 def _estudiante_con_perfil(db, perfil: PerfilVark) -> Estudiante:
@@ -354,12 +378,9 @@ def test_regenerar_crea_una_version_nueva_y_conserva_la_anterior(
     assert segunda["id_capsula"] != primera["id_capsula"]
     assert cliente_falso.llamadas == 2
 
-    # El historial pasó a exigir credenciales de docente (pendiente n.º 17): sin
-    # filtro devuelve las cápsulas de toda la cohorte, así que es analítica y no
-    # algo del estudiante. Se piden por HTTP Basic y no por cookie porque es lo
-    # que usaría un script — y de paso deja probada esa vía. Las peticiones de
-    # generación de arriba siguen siendo anónimas a propósito: son del
-    # estudiante y tienen que funcionar sin credencial.
+    # El historial exige credenciales de docente (pendiente n.º 17): sin filtro
+    # devuelve las cápsulas de toda la cohorte, así que es analítica y no algo
+    # del estudiante.
     historial = http.get(
         "/api/capsulas",
         params={"id_objetivo": escenario["objetivo"].id_objetivo},
@@ -456,3 +477,31 @@ def test_sin_api_key_no_se_genera_pero_el_cache_sigue_sirviendo(
     forzada = _pedir(http, escenario, regenerar="true")
     assert forzada.status_code == 503
     assert "LLM_API_KEY" in forzada.json()["detail"]
+
+
+# --- Quién puede pedir y leer una cápsula (auditoría de datos, 02-oct-2026) --
+
+
+def test_el_estudiante_pide_y_lee_su_propia_capsula(escenario, cliente_falso, navegador_de):
+    """Con su cookie y sin credencial de docente: es el camino del estudiante."""
+    navegador = navegador_de(escenario["estudiante"].id_estudiante)
+
+    creada = _pedir(navegador, escenario)
+    assert creada.status_code == 201
+
+    leida = navegador.get(f"/api/capsulas/{creada.json()['id_capsula']}")
+    assert leida.status_code == 200
+
+
+def test_la_capsula_ajena_no_se_lee_ni_se_responde(escenario, cliente_falso, navegador_de):
+    """Antes bastaba con recorrer ids: ahora el ajeno recibe 404, como si no existiera."""
+    dueno = escenario["estudiante"].id_estudiante
+    id_capsula = _pedir(navegador_de(dueno), escenario).json()["id_capsula"]
+    intruso = navegador_de(dueno + 10_000_000)
+
+    assert intruso.get(f"/api/capsulas/{id_capsula}").status_code == 404
+    respuesta = intruso.post(
+        f"/api/capsulas/{id_capsula}/quiz",
+        json={"id_estudiante": dueno, "alternativa_seleccionada": 0},
+    )
+    assert respuesta.status_code == 404
