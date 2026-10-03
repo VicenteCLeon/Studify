@@ -1,73 +1,167 @@
 {% extends "base.html" %}
+{% import "components/ui.html" as ui %}
 
-{% block title %}Tu Perfil de Aprendizaje - Studify{% endblock %}
+{% block title %}Tu perfil de aprendizaje · RepasAi{% endblock %}
 
 {% block content %}
-<div class="card" style="max-width: 860px; margin: 0 auto;">
-    <div class="text-center mb-6">
-        <h1 class="mb-2">Tu Perfil: <span class="text-primary">{{ canal_principal }}</span></h1>
-        <p class="text-muted">Así es como procesas mejor la información.</p>
-        <div class="flex justify-center gap-2 mt-4">
-            <span class="badge badge-primary">{{ modalidad }}</span>
-            <span class="badge badge-success">Jerarquía {{ jerarquia.jerarquia }}</span>
-            <span class="badge badge-warning">Diagnóstico #{{ id_diagnostico }}</span>
+{%- set primario = jerarquia.canal_primario -%}
+
+{# Porcentaje por letra, para el radar (los `canales` vienen ordenados de
+   mayor a menor, que es lo que quieren las barras, no el gráfico). #}
+{%- set valor = {} -%}
+{%- for c in canales %}{% set _ = valor.update({c.canal: c.ancho | float}) %}{% endfor -%}
+{%- set texto = {} -%}
+{%- for c in canales %}{% set _ = texto.update({c.canal: c.texto}) %}{% endfor -%}
+
+{# Escala del radar: el eje llega al 50 % salvo que algún canal lo supere.
+   Con escala fija de 100 un perfil equilibrado (≈25 % cada uno) se vería
+   como un punto en el centro. #}
+{%- set maximo = valor.values() | max -%}
+{%- set escala = 50 if maximo <= 50 else (75 if maximo <= 75 else 100) -%}
+{%- set c0, radio = 160, 112 -%}
+{%- set px = {
+    "V": (c0, c0 - radio * valor.V / escala),
+    "A": (c0 + radio * valor.A / escala, c0),
+    "R": (c0, c0 + radio * valor.R / escala),
+    "K": (c0 - radio * valor.K / escala, c0),
+} -%}
+
+<div class="perfil">
+    <header class="perfil-head reveal">
+        <span class="eyebrow">{{ ui.icon("circle-user", cls="icon-sm") }}Tu perfil de aprendizaje</span>
+        <h1>
+            Tu canal principal es
+            <span class="perfil-canal" data-canal="{{ primario }}">{{ canal_principal }}</span>
+        </h1>
+        <p class="perfil-bajada">Así es como procesas mejor la información.</p>
+        <div class="cluster cluster-sm">
+            <span class="badge badge-primary">{{ ui.icon("layers") }}{{ modalidad }}</span>
+            <span class="badge badge-neutral">Jerarquía {{ jerarquia.jerarquia }}</span>
+            <span class="badge badge-neutral">{{ ui.icon("hash") }}Diagnóstico #{{ id_diagnostico }}</span>
         </div>
+    </header>
+
+    <div class="perfil-grid">
+        <section class="card perfil-radar-card reveal" style="--i: 1" aria-labelledby="radar-titulo">
+            <h2 id="radar-titulo" class="card-title">Tu mezcla VARK</h2>
+            <p class="card-subtitle mb-4">Mientras más se estira hacia un canal, más lo aprovechas.</p>
+
+            <svg class="radar" viewBox="0 0 320 320" role="img"
+                 aria-label="Gráfico radar de tu perfil: {% for c in canales %}{{ c.nombre }} {{ c.texto }}%{% if not loop.last %}, {% endif %}{% endfor %}.">
+                {# Rejilla: cuatro rombos concéntricos y los dos ejes. #}
+                <g class="radar-grid">
+                    {% for f in [0.25, 0.5, 0.75, 1] %}
+                    {% set r = radio * f %}
+                    <polygon points="{{ c0 }},{{ c0 - r }} {{ c0 + r }},{{ c0 }} {{ c0 }},{{ c0 + r }} {{ c0 - r }},{{ c0 }}" />
+                    {% endfor %}
+                    <line x1="{{ c0 }}" y1="{{ c0 - radio }}" x2="{{ c0 }}" y2="{{ c0 + radio }}" />
+                    <line x1="{{ c0 - radio }}" y1="{{ c0 }}" x2="{{ c0 + radio }}" y2="{{ c0 }}" />
+                </g>
+                <text class="radar-escala" x="{{ c0 + 4 }}" y="{{ c0 - radio + 12 }}">{{ escala }}%</text>
+
+                <g class="radar-forma">
+                    <polygon points="{% for l in 'VARK' %}{{ px[l][0] | round(2) }},{{ px[l][1] | round(2) }} {% endfor %}" />
+                    {% for l in 'VARK' %}
+                    <circle data-canal="{{ l }}" cx="{{ px[l][0] | round(2) }}" cy="{{ px[l][1] | round(2) }}" r="{{ 7 if l == primario else 5 }}" />
+                    {% endfor %}
+                </g>
+
+                {# Etiquetas en la punta de cada eje. #}
+                {% set etiquetas = {
+                    "V": (c0, 14, "middle"),
+                    "A": (306, c0 + 5, "end"),
+                    "R": (c0, 314, "middle"),
+                    "K": (14, c0 + 5, "start"),
+                } %}
+                {% for l in 'VARK' %}
+                <text class="radar-label" data-canal="{{ l }}" x="{{ etiquetas[l][0] }}" y="{{ etiquetas[l][1] }}" text-anchor="{{ etiquetas[l][2] }}">
+                    {{- l }} · {{ texto[l] }}%
+                </text>
+                {% endfor %}
+            </svg>
+        </section>
+
+        <section class="card perfil-barras-card reveal" style="--i: 2" aria-labelledby="barras-titulo">
+            <h2 id="barras-titulo" class="card-title mb-4">Tus porcentajes</h2>
+            <ul class="perfil-barras" role="list">
+                {% for canal in canales %}
+                <li class="perfil-barra {% if canal.canal == primario %}is-primario{% endif %}" data-canal="{{ canal.canal }}">
+                    {{ ui.vark_tile(canal.canal) }}
+                    <div class="perfil-barra-cuerpo">
+                        <div class="perfil-barra-top">
+                            <span class="perfil-barra-nombre">
+                                {{ canal.nombre }}
+                                {% if canal.canal == primario %}<span class="badge badge-accent">Principal</span>{% endif %}
+                            </span>
+                            <span class="perfil-barra-valor">{{ canal.texto }}%</span>
+                        </div>
+                        {{ ui.progress(canal.ancho, canal.nombre ~ ": " ~ canal.texto ~ "%", canal.canal) }}
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+        </section>
     </div>
 
-    <div class="flex flex-col gap-4 mb-8">
-        {% for canal in canales %}
+    <section class="perfil-significado reveal" data-canal="{{ primario }}" style="--i: 3" aria-labelledby="significado-titulo">
+        {{ ui.vark_tile(primario, size="lg") }}
         <div>
-            <div class="flex justify-between mb-1">
-                <span class="font-medium">{{ canal.nombre }}</span>
-                <span class="text-muted">{{ canal.texto }}%</span>
+            <h2 id="significado-titulo">¿Qué significa esto para ti?</h2>
+            <p>{{ explicacion }}</p>
+        </div>
+    </section>
+
+    <section class="perfil-config" aria-labelledby="config-titulo">
+        <header class="section-header">
+            <span class="eyebrow">{{ ui.icon("sparkles", cls="icon-sm") }}Tus microcápsulas</span>
+            <h2 id="config-titulo">Cómo se construirán tus microcápsulas</h2>
+            <p>
+                Estos parámetros los derivó el sistema desde tu vector y son los que
+                recibe el generador. No son una descripción de tu personalidad: son
+                instrucciones de armado.
+            </p>
+        </header>
+
+        <div class="auto-grid perfil-stats" style="--grid-min: 10rem">
+            <div class="stat">
+                {{ ui.icon("file-text", cls="stat-icon") }}
+                <span class="stat-value">{{ config.palabras_texto }}</span>
+                <span class="stat-label">palabras de contenido</span>
             </div>
-            <div class="progress-container">
-                <div class="progress-bar"
-                     style="width: {{ canal.ancho }}%; background-color: {{ canal.color }};"></div>
+            <div class="stat">
+                {{ ui.icon("eye", cls="stat-icon") }}
+                <span class="stat-value">{{ config.recursos_visuales }}</span>
+                <span class="stat-label">recursos visuales</span>
+            </div>
+            <div class="stat">
+                {{ ui.icon("hand", cls="stat-icon") }}
+                <span class="stat-value">{{ config.componentes_practicos }}</span>
+                <span class="stat-label">componentes prácticos</span>
+            </div>
+            <div class="stat">
+                {{ ui.icon("message-circle", cls="stat-icon") }}
+                <span class="stat-value stat-value-texto">{{ config.tono }}</span>
+                <span class="stat-label">registro de redacción</span>
             </div>
         </div>
-        {% endfor %}
-    </div>
 
-    <div class="capsule-activity mb-8">
-        <h3 class="mb-2">¿Qué significa esto para ti?</h3>
-        <p>{{ explicacion }}</p>
-    </div>
+        {% if directivas %}
+        <h3 class="perfil-directivas-titulo">Lo que incluirá cada cápsula</h3>
+        <ul class="perfil-directivas" role="list">
+            {% for directiva in directivas %}
+            <li>{{ ui.icon("check", cls="icon-sm") }}<span>{{ directiva }}</span></li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+    </section>
 
-    <h3 class="mb-2">Cómo se construirán tus microcápsulas</h3>
-    <p class="text-muted text-sm mb-4">
-        Estos parámetros los derivó el sistema desde tu vector y son los que recibe el
-        generador. No son una descripción de tu personalidad: son instrucciones de armado.
-    </p>
-
-    <div class="grid-config mb-6">
-        <div class="dato">
-            <span class="dato-valor">{{ config.palabras_texto }}</span>
-            <span class="dato-etiqueta">palabras de contenido</span>
-        </div>
-        <div class="dato">
-            <span class="dato-valor">{{ config.recursos_visuales }}</span>
-            <span class="dato-etiqueta">recursos visuales</span>
-        </div>
-        <div class="dato">
-            <span class="dato-valor">{{ config.componentes_practicos }}</span>
-            <span class="dato-etiqueta">componentes prácticos</span>
-        </div>
-        <div class="dato">
-            <span class="dato-valor dato-texto">{{ config.tono }}</span>
-            <span class="dato-etiqueta">registro de redacción</span>
-        </div>
-    </div>
-
-    <ul class="lista-directivas mb-8">
-        {% for directiva in directivas %}
-        <li>{{ directiva }}</li>
-        {% endfor %}
-    </ul>
-
-    <div class="flex justify-center gap-4">
-        <a href="/student/catalog" class="btn btn-primary">Ir al Catálogo de Temas</a>
-        <a href="/student/vark" class="btn btn-outline">Volver a responder</a>
+    <div class="perfil-acciones">
+        <a href="/student/catalog" class="btn btn-primary btn-lg">
+            {{ ui.icon("layers") }}Explorar temas
+        </a>
+        <a href="/student/vark" class="btn btn-secondary btn-lg">
+            {{ ui.icon("refresh-cw") }}Volver a responder
+        </a>
     </div>
 </div>
 {% endblock %}
