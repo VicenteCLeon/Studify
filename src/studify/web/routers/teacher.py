@@ -670,6 +670,7 @@ def _barras_cohorte(vark) -> list[dict]:
     ordenados = sorted(valores.items(), key=lambda kv: (-kv[1], "VARK".index(kv[0])))
     return [
         {
+            "canal": canal,
             "nombre": textos.NOMBRE_CANAL[canal],
             "color": textos.COLOR_CANAL[canal],
             "ancho": f"{porcentaje:.2f}",

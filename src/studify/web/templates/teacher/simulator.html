@@ -1,75 +1,93 @@
 {% extends "base.html" %}
+{% import "components/ui.html" as ui %}
 
-{% block title %}Simulador VARK - Studify{% endblock %}
+{% block title %}Simulador VARK · RepasAi{% endblock %}
 
 {% block content %}
-<div class="mb-8">
-    <h1 class="mb-2">Simulador de Generación (VARK)</h1>
-    <p class="text-muted">
-        Elige un Tema Curricular y un Perfil de Aprendizaje dominante.
-        El sistema generará una cápsula al vuelo para que puedas evaluar la calidad
-        de la adaptación pedagógica antes de habilitarla para los alumnos.
-    </p>
-</div>
+<div class="panel">
+    {{ ui.page_header("Simulador de generación",
+        "Elige un tema y un perfil de aprendizaje: el sistema genera una cápsula al vuelo para que evalúes la calidad de la adaptación antes de habilitarla para los alumnos. Nada de lo simulado se guarda.",
+        "Panel docente", "flask-conical") }}
 
-<div class="card mb-8">
-    <h3 class="mb-2">Un perfil a la vez</h3>
-    <form hx-post="/teacher/simulator/generate"
-          hx-target="#simulator-result"
-          class="flex items-center gap-4"
-          style="flex-wrap: wrap;">
+    <div class="panel-grid">
+        <section class="card" aria-labelledby="sim-uno-titulo">
+            <h2 id="sim-uno-titulo" class="card-title">Un perfil a la vez</h2>
+            <p class="card-subtitle mb-4">Muestra la cápsula completa, con la clave de la actividad.</p>
+            <form hx-post="/teacher/simulator/generate" hx-target="#simulator-result"
+                  hx-indicator="#sim-cargando, #simulator-result">
+                <div class="form-group">
+                    <label class="form-label" for="sim-tema">Tema</label>
+                    <select id="sim-tema" name="id_objetivo" class="form-control" required>
+                        <option value="">Selecciona un tema…</option>
+                        {% for obj in objetivos %}
+                        <option value="{{ obj.id_objetivo }}">{{ obj.asignatura }} — {{ obj.tema }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <fieldset class="form-group">
+                    <legend class="form-label">Perfil a simular (100 % en un canal)</legend>
+                    <div class="canal-picker">
+                        {% for letra in "VARK" %}
+                        <label class="canal-opcion" data-canal="{{ letra }}">
+                            <input type="radio" name="canal" value="{{ letra | lower }}" required {% if loop.first %}checked{% endif %}>
+                            {{ ui.icon(ui.vark_icon_name(letra)) }}
+                            <span>{{ NOMBRE_CANAL[letra] }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </fieldset>
+                <button type="submit" class="btn btn-primary">
+                    <span class="idle-only">{{ ui.icon("sparkles") }}</span>Generar cápsula
+                    <span class="htmx-indicator">{{ ui.spinner("Generando") }}</span>
+                </button>
+            </form>
+        </section>
 
-        <select name="id_objetivo" class="form-control" required style="max-width: 300px;">
-            <option value="">Selecciona un Tema...</option>
-            {% for obj in objetivos %}
-            <option value="{{ obj.id_objetivo }}">{{ obj.asignatura }} - {{ obj.tema }}</option>
-            {% endfor %}
-        </select>
+        <section class="card" aria-labelledby="sim-cuatro-titulo">
+            <h2 id="sim-cuatro-titulo" class="card-title">Los cuatro perfiles, lado a lado</h2>
+            <p class="card-subtitle mb-4">
+                Genera V, A, R y K sobre el mismo tema para juzgar de un vistazo si la
+                adaptación se nota entre perfiles. Son cuatro llamadas al modelo: tarda
+                más que generar uno solo.
+            </p>
+            <form hx-post="/teacher/simulator/compare" hx-target="#simulator-result"
+                  hx-indicator="#sim-cargando, #simulator-result">
+                <div class="form-group">
+                    <label class="form-label" for="sim-tema-4">Tema</label>
+                    <select id="sim-tema-4" name="id_objetivo" class="form-control" required>
+                        <option value="">Selecciona un tema…</option>
+                        {% for obj in objetivos %}
+                        <option value="{{ obj.id_objetivo }}">{{ obj.asignatura }} — {{ obj.tema }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="cluster cluster-sm mb-4" aria-hidden="true">
+                    {% for letra in "VARK" %}{{ ui.vark_chip(letra, size="sm") }}{% endfor %}
+                </div>
+                <button type="submit" class="btn btn-secondary">
+                    <span class="idle-only">{{ ui.icon("layers") }}</span>Comparar los 4 perfiles
+                    <span class="htmx-indicator">{{ ui.spinner("Generando") }}</span>
+                </button>
+            </form>
+        </section>
+    </div>
 
-        <select name="canal" class="form-control" required style="max-width: 200px;">
-            <option value="">Perfil a simular...</option>
-            <option value="v">Visual (100%)</option>
-            <option value="a">Auditivo (100%)</option>
-            <option value="r">Lecto/Escritura (100%)</option>
-            <option value="k">Kinestésico (100%)</option>
-        </select>
+    <div id="sim-cargando" class="sim-cargando htmx-indicator" role="status">
+        {{ ui.spinner("Generando") }}
+        <div>
+            <p class="font-semibold">Generando con el modelo…</p>
+            <p class="text-sm text-muted">Una cápsula tarda unos segundos; la comparación de cuatro, bastante más.</p>
+        </div>
+    </div>
 
-        <button type="submit" class="btn btn-primary">
-            Generar Cápsula
-            <span class="htmx-indicator ml-2">⏳</span>
-        </button>
-    </form>
-</div>
-
-<div class="card mb-8">
-    <h3 class="mb-2">Los cuatro perfiles, lado a lado</h3>
-    <p class="text-muted text-sm mb-4">
-        Genera V, A, R y K sobre el mismo tema para juzgar de un vistazo si la
-        adaptación se nota entre perfiles. Son cuatro llamadas al modelo: tarda
-        más que generar uno solo.
-    </p>
-    <form hx-post="/teacher/simulator/compare"
-          hx-target="#simulator-result"
-          class="flex items-center gap-4"
-          style="flex-wrap: wrap;">
-
-        <select name="id_objetivo" class="form-control" required style="max-width: 300px;">
-            <option value="">Selecciona un Tema...</option>
-            {% for obj in objetivos %}
-            <option value="{{ obj.id_objetivo }}">{{ obj.asignatura }} - {{ obj.tema }}</option>
-            {% endfor %}
-        </select>
-
-        <button type="submit" class="btn btn-outline">
-            Comparar los 4 perfiles
-            <span class="htmx-indicator ml-2">⏳</span>
-        </button>
-    </form>
-</div>
-
-<!-- El visor de la cápsula (mismo template que los alumnos) o la comparación
-     de las cuatro se carga acá, según qué formulario se haya usado. -->
-<div id="simulator-result">
-    <!-- Feedback de la generación -->
+    {# El visor de la cápsula (mismo parcial que ven los alumnos) o la
+       comparación de las cuatro se carga acá, según qué formulario se usó. #}
+    <div id="simulator-result" class="sim-resultado" aria-live="polite">
+        <div class="card card-flat sim-vacio">
+            {% call ui.empty_state("flask-conical", "Todavía no hay una simulación", heading="h2") %}
+            <p>Elige un tema y un perfil arriba. La cápsula aparecerá aquí, con la alternativa correcta marcada.</p>
+            {% endcall %}
+        </div>
+    </div>
 </div>
 {% endblock %}

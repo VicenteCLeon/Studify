@@ -9,75 +9,81 @@
    la otra serían ilegibles, y lo que hay que juzgar acá es la diferencia
    *estructural* entre columnas (qué bloques trae cada una, qué tipo de
    actividad cierra cada una), no leer cada cápsula entera — para eso está el
-   generador de un solo canal, arriba en la misma pantalla. #}
-<div class="mb-4">
-    <h2 class="mb-1">Comparación para «{{ objetivo.tema }}»</h2>
-    <p class="text-muted text-sm">
-        Perfil puro (100% en un solo canal) para cada columna, mismo material.
-        Si dos columnas se parecen demasiado, la adaptación no está
-        diferenciando ese par de perfiles.
-    </p>
-</div>
+   generador de un solo canal, arriba en la misma pantalla.
 
-<div class="grid-comparacion">
-    {% for col in columnas %}
-    <div class="card comparacion-columna" style="border-top: 4px solid {{ col.color_canal }};">
-        <span class="badge mb-4" style="background-color: {{ col.color_canal }}26; color: {{ col.color_canal }};">
-            {{ col.nombre_canal }} · 100%
-        </span>
-
-        {% if col.error %}
-        <p class="alerta alerta-error">{{ col.error }}</p>
-        {% else %}
-        <h3 class="mb-4">{{ col.capsula.titulo }}</h3>
-
-        <p class="paso-etiqueta">Para partir</p>
-        <p class="text-sm mb-4">{{ col.capsula.activacion }}</p>
-
-        <p class="paso-etiqueta">Concepto central</p>
-        <p class="text-sm mb-4">{{ col.capsula.concepto_central }}</p>
-
-        <p class="paso-etiqueta">Representación adaptativa + ejemplo</p>
-        <div class="flex gap-2 mb-2" style="flex-wrap: wrap;">
-            {% for bloque in col.bloques %}
-            <span class="badge badge-primary">{{ bloque.tipo.replace('_', ' ') }}</span>
-            {% endfor %}
-        </div>
-
-        {% for bloque in col.bloques %}
-        <div class="mb-4">
-            {% if bloque.encabezado %}<strong class="text-sm">{{ bloque.encabezado }}</strong>{% endif %}
-
-            {% if bloque.forma == 'texto' %}
-            <p class="text-sm">{{ bloque.cuerpo }}</p>
-
-            {% elif bloque.forma == 'lista' %}
-                {% if bloque.ordenada %}
-                <ol class="text-sm lista-bloque">{% for elemento in bloque.cuerpo %}<li>{{ elemento }}</li>{% endfor %}</ol>
-                {% else %}
-                <ul class="text-sm lista-bloque">{% for elemento in bloque.cuerpo %}<li>{{ elemento }}</li>{% endfor %}</ul>
-                {% endif %}
-
-            {% elif bloque.forma == 'filas' %}
-            <div class="table-container">
-                <table class="table text-sm">
-                    {% for fila in bloque.cuerpo %}
-                    <tr>{% for celda in fila %}<td>{{ celda }}</td>{% endfor %}</tr>
-                    {% endfor %}
-                </table>
-            </div>
-            {% endif %}
-        </div>
-        {% endfor %}
-
-        <p class="paso-etiqueta">Actividad de cierre</p>
-        <span class="badge badge-warning mb-2">{{ col.capsula.actividad.tipo }}</span>
-        <p class="text-sm mb-4">{{ col.capsula.actividad.pregunta }}</p>
-
+   Sin formularios ni <head…>: es un parcial que HTMX inserta en el simulador. #}
+{% import "components/ui.html" as ui %}
+<div class="comparacion">
+    <div class="comparacion-intro">
+        <h2>Comparación para «{{ objetivo.tema }}»</h2>
         <p class="text-sm text-muted">
-            {{ col.palabras }} palabras · {{ col.capsula.fuentes | length }} fuente(s)
+            Perfil puro (100 % en un solo canal) para cada columna, mismo material.
+            Si dos columnas se parecen demasiado, la adaptación no está
+            diferenciando ese par de perfiles.
         </p>
-        {% endif %}
     </div>
-    {% endfor %}
+
+    <div class="grid-comparacion">
+        {% for col in columnas %}
+        <article class="comparacion-columna" data-canal="{{ col.canal }}" aria-label="{{ col.nombre_canal }}">
+            <div class="comparacion-columna-top">
+                {{ ui.vark_chip(col.canal, col.nombre_canal ~ " · 100%", con_icono=True) }}
+            </div>
+
+            {% if col.error %}
+            {% call ui.alert("error") %}{{ col.error }}{% endcall %}
+            {% else %}
+            <h3 class="comparacion-titulo">{{ col.capsula.titulo }}</h3>
+
+            <p class="comparacion-rotulo">Para partir</p>
+            <p class="text-sm">{{ col.capsula.activacion }}</p>
+
+            <p class="comparacion-rotulo">Concepto central</p>
+            <p class="text-sm">{{ col.capsula.concepto_central }}</p>
+
+            <p class="comparacion-rotulo">Representación adaptativa + ejemplo</p>
+            <div class="cluster cluster-sm mb-3">
+                {% for bloque in col.bloques %}
+                <span class="badge badge-primary">{{ bloque.tipo.replace('_', ' ') }}</span>
+                {% endfor %}
+            </div>
+
+            {% for bloque in col.bloques %}
+            <div class="comparacion-bloque">
+                {% if bloque.encabezado %}<strong class="text-sm">{{ bloque.encabezado }}</strong>{% endif %}
+
+                {% if bloque.forma == 'texto' %}
+                <p class="text-sm">{{ bloque.cuerpo }}</p>
+
+                {% elif bloque.forma == 'lista' %}
+                    {% if bloque.ordenada %}
+                    <ol class="text-sm lista-bloque">{% for elemento in bloque.cuerpo %}<li>{{ elemento }}</li>{% endfor %}</ol>
+                    {% else %}
+                    <ul class="text-sm lista-bloque">{% for elemento in bloque.cuerpo %}<li>{{ elemento }}</li>{% endfor %}</ul>
+                    {% endif %}
+
+                {% elif bloque.forma == 'filas' %}
+                <div class="table-container">
+                    <table class="table">
+                        {% for fila in bloque.cuerpo %}
+                        <tr>{% for celda in fila %}<td>{{ celda }}</td>{% endfor %}</tr>
+                        {% endfor %}
+                    </table>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+
+            <p class="comparacion-rotulo">Actividad de cierre</p>
+            <span class="badge badge-warning mb-2">{{ col.capsula.actividad.tipo }}</span>
+            <p class="text-sm">{{ col.capsula.actividad.pregunta }}</p>
+
+            <p class="comparacion-pie">
+                {{ ui.icon("file-text", cls="icon-sm") }}{{ col.palabras }} palabras
+                · {{ ui.icon("quote", cls="icon-sm") }}{{ col.capsula.fuentes | length }} fuente(s)
+            </p>
+            {% endif %}
+        </article>
+        {% endfor %}
+    </div>
 </div>

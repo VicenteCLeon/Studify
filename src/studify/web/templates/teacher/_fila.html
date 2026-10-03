@@ -1,10 +1,12 @@
 {# Una fila de la bandeja. Se usa en dos sitios: dentro del bucle de
    `_bandeja.html` y como respuesta suelta de aprobar/rechazar, que HTMX
-   intercambia por la fila anterior (`hx-swap="outerHTML"`). #}
-<tr id="fragment-{{ fragmento.id }}">
-    <td>
-        <div class="font-medium">{{ fragmento.documento }}</div>
-        <div class="text-sm text-muted">
+   intercambia por la fila anterior (`hx-swap="outerHTML"`). Por eso es un <tr>
+   autocontenido: importa sus propios macros. #}
+{% import "components/ui.html" as ui %}
+<tr id="fragment-{{ fragmento.id }}" class="fila-fragmento {% if fragmento.estado != 'pendiente' %}is-revisado{% endif %}">
+    <td data-label="Origen">
+        <div class="font-semibold">{{ fragmento.documento }}</div>
+        <div class="text-xs text-muted mt-1">
             {% if fragmento.pagina_inicio %}
                 Pág. {{ fragmento.pagina_inicio }}{% if fragmento.pagina_fin and fragmento.pagina_fin != fragmento.pagina_inicio %}–{{ fragmento.pagina_fin }}{% endif %}
                 ·
@@ -12,22 +14,23 @@
             {{ fragmento.tipo }} · {{ fragmento.palabras }} palabras
         </div>
     </td>
-    <td>
+    <td data-label="Fragmento">
         <div class="text-sm texto-fragmento">{{ fragmento.texto }}</div>
         {% if error %}
-        <div class="alerta alerta-error mt-2 text-sm">{{ error }}</div>
+        <div class="mt-2">{% call ui.alert("error") %}{{ error }}{% endcall %}</div>
         {% endif %}
     </td>
-    <td>
+    <td data-label="Objetivo de aprendizaje">
         {% if fragmento.estado == 'validado' %}
-        <span class="badge badge-success">validado</span>
+        <span class="badge badge-success">{{ ui.icon("check") }}validado</span>
         {% elif fragmento.estado == 'descartado' %}
-        <span class="badge badge-danger">descartado</span>
+        <span class="badge badge-danger">{{ ui.icon("x") }}descartado</span>
         {% else %}
         {# Sin objetivo asignado todavía, el select se preselecciona con la
            propuesta del tagger si hay una — sigue siendo solo una propuesta:
            el POST de "Validar" es lo único que la vuelve real. #}
-        <select name="id_objetivo" class="form-control text-sm" style="min-width: 220px;">
+        <select name="id_objetivo" class="form-control select-objetivo"
+                aria-label="Objetivo para el fragmento de {{ fragmento.documento }}">
             <option value="">— sin asignar —</option>
             {% for objetivo in objetivos %}
             <option value="{{ objetivo.id_objetivo }}"
@@ -37,33 +40,33 @@
             {% endfor %}
         </select>
         {% if fragmento.sugerido_etiqueta or fragmento.sugerido_motivo %}
-        <div class="text-sm text-muted mt-1">
-            <span class="badge badge-primary">IA</span>
-            {% if fragmento.sugerido_etiqueta %}{{ fragmento.sugerido_etiqueta }}{% endif %}
-            {% if fragmento.sugerido_motivo %} — {{ fragmento.sugerido_motivo }}{% endif %}
+        <div class="sugerencia-ia">
+            <span class="badge badge-primary">{{ ui.icon("sparkles") }}IA</span>
+            <span>
+                {% if fragmento.sugerido_etiqueta %}{{ fragmento.sugerido_etiqueta }}{% endif %}
+                {% if fragmento.sugerido_motivo %} — {{ fragmento.sugerido_motivo }}{% endif %}
+            </span>
         </div>
         {% endif %}
         {% endif %}
     </td>
-    <td>
+    <td data-label="Acciones">
         {% if fragmento.estado == 'pendiente' %}
-        <div class="flex gap-2">
+        <div class="cluster cluster-sm acciones-fila">
             {# `hx-include="closest tr"` manda el objetivo elegido junto al POST:
                validar sin objetivo dejaría el fragmento inalcanzable. #}
             <button hx-post="/teacher/curation/{{ fragmento.id }}/approve"
                     hx-include="closest tr"
                     hx-target="closest tr"
                     hx-swap="outerHTML"
-                    class="btn btn-outline text-sm"
-                    style="padding: 0.25rem 0.75rem; border-color: var(--success); color: var(--success);">
-                Validar
+                    class="btn btn-success btn-sm">
+                {{ ui.icon("check") }}Validar
             </button>
             <button hx-post="/teacher/curation/{{ fragmento.id }}/reject"
                     hx-target="closest tr"
                     hx-swap="outerHTML"
-                    class="btn btn-outline text-sm"
-                    style="padding: 0.25rem 0.75rem; border-color: var(--danger); color: var(--danger);">
-                Descartar
+                    class="btn btn-danger btn-sm">
+                {{ ui.icon("x") }}Descartar
             </button>
         </div>
         {% else %}

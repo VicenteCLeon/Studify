@@ -1,13 +1,15 @@
 {# Bandeja de fragmentos pendientes. Se renderiza en la carga de la página y la
-   vuelve a pedir HTMX tras cada ingesta (evento `fragmentos-actualizados`). #}
+   vuelve a pedir HTMX tras cada ingesta (evento `fragmentos-actualizados`).
+   En móvil cada fila se apila como tarjeta (.table-stack + data-label). #}
+{% import "components/ui.html" as ui %}
 <div class="table-container">
-    <table class="table">
+    <table class="table table-stack bandeja">
         <thead>
             <tr>
-                <th>Origen</th>
-                <th>Fragmento</th>
-                <th>Objetivo de aprendizaje</th>
-                <th>Acciones</th>
+                <th scope="col">Origen</th>
+                <th scope="col">Fragmento</th>
+                <th scope="col">Objetivo de aprendizaje</th>
+                <th scope="col">Acciones</th>
             </tr>
         </thead>
         <tbody id="fragments-list">
@@ -15,8 +17,12 @@
                 {% include "teacher/_fila.html" %}
             {% else %}
             <tr>
-                <td colspan="4" class="text-center text-muted py-8">
-                    No hay fragmentos pendientes de revisión.
+                <td colspan="4">
+                    <div class="empty-state">
+                        <span class="icon-tile">{{ ui.icon("circle-check") }}</span>
+                        <p class="font-semibold">No hay fragmentos pendientes de revisión.</p>
+                        <p class="text-sm">Cuando subas un documento, sus fragmentos aparecerán acá para validarlos.</p>
+                    </div>
                 </td>
             </tr>
             {% endfor %}

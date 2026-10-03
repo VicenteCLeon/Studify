@@ -1,178 +1,223 @@
 {% extends "base.html" %}
+{% import "components/ui.html" as ui %}
 
-{% block title %}Panel de Curación - Studify{% endblock %}
+{% block title %}Curación de contenido · RepasAi{% endblock %}
 
 {% block content %}
-<div class="mb-8">
-    <h1 class="mb-2">Base de Conocimiento: Curación de Contenido</h1>
-    <p class="text-muted">
-        Sube el documento oficial y valida los fragmentos que lo respaldan.
-        <strong>Ningún fragmento sin validar llega a una microcápsula</strong>: es lo que
-        garantiza que el contenido generado esté anclado a material institucional.
+<div class="panel">
+    {% call ui.page_header("Curación de contenido",
+        "Sube el documento oficial y valida los fragmentos que lo respaldan.",
+        "Panel docente", "folder-check") %}
+    <p class="panel-regla">
+        {{ ui.icon("shield-check", cls="icon-sm") }}
+        <span><strong>Ningún fragmento sin validar llega a una microcápsula</strong>: es lo que
+        garantiza que el contenido generado esté anclado a material institucional.</span>
     </p>
-</div>
+    {% endcall %}
 
-<div class="card mb-8">
-    <div class="flex justify-between items-center mb-4">
-        <h2 class="text-lg">Objetivos de aprendizaje</h2>
-        <span class="text-sm text-muted">
-            {{ objetivos | length }} en el catálogo
-        </span>
+    <div class="panel-stats">
+        <div class="stat">{{ ui.icon("target", cls="stat-icon") }}<span class="stat-value">{{ objetivos | length }}</span><span class="stat-label">objetivos en el catálogo</span></div>
+        <div class="stat">{{ ui.icon("file-text", cls="stat-icon") }}<span class="stat-value">{{ documentos | length }}</span><span class="stat-label">documentos cargados</span></div>
+        <div class="stat">{{ ui.icon("inbox", cls="stat-icon") }}<span class="stat-value">{{ fragmentos | length }}</span><span class="stat-label">fragmentos en la bandeja</span></div>
     </div>
-    <p class="text-muted text-sm mb-4">
-        Son los temas a los que se asigna cada fragmento. <strong>Sin al menos uno no
-        se puede validar nada</strong>, porque el retriever recupera por objetivo.
-        Para cargar un plan de estudios completo de una vez está
-        <code>python scripts/cargar_objetivos.py data/objetivos.csv</code>.
-    </p>
-    <form hx-post="/teacher/curation/objetivos"
-          hx-target="#objetivo-status"
-          class="flex items-center gap-4"
-          style="flex-wrap: wrap;">
-        <input type="text" name="codigo_objetivo" class="form-control" maxlength="30" required
-               placeholder="Código (ej. UX-U1-01)" style="max-width: 190px;">
-        <input type="text" name="asignatura" class="form-control" maxlength="100" required
-               placeholder="Asignatura" style="max-width: 200px;">
-        <input type="text" name="unidad" class="form-control" maxlength="100" required
-               placeholder="Unidad" style="max-width: 200px;">
-        <input type="text" name="tema" class="form-control" maxlength="150" required
-               placeholder="Tema" style="max-width: 220px;">
-        <input type="text" name="nivel_taxonomico" class="form-control" maxlength="50"
-               placeholder="Nivel (opcional)" style="max-width: 160px;">
-        <input type="text" name="descripcion" class="form-control"
-               placeholder="Descripción (opcional)" style="max-width: 320px;">
-        <button type="submit" class="btn btn-primary">
-            Crear objetivo
-            <span class="htmx-indicator ml-2">…</span>
-        </button>
-    </form>
-    <div id="objetivo-status" class="mt-4"></div>
 
-    {% if objetivos %}
-    <details class="mt-4">
-        <summary class="text-sm text-muted" style="cursor: pointer;">
-            Ver los {{ objetivos | length }} objetivos cargados
-        </summary>
-        <ul class="mt-2 text-sm">
-            {% for objetivo in objetivos %}
-            <li>
-                <strong>{{ objetivo.codigo_objetivo }}</strong> —
-                {{ objetivo.asignatura }} · {{ objetivo.unidad }} · {{ objetivo.tema }}
-            </li>
-            {% endfor %}
-        </ul>
-    </details>
+    {% if not objetivos %}
+    <div class="mb-6">
+        {% call ui.alert("warning", "No hay objetivos de aprendizaje cargados.") %}
+        Sin ellos no se puede validar ningún fragmento, porque el retriever recupera por
+        objetivo y un fragmento validado sin objetivo queda inalcanzable para siempre.
+        Crea el primero en el formulario de abajo.
+        {% endcall %}
+    </div>
     {% endif %}
-</div>
 
-<div class="card mb-8">
-    <h2 class="text-lg mb-4">Cargar nuevo documento</h2>
-    <form hx-post="/teacher/curation/upload"
-          hx-encoding="multipart/form-data"
-          hx-target="#upload-status"
-          class="flex items-center gap-4"
-          style="flex-wrap: wrap;">
-        <input type="file" name="file" accept=".pdf,.pptx" class="form-control" required
-               style="max-width: 340px;">
-        <input type="text" name="asignatura" class="form-control" maxlength="100"
-               placeholder="Asignatura (opcional)" style="max-width: 240px;">
-        <button type="submit" class="btn btn-primary">
-            Subir e ingerir
-            <span class="htmx-indicator ml-2">…</span>
-        </button>
-    </form>
-    <div id="upload-status" class="mt-4"></div>
-</div>
+    <div class="panel-grid">
+        <section class="card" aria-labelledby="objetivos-titulo">
+            <div class="card-header">
+                <div>
+                    <h2 id="objetivos-titulo" class="card-title">Objetivos de aprendizaje</h2>
+                    <p class="card-subtitle">Los temas a los que se asigna cada fragmento.</p>
+                </div>
+                <span class="badge badge-neutral">{{ objetivos | length }} en el catálogo</span>
+            </div>
+            <p class="text-sm text-muted mb-4">
+                <strong>Sin al menos uno no se puede validar nada</strong>, porque el retriever
+                recupera por objetivo. Para cargar un plan de estudios completo de una vez está
+                <code>python scripts/cargar_objetivos.py data/objetivos.csv</code>.
+            </p>
+            <form hx-post="/teacher/curation/objetivos" hx-target="#objetivo-status">
+                <div class="form-grid form-grid-sm">
+                    <div class="form-group">
+                        <label class="form-label" for="obj-codigo">Código</label>
+                        <input type="text" id="obj-codigo" name="codigo_objetivo" class="form-control" maxlength="30" required placeholder="UX-U1-01">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="obj-asignatura">Asignatura</label>
+                        <input type="text" id="obj-asignatura" name="asignatura" class="form-control" maxlength="100" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="obj-unidad">Unidad</label>
+                        <input type="text" id="obj-unidad" name="unidad" class="form-control" maxlength="100" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="obj-tema">Tema</label>
+                        <input type="text" id="obj-tema" name="tema" class="form-control" maxlength="150" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="obj-nivel">Nivel <span class="text-soft">(opcional)</span></label>
+                        <input type="text" id="obj-nivel" name="nivel_taxonomico" class="form-control" maxlength="50" placeholder="Comprender, aplicar…">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="obj-desc">Descripción <span class="text-soft">(opcional)</span></label>
+                        <input type="text" id="obj-desc" name="descripcion" class="form-control">
+                    </div>
+                </div>
+                <div class="form-actions mt-4">
+                    <button type="submit" class="btn btn-primary">
+                        <span class="idle-only">{{ ui.icon("target") }}</span>Crear objetivo
+                        <span class="htmx-indicator">{{ ui.spinner("Creando") }}</span>
+                    </button>
+                </div>
+            </form>
+            <div id="objetivo-status" class="panel-status"></div>
 
-{% if documentos %}
-<div class="card mb-8">
-    <h2 class="text-lg mb-4">Documentos cargados</h2>
-    <div class="table-container">
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Documento</th>
-                    <th>Estado</th>
-                    <th>Avance de curación</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for fila in documentos %}
-                <tr>
-                    <td>
-                        <div class="font-medium">{{ fila.documento.titulo }}</div>
-                        <div class="text-sm text-muted">
-                            {{ fila.documento.formato }}
-                            {% if fila.documento.asignatura %} · {{ fila.documento.asignatura }}{% endif %}
-                        </div>
-                    </td>
-                    <td>
-                        {% if fila.documento.estado_curacion == 'validado' %}
-                        <span class="badge badge-success">validado</span>
-                        {% elif fila.documento.estado_curacion == 'rechazado' %}
-                        <span class="badge badge-danger">rechazado</span>
-                        {% else %}
-                        <span class="badge badge-warning">pendiente</span>
-                        {% endif %}
-                    </td>
-                    <td class="text-sm">
-                        {{ fila.conteo.validado }} validados ·
-                        {{ fila.conteo.pendiente }} pendientes ·
-                        {{ fila.conteo.descartado }} descartados
-                    </td>
-                    <td>
-                        <a class="btn btn-outline text-sm" style="padding: 0.25rem 0.75rem;"
-                           href="/teacher/curation?id_documento={{ fila.documento.id_documento }}">
-                            Revisar solo este
-                        </a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-</div>
-{% endif %}
-
-{% if not objetivos %}
-<div class="alerta alerta-error mb-8">
-    <strong>No hay objetivos de aprendizaje cargados.</strong>
-    Sin ellos no se puede validar ningún fragmento, porque el retriever recupera por
-    objetivo y un fragmento validado sin objetivo queda inalcanzable para siempre.
-    Crea el primero en el formulario de arriba.
-</div>
-{% endif %}
-
-<div class="card">
-    <div class="flex justify-between items-center mb-4">
-        <h2 class="text-lg">Bandeja de revisión</h2>
-        <div class="flex items-center gap-4">
             {% if objetivos %}
-            <form hx-post="/teacher/curation/tag" hx-target="#tag-status" hx-swap="innerHTML">
-                {% if id_documento %}
-                <input type="hidden" name="id_documento" value="{{ id_documento }}">
-                {% endif %}
-                <button type="submit" class="btn btn-outline text-sm" style="padding: 0.25rem 0.75rem;"
-                        title="El modelo propone objetivo y etiqueta para lo que sigue sin clasificar; tú sigues validando cada fragmento.">
-                    Sugerir objetivos con IA
-                    <span class="htmx-indicator ml-2">…</span>
+            <details class="accordion panel-lista mt-4">
+                <summary>
+                    <span class="flex-1">Ver los {{ objetivos | length }} objetivos cargados</span>
+                    {{ ui.icon("chevron-down", cls="accordion-chevron") }}
+                </summary>
+                <div class="accordion-body">
+                    <ul class="objetivos-lista" role="list">
+                        {% for objetivo in objetivos %}
+                        <li>
+                            <span class="badge badge-primary">{{ objetivo.codigo_objetivo }}</span>
+                            <span>{{ objetivo.asignatura }} · {{ objetivo.unidad }} · <strong>{{ objetivo.tema }}</strong></span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </details>
+            {% endif %}
+        </section>
+
+        <section class="card" aria-labelledby="carga-titulo">
+            <div class="card-header">
+                <div>
+                    <h2 id="carga-titulo" class="card-title">Cargar nuevo documento</h2>
+                    <p class="card-subtitle">PDF o PPTX. Se divide en fragmentos con su página de origen.</p>
+                </div>
+            </div>
+            <form hx-post="/teacher/curation/upload" hx-encoding="multipart/form-data" hx-target="#upload-status">
+                <label class="dropzone" for="doc-file">
+                    <span class="icon-tile">{{ ui.icon("upload") }}</span>
+                    <span class="dropzone-titulo">Elige el archivo</span>
+                    <span class="dropzone-sub">Formatos: .pdf, .pptx</span>
+                    <input type="file" id="doc-file" name="file" accept=".pdf,.pptx" class="form-control" required>
+                </label>
+                <div class="form-group mt-4">
+                    <label class="form-label" for="doc-asignatura">Asignatura <span class="text-soft">(opcional)</span></label>
+                    <input type="text" id="doc-asignatura" name="asignatura" class="form-control" maxlength="100">
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    <span class="idle-only">{{ ui.icon("upload") }}</span>Subir e ingerir
+                    <span class="htmx-indicator">{{ ui.spinner("Ingiriendo") }}</span>
                 </button>
             </form>
-            {% endif %}
-            {% if id_documento %}
-            <a href="/teacher/curation" class="text-sm text-muted">Ver todos los documentos</a>
-            {% endif %}
-        </div>
+            <div id="upload-status" class="panel-status"></div>
+        </section>
     </div>
-    <div id="tag-status" class="mb-4"></div>
 
-    <div id="bandeja"
-         hx-get="/teacher/curation/fragmentos{% if id_documento %}?id_documento={{ id_documento }}{% endif %}"
-         hx-trigger="fragmentos-actualizados from:body"
-         hx-target="this"
-         hx-swap="innerHTML">
-        {% include "teacher/_bandeja.html" %}
-    </div>
+    {% if documentos %}
+    <section class="card mt-6" aria-labelledby="docs-titulo">
+        <h2 id="docs-titulo" class="card-title mb-4">Documentos cargados</h2>
+        <div class="table-container">
+            <table class="table table-stack">
+                <thead>
+                    <tr>
+                        <th scope="col">Documento</th>
+                        <th scope="col">Estado</th>
+                        <th scope="col">Avance de curación</th>
+                        <th scope="col"><span class="visually-hidden">Acciones</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for fila in documentos %}
+                    {% set c = fila.conteo %}
+                    {% set total = (c.validado or 0) + (c.pendiente or 0) + (c.descartado or 0) %}
+                    <tr>
+                        <td data-label="Documento">
+                            <div class="font-semibold">{{ fila.documento.titulo }}</div>
+                            <div class="text-sm text-muted">
+                                {{ fila.documento.formato }}{% if fila.documento.asignatura %} · {{ fila.documento.asignatura }}{% endif %}
+                            </div>
+                        </td>
+                        <td data-label="Estado">
+                            {% if fila.documento.estado_curacion == 'validado' %}
+                            <span class="badge badge-success">validado</span>
+                            {% elif fila.documento.estado_curacion == 'rechazado' %}
+                            <span class="badge badge-danger">rechazado</span>
+                            {% else %}
+                            <span class="badge badge-warning">pendiente</span>
+                            {% endif %}
+                        </td>
+                        <td data-label="Avance de curación">
+                            <div class="avance" aria-hidden="true">
+                                {% if total %}
+                                <span class="avance-ok" style="width: {{ (c.validado or 0) / total * 100 }}%"></span>
+                                <span class="avance-desc" style="width: {{ (c.descartado or 0) / total * 100 }}%"></span>
+                                {% endif %}
+                            </div>
+                            <div class="text-xs text-muted mt-1">
+                                {{ c.validado }} validados · {{ c.pendiente }} pendientes · {{ c.descartado }} descartados
+                            </div>
+                        </td>
+                        <td data-label="">
+                            <a class="btn btn-secondary btn-sm" href="/teacher/curation?id_documento={{ fila.documento.id_documento }}">
+                                Revisar solo este
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+    {% endif %}
+
+    <section class="card mt-6" aria-labelledby="bandeja-titulo">
+        <div class="card-header">
+            <div>
+                <h2 id="bandeja-titulo" class="card-title">Bandeja de revisión</h2>
+                <p class="card-subtitle">Asigna un objetivo a cada fragmento y valídalo, o descártalo.</p>
+            </div>
+            <div class="cluster cluster-sm">
+                {% if id_documento %}
+                <a href="/teacher/curation" class="btn btn-ghost btn-sm">{{ ui.icon("x") }}Ver todos los documentos</a>
+                {% endif %}
+                {% if objetivos %}
+                <form hx-post="/teacher/curation/tag" hx-target="#tag-status" hx-swap="innerHTML">
+                    {% if id_documento %}
+                    <input type="hidden" name="id_documento" value="{{ id_documento }}">
+                    {% endif %}
+                    <button type="submit" class="btn btn-secondary btn-sm"
+                            title="El modelo propone objetivo y etiqueta para lo que sigue sin clasificar; tú sigues validando cada fragmento.">
+                        <span class="idle-only">{{ ui.icon("sparkles") }}</span>Sugerir objetivos con IA
+                        <span class="htmx-indicator">{{ ui.spinner("Sugiriendo") }}</span>
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+        <div id="tag-status" class="panel-status"></div>
+
+        <div id="bandeja"
+             hx-get="/teacher/curation/fragmentos{% if id_documento %}?id_documento={{ id_documento }}{% endif %}"
+             hx-trigger="fragmentos-actualizados from:body"
+             hx-target="this"
+             hx-swap="innerHTML">
+            {% include "teacher/_bandeja.html" %}
+        </div>
+    </section>
 </div>
 {% endblock %}
