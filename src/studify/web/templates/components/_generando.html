@@ -1,0 +1,51 @@
+{# Pantalla "Generando tu cápsula…".
+
+   El visor genera la cápsula en el mismo GET (el LLM tarda varios segundos),
+   así que entre el clic en "Estudiar" y la página nueva el navegador se queda
+   esperando. Esta capa ocupa esa espera: la abre app.js al hacer clic en
+   cualquier enlace con [data-study-link] y se cierra sola cuando llega la
+   página (o al volver atrás, por el bfcache).
+
+   Reemplaza al video de carga anterior (public/animacionCarga.mp4, que se
+   conserva en el repo): la animación es CSS, sigue el tema claro/oscuro y se
+   detiene con prefers-reduced-motion. #}
+{% import "components/ui.html" as ui %}
+<div class="generando" data-generando hidden>
+    <div class="generando-backdrop"></div>
+    <div class="generando-card" role="dialog" aria-modal="true" aria-labelledby="generando-titulo"
+         aria-describedby="generando-paso" tabindex="-1">
+
+        <div class="generando-ilustracion" aria-hidden="true">
+            <span class="generando-orbita">
+                <span class="generando-punto" data-canal="V"></span>
+                <span class="generando-punto" data-canal="A"></span>
+                <span class="generando-punto" data-canal="R"></span>
+                <span class="generando-punto" data-canal="K"></span>
+            </span>
+            <span class="generando-capsula"><span></span><span></span></span>
+        </div>
+
+        <h2 id="generando-titulo" class="generando-titulo">Generando tu cápsula…</h2>
+
+        <p class="generando-tema">
+            <span class="badge badge-primary" data-generando-codigo>OA</span>
+            <span class="generando-tema-nombre" data-generando-tema>Tema seleccionado</span>
+        </p>
+
+        <ol class="generando-pasos" role="list">
+            <li data-paso>Consultando tu perfil VARK</li>
+            <li data-paso>Recuperando el material validado del tema</li>
+            <li data-paso>Adaptando el contenido a tu forma de aprender</li>
+            <li data-paso>Preparando ejemplos y tu actividad de cierre</li>
+            <li data-paso>Verificando cada cita contra la base de datos</li>
+        </ol>
+        <p id="generando-paso" class="visually-hidden" aria-live="polite" data-generando-live></p>
+
+        <div class="generando-barra" aria-hidden="true"><span></span></div>
+
+        <p class="generando-nota">
+            {{ ui.icon("clock", cls="icon-sm") }}
+            Suele tardar entre 5 y 20 segundos. Si ya la habías generado, sale al instante.
+        </p>
+    </div>
+</div>

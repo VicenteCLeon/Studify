@@ -248,11 +248,113 @@
   }
 
   // ------------------------------------------------------------------------
+  // Catálogo: filtro de temas en el cliente
+  // ------------------------------------------------------------------------
+  const normalize = (t) =>
+    t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+  function initCatalogFilter(input) {
+    const items = Array.from(document.querySelectorAll("[data-catalog-item]"));
+    const groups = Array.from(document.querySelectorAll("[data-catalog-group]"));
+    const count = document.querySelector("[data-catalog-count]");
+    const empty = document.querySelector("[data-catalog-empty]");
+    const openState = new Map();
+    groups.forEach((g) => g.tagName === "DETAILS" && openState.set(g, g.open));
+    items.forEach((it) => (it.dataset.norm = normalize(it.dataset.search || "")));
+
+    input.addEventListener("input", () => {
+      const terms = normalize(input.value.trim()).split(/\s+/).filter(Boolean);
+      let visibles = 0;
+      items.forEach((it) => {
+        const ok = terms.every((t) => it.dataset.norm.includes(t));
+        it.hidden = !ok;
+        if (ok) visibles++;
+      });
+      // Grupos sin coincidencias se ocultan; los que tienen se abren mientras
+      // se busca y vuelven a su estado original al borrar la búsqueda.
+      groups.forEach((g) => {
+        const any = g.querySelector("[data-catalog-item]:not([hidden])");
+        g.hidden = !any;
+        if (g.tagName === "DETAILS") g.open = terms.length ? !!any : openState.get(g);
+      });
+      if (empty) empty.hidden = visibles !== 0;
+      if (count) {
+        count.textContent = terms.length
+          ? `${visibles} resultado${visibles === 1 ? "" : "s"}`
+          : `${items.length} tema${items.length === 1 ? "" : "s"} disponible${items.length === 1 ? "" : "s"}`;
+      }
+    });
+  }
+
+  // ------------------------------------------------------------------------
+  // "Generando tu cápsula…": ocupa la espera del GET al visor
+  // ------------------------------------------------------------------------
+  let generandoTimer = null;
+
+  function openGenerando(link) {
+    const layer = document.querySelector("[data-generando]");
+    if (!layer) return;
+    layer.querySelector("[data-generando-codigo]").textContent = link.dataset.codigo || "OA";
+    layer.querySelector("[data-generando-tema]").textContent = link.dataset.tema || "Tema seleccionado";
+    const pasos = Array.from(layer.querySelectorAll("[data-paso]"));
+    const live = layer.querySelector("[data-generando-live]");
+    let i = 0;
+    const marcar = () => {
+      pasos.forEach((p, k) => {
+        p.classList.toggle("is-done", k < i);
+        p.classList.toggle("is-active", k === i);
+      });
+      if (live && pasos[i]) live.textContent = pasos[i].textContent;
+    };
+    marcar();
+    layer.hidden = false;
+    document.body.classList.add("is-generando");
+    requestAnimationFrame(() => layer.classList.add("is-open"));
+    layer.querySelector('[role="dialog"]').focus({ preventScroll: true });
+    clearInterval(generandoTimer);
+    // Avanza hasta el último paso y se queda ahí: no promete un final que no
+    // controla (la página llega cuando el modelo termina).
+    generandoTimer = setInterval(() => {
+      if (i < pasos.length - 1) {
+        i++;
+        marcar();
+      }
+    }, 2600);
+  }
+
+  function closeGenerando() {
+    const layer = document.querySelector("[data-generando]");
+    clearInterval(generandoTimer);
+    document.body.classList.remove("is-generando");
+    if (!layer) return;
+    layer.classList.remove("is-open");
+    layer.hidden = true;
+  }
+
+  function initStudyLink(link) {
+    link.addEventListener("click", (e) => {
+      // Abrir en otra pestaña no deja esta página esperando.
+      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      if (document.body.classList.contains("is-generando")) {
+        e.preventDefault(); // evita el doble clic mientras ya se genera
+        return;
+      }
+      openGenerando(link);
+    });
+  }
+
+  // Al volver con "atrás" el navegador puede restaurar la página tal cual
+  // quedó (bfcache), con la capa abierta: se cierra.
+  window.addEventListener("pageshow", closeGenerando);
+
+  // ------------------------------------------------------------------------
   // Registro de módulos
   // ------------------------------------------------------------------------
   const modules = [
     ["[data-theme-toggle]", initThemeToggle],
     ["[data-vark-stepper]", initVarkStepper],
+    ["[data-catalog-filter]", initCatalogFilter],
+    ["[data-study-link]", initStudyLink],
   ];
 
   function init(root) {
