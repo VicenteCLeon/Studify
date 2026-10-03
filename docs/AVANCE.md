@@ -2,7 +2,14 @@
 
 > Documento vivo. Se actualiza al cierre de cada fase para que cualquier sesión de trabajo
 > (o cualquier persona) pueda retomar el proyecto sin releer todo el hilo de conversación.
-> Última actualización: **26-ago-2026** — **separación de las vistas del estudiante y del
+> Última actualización: **02-oct-2026** — **rediseño completo del frontend** (sección 5
+> duovicies): design system propio (tokens, modo oscuro, íconos, componentes), landing en `/`,
+> cuestionario de una pregunta a la vez, perfil con radar SVG, catálogo con buscador, pantalla
+> "Generando tu cápsula…", visor con referencias que muestran el fragmento citado y panel
+> docente responsive con el gráfico VARK de la cohorte. Solo capa de presentación: ningún
+> endpoint ni flujo HTMX cambió. Convenciones en [`DESIGN_SYSTEM.md`](DESIGN_SYSTEM.md).
+> **341 tests en verde** (4 fallos previos, documentados en la sección).
+> Antes: **26-ago-2026** — **separación de las vistas del estudiante y del
 > docente** (secciones 5 duodevicies y 5 undevicies). Hasta ahora `/teacher/*` estaba abierto:
 > la cabecera ofrecía las tres pestañas del docente a cualquiera y ninguna comprobaba nada, de
 > modo que la bandeja de curación —que decide qué material llega a las cápsulas, cap. 12/13— la
@@ -162,6 +169,8 @@ equipo, el default sin tocar el `.env` pasó de "panel cerrado" a "panel abierto
 `admin`/`admin123`" — retroceso de seguridad deliberado a cambio de que el sistema funcione
 nada más clonar el repo, documentado como tal (`config.py`, `.env.example`) y a cambiar antes
 de exponer el sistema a estudiantes reales. **330 tests en verde** (308 + 19 + 3).
+
+**Rediseño completo del frontend (02-oct-2026, sección 5 duovicies):** la UI pasó de un estilo mínimo a un design system propio, sin build y sin migrar de Jinja2 + HTMX: modo claro/oscuro, navegación móvil, landing, cuestionario paginado, radar VARK, catálogo con buscador, visor con referencias que muestran el fragmento citado y panel docente responsive. Contraste AA, foco visible y `prefers-reduced-motion` en todas las vistas. Convenciones en [`DESIGN_SYSTEM.md`](DESIGN_SYSTEM.md). **341 tests en verde.**
 
 Queda una discrepancia abierta: las tablas 16.2/16.3 del informe no se reproducen desde el CSV (sección 5 ter) — es un problema del informe, no del código.
 
@@ -941,6 +950,9 @@ la interfaz.
   logo en el header). Es solo el nombre visible en la UI — el paquete Python (`studify`), el
   repositorio, `PLAN_DESARROLLO.md` y el resto de la documentación siguen diciendo "Studify".
   Si el cambio de nombre se vuelve definitivo, falta decidir hasta dónde propagarlo.
+> ⚠️ **Superado en parte el 02-oct-2026** (sección 5 duovicies): la textura ya no es el fondo de
+> toda la web. Quedó como decoración de la landing, monocroma y teñida según el tema claro/oscuro.
+
 - **Fondo de marca en toda la web:** textura repetible de íconos educativos (libro, lápiz,
   regla, compás, globo, letras sueltas "A"/"3") en verde y azul muy tenues, sobre un degradado
   casi blanco. Viene de `docs/School Background.dc.html` y quedó aplicado a `body` en
@@ -1809,6 +1821,93 @@ cambio —el sistema no tiene autenticación de estudiantes, y el cap. 9 lo iden
 diagnóstico y no por una credencial (`web/sesion.py` lo dice desde la Fase 4)—, pero conviene
 tenerlo escrito antes de una sesión con estudiantes reales: la cookie firmada evita que alguien
 se haga pasar por otro **en la UI**, no que llame a la API con un `id` ajeno.
+
+---
+
+## 5 duovicies. Rediseño completo del frontend (02-oct-2026)
+
+La UI de la Fase 4 era funcional pero mínima: un `style.css` de 1.228 líneas con estilos inline
+en los templates, sin modo oscuro, sin íconos (emojis en su lugar), con formularios sin
+`<label>` y tablas que desbordaban en el celular. Se rediseñó **toda la capa de presentación**
+—las 9 pantallas y sus parciales HTMX— sin tocar backend, modelos, RAG, VARK, validación ni
+migraciones, y sin cambiar ningún endpoint, campo ni flujo HTMX. Se hizo por etapas, un commit
+por etapa: design system → layout base → landing → cuestionario → perfil → catálogo y carga →
+visor → panel docente → esta documentación.
+
+Las convenciones resultantes (tokens, componentes, colores VARK, módulos JS, contratos con los
+tests y checklist de accesibilidad) están en [`DESIGN_SYSTEM.md`](DESIGN_SYSTEM.md).
+
+### Qué cambió, por pantalla
+
+| Pantalla | Antes | Ahora |
+|---|---|---|
+| `/` | Redirigía al cuestionario | **Landing** con propuesta de valor, las 4 dimensiones VARK, "cómo funciona" y trazabilidad. El CTA cambia según haya sesión. |
+| Cuestionario | Los 16 ítems en una sola tarjeta larga | **Una pregunta a la vez** sobre el mismo `<form>`: barra de progreso, "Saltar"/"Siguiente", atajos 1–4, mapa de revisión y borrador en `sessionStorage`. Sin JS se ve como antes. |
+| Perfil | Barras con colores fijos (K en rojo de error) | **Radar SVG** armado en el servidor + barras por canal con ícono, "¿qué significa?" teñido con el canal principal, configuración como estadísticas. |
+| Catálogo | Acordeones anidados con `▼` | Temas como tarjetas, **buscador** en el cliente (sin distinguir tildes), estado vacío sin enlace al panel para estudiantes. |
+| Carga del visor | Video `animacionCarga.mp4` | **"Generando tu cápsula…"** en CSS: pasos que se marcan, `role="dialog"`, versión sin movimiento. El video se conserva en `public/`. |
+| Visor | Bloques con poco contraste entre tipos, JS inline duplicado | Índice de pasos, **estilo propio por tipo de bloque** en el color de su canal, flashcards 3D accesibles, cuestionario con detalle por pregunta, **referencias con el extracto del fragmento citado**. |
+| Panel docente | Formularios solo con placeholder, colores hex concatenados | Labels reales, bandeja apilable en móvil, **gráfico VARK de la cohorte** (se calculaba y no se mostraba), comparación V/A/R/K teñida por canal. |
+
+En todas: header con navegación e íconos, **barra inferior en móvil**, **modo claro/oscuro**
+(sistema + botón), foco visible, `prefers-reduced-motion`, sin scroll horizontal a 390 px.
+
+### Decisiones tomadas
+
+| Decisión | Alternativa descartada | Motivo |
+|---|---|---|
+| **CSS propio con design tokens** en un solo archivo por capas | Tailwind vía CDN | El CDN de Tailwind compila en el navegador en tiempo de ejecución (no es para producción y produce un destello sin estilos) y llenaría los templates de clases. Los tests y los routers ya dependían de clases semánticas (`alerta-error`, `badge-success`…). |
+| **Sprite SVG local** con un subconjunto de Lucide | Lucide/Phosphor por CDN con JS | Sin JS que reinicializar tras cada swap de HTMX y sin depender de la red. |
+| **El cuestionario se pagina en el cliente, sobre el mismo `<form>`** | Un endpoint por pregunta | No cambia el contrato de `POST /student/vark` ni la calificación; el instrumento sigue siendo el mismo de los 43 diagnósticos. Las alternativas **no** se tiñen por canal: eso filtraría la matriz al navegador (cap. 17.1). |
+| **La textura escolar de la sección 5 undecies queda solo en la landing y el CTA**, como máscara CSS teñida por tema | Mantenerla de fondo en toda la web | Sobre el contenido bajaba la legibilidad y con colores fijos no funcionaba en modo oscuro. Se conserva el motivo de marca, ahora monocromo (`static/img/textura-escolar.svg`). |
+| **Referencias con el texto del fragmento** | Solo documento y página | Es la trazabilidad del cap. 13 a la vista del estudiante. Cuesta una lectura por clave primaria de fragmentos que `validator.py` ya verificó. |
+| **Sin `autoplay` en el audio del perfil auditivo** | Mantenerlo | Un audio que arranca solo interrumpe al lector de pantalla y a quien estudia en un lugar público (WCAG 1.4.2). |
+| **"Intentar de nuevo" solo si falló el modelo (502)** | Ofrecerlo siempre | Sin material o sin credencial, reintentar devuelve el mismo error. |
+
+### Lo que se tocó fuera de templates y estáticos
+
+Solo lo necesario para pasar datos a las vistas; ninguna lógica de dominio:
+
+- `main.py`: `GET /` renderiza la landing (antes, redirect). Lee la cookie solo para el CTA.
+- `web/routers/student.py`: `_referencias()` (texto de los fragmentos citados, solo lectura); el
+  audio se renderiza con `student/_audio.html` en vez de un f-string; flag `reintentable`.
+- `web/routers/teacher.py`: pasa `referencias` al simulador; `_barras_cohorte` incluye la letra
+  del canal.
+- `web/deps.py`: `NOMBRE_CANAL` como global de Jinja para los macros.
+
+### Verificación
+
+- **Tests:** 341 en verde (338 + 3 nuevos: la portada con y sin sesión, y que el visor muestra
+  el fragmento citado; además se amplió un test para que sin material no se ofrezca reintentar).
+  Los 4 que fallan **ya fallaban antes de empezar** (ver abajo). `ruff`: 41 errores, todos
+  previos; bajó de 45 al sacar el HTML largo del router de audio.
+- **En navegador real** (Playwright sobre Chrome, a 390 y 1280 px, claro y oscuro), en cada
+  etapa: capturas de cada pantalla, verificación de que no hay scroll horizontal ni errores de
+  consola, y los flujos HTMX: envío del cuestionario (`HX-Redirect`), error de envío vacío,
+  filtro del catálogo, pantalla de carga, actividades y retroalimentación del visor, aviso de
+  objetivo duplicado en curación.
+- Para el visor y la comparación V/A/R/K se usó un **servidor de previsualización** fuera del
+  repo, con los templates reales y una cápsula de ejemplo: así no se gastaron créditos del LLM
+  ni se guardó en la base una cápsula falsa que el caché podría servir a un estudiante real.
+
+### Lo que queda pendiente o se encontró de paso
+
+1. **No se generó ninguna cápsula real con DeepSeek** durante el rediseño. Falta abrir un tema
+   desde el catálogo con la credencial configurada para ver la pantalla de carga y el visor con
+   contenido real, incluido el audio del perfil auditivo.
+2. **4 tests ya fallaban antes del rediseño**: dos de `test_interaccion_quiz.py` encuentran
+   intentos de quiz que otras corridas dejaron en la base, y dos de `test_prompt_maestro.py`
+   no calzan con el prompt actual: las actividades kinestésicas de `614238e` y `1dc5286`
+   cambiaron el texto del prompt y el test no se actualizó desde `07fc15d`. Uno espera
+   `intentalo_tu` y el otro que el prompt no nombre la etiqueta "kinestésico".
+3. **`pytest` a secas no recolecta en la máquina 1**: alguna dependencia de `media` (probablemente
+   TTS) instala un paquete `tests` en `site-packages` que tapa el `tests/` del repo, y
+   `from tests.conftest import …` falla. `test_visual.py` y `test_voz.py` además no cargan sin
+   las dependencias de medios. No se tocó porque no es de la UI.
+4. **`uvicorn --reload` se quedó colgado en Windows** al recargar `main.py` (siguió sirviendo el
+   código viejo). Si un cambio en Python no aparece, reiniciar el servidor.
+5. `textos.COLOR_CANAL` ya no lo usa ningún template (los colores salen de los tokens
+   `--vark-*`); los routers todavía lo pasan. Se puede retirar cuando convenga.
 
 ---
 
