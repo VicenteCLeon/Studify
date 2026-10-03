@@ -33,7 +33,7 @@
         <li><strong>No te pedimos nombre, correo ni RUT.</strong> Te reconocemos solo por un número guardado en una cookie de tu navegador.</li>
         <li>Guardamos tus respuestas al cuestionario VARK, tu perfil, las cápsulas que abres y tus intentos en las actividades. La edad, el género y la carrera son <strong>opcionales</strong>.</li>
         <li>Al proveedor de IA <strong>no le enviamos ningún dato tuyo</strong>: solo el material del curso y los parámetros de formato que salen de tu perfil, sin nada que te identifique.</li>
-        <li>Puedes pedir ver, corregir, llevarte o eliminar tus datos (sección 9).</li>
+        <li>Puedes ver, descargar, corregir o eliminar tus datos en <a href="/mis-datos">Mis datos</a> (sección 9).</li>
     </ul>
     {% endcall %}
 </div>
@@ -51,13 +51,14 @@
 <section id="responsable" aria-labelledby="responsable-t">
     <h2 id="responsable-t">1. Responsable y contacto</h2>
     <p>
-        Responsable del tratamiento: {{ ui.placeholder("nombre(s) de los estudiantes autores, o la entidad que asuma como responsable") }},
-        autores de RepasAi, prototipo del proyecto de título de {{ ui.placeholder("carrera") }} de la Pontificia
-        Universidad Católica de Valparaíso. RepasAi no es un servicio oficial de la PUCV.
-        {{ ui.placeholder("confirmar con la profesora guía quién figura como responsable y si la PUCV tiene un rol en el tratamiento") }}
+        Responsables del tratamiento: Patricio Hernández Vergara y Vicente Cisternas León, autores de
+        RepasAi, prototipo del Proyecto de Título de Ingeniería en Informática de la Pontificia Universidad
+        Católica de Valparaíso (PUCV), bajo la guía de la profesora Sandra Cano Mazuera. RepasAi no es un
+        servicio oficial de la PUCV.
+        La PUCV no participa en el tratamiento de los datos.
     </p>
     <p id="contacto">
-        Contacto para privacidad y ejercicio de derechos: {{ ui.placeholder("correo de contacto del proyecto") }}.
+        Contacto para privacidad y ejercicio de derechos: <a href="mailto:patricio.hernandez.v@mail.pucv.cl">patricio.hernandez.v@mail.pucv.cl</a>.
     </p>
 </section>
 
@@ -128,9 +129,9 @@
     </p>
     <p>
         Si respondiste el <strong>cuestionario piloto</strong> en Google Forms
-        ({{ ui.placeholder("período en que se aplicó") }}), tus respuestas, rango de edad, género, carrera y
+        (a fines de mayo de 2026), tus respuestas, rango de edad, género, carrera y
         año de carrera se incorporaron a RepasAi con el mismo tratamiento descrito aquí. El archivo importado
-        no incluye nombre ni correo. {{ ui.placeholder("indicar qué consentimiento se informó en ese formulario") }}
+        no incluye nombre ni correo. Si respondiste ese cuestionario y quieres que eliminemos tus respuestas, escríbenos: como el formulario no pedía datos de contacto, indícanos tu carrera, tu rango de edad y la fecha aproximada en que respondiste para encontrarlas. Los cuestionarios previos y posteriores que se apliquen más adelante en el proyecto informarán su propio tratamiento al momento de responderlos.
     </p>
     <p>
         Aunque no sepamos tu nombre, estos datos <strong>siguen siendo datos personales</strong>: están
@@ -152,7 +153,7 @@
             cápsulas adaptadas funcionan (por ejemplo, el porcentaje de aciertos al primer intento por tema o el
             perfil promedio del curso). Base: tu <strong>consentimiento</strong>. En el informe del proyecto y en
             cualquier presentación solo se usan resultados agregados o anonimizados, nunca datos que permitan
-            identificarte. {{ ui.placeholder("confirmar si habrá publicaciones o presentaciones fuera del informe de título") }}
+            identificarte. Los resultados se presentan solo ante la profesora guía, en las instancias de evaluación del Proyecto de Título. Si más adelante se publicara un artículo, usaría solo datos agregados o anonimizados.
         </li>
         <li>
             <strong>Análisis por grupo</strong> con edad, género y carrera, solo si los entregaste. Nunca
@@ -162,12 +163,12 @@
         <li>
             <strong>Seguridad</strong>: registrar intentos fallidos de acceso al panel docente y la IP de las
             peticiones para detectar abusos. Base: el <strong>interés legítimo</strong> de proteger el servicio y
-            tus datos. {{ ui.placeholder("revisión legal: confirmar la base de licitud aplicable a los registros técnicos") }}
+            tus datos.
         </li>
     </ul>
     <p>
-        El equipo docente del curso ({{ ui.placeholder("quiénes acceden al panel docente") }}) puede ver en su
-        panel las cápsulas generadas, identificadas solo por número de estudiante, y estadísticas agregadas del
+        Al panel docente acceden los desarrolladores, para hacer pruebas, y los profesores que decidan sumarse a
+        probar el prototipo. Ahí pueden ver las cápsulas generadas, identificadas solo por número de estudiante, y estadísticas agregadas del
         curso. No usamos tus datos para otros fines ni los vendemos.
     </p>
 </section>
@@ -190,9 +191,9 @@
     <h2 id="proveedor-ia-t">5. Proveedor de IA y transferencia internacional</h2>
     <p>
         Las cápsulas las redacta el modelo <strong>deepseek-chat</strong> de <strong>DeepSeek</strong>, a través de
-        su API ({{ ui.placeholder("razón social del proveedor según sus términos vigentes") }}). Según sus propios
-        términos, el proveedor procesa la información en la República Popular China.
-        {{ ui.placeholder("verificar la ubicación del tratamiento y la política de uso de datos de la API vigente") }}
+        su API. DeepSeek es una empresa con sede en la República Popular China y, según sus propios
+        términos, procesa la información en ese país.
+        Puedes consultar sus términos y su política de privacidad en el sitio del proveedor.
     </p>
     <p>Lo que <strong>sí</strong> le enviamos en cada generación:</p>
     <ul>
@@ -204,7 +205,7 @@
     <p>
         Como ese envío no contiene datos que te identifiquen, no constituye una transferencia internacional de
         tus datos personales. Lo informamos igual por transparencia, porque los parámetros de formato sí salen
-        de tu perfil. {{ ui.placeholder("revisión legal: confirmar esta calificación") }}
+        de tu perfil.
     </p>
     <p>
         Si cambiamos de proveedor de IA, actualizaremos esta sección y su versión.
@@ -212,7 +213,7 @@
     <p>
         La <strong>narración de audio</strong> la genera un modelo de voz (XTTS-v2) que corre en nuestro propio
         servidor: el texto no sale a ningún tercero. La voz es sintética, creada a partir de una grabación de
-        referencia de {{ ui.placeholder("de quién es la voz de referencia y constancia de su consentimiento") }}.
+        referencia de dominio público de Linda Johnson, locutora de audiolibros del proyecto LibriVox. No es la voz de ningún docente ni estudiante.
     </p>
 </section>
 
@@ -224,8 +225,8 @@
         IP al abrir RepasAi.
     </p>
     <p>
-        Los datos se almacenan en una base de datos PostgreSQL en {{ ui.placeholder("dónde se aloja: servidor, proveedor de hosting y país") }}.
-        {{ ui.placeholder("si hay proveedor de hosting, identificarlo como encargado del tratamiento") }}
+        Los datos se almacenan en una base de datos PostgreSQL en un entorno local, en los equipos de los desarrolladores, sin acceso público desde internet.
+        No hay un proveedor de alojamiento externo ni otros encargados del tratamiento.
     </p>
     <p>Solo entregaríamos datos a una autoridad cuando una ley o una resolución judicial lo exija.</p>
 </section>
@@ -281,13 +282,13 @@
     <h2 id="conservacion-t">8. Cuánto tiempo los conservamos</h2>
     <ul>
         <li>
-            <strong>Perfil, respuestas, cápsulas, intentos y aceptaciones</strong>: mientras dure el proyecto de
-            título y hasta {{ ui.placeholder("plazo máximo, p. ej. la fecha de cierre del proyecto o N meses después") }}.
+            <strong>Perfil, respuestas, cápsulas, intentos y aceptaciones</strong>: hasta el cierre del proyecto de
+            título, estimado entre noviembre y diciembre de 2026, y a más tardar el 31 de diciembre de 2026.
             Después los eliminaremos o los anonimizaremos de forma irreversible para conservar solo estadísticas.
         </li>
         <li>Si pides eliminar tus datos, los borramos antes, salvo que una ley nos obligue a conservar algo.</li>
         <li>
-            <strong>Registros técnicos</strong> (IP y peticiones): {{ ui.placeholder("plazo según el hosting; hoy no se guardan en archivo, solo en la consola del servidor") }}.
+            <strong>Registros técnicos</strong> (IP y peticiones): no se guardan en archivo; solo aparecen en la consola del servidor mientras está en ejecución y se pierden al cerrarla.
         </li>
         <li>Las <strong>cookies</strong> duran lo indicado en la sección 7.</li>
     </ul>
@@ -310,8 +311,17 @@
     </p>
     <h3>Cómo ejercerlos</h3>
     <p>
-        Escríbenos a {{ ui.placeholder("correo de contacto del proyecto") }} indicando qué derecho quieres
-        ejercer. Te responderemos en un plazo de {{ ui.placeholder("plazo de respuesta conforme a la Ley 21.719") }}.
+        En <a href="/mis-datos">Mis datos</a> puedes, sin escribirle a nadie:
+    </p>
+    <ul>
+        <li><strong>ver</strong> lo que guardamos y <strong>descargarlo</strong> completo en un archivo JSON (acceso y portabilidad);</li>
+        <li><strong>corregir o borrar</strong> tu rango de edad, género y carrera, y retirar la autorización para usar tu género (rectificación);</li>
+        <li><strong>eliminar todos tus datos</strong> de forma definitiva (supresión).</li>
+    </ul>
+    <p>
+        Tu perfil VARK se corrige respondiendo de nuevo el cuestionario. Para la <strong>oposición</strong>, el
+        <strong>bloqueo</strong> o cualquier otra solicitud, escríbenos a <a href="mailto:patricio.hernandez.v@mail.pucv.cl">patricio.hernandez.v@mail.pucv.cl</a>.
+        Te responderemos en un plazo de 15 días hábiles como máximo.
     </p>
     <p>
         <strong>Cómo te identificamos.</strong> Como no te pedimos nombre ni correo, la única forma de saber qué
@@ -331,13 +341,13 @@
         <li><strong>Al proveedor de IA no llegan datos personales</strong> (sección 5).</li>
     </ul>
     <p>
-        {{ ui.placeholder("completar según el despliegue: cifrado en tránsito (HTTPS), cifrado y respaldos de la base de datos, quién tiene acceso al servidor y credenciales cambiadas respecto de las de demostración") }}
+        RepasAi se ejecuta en un entorno local, en los equipos de los desarrolladores y sin acceso público desde internet: solo ellos tienen acceso al servidor y a la base de datos. Por ser local, la conexión no usa HTTPS y la base de datos no está cifrada ni tiene respaldos externos.
     </p>
     <p>
         Ningún sistema es completamente seguro. Si ocurre una vulneración de seguridad que afecte tus datos, la
         notificaremos a la Agencia de Protección de Datos Personales y, cuando la ley lo exija, también a los
         afectados. Como no tenemos tu correo, el aviso a los titulares será mediante un aviso visible en RepasAi
-        y por los canales del curso. {{ ui.placeholder("procedimiento interno y plazos de notificación conforme a la Ley 21.719") }}
+        y por los canales del curso. Ante cualquier sospecha, revisaremos el incidente de inmediato, tomaremos medidas para contenerlo y haremos la notificación sin dilaciones indebidas.
     </p>
 </section>
 
@@ -354,8 +364,7 @@
     <h2 id="reclamos-t">12. Reclamos ante la Agencia</h2>
     <p>
         Si consideras que no respetamos tus derechos o que tratamos tus datos en contra de la ley, puedes
-        reclamar ante la <strong>Agencia de Protección de Datos Personales</strong>.
-        {{ ui.placeholder("sitio web y canal de reclamos de la Agencia, y si se exige reclamar primero ante el responsable") }}
+        reclamar ante la <strong>Agencia de Protección de Datos Personales</strong>, a través de los canales que la Agencia habilite al entrar en funcionamiento con la vigencia de la Ley 21.719.
         Te agradeceremos que antes nos escribas, para intentar resolverlo directamente.
     </p>
 </section>

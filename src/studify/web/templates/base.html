@@ -132,7 +132,7 @@
                 <ul role="list">
                     <li><a href="/terminos" {% if ruta == '/terminos' %}aria-current="page"{% endif %}>Términos</a></li>
                     <li><a href="/privacidad" {% if ruta == '/privacidad' %}aria-current="page"{% endif %}>Privacidad</a></li>
-                    <li><a href="/privacidad#derechos">Ejercer mis derechos</a></li>
+                    <li><a href="/mis-datos" {% if ruta.startswith('/mis-datos') %}aria-current="page"{% endif %}>Ejercer mis derechos</a></li>
                     <li><a href="/privacidad#contacto">Contacto</a></li>
                 </ul>
             </nav>
@@ -145,7 +145,7 @@
                 <p class="site-footer-traza text-xs text-soft">
                     {{ ui.icon("shield-check", cls="icon-sm") }}
                     Cada cápsula cita los fragmentos y páginas de los que sale.
-                    Prototipo académico de un proyecto de título de estudiantes de la PUCV; no es un servicio oficial de la universidad.
+                    Prototipo académico del Proyecto de Título de Ingeniería en Informática, PUCV; no es un servicio oficial de la universidad.
                 </p>
             </div>
         </div>

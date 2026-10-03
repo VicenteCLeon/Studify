@@ -2,7 +2,11 @@
 
 > Documento vivo. Se actualiza al cierre de cada fase para que cualquier sesión de trabajo
 > (o cualquier persona) pueda retomar el proyecto sin releer todo el hilo de conversación.
-> Última actualización: **02-oct-2026** — **rediseño completo del frontend** (sección 5
+> Última actualización: **02-oct-2026** — **marco legal** (sección 5 tervicies): Términos y
+> Política de Privacidad (Ley 19.628/21.719) en borrador con `[PLACEHOLDER]`, footer legal,
+> consentimiento con trazabilidad (`aceptacion_legal`), `/mis-datos` para ejercer derechos,
+> cierre de los endpoints de la API que exponían perfiles ajenos y fuentes/HTMX sin terceros.
+> Antes, el mismo día: **rediseño completo del frontend** (sección 5
 > duovicies): design system propio (tokens, modo oscuro, íconos, componentes), landing en `/`,
 > cuestionario de una pregunta a la vez, perfil con radar SVG, catálogo con buscador, pantalla
 > "Generando tu cápsula…", visor con referencias que muestran el fragmento citado y panel
@@ -1910,6 +1914,108 @@ Solo lo necesario para pasar datos a las vistas; ninguna lógica de dominio:
    `--vark-*`); los routers todavía lo pasan. Se puede retirar cuando convenga.
 
 ---
+
+## 5 tervicies. Marco legal: Términos, Privacidad, consentimiento y derechos (02-oct-2026)
+
+Antes de exponer RepasAi a la cohorte hacía falta informar con transparencia qué pasa con
+los datos y reducir la exposición legal del equipo. Se hizo en seis etapas, cada una con
+su commit. **No se tocó la lógica de RAG, VARK ni generación.**
+
+### 1. Auditoría de datos (lo que los textos describen)
+
+| Pregunta | Hallazgo |
+|---|---|
+| Qué se persiste | `estudiante` (rango etario, género y carrera opcionales), diagnósticos VARK con **cada alternativa marcada**, configuración, cápsulas, intentos de quiz, audios `capsula_{id}.wav`. Sin nombre, correo ni RUT: son datos **seudónimos**, pero siguen siendo datos personales. |
+| Qué viaja al LLM (DeepSeek) | Objetivo curricular, fragmentos curados y los 4 pesos de formato derivados del perfil. **Ningún identificador ni dato sociodemográfico**; la llamada sale del servidor, así que el proveedor no ve la IP del estudiante. |
+| Cookies y almacenamiento | `id_estudiante` (30 días) y `docente` (12 h), firmadas con HMAC, `httponly` y `samesite=lax`; `repasai-theme` en localStorage y el borrador del cuestionario en sessionStorage. **Nada de analítica ni terceros → no corresponde banner de cookies.** |
+| Terceros que recibían la IP | Google Fonts y unpkg (corregido en la etapa 2). |
+| Autenticación y menores | No hay cuentas: la cookie es la identidad. El docente usa una clave compartida. Nada impedía el uso por menores de 18. |
+
+**Lo más grave no era el LLM, sino la API:** `GET /api/diagnosticos/{id}`, `GET`/`POST
+/api/capsulas` y `generate-audio` eran anónimos y el dueño lo declaraba el cliente.
+Recorriendo ids correlativos se leía el perfil VARK de toda la cohorte.
+
+### 2. Qué se implementó
+
+| Etapa | Cambio |
+|---|---|
+| 1. `fix(api)` | Guardián `estudiante_o_docente_api`: los endpoints con `id_estudiante` exigen ser el dueño (cookie) o el docente. Al ajeno se le responde 404 y no 403, para no confirmar que el recurso existe. `POST /api/diagnosticos` pasa a ser solo del docente. El audio narra siempre el texto guardado (ignora `texto_override`) y el del simulador es solo del docente. |
+| 2. `feat(web)` | Fuentes (Figtree y Fraunces variables, OFL) y HTMX 1.9.10 servidos desde `/static`. El SRI calza byte a byte. Un test impide volver a enlazar un CDN. |
+| 3. `feat(legal)` | `/terminos` y `/privacidad` en plantillas editables (`templates/legal/`), con tabla de contenidos, versión y fecha (`web/legal.py`), `ui.placeholder()` para lo pendiente y el comentario `BORRADOR`. Footer legal en todas las páginas; compacto en el cuestionario y el visor. |
+| 4. `feat(legal)` | Tabla `aceptacion_legal` (migración `aaf2d3de8b4e`): estudiante, documento, versión y `aceptado_en` en UTC, con historial y cascada. Casilla **no premarcada** (18+ y aceptación) en el paso 0 del cuestionario, con los botones deshabilitados hasta marcarla. Consentimiento **separado** para el género, que es dato sensible. Guardián `exigir_vigente` en `/student/*`, que lleva a `/aceptar` si la versión cambió. |
+| 5. `feat(legal)` | `/mis-datos`: ver y descargar JSON (acceso y portabilidad), corregir los datos opcionales y retirar el consentimiento del género (rectificación), y eliminar todo en cascada con los `.wav` y el cierre de sesión (supresión). Oposición y bloqueo van por correo. |
+
+**Decisiones:**
+- `/mis-datos` va fuera del guardián de aceptación: ejercer derechos no puede depender de
+  aceptar primero.
+- Sin cuentas, la cookie es la única forma de verificar la identidad. Por eso los derechos
+  se ejercen en la página y no por correo.
+- Todo queda asociado a `id_estudiante` para que sobreviva al cambio a **Google Identity**
+  previsto para una fase posterior. Cuando llegue, habrá que declarar el correo, el nombre y
+  el identificador de Google en la Política y subir su versión.
+
+### 3. Datos del proyecto completados (03-oct-2026)
+
+Ya no queda ningún `[PLACEHOLDER]`; `test_no_quedan_placeholders_sin_completar` lo vigila.
+
+- **Datos entregados por el equipo:**
+  - autores, carrera y profesora guía;
+  - el correo de contacto `patricio.hernandez.v@mail.pucv.cl`, personal porque no hay uno del proyecto;
+  - el uso en asignaturas de Ingeniería Informática con estudiantes de la PUCV u otras universidades;
+  - el acceso al panel: desarrolladores y profesores que se sumen;
+  - el cierre del proyecto entre noviembre y diciembre de 2026;
+  - el alojamiento solo local, sin acceso desde internet;
+  - la voz de referencia: Linda Johnson, LibriVox, dominio público;
+  - el origen del material: aulas virtuales y material propio, y más adelante material de docentes PUCV;
+  - que las actividades no califican;
+  - que los resultados se presentan solo ante la profesora guía;
+  - que el código es público en GitHub.
+- **Lo que se asumió**, porque el sistema no se publicará ni seguirá en marcha tras la evaluación:
+  - conservación hasta el cierre del proyecto, **a más tardar el 31-dic-2026**;
+  - respuesta a solicitudes en **15 días hábiles**;
+  - tribunales de **Valparaíso**;
+  - la PUCV no participa en el tratamiento;
+  - el código no tiene licencia de código abierto, porque el repo no tiene `LICENSE`;
+  - se quitaron las notas de revisión legal.
+- El piloto de **mayo de 2026** (los 43 diagnósticos importados) se describe sin afirmar qué
+  consentimiento se informó en el formulario. Se ofrece eliminarlo a pedido, identificándolo
+  por carrera, edad y fecha. Los pre y post test futuros informarán su propio tratamiento.
+
+### 4. Riesgos legales que siguen abiertos
+
+1. **Los textos no tienen revisión legal profesional.** Bastan para un prototipo local y
+   temporal, pero no para un servicio abierto. Por eso cada página conserva el comentario
+   `BORRADOR`.
+2. **Credenciales de demostración** (`admin`/`admin123`, `studify`/`studify`). Hoy el riesgo es
+   bajo porque todo corre en local, pero habría que cambiarlas si alguna vez se expone a una red.
+3. **El material del curso viaja a un proveedor en China** con términos propios sobre uso
+   de las entradas. No hay datos personales, pero sí puede haber obras de terceros o
+   material institucional confidencial.
+4. **Voz clonada:** la referencia es una grabación de dominio público de LibriVox (Linda Johnson).
+   Imitar la voz de una persona real sigue siendo sensible, aunque la grabación sea libre.
+   XTTS-v2 solo permite uso no comercial (CPML).
+5. **Los 43 diagnósticos del piloto** (mayo de 2026) se tomaron en Google Forms con un
+   consentimiento que no está documentado. Además, el **material de las aulas virtuales** es
+   obra de sus docentes y viaja al LLM: conviene pedirles autorización.
+6. **Menores:** solo hay una declaración de edad en la casilla, sin verificación.
+7. **Los audios `public/audio/capsula_{id}.wav` se sirven sin control de acceso** y sus nombres
+   son predecibles. El contenido es curricular, no personal, pero conviene darles nombres no
+   adivinables.
+8. **La aceptación solo se exige en la web:** los endpoints `/api/*` del dueño no la piden.
+9. **La Ley 21.719 rige desde el 01-dic-2026.** La Agencia y sus procedimientos todavía no
+   tienen canales verificados para citar.
+
+### Verificación
+
+- pytest: **381 en verde**, 40 tests nuevos entre acceso a la API, recursos de terceros,
+  documentos, footer, consentimiento y `/mis-datos`. Fallan los **mismos 4** previos de la
+  sección 5 duovicies. `ruff`: 41 errores, los mismos previos.
+- Migración aplicada, revertida y vuelta a aplicar; el índice FTS sigue intacto.
+- En Chrome, a 390 y 1280 px y en claro y oscuro:
+  - 0 peticiones a terceros y 0 errores de consola;
+  - el flujo de aceptación completo, el rechazo de un género sin consentimiento, `/aceptar`
+    y `/mis-datos`;
+  - en la base, la aceptación quedó en UTC y la eliminación cayó en cascada.
 
 ## 6. Pendiente inmediato
 

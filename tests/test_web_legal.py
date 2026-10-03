@@ -19,7 +19,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import func, select
 
-from studify.db.models import AceptacionLegal, Estudiante
+from studify.db.models import AceptacionLegal, DiagnosticoVark, Estudiante
 from studify.main import app
 from studify.web import consentimiento, legal, sesion
 from tests.conftest import necesita_bd
@@ -32,7 +32,7 @@ AVISO_IA = (
 ENLACES_FOOTER = (
     'href="/terminos"',
     'href="/privacidad"',
-    'href="/privacidad#derechos"',
+    'href="/mis-datos"',
     'href="/privacidad#contacto"',
 )
 
@@ -80,10 +80,11 @@ def test_la_tabla_de_contenidos_apunta_a_secciones_que_existen(http, documento):
     assert [a for a in anclas if a not in ids] == []
 
 
-def test_los_pendientes_quedan_marcados_como_placeholder(http):
-    """Lo que el equipo debe completar se encuentra con un grep, en ambos documentos."""
+def test_no_quedan_placeholders_sin_completar(http):
+    """Los datos del proyecto ya están completos: un `ui.placeholder()` nuevo
+    tiene que resolverse antes de mostrar los documentos a estudiantes."""
     for documento in legal.DOCUMENTOS:
-        assert "[PLACEHOLDER:" in http.get(documento.ruta).text, documento.clave
+        assert "[PLACEHOLDER:" not in http.get(documento.ruta).text, documento.clave
 
 
 def test_la_privacidad_nombra_al_proveedor_y_a_la_agencia(http):
@@ -325,3 +326,103 @@ def test_todas_las_vistas_del_estudiante_exigen_la_aceptacion():
             sin_guardian.append(ruta.path)
 
     assert sin_guardian == []
+
+
+# --- Mis datos: acceso, portabilidad, rectificación y supresión ----------------
+
+
+def _conectado(http, creados) -> int:
+    http.post("/student/vark", data=RESPUESTAS | {"acepto": "si", "carrera": "Carrera de prueba"})
+    id_estudiante = _id_de_la_cookie(http)
+    creados.append(id_estudiante)
+    return id_estudiante
+
+
+def test_mis_datos_sin_sesion_explica_por_que_no_hay_nada(http):
+    respuesta = http.get("/mis-datos")
+
+    assert respuesta.status_code == 200
+    assert "No encontramos una sesión" in respuesta.text
+
+
+@necesita_bd
+def test_mis_datos_no_exige_aceptar_antes(http, db, creados):
+    """Ejercer derechos no puede quedar condicionado a aceptar la versión nueva."""
+    estudiante = Estudiante()
+    db.add(estudiante)
+    db.commit()
+    creados.append(estudiante.id_estudiante)
+    http.cookies.set(
+        sesion.COOKIE_ESTUDIANTE,
+        f"{estudiante.id_estudiante}.{sesion._firma(estudiante.id_estudiante)}",
+    )
+
+    respuesta = http.get("/mis-datos", follow_redirects=False)
+
+    assert respuesta.status_code == 200
+    assert f"Estudiante n.º {estudiante.id_estudiante}" in respuesta.text
+
+
+@necesita_bd
+def test_la_exportacion_trae_todos_los_datos_en_json(http, creados):
+    id_estudiante = _conectado(http, creados)
+
+    respuesta = http.get("/mis-datos/exportar")
+
+    assert respuesta.status_code == 200
+    assert "attachment" in respuesta.headers["content-disposition"]
+    datos = respuesta.json()
+    assert datos["estudiante"]["id_estudiante"] == id_estudiante
+    assert datos["estudiante"]["carrera"] == "Carrera de prueba"
+    assert len(datos["diagnosticos_vark"]) == 1
+    assert len(datos["diagnosticos_vark"][0]["respuestas"]) == 16
+    assert {a["documento"] for a in datos["aceptaciones"]} == {"terminos", "privacidad"}
+    assert set(datos) == {
+        "estudiante", "diagnosticos_vark", "capsulas", "intentos_en_actividades", "aceptaciones",
+    }  # fmt: skip
+
+
+@necesita_bd
+def test_rectificar_corrige_y_el_genero_pide_consentimiento(http, db, creados):
+    id_estudiante = _conectado(http, creados)
+
+    sin_consentir = http.post("/mis-datos/rectificar", data={"genero": "Masculino"})
+    assert "alerta-error" in sin_consentir.text
+
+    http.post(
+        "/mis-datos/rectificar",
+        data={"genero": "Masculino", "consiento_genero": "si", "rango_etario": "21 - 23 años"},
+    )
+    db.expire_all()
+    estudiante = db.get(Estudiante, id_estudiante)
+    assert (estudiante.genero, estudiante.rango_etario, estudiante.carrera) == (
+        "Masculino", "21 - 23 años", None,
+    )  # fmt: skip
+    assert "genero" in {f.documento for f in _aceptaciones(db, id_estudiante)}
+
+    http.post("/mis-datos/rectificar", data={})
+    db.expire_all()
+    assert db.get(Estudiante, id_estudiante).genero is None
+
+
+@necesita_bd
+def test_eliminar_borra_todo_en_cascada_y_cierra_la_sesion(http, db, creados):
+    id_estudiante = _conectado(http, creados)
+
+    sin_confirmar = http.post("/mis-datos/eliminar")
+    assert "alerta-error" in sin_confirmar.text
+    assert db.get(Estudiante, id_estudiante) is not None
+
+    respuesta = http.post("/mis-datos/eliminar", data={"confirmo": "si"})
+
+    assert respuesta.status_code == 200
+    assert "Eliminamos tus datos" in respuesta.text
+    assert _id_de_la_cookie(http) is None
+    db.expire_all()
+    assert db.get(Estudiante, id_estudiante) is None
+    assert _aceptaciones(db, id_estudiante) == []
+    assert db.scalar(
+        select(func.count()).select_from(DiagnosticoVark).where(
+            DiagnosticoVark.id_estudiante == id_estudiante
+        )
+    ) == 0

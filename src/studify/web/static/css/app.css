@@ -4864,6 +4864,45 @@ body.is-generando {
   color: var(--primary-text);
 }
 
+/* /mis-datos */
+.mis-datos {
+  max-width: 46rem;
+  margin-inline: auto;
+}
+
+.md-lista {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0 0 var(--space-5);
+}
+
+.md-lista > div {
+  display: grid;
+  gap: var(--space-1);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--border);
+}
+
+.md-lista dt {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--text-muted);
+}
+
+.md-lista dd {
+  margin: 0;
+}
+
+@media (min-width: 640px) {
+  .md-lista > div {
+    grid-template-columns: 12rem 1fr;
+  }
+}
+
+.md-eliminar {
+  border-color: color-mix(in srgb, var(--danger) 35%, var(--border));
+}
+
 /* Dato pendiente de completar en un borrador legal: tiene que saltar a la
    vista, también en modo oscuro (los tokens -soft/-text ya se redefinen). */
 mark.placeholder {

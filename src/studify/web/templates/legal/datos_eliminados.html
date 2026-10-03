@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% import "components/ui.html" as ui %}
+
+{% block title %}Datos eliminados · RepasAi{% endblock %}
+
+{% block content %}
+<div class="mis-datos">
+    {% call ui.empty_state("circle-check", "Eliminamos tus datos", heading="h1") %}
+    <p>
+        Borramos tu perfil, tus respuestas, tus cápsulas, tus intentos y tus aceptaciones, y cerramos tu
+        sesión en este navegador. Si vuelves a usar RepasAi empezarás desde cero.
+    </p>
+    <p><a class="btn btn-secondary" href="/">{{ ui.icon("house") }}<span>Volver al inicio</span></a></p>
+    {% endcall %}
+</div>
+{% endblock %}
