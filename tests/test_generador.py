@@ -317,6 +317,71 @@ def test_las_citas_se_contrastan_contra_los_fragmentos_inyectados():
 # --- Cliente real -------------------------------------------------------------
 
 
+# --- Respuesta repetida (hallazgo H2 de PRUEBAS_VARK.md) ----------------------
+
+CORTA = con_defecto(
+    concepto_central="Muy breve.",
+    representacion_adaptativa=[{"tipo": "parrafo", "cuerpo": "También breve."}],
+    ejemplo={"tipo": "parrafo", "cuerpo": "Un caso."},
+)
+
+
+def _turnos(conversacion):
+    return tuple((m.rol, m.contenido) for m in conversacion)
+
+
+def test_una_respuesta_identica_rearma_la_conversacion_sin_el_turno_repetido():
+    """Con la misma entrada el modelo es en la práctica determinista: pedirle la
+    corrección sobre una conversación que ya contiene su respuesta repetida
+    solo produce otra copia. El intento siguiente arranca del prompt original,
+    sin ese turno, con un aviso y los errores cuantificados."""
+    cliente = ClienteFalso(CORTA, CORTA, VALIDA)
+
+    resultado = generar(prompt_maestro(), cliente=cliente)
+
+    assert resultado.intentos == 3
+    assert resultado.repeticiones_detectadas == 1
+    tercera = cliente.conversaciones[2]
+    assert [m.rol for m in tercera] == ["system", "user"]
+    assert all(m.contenido != CORTA for m in tercera)
+    assert "la repetiste sin cambios" in tercera[1].contenido
+    assert "faltan" in tercera[1].contenido  # el error va cuantificado
+
+
+def test_sin_repeticion_el_reintento_sigue_viendo_su_respuesta():
+    """La detección solo cambia el camino cuando la respuesta es idéntica."""
+    cliente = ClienteFalso(CORTA, VALIDA)
+
+    resultado = generar(prompt_maestro(), cliente=cliente)
+
+    assert resultado.repeticiones_detectadas == 0
+    assert cliente.conversaciones[1][2].contenido == CORTA
+
+
+def test_un_cliente_que_siempre_repite_nunca_recibe_dos_veces_la_misma_conversacion():
+    """D1 (a): la segunda de dos respuestas idénticas nunca se pide con la
+    misma conversación que la primera."""
+    cliente = ClienteFalso(CORTA, CORTA, CORTA)
+
+    with pytest.raises(ErrorGeneracion):
+        generar(prompt_maestro(), cliente=cliente)
+
+    conversaciones = [_turnos(c) for c in cliente.conversaciones]
+    assert len(set(conversaciones)) == len(conversaciones)
+
+
+def test_la_deteccion_de_repeticion_respeta_el_tope_de_intentos():
+    """El arranque limpio no es un intento gratis: el tope sigue en 3."""
+    cliente = ClienteFalso(CORTA, CORTA, CORTA, CORTA, CORTA)
+
+    with pytest.raises(ErrorGeneracion) as error:
+        generar(prompt_maestro(), cliente=cliente)
+
+    assert cliente.llamadas == 3
+    assert len(cliente.respuestas) == 2  # las dos sobrantes nunca se pidieron
+    assert len(error.value.errores_por_intento) == 3
+
+
 def test_sin_api_key_el_error_dice_que_falta_la_key():
     """Es el estado actual del proyecto: conviene que no falle con un 401 opaco."""
     with pytest.raises(ErrorGeneracion, match="LLM_API_KEY"):

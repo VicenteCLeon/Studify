@@ -16,6 +16,7 @@ from pydantic import ValidationError
 from studify.generation import idioma
 from studify.generation.schemas import Actividad, BloqueContenido, Microcapsula
 from studify.generation.validator import (
+    MARGEN_REPARACION,
     ErrorFormatoJSON,
     ResultadoValidacion,
     extraer_json,
@@ -421,6 +422,32 @@ def test_contenido_demasiado_largo_se_rechaza():
 
     assert not resultado.es_valida
     assert any("máximo es 300" in e for e in resultado.errores)
+
+
+def test_el_error_de_falta_dice_cuanto_agregar_hasta_donde_y_en_que_campos():
+    """Hallazgo H2 de PRUEBAS_VARK.md (04-oct-2026): con «hay que desarrollarlo
+    más» el modelo devolvió su respuesta idéntica en 4 de 6 reintentos. El
+    mensaje ahora es simétrico al de exceso: cuánto falta, cuánto agregar con
+    margen, el techo y los campos donde desarrollar."""
+    datos = capsula_valida()
+    datos["concepto_central"] = "La normalización reduce la redundancia de los datos."
+    datos["representacion_adaptativa"] = [
+        {"tipo": "parrafo", "cuerpo": "Cada dato se guarda una sola vez."}
+    ]
+    datos["ejemplo"] = {"tipo": "parrafo", "cuerpo": "Una tabla de matrículas."}
+
+    resultado = validar_capsula(datos)
+    (mensaje,) = [e for e in resultado.errores if "mínimo es 150" in e]
+
+    faltan = 150 - resultado.metricas["palabras_contenido"]
+    assert f"faltan {faltan}" in mensaje
+    assert f"al menos {faltan + MARGEN_REPARACION} palabras" in mensaje
+    assert "sin que la suma pase de 300" in mensaje
+    assert "`concepto_central` (hoy 8 palabras)" in mensaje
+    assert "`representacion_adaptativa` (hoy 7 palabras en total)" in mensaje
+    # Nombrar tipos de bloque en una instrucción genérica los induce (Etapa 1).
+    for tipo in ("glosario", "analogia", "lista_pasos", "tabla", "esquema", "ejemplo_resuelto"):
+        assert tipo not in mensaje
 
 
 def test_el_error_de_exceso_senala_cuanto_sobra_y_donde_recortar():
