@@ -206,6 +206,60 @@ class ResultadoValidacion:
             "repite."
         )
 
+    def mensaje_tras_repeticion(self) -> str:
+        """Aviso para cuando el modelo devolvió su respuesta anterior sin cambios.
+
+        Va en una conversación nueva, sin el turno repetido (ver
+        `generator.generar`), así que no puede decir «corrige la respuesta
+        anterior»: el modelo ya no la tiene a la vista. Por eso pide generar
+        la cápsula de nuevo y trae los errores cuantificados de la versión que
+        se repitió, que son el único blanco concreto disponible (hallazgo H2 de
+        PRUEBAS_VARK.md, 04-oct-2026).
+        """
+        listado = "\n".join(f"{i}. {e}" for i, e in enumerate(self.errores, start=1))
+        return (
+            "Ya entregaste una versión de esta cápsula y fue rechazada; al "
+            "pedirte la corrección, la repetiste sin cambios. Estos son los "
+            "problemas de esa versión:\n"
+            f"{listado}\n\n"
+            "Genera la cápsula de nuevo cumpliendo todo lo anterior y "
+            "resolviendo exactamente esos problemas, con las cifras indicadas. "
+            "Entrega el objeto JSON completo, en español y sin texto adicional "
+            "fuera del JSON."
+        )
+
+
+# Palabras de holgura que se piden de más al corregir la extensión, en un
+# sentido o en el otro. Recortar o agregar exactamente lo que falta deja la
+# cápsula pegada al límite, y la variación normal de redacción la vuelve a
+# sacar del rango en el intento siguiente.
+MARGEN_REPARACION = 15
+
+
+def _error_falta_de_palabras(
+    capsula: Microcapsula, palabras: int, minimo: int, maximo: int
+) -> str:
+    """Mensaje de la regla 2 cuando faltan palabras, simétrico al de exceso.
+
+    Hasta el 04-oct-2026 decía solo «hay que desarrollarlo más»: sin cuánto ni
+    dónde, el modelo devolvió su respuesta idéntica en 4 de 6 reintentos
+    (hallazgo H2 de PRUEBAS_VARK.md), mientras que tras el mensaje de exceso
+    —cuantificado desde el 24-ago— la repitió en 1 de 52. Nombra campos del
+    contrato y no tipos de bloque: nombrar un tipo de bloque en una
+    instrucción genérica induce al modelo a agregarlo donde no corresponde.
+    """
+    faltan = minimo - palabras
+    representacion = sum(b.palabras() for b in capsula.representacion_adaptativa)
+    return (
+        f"el contenido tiene {palabras} palabras y el mínimo es {minimo}: faltan "
+        f"{faltan}. Debes agregar al menos {faltan + MARGEN_REPARACION} palabras "
+        f"en total, sin que la suma pase de {maximo}. Desarrolla "
+        f"`concepto_central` (hoy {contar_palabras(capsula.concepto_central)} "
+        f"palabras) y `representacion_adaptativa` (hoy {representacion} palabras "
+        f"en total) con información de los fragmentos entregados. No cambies lo "
+        f"que ya está bien."
+    )
+
 
 def _error_exceso_de_palabras(capsula: Microcapsula, palabras: int, maximo: int) -> str:
     """Mensaje de la regla 2 cuando sobran palabras, con un blanco concreto.
@@ -234,7 +288,8 @@ def _error_exceso_de_palabras(capsula: Microcapsula, palabras: int, maximo: int)
     etiqueta, palabras_de_la_parte = max(partes, key=lambda par: par[1])
     return (
         f"el contenido tiene {palabras} palabras y el máximo es {maximo}: sobran "
-        f"{exceso}. Debes recortar al menos {exceso + 15} palabras en total para asegurar "
+        f"{exceso}. Debes recortar al menos {exceso + MARGEN_REPARACION} palabras en total "
+        f"para asegurar "
         f"que la suma total quede estrictamente por debajo de {maximo}. "
         f"La parte más extensa es {etiqueta}, con {palabras_de_la_parte} "
         f"palabras — recórtala primero y sintetiza de forma concisa las demás secciones "
@@ -280,8 +335,9 @@ def validar(
     palabras = capsula.palabras_contenido()
     if palabras < ajustes.capsula_min_palabras:
         errores.append(
-            f"el contenido tiene {palabras} palabras y el mínimo es "
-            f"{ajustes.capsula_min_palabras}: hay que desarrollarlo más"
+            _error_falta_de_palabras(
+                capsula, palabras, ajustes.capsula_min_palabras, ajustes.capsula_max_palabras
+            )
         )
     elif palabras > ajustes.capsula_max_palabras:
         errores.append(_error_exceso_de_palabras(capsula, palabras, ajustes.capsula_max_palabras))

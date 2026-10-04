@@ -133,6 +133,9 @@ class ResultadoGeneracion:
     segundos: float
     metricas: dict[str, object] = field(default_factory=dict)
     errores_por_intento: list[list[str]] = field(default_factory=list)
+    # Cuántas veces el modelo devolvió su respuesta anterior sin cambios. Solo
+    # vive en memoria (no se persiste): sirve para medir el hallazgo H2.
+    repeticiones_detectadas: int = 0
 
     @property
     def valida_al_primer_intento(self) -> bool:
@@ -161,6 +164,8 @@ def generar(
         Mensaje("user", prompt.usuario),
     ]
     errores_por_intento: list[list[str]] = []
+    anterior: str | None = None
+    repeticiones = 0
     inicio = time.perf_counter()
 
     for intento in range(1, total_intentos + 1):
@@ -181,6 +186,7 @@ def generar(
                 segundos=time.perf_counter() - inicio,
                 metricas=resultado.metricas,
                 errores_por_intento=errores_por_intento,
+                repeticiones_detectadas=repeticiones,
             )
 
         errores_por_intento.append(resultado.errores)
@@ -192,13 +198,33 @@ def generar(
             "; ".join(resultado.errores),
         )
 
+        repetida = crudo == anterior
+        anterior = crudo
+        if repetida:
+            repeticiones += 1
+
         if intento < total_intentos:
-            # Se reinyecta la respuesta rechazada junto con el motivo. El modelo
-            # necesita ver qué produjo para corregirlo: sin eso, un "acorta el
-            # contenido" no tiene referente y suele devolver otro texto igual
-            # de largo.
-            mensajes.append(Mensaje("assistant", crudo))
-            mensajes.append(Mensaje("user", resultado.mensaje_para_reparacion()))
+            if repetida:
+                # El modelo devolvió su respuesta anterior sin cambios. Con la
+                # misma entrada es en la práctica determinista (PRUEBAS_VARK.md,
+                # hallazgo H2): volver a pedirle la corrección sobre una
+                # conversación que ya contiene esa respuesta solo produce otra
+                # copia. Se arranca de nuevo desde el prompt original, sin el
+                # turno repetido, con un aviso y los errores cuantificados.
+                mensajes = [
+                    Mensaje("system", prompt.sistema),
+                    Mensaje(
+                        "user",
+                        f"{prompt.usuario}\n\n{resultado.mensaje_tras_repeticion()}",
+                    ),
+                ]
+            else:
+                # Se reinyecta la respuesta rechazada junto con el motivo. El
+                # modelo necesita ver qué produjo para corregirlo: sin eso, un
+                # "acorta el contenido" no tiene referente y suele devolver
+                # otro texto igual de largo.
+                mensajes.append(Mensaje("assistant", crudo))
+                mensajes.append(Mensaje("user", resultado.mensaje_para_reparacion()))
 
     raise ErrorGeneracion(
         f"no se obtuvo una cápsula válida en {total_intentos} intentos con el "
