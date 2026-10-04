@@ -17,13 +17,13 @@ from decimal import Decimal
 from itertools import product
 
 import pytest
-from material import DOCUMENTO, FRAGMENTOS, OBJETIVO
 
 from studify.generation.schemas import Actividad, Fuente, Microcapsula
 from studify.rag import orchestrator, prompts
 from studify.rag.orchestrator import ErrorPrompt
 from studify.vark.rules import aplicar_reglas
 from studify.vark.scoring import PerfilVark
+from tests.material import DOCUMENTO, FRAGMENTOS, OBJETIVO
 
 D = Decimal
 

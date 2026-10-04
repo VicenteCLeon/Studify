@@ -11,7 +11,6 @@ import json
 from decimal import Decimal
 
 import pytest
-from material import FRAGMENTOS, OBJETIVO, capsula_valida
 
 from studify.generation.generator import (
     ClienteOpenAILike,
@@ -22,6 +21,7 @@ from studify.generation.generator import (
 from studify.rag import orchestrator
 from studify.vark.rules import aplicar_reglas
 from studify.vark.scoring import PerfilVark
+from tests.material import FRAGMENTOS, OBJETIVO, capsula_valida
 
 
 class ClienteFalso:

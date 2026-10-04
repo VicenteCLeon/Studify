@@ -16,9 +16,9 @@ from decimal import Decimal
 from pathlib import Path
 
 import pytest
-from material import EXPLICACION, FRAGMENTOS, OBJETIVO, PARRAFO, capsula_valida
 
 from studify.vark.rules import aplicar_reglas
+from tests.material import EXPLICACION, FRAGMENTOS, OBJETIVO, PARRAFO, capsula_valida
 
 _RUTA = Path(__file__).resolve().parent.parent / "scripts" / "probar_perfiles_vark.py"
 _spec = importlib.util.spec_from_file_location("probar_perfiles_vark", _RUTA)

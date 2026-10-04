@@ -11,7 +11,6 @@ un cliente falso.
 import copy
 
 import pytest
-from material import DOCUMENTO, EXPLICACION, FRAGMENTOS, PARRAFO, capsula_valida
 from pydantic import ValidationError
 
 from studify.generation import idioma
@@ -22,6 +21,7 @@ from studify.generation.validator import (
     extraer_json,
     validar,
 )
+from tests.material import DOCUMENTO, EXPLICACION, FRAGMENTOS, PARRAFO, capsula_valida
 
 
 def validar_capsula(datos: dict) -> ResultadoValidacion:
