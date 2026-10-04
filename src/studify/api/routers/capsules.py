@@ -372,25 +372,13 @@ def crear_capsula(
         modelo=resultado.modelo,
     )
 
-    # --- Fase 6: Generación Multimedia Local ---
-    # Ejecutamos de forma secuencial la síntesis de V/A/K
-    import json
-    from pathlib import Path
-
-    from studify.media.generator import GeneradorMultimedia
-
-    try:
-        media_gen = GeneradorMultimedia(Path(ajustes.media_dir))
-        texto_crudo = json.dumps(resultado.capsula.model_dump(), ensure_ascii=False)
-        logger.info(
-            f"Iniciando generación multimedia local (Fase 6) para cápsula {fila.id_capsula}"
-        )
-        activos = media_gen.generar_activos(config, texto_crudo, str(fila.id_capsula))
-        logger.info(f"Generación multimedia finalizada. Activos: {activos}")
-    except Exception as e:
-        logger.error(f"Fallo en generación multimedia local para cápsula {fila.id_capsula}: {e}")
-        # En caso de error (o falta de VRAM), entregamos la cápsula de texto de todos modos
-
+    # Acá no se sintetiza audio ni imagen (hallazgo H5, PRUEBAS_VARK.md). Antes
+    # se llamaba a `GeneradorMultimedia.generar_activos` con los primeros 250
+    # caracteres del JSON como guion: bloqueaba la respuesta ~100–130 s con
+    # XTTS en CPU y dejaba en `media_dir` archivos que nada sirve. El audio que
+    # el estudiante escucha lo sintetiza el visor por su cuenta
+    # (`POST /student/viewer/{id}/generate-audio`), a partir de la cápsula ya
+    # guardada.
     return _a_salida(fila, origen="generada", resultado=resultado)
 
 
