@@ -507,6 +507,138 @@ Corrida completa del 03-oct-2026 (`20261003-235748_semilla42`, 30 perfiles, con 
   ≥ 40 % son codominantes. La corrida se reevaluó con `--informe` (sin llamar al LLM), y
   C06 pasó de ❌ a ✅.
 
+## Correcciones
+
+### Etapa 1 — H1 + H3: glosario de R y reparto de la extensión
+
+**Criterios fijados el 04-oct-2026, antes de re-ejecutar** (no se modifican después de ver
+resultados).
+
+Cambio evaluado: la directiva del glosario apunta al último bloque de
+`representacion_adaptativa` y se acota a 3–5 entradas; el prompt reparte el objetivo de
+palabras por paso (activación ≤ 20, concepto ≈ 30 %, ejemplo ≈ 20 %, el resto para la
+representación); `ejemplo_resuelto` se fija en el `ejemplo` (paso 5) y `lista_pasos` en
+3–5 pasos de una oración. El objetivo de palabras de cada perfil no cambia.
+
+**Conjuntos:**
+
+- **S42 (comparación directa):** los 30 perfiles con semilla 42, sin audio, con el prompt
+  nuevo, contra la corrida `20261003-235748_semilla42`. C1–C3 se miden sobre los **26
+  perfiles con R > 0**; C4, sobre los 30.
+- **S43 (validación):** las 8 mezclas de la Fase C con semilla 43, que no se usaron para
+  diseñar el reparto, corridas sin audio **con el prompt anterior** (línea base, antes de
+  aplicar el cambio) y con el nuevo. Se reportan por separado de S42.
+
+| # | Criterio | Base S42 | Éxito si |
+|---|---|---|---|
+| C1 | Bloque `glosario` en las cápsulas válidas con R ≥ 40 % | 0/9 | todas |
+| C2 | Contenido dentro de ±15 % del objetivo de palabras del prompt (cápsulas válidas) | 13/25 | ≥ 80 % |
+| C2b | Desvío medio de R dominante (R ≥ 60 %) respecto del objetivo | −21 % | dentro de ±15 % |
+| C2c | Desvío medio de K dominante (K ≥ 60 %) respecto del objetivo | +21 % | dentro de ±15 % |
+| C3 | No regresión: cápsulas válidas / reparaciones (llamadas − perfiles) / citas inventadas | 25 / 4 / 0 | ≥ 25 / ≤ 4 / 0 |
+| C4a | Cápsulas válidas con K ≥ 40 % que pasan el criterio «ejercicios» de la batería (`flashcards_y_quiz` con 3–5 tarjetas y 3–5 preguntas explicadas, `lista_pasos`, `ejemplo_resuelto`, ≥ 80 % de respuestas respaldadas) | 12/12 | todas |
+| C4b | Guion de audio válido (sin sintetizar) en las cápsulas válidas con A ≥ 25 %: `activacion` + `concepto_central` no vacío, no JSON, ≥ 40 palabras y cobertura léxica ≥ 50 % | 16/16 (mín. 71 palabras, cobertura mín. 67 %) | todas |
+| C4c | Bloque `analogia` en las cápsulas válidas con A ≥ 40 % | 13/13 | todas |
+
+En S43, C2b y C2c se informan solo si hay al menos dos perfiles dominantes ≥ 60 % de ese
+canal, y C3 se compara contra la línea base de S43.
+
+Si falla C1, C3 o C4, se detiene la etapa y se reporta, sin iterar. Si fallan solo C2b o
+C2c, se reporta sin tocar las fracciones. Cada perfil corre una sola vez y el modelo usa
+temperatura 0,4, así que una diferencia de ±1 en un conteo puede ser ruido.
+
+#### Intento 1 (04-oct): reparto con «unas N palabras» — detenido
+
+Falló C3 en las dos semillas (válidas 25 → 23 y 8 → 6; reparaciones 4 → 20 y 2 → 8), y C4a
+en S43. El primer intento de las cápsulas con R ≥ 40 % casi se duplicó (225 → 422 palabras
+en S42): el modelo leyó «unas 80» como aproximación, agregó `lista_pasos` donde nadie lo
+pidió, y la mención «(también el glosario, si se pide)» del reparto indujo **5 glosarios
+sin directiva** en perfiles A. Además, el diff había borrado la frase «Sé conciso…».
+
+#### Intento 2 (04-oct): brazos A y B con regla de cierre fijada antes de ejecutar
+
+- **Brazo A:** solo la instrucción nueva del glosario, sin reparto por paso.
+- **Brazo B:** el reparto como tope («como máximo N palabras»), la frase de concisión
+  restaurada, «incluye únicamente los bloques que piden las instrucciones estructurales»,
+  y un `parrafo` de reexpresión que el código antepone solo cuando ninguna directiva del
+  perfil pide un bloque que reexprese el concepto (los perfiles «solo R»).
+- **Regla de cierre:** aplicar B si cumple C1, C3 y C4; si no, A; si ninguno, revertir y
+  analizar. C2 no es bloqueante.
+
+Mismos conjuntos (S42 y S43, sin audio) y mismo comparador para la base y los dos brazos.
+
+| Criterio | S42 base | S42 A | S42 B | S43 base | S43 A | S43 B |
+|---|---|---|---|---|---|---|
+| C1 glosario en R ≥ 40 % válidas | 0/9 | 7/7 | **9/9** | 0/5 | 5/5 | **5/5** |
+| ↳ perfiles R ≥ 40 % sin cápsula válida | 0/9 | 2/9 | 0/9 | 0/5 | 0/5 | 0/5 |
+| C2 ±15 % *(no bloqueante)* | 13/25 | 20/24 | 9/24 | 5/8 | 6/8 | 6/8 |
+| C2b desvío R ≥ 60 % | −21 % (n=6) | +4 % (n=6) | +2 % (n=6) | −16 % (n=1) | +5 % (n=1) | +6 % (n=1) |
+| C2c desvío K ≥ 60 % | +21 % (n=6) | +18 % (n=7) | −21 % (n=6) | +6 % (n=1) | +17 % (n=1) | −8 % (n=1) |
+| C3 válidas (R > 0) | 25/26 | 24/26 ❌ | **24/26 ❌** | 8/8 | 8/8 | 8/8 |
+| C3 reparaciones (n = perfiles R > 0) | 4 (n=26) | 10 ❌ | **5 ❌** | 2 (n=8) | 3 ❌ | 1 |
+| C3 citas inventadas | 0 (n=25) | 0 (n=24) | 0 (n=24) | 0 (n=8) | 0 (n=8) | 0 (n=8) |
+| C4a ejercicios K ≥ 40 % | 12/12 | 9/11 ❌ | 12/12 | 4/4 | 3/4 ❌ | 4/4 |
+| C4b guion de audio A ≥ 25 % | 16/16 | 16/16 | 15/15 | 3/3 | 3/3 | 3/3 |
+| C4c analogía A ≥ 40 % | 13/13 | 13/13 | 12/12 | 1/1 | 1/1 | 1/1 |
+| ↳ glosarios sin directiva | 0/29 | 0/28 | 0/28 | 0/8 | 0/8 | 0/8 |
+
+**Repeticiones de A19-R34-K47** (la falla de C4a del intento 1): A 5/5 y B 5/5 con
+`flashcards_y_quiz` válido al primer intento; base 1/1. La falla del intento 1 fue ruido.
+
+**Composición de `representacion_adaptativa` en los 9 perfiles «solo R»** (n = 1 cápsula
+por perfil y brazo; informativa):
+
+| Perfil | Base | A | B |
+|---|---|---|---|
+| A0-R100-K0 | parrafo | parrafo+lista_pasos+glosario | parrafo+glosario |
+| A20-R70-K10 | analogia | parrafo+glosario | parrafo+glosario |
+| A10-R70-K20 | analogia | parrafo+lista_pasos+glosario | parrafo+glosario |
+| A30-R60-K10 | analogia | parrafo+glosario | parrafo+glosario |
+| A10-R60-K30 | analogia | parrafo+lista_pasos+glosario | parrafo+glosario |
+| A5-R90-K5 | lista_pasos | parrafo+glosario | parrafo+glosario |
+| S43 A3-R86-K11 | analogia | parrafo+glosario | parrafo+glosario |
+| S43 A29-R51-K20 | analogia | parrafo+glosario | parrafo+glosario |
+| S43 A22-R48-K30 | analogia | parrafo+analogia+glosario | parrafo+glosario |
+
+En B, los 9 traen `parrafo` + `glosario`: ninguno quedó reducido solo al glosario.
+
+#### Decisión: ningún brazo cumple la regla de cierre → no se aplica nada
+
+B falla C3 en S42 por **una cápsula y una reparación** (24 contra 25 válidas, 5 contra 4
+reparaciones). A falla C3 y C4a en las dos semillas. Por la regla fijada antes de ejecutar,
+se revierte todo: `src/` y `tests/` quedan como en `main` y **H1 y H3 siguen abiertos**.
+
+#### Por qué falló (análisis para elegir el siguiente enfoque)
+
+1. **El arreglo del glosario funciona.** En los dos brazos y las dos semillas aparece en
+   todas las cápsulas válidas con R ≥ 40 %, y ya no se induce en perfiles que no lo piden.
+   Lo que bloquea la etapa no es H1.
+2. **C3 en S42 lo decide H2, no el prompt.** Las dos cápsulas que B perdió (A75-R2-K23 y
+   A2-R17-K81) tuvieron un primer intento **bajo** el mínimo (129 y 142 palabras) y los
+   tres intentos fueron **byte a byte idénticos**: el bucle de reparación nunca llegó a
+   corregir una desviación de 8–21 palabras. La única cápsula perdida de la línea base
+   (A2-R17-K81) también murió por repetición idéntica (intentos 2 y 3). Mientras el bucle
+   no pueda salir de una respuesta repetida, cualquier cambio de extensión convierte una
+   desviación chica en una cápsula perdida, y C3 no puede distinguir efecto de ruido con
+   una corrida por perfil.
+3. **El tope por paso invirtió el sesgo de K.** K pasó de +21 % a −21 % sobre su
+   objetivo y C2 empeoró (13/25 → 9/24): con topes que suman el objetivo y sin un mínimo
+   por paso, los perfiles de objetivo bajo (≈ 210) quedan cerca del piso de 150. Es la
+   misma pérdida que describe el punto 2, vista desde la extensión.
+4. **Sin el reparto (brazo A), R vuelve a pasarse:** sus dos cápsulas perdidas agotaron
+   los intentos convergiendo desde arriba (372 → 305 → 304 y 431 → 348 → 337), y K sigue
+   con +18 %.
+
+**Enfoque propuesto, para decidir:** hacer primero la **Etapa 4 (H2)** —que el bucle
+detecte una respuesta idéntica y cambie de estrategia— y recién después volver a medir H1
+(brazo A) y H3 con estos mismos criterios y conjuntos. Hoy H2 es el mecanismo que
+convierte una desviación de extensión en una cápsula perdida. Opcionalmente, repetir la
+línea base de S42 para estimar cuánto varía C3 entre corridas idénticas antes de comparar.
+
+Artefactos: `data/pruebas_vark/20261004-0128*` a `20261004-0136*`. Los brazos
+(`brazo_A.patch`, `brazo_B_c1.patch`, `brazo_B.patch`) y el comparador
+(`comparar_etapa1.py`) quedaron fuera del repo; se pueden versionar si se retoma la etapa.
+
 ## Limitaciones conocidas
 
 ### Canal Visual (excluido de esta batería)
@@ -533,18 +665,19 @@ No se ejecutó por decisión del equipo. Su comportamiento actual, leído del c�
 
 ### Hallazgos reportados sin corregir
 
-Ninguno se corrigió: la batería no toca lógica de negocio. Ordenados por impacto. En H5, «el visor lo llama» se refiere a cada cápsula **nueva**: las que salen del caché no pasan por `GeneradorMultimedia`.
+La batería no toca lógica de negocio: cada corrección se hace aparte, por etapas (ver «Correcciones»). Estado al 04-oct-2026: H9 corregido; H1 y H3 abiertos tras la Etapa 1; el resto, sin tocar. Ordenados por impacto. En H5, «el visor lo llama» se refiere a cada cápsula **nueva**: las que salen del caché no pasan por `GeneradorMultimedia`.
 
 | # | Hallazgo | Evidencia | Propuesta (pendiente de aprobación) |
 |---|---|---|---|
-| H1 | **El perfil R nunca recibe glosario.** La directiva dice «Cierra *el contenido* con un bloque `glosario`», y `contenido` es el campo del contrato anterior a los siete pasos (19-ago), que ya no existe. | 0/10 cápsulas con R ≥ 40 %. **Experimento** (scratchpad, sin tocar el repo): reescribiendo la instrucción como «El último bloque de `representacion_adaptativa` debe ser un bloque `glosario`…», **4/4** cápsulas lo traen (3 R puro + A20-R70-K10). | Cambiar ese texto en `rag/prompts/maestro.py::INSTRUCCION_POR_DIRECTIVA["glosario"]` y revisar el resto de las instrucciones que digan «contenido». **Efecto colateral medido:** las cápsulas R suben a 255–299 palabras y 2/4 necesitaron una reparación por pasar de 300, así que conviene acompañarlo con un objetivo de palabras R algo menor (`MARGEN_PALABRAS_OBJETIVO`). |
-| H2 | **El bucle de reparación vuelve a repetir la respuesta byte a byte.** | C05 (A2-R17-K81): los intentos 2 y 3 son idénticos (mismo MD5, 4.930 caracteres), así que el tercer intento se desperdició y la cápsula se perdió. Es el problema que la sección 5 sedecies de AVANCE daba por corregido con el mensaje de reparación. | En `generation/generator.py`, detectar que `crudo` es igual al anterior y, en ese caso, reintentar con otra estrategia: subir la temperatura en esa llamada o reinyectar solo el error con la cápsula anterior resumida. |
-| H3 | **Las cápsulas K se pasan de largo y las R se quedan cortas** (patrón 1). | K +48, R −57 palabras respecto del objetivo. 4/4 reparaciones y el único contrato agotado son de K ≥ 40 % por pasar de 300 palabras. | Decisión de diseño del equipo: o bajar el objetivo de palabras de K cuando se pide `lista_pasos` + `ejemplo_resuelto`, o pedir explícitamente brevedad en esos bloques. |
+| H1 | 🟡 **Abierto; arreglo validado pero no aplicado (Etapa 1).** **El perfil R nunca recibe glosario.** La directiva dice «Cierra *el contenido* con un bloque `glosario`», y `contenido` es el campo del contrato anterior a los siete pasos (19-ago), que ya no existe. | 0/10 cápsulas con R ≥ 40 %. **Experimento** (scratchpad, sin tocar el repo): reescribiendo la instrucción como «El último bloque de `representacion_adaptativa` debe ser un bloque `glosario`…», **4/4** cápsulas lo traen (3 R puro + A20-R70-K10). **Etapa 1:** con el texto nuevo, el glosario aparece en todas las cápsulas válidas con R ≥ 40 % (S42 y S43, brazos A y B), pero la etapa no cumplió C3 (ver «Correcciones»). | Cambiar ese texto en `rag/prompts/maestro.py::INSTRUCCION_POR_DIRECTIVA["glosario"]` y revisar el resto de las instrucciones que digan «contenido». **Efecto colateral medido:** las cápsulas R suben a 255–299 palabras y 2/4 necesitaron una reparación por pasar de 300, así que conviene acompañarlo con un objetivo de palabras R algo menor (`MARGEN_PALABRAS_OBJETIVO`). |
+| H2 | 🔴 **Abierto y prioritario: bloquea H1 y H3.** **El bucle de reparación vuelve a repetir la respuesta byte a byte.** | C05 (A2-R17-K81): los intentos 2 y 3 son idénticos (mismo MD5, 4.930 caracteres), así que el tercer intento se desperdició y la cápsula se perdió. Es el problema que la sección 5 sedecies de AVANCE daba por corregido con el mensaje de reparación. **Etapa 1:** las 2 cápsulas que perdió el brazo B repitieron los 3 intentos idénticos, con desviaciones de solo 8–21 palabras. | En `generation/generator.py`, detectar que `crudo` es igual al anterior y, en ese caso, reintentar con otra estrategia: subir la temperatura en esa llamada o reinyectar solo el error con la cápsula anterior resumida. |
+| H3 | 🟡 **Abierto (Etapa 1 sin aplicar).** **Las cápsulas K se pasan de largo y las R se quedan cortas** (patrón 1). | K +48, R −57 palabras respecto del objetivo. 4/4 reparaciones y el único contrato agotado son de K ≥ 40 % por pasar de 300 palabras. | Decisión de diseño del equipo: o bajar el objetivo de palabras de K cuando se pide `lista_pasos` + `ejemplo_resuelto`, o pedir explícitamente brevedad en esos bloques. **Etapa 1:** el reparto por paso como tope llevó R a +2 %, pero invirtió K a −21 % y acercó al piso de 150 a los perfiles de objetivo bajo. Retomar después de H2. |
 | H4 | **Con 25 ≤ p_K < 40 % se ignora la cantidad de componentes prácticos** (patrón 2). | 3/3 perfiles. | Que `componentes_practicos = 2` vaya acompañado de una directiva concreta (p. ej. `paso_a_paso`) en `vark/rules.py`. Toca la lectura de la tabla 11.1 aprobada el 06-ago, así que la decide el equipo. |
 | H5 | **Audio en el camino de la API: narra JSON, se pierde y bloquea.** `POST /api/capsulas` (y el visor, que lo llama) ejecuta `GeneradorMultimedia` **síncrono** con `json.dumps(capsula)[:250]` como guion, guarda el WAV en `data/media/` (nada lo sirve), y después el visor sintetiza **otro** audio con el guion correcto. | 29/29 cápsulas: el guion de la ruta API empieza con `{"titulo": …`. XTTS en CPU tardó 67–229 s por audio en esta batería. Por lectura de código, un estudiante con p_A ≥ 25 % espera esa síntesis inútil antes de ver su cápsula. | Quitar la síntesis de audio de `crear_capsula` (el visor ya la hace bajo demanda con el guion correcto). Corrige a la vez el guion JSON, el archivo huérfano, la doble síntesis y la espera. |
 | H6 | **El modelo inventa cifras de ejemplo** (patrón 4). | 2/29 cápsulas con RUT ficticios. | Advertencia (no rechazo) en `generation/validator.py` para cifras que no están en los fragmentos, o permitir explícitamente los datos de ejemplo en el prompt. |
 | H7 | **«Preguntas reflexivas» casi nunca se cumple.** | 2/13 cápsulas con A ≥ 40 % intercalan una pregunta en la prosa. | Reformular la instrucción para que nombre dónde va (p. ej. dentro de `concepto_central`). |
 | H8 | **`pytest` completo carga SDXL y XTTS.** `tests/test_visual.py` y `tests/test_voz.py` ejecutan la generación **al importarse**. | Lectura de código. | Moverlos a `scripts/` o protegerlos con `if __name__ == "__main__"`. |
+| H9 | ✅ **Corregido (04-oct).** **`gruut` (dependencia de Coqui TTS) instala un paquete `tests` en site-packages** que le hacía sombra a `tests/` del repo: 12 archivos que hacen `from tests.conftest import …` no se podían ni importar. | `import tests` resolvía a `.venv/Lib/site-packages/tests/__init__.py` (instalado el 31-ago). Con `pytest`: 12 errores de colección. | `tests/__init__.py` convierte la carpeta en paquete regular y pytest antepone la raíz del repo a `sys.path`; los 4 tests que hacían `from material import` pasan a `from tests.material import`. Verificado: 432 pasan y 4 fallan (los mismos 4 previos), sin shim. |
 
 **Aviso de XTTS, sin consecuencias en esta corrida:** 10/16 audios registraron «The text
 length exceeds the character limit of 239 for language 'es'». Ninguno quedó truncado (las

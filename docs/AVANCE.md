@@ -2,7 +2,12 @@
 
 > Documento vivo. Se actualiza al cierre de cada fase para que cualquier sesión de trabajo
 > (o cualquier persona) pueda retomar el proyecto sin releer todo el hilo de conversación.
-> Última actualización: **03-oct-2026** — **batería de pruebas VARK de punta a punta**
+> Última actualización: **04-oct-2026** — **corrección de H1 + H3 medida y no aplicada**
+> (sección 5 quinvicies): el glosario de R aparece en el 100 % de los casos con el texto
+> nuevo, pero ningún brazo cumplió la regla de cierre fijada de antemano. La causa es el
+> bucle de reparación que repite la respuesta (H2), que pasa a ser prioritario. Además, se
+> arregló H9: un paquete `tests` de gruut impedía importar 12 archivos de tests.
+> Antes: **03-oct-2026** — **batería de pruebas VARK de punta a punta**
 > (sección 5 quatervicies): 30 perfiles A/R/K contra DeepSeek y XTTS reales; 29/30 cápsulas
 > válidas y 0 citas inventadas, el audio funciona (16/16) y K también con p_K ≥ 40 %, pero
 > **el perfil R nunca recibe su glosario** (directiva que apunta a un campo eliminado). Hay
@@ -2077,6 +2082,48 @@ válidas (96,7 %), **0 citas inventadas** y US$ 0,05 en total. Por canal:
 - Una corrección de la heurística propia (codominancia de dos canales ≥ 40 %) se aplicó
   reevaluando la corrida guardada con `--informe`, sin volver a llamar al LLM: C06 pasó de
   ❌ a ✅, y está documentada como tal.
+
+## 5 quinvicies. Corrección de H1 + H3: medida y no aplicada; arreglo de H9 (04-oct-2026)
+
+Primera etapa de correcciones de la batería (sección 5 quatervicies): el glosario que el
+perfil R nunca recibía (H1) y la extensión que iba al revés del diseño (H3). Se trabajó en
+la rama `fix/etapa1-glosario-extension`, con los criterios C1–C4 y la regla de cierre
+fijados **antes** de ejecutar y medidos contra la corrida guardada (semilla 42) y un
+conjunto de validación que no se usó para diseñar el cambio (semilla 43). Detalle
+completo en `PRUEBAS_VARK.md`, «Correcciones».
+
+### Qué se probó
+
+- **Intento 1** (reparto del objetivo de palabras por paso, «unas N»): detenido. Duplicó el
+  primer intento de las cápsulas R (225 → 422 palabras), indujo 5 glosarios donde no se
+  pedían, y la cantidad de reparaciones subió de 4 a 20.
+- **Intento 2**, dos brazos con la misma medición:
+  - **A:** solo el texto nuevo del glosario.
+  - **B:** reparto como tope, frase de concisión restaurada, «solo los bloques pedidos» y
+    un párrafo de reexpresión que el código antepone en los perfiles «solo R».
+
+### Resultado: ningún brazo cumplió la regla de cierre, así que no se aplicó nada
+
+- El glosario aparece en el **100 %** de las cápsulas válidas con R ≥ 40 % en los dos
+  brazos y las dos semillas, sin aparecer donde no se pide.
+- B falló C3 en la semilla 42 por **una cápsula y una reparación** (24/26 contra 25/26
+  válidas; 5 contra 4 reparaciones). A falló C3 y C4a.
+- **La causa es H2:** las dos cápsulas que B perdió repitieron byte a byte sus tres
+  intentos, con desviaciones de solo 8–21 palabras. También fue la causa de la única
+  cápsula perdida de la línea base.
+- La falla de C4a en A19-R34-K47 resultó ser ruido: 5/5 en los dos brazos.
+
+**Decisión pendiente del equipo:** se propone hacer primero la Etapa 4 (H2) y después
+volver a medir H1 y H3 con los mismos criterios. H1 y H3 quedan abiertos.
+
+### H9 corregido: el paquete `tests` de gruut
+
+`gruut`, una dependencia de Coqui TTS, instala un paquete `tests` en site-packages que le
+hacía sombra a `tests/` del repo. En este venv, **12 archivos de tests no se podían ni
+importar** desde el 31-ago. Con `tests/__init__.py` y 4 imports `from tests.material`,
+`pytest` vuelve a correr la suite completa: **432 en verde y los mismos 4 fallos previos**
+(2 de `test_interaccion_quiz`; 2 de `test_prompt_maestro`, por la etiqueta del perfil en
+el prompt, que es la Etapa 3).
 
 ## 6. Pendiente inmediato
 
