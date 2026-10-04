@@ -2,7 +2,12 @@
 
 > Documento vivo. Se actualiza al cierre de cada fase para que cualquier sesión de trabajo
 > (o cualquier persona) pueda retomar el proyecto sin releer todo el hilo de conversación.
-> Última actualización: **02-oct-2026** — **marco legal** (sección 5 tervicies): Términos y
+> Última actualización: **03-oct-2026** — **batería de pruebas VARK de punta a punta**
+> (sección 5 quatervicies): 30 perfiles A/R/K contra DeepSeek y XTTS reales; 29/30 cápsulas
+> válidas y 0 citas inventadas, el audio funciona (16/16) y K también con p_K ≥ 40 %, pero
+> **el perfil R nunca recibe su glosario** (directiva que apunta a un campo eliminado). Hay
+> ocho hallazgos reportados sin corregir en [`PRUEBAS_VARK.md`](PRUEBAS_VARK.md).
+> Antes: **02-oct-2026** — **marco legal** (sección 5 tervicies): Términos y
 > Política de Privacidad (Ley 19.628/21.719) en borrador con `[PLACEHOLDER]`, footer legal,
 > consentimiento con trazabilidad (`aceptacion_legal`), `/mis-datos` para ejercer derechos,
 > cierre de los endpoints de la API que exponían perfiles ajenos y fuentes/HTMX sin terceros.
@@ -2016,6 +2021,62 @@ Ya no queda ningún `[PLACEHOLDER]`; `test_no_quedan_placeholders_sin_completar`
   - el flujo de aceptación completo, el rechazo de un género sin consentimiento, `/aceptar`
     y `/mis-datos`;
   - en la base, la aceptación quedó en UTC y la eliminación cayó en cascada.
+
+## 5 quatervicies. Batería de pruebas de punta a punta por perfil VARK (03-oct-2026)
+
+Hasta ahora la adaptación se había comprobado con cuatro perfiles puros en el simulador.
+Faltaba medir, con criterios objetivos, si el motor responde a **mezclas** de canales y si
+el audio funciona de verdad. **No se tocó lógica de negocio:** se agregó un script, sus
+tests y un informe. El canal Visual queda fuera por decisión del equipo: V vale 0 % en todos
+los perfiles y el script no importa `media/image.py`.
+
+### Qué se agregó
+
+| Archivo | Qué hace |
+|---|---|
+| `scripts/probar_perfiles_vark.py` | Corre el pipeline real (retriever → reglas → prompt → DeepSeek → XTTS) sobre un objetivo fijo (`BD-U3-02`) y 30 perfiles: 3 puros, 19 mezclas controladas y 8 aleatorias Dirichlet con semilla. Evalúa contrato, trazabilidad, texto, audio, ejercicios, proporcionalidad y operación. Sin `--live` solo muestra el plan y el costo; con `--max-runs` se acota. No escribe en la base. |
+| `tests/test_perfiles_vark.py` | **51 tests sin red, BD ni GPU** (~2 s): la decisión perfil → canales, cantidades y directivas para cada perfil de la batería, y la evaluación con LLM y TTS falsos (reparaciones, timeouts, TTS roto, audio truncado, canal al 0 % con marcas). |
+| `docs/PRUEBAS_VARK.md` | Método, heurísticas con sus límites, tabla por perfil (generada por el script), patrones, limitaciones conocidas y hallazgos. |
+| `.gitignore` | `data/pruebas_vark/` explícito, donde quedan cápsulas, prompts, respuestas crudas y WAV. |
+
+### Resultado de la corrida completa
+
+**15/30 perfiles pasan todos los criterios.** El motor común está sólido: 29/30 cápsulas
+válidas (96,7 %), **0 citas inventadas** y US$ 0,05 en total. Por canal:
+
+- **A funciona:** 16/16 audios válidos, ninguno truncado. Pero XTTS en CPU tarda 67–229 s
+  por audio.
+- **K funciona con p_K ≥ 40 %:** 12/12 traen flashcards + quiz, pasos y ejemplo resuelto.
+  Falla con 25 ≤ p_K < 40 %.
+- **R no se diferencia:** el glosario no aparece en **ninguna** cápsula con R ≥ 40 % (0/10).
+
+### Hallazgos (reportados, sin corregir; detalle y evidencia en `PRUEBAS_VARK.md`)
+
+1. **H1, causa del fallo de R:** la directiva del glosario dice «cierra *el contenido*», y
+   `contenido` es el campo del contrato anterior a los siete pasos. Reescrita apuntando a
+   `representacion_adaptativa` en un experimento fuera del repo, el glosario apareció en
+   4/4 cápsulas.
+2. **H2:** el bucle de reparación vuelve a repetir la respuesta byte a byte (C05, intentos 2
+   y 3 idénticos). La corrección de la sección 5 sedecies no alcanza.
+3. **H3:** la extensión va al revés del diseño: K +48 palabras sobre el objetivo, R −57.
+   Todas las reparaciones son de K por pasar de 300.
+4. **H4:** con 25 ≤ p_K < 40 %, «2 componentes prácticos» sin una directiva concreta se ignora.
+5. **H5:** `POST /api/capsulas` sintetiza de forma síncrona los primeros 250 caracteres del
+   **JSON** como guion, guarda el WAV donde nada lo sirve, y el visor después sintetiza
+   otro: un estudiante con p_A ≥ 25 % espera una síntesis inútil.
+6. **H6–H8:** cifras de ejemplo inventadas que el validador no detecta (2/29), «preguntas
+   reflexivas» casi nunca se cumple (2/13), y `tests/test_visual.py` y `tests/test_voz.py`
+   cargan modelos al importarse en `pytest`.
+
+### Verificación
+
+- `pytest tests/test_perfiles_vark.py`: 51 en verde. `ruff check` limpio en los dos archivos
+  nuevos (ruff se instaló en el `.venv`: figuraba en el extra `dev` pero no estaba).
+- Smoke real de 3 perfiles y corrida completa de 30 contra DeepSeek y XTTS (unos 50 min,
+  casi todo de audio).
+- Una corrección de la heurística propia (codominancia de dos canales ≥ 40 %) se aplicó
+  reevaluando la corrida guardada con `--informe`, sin volver a llamar al LLM: C06 pasó de
+  ❌ a ✅, y está documentada como tal.
 
 ## 6. Pendiente inmediato
 
