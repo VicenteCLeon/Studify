@@ -17,6 +17,10 @@ build/
 # directorio padre está excluido: con data/ el .gitkeep nunca se versionaría.
 data/*
 !data/.gitkeep
+# Artefactos de scripts/probar_perfiles_vark.py (cápsulas, prompts, WAV). Ya los
+# cubre data/*, pero se declaran aparte para que no se versionen si alguien
+# vuelve a incluir data/ completo.
+data/pruebas_vark/
 *.pdf
 *.pptx
 *.docx
