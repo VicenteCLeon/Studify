@@ -14,6 +14,8 @@ que no tiene nada que ver con lo que el test quiere medir.
 
 import json
 import re
+import sys
+import types
 from decimal import Decimal
 
 import pytest
@@ -32,7 +34,7 @@ from studify.db.models import (
 from studify.main import app
 from studify.vark.rules import aplicar_reglas
 from studify.vark.scoring import PerfilVark
-from studify.web import sesion
+from studify.web import consentimiento, sesion
 from tests.conftest import USUARIO_DOCENTE, necesita_bd
 
 pytestmark = necesita_bd
@@ -505,3 +507,136 @@ def test_la_capsula_ajena_no_se_lee_ni_se_responde(escenario, cliente_falso, nav
         json={"id_estudiante": dueno, "alternativa_seleccionada": 0},
     )
     assert respuesta.status_code == 404
+
+
+# --- Sin síntesis multimedia en la API (hallazgo H5, PRUEBAS_VARK.md) ---------
+#
+# `crear_capsula` sintetizaba audio e imagen con un guion que nadie servía y
+# bloqueaba la respuesta ~100–130 s. Estos tests fijan que ya no lo hace.
+
+# Los campos de `CapsulaOut` antes de quitar la síntesis. Se escriben a mano y no
+# se leen del esquema para que un cambio en la respuesta no pase inadvertido.
+CAMPOS_CAPSULA_OUT = {
+    "id_capsula",
+    "id_estudiante",
+    "id_objetivo",
+    "fecha_generacion",
+    "estado_validacion",
+    "titulo",
+    "objetivo_aprendizaje",
+    "activacion",
+    "concepto_central",
+    "representacion_adaptativa",
+    "ejemplo",
+    "actividad",
+    "fuentes",
+    "origen",
+    "modelo_llm",
+    "intentos",
+    "segundos",
+}
+
+
+@pytest.fixture
+def sin_multimedia(monkeypatch):
+    """Sustituye los módulos de multimedia por dobles que anotan y fallan.
+
+    Van en `sys.modules` y no con `monkeypatch.setattr` sobre las funciones
+    reales para no importar `media/image.py` ni TTS, y para que cualquier import
+    perezoso dentro de un handler reciba el doble. Lo que cuenta es la anotación,
+    no la excepción: el bloque que se quitó tragaba todo con `except Exception`.
+    """
+    llamadas: list[str] = []
+
+    def _prohibida(nombre: str):
+        def _llamada(*args, **kwargs):
+            llamadas.append(nombre)
+            raise AssertionError(f"POST /api/capsulas no debía llamar a {nombre}")
+
+        return _llamada
+
+    audio = types.ModuleType("studify.media.audio")
+    audio.generar_audio = _prohibida("generar_audio")
+    imagen = types.ModuleType("studify.media.image")
+    imagen.generar_imagen = _prohibida("generar_imagen")
+    generador = types.ModuleType("studify.media.generator")
+    generador.GeneradorMultimedia = _prohibida("GeneradorMultimedia")
+
+    monkeypatch.setitem(sys.modules, "studify.media.audio", audio)
+    monkeypatch.setitem(sys.modules, "studify.media.image", imagen)
+    monkeypatch.setitem(sys.modules, "studify.media.generator", generador)
+    return llamadas
+
+
+def _pedir_con_perfil(http, db, escenario, perfil: PerfilVark):
+    estudiante = _estudiante_con_perfil(db, perfil)
+    return http.post(
+        "/api/capsulas",
+        json={
+            "id_estudiante": estudiante.id_estudiante,
+            "id_objetivo": escenario["objetivo"].id_objetivo,
+        },
+    )
+
+
+def test_un_perfil_auditivo_no_sintetiza_audio_al_crear_la_capsula(
+    http, db, escenario, cliente_falso, sin_multimedia
+):
+    perfil = PerfilVark(v=Decimal(0), a=Decimal(100), r=Decimal(0), k=Decimal(0))
+    assert aplicar_reglas(perfil).audio_activo
+
+    respuesta = _pedir_con_perfil(http, db, escenario, perfil)
+
+    assert respuesta.status_code == 201, respuesta.text
+    assert respuesta.json()["origen"] == "generada"
+    assert sin_multimedia == []
+
+
+def test_un_perfil_visual_no_genera_imagen_al_crear_la_capsula(
+    http, db, escenario, cliente_falso, sin_multimedia
+):
+    perfil = PerfilVark(v=Decimal(100), a=Decimal(0), r=Decimal(0), k=Decimal(0))
+    assert aplicar_reglas(perfil).recursos_visuales > 0
+
+    respuesta = _pedir_con_perfil(http, db, escenario, perfil)
+
+    assert respuesta.status_code == 201, respuesta.text
+    assert respuesta.json()["origen"] == "generada"
+    assert sin_multimedia == []
+
+
+def test_un_perfil_auditivo_y_visual_no_sintetiza_nada_al_crear_la_capsula(
+    http, db, escenario, cliente_falso, sin_multimedia
+):
+    perfil = PerfilVark(v=Decimal(40), a=Decimal(40), r=Decimal(10), k=Decimal(10))
+    config = aplicar_reglas(perfil)
+    assert config.audio_activo and config.recursos_visuales > 0
+
+    respuesta = _pedir_con_perfil(http, db, escenario, perfil)
+
+    assert respuesta.status_code == 201, respuesta.text
+    assert respuesta.json()["origen"] == "generada"
+    assert sin_multimedia == []
+
+
+def test_la_respuesta_conserva_sus_campos_y_el_visor_sigue_ofreciendo_audio(
+    http, db, escenario, cliente_falso, sin_multimedia, navegador_de
+):
+    """La API responde lo mismo y el audio del visor, que tiene su endpoint, sigue."""
+    perfil = PerfilVark(v=Decimal(0), a=Decimal(60), r=Decimal(20), k=Decimal(20))
+    assert aplicar_reglas(perfil).audio_activo
+    estudiante = _estudiante_con_perfil(db, perfil)
+    # Sin la aceptación vigente el visor manda a /aceptar en vez de mostrarse.
+    consentimiento.registrar(db, estudiante.id_estudiante)
+    navegador = navegador_de(estudiante.id_estudiante)
+
+    creada = _pedir(navegador, {**escenario, "estudiante": estudiante})
+    html = navegador.get(f"/student/viewer/{escenario['objetivo'].id_objetivo}").text
+
+    assert creada.status_code == 201, creada.text
+    assert set(creada.json()) == CAMPOS_CAPSULA_OUT
+    assert creada.json()["intentos"] == 1
+    # El visor sale del caché (no regenera) y deja pedido su propio audio.
+    assert f"/student/viewer/{creada.json()['id_capsula']}/generate-audio" in html
+    assert 'hx-trigger="load"' in html
+    assert sin_multimedia == []
