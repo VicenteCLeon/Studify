@@ -722,6 +722,96 @@ cubierta por los tests.
 **Para la próxima ronda (H1 + H3):** todas las comparaciones se expresan como promedio de al
 menos 2 corridas por brazo, con el criterio declarado antes de ejecutar.
 
+### Etapa 2 — H5: síntesis multimedia síncrona e inútil en `POST /api/capsulas`
+
+**Verificación (04-oct-2026, rama `fix/h5-audio`).**
+
+- Después de persistir una cápsula **nueva**, `crear_capsula` llamaba a
+  `GeneradorMultimedia.generar_activos(config, json.dumps(capsula), id)`.
+  - Con `recursos_visuales > 0` generaba una imagen (`data/media/{id}_visual.png`).
+  - Con `audio_activo` sintetizaba con XTTS los primeros 250 caracteres del JSON
+    (`data/media/{id}_audio.wav`).
+- Nada sirve esos archivos:
+  - la app solo monta `/static` y `/public`;
+  - ninguna plantilla, endpoint ni columna de la BD lee `media_dir`.
+- El visor sintetiza **otro** audio por su cuenta, con `hx-trigger="load"` hacia
+  `POST /student/viewer/{id}/generate-audio`. Su guion es `activacion + concepto_central`
+  leído de la BD, y lo guarda en `src/studify/public/audio/capsula_{id}.wav`.
+- Como `GET /student/viewer/{id_objetivo}` llama directamente a `crear_capsula`, la página
+  del estudiante esperaba esa síntesis antes de mostrarse.
+- Las cápsulas que salen del caché o del caché compartido retornan antes y nunca pasaron
+  por ese bloque.
+
+**Costo medido de la síntesis inútil** (XTTS-v2 en CPU, i5-14600KF; guion de la ruta API
+de dos cápsulas de la batería):
+
+| Cápsula | Guion | Síntesis | Audio resultante |
+|---|---|---|---|
+| A100 | 250 caracteres de JSON | 129,4 s | 21,5 s |
+| R100 | 250 caracteres de JSON | 99,5 s | 21,0 s |
+
+Lo narrado eran claves del JSON y una frase cortada: `{"titulo": "…", "objetivo_aprendizaje":
+"…", "activacion": "¿Alguna vez has notado que si conoces el RUT de una persona,`.
+
+**Corrección.**
+
+- Se quita de `crear_capsula` el bloque completo de la Fase 6 (audio e imagen), decisión
+  del equipo.
+- No se modifican `media/audio.py`, `media/image.py` ni `media/generator.py`, ni el visor:
+  la API solo deja de llamarlos. La generación de imágenes se retomará cuando se decida su
+  API.
+- Quedan sin uso desde la aplicación:
+  - `GeneradorMultimedia` y `generar_activos` (`media/generator.py`);
+  - `generar_imagen` (solo la llama `generator.py`);
+  - el ajuste `media_dir` (`config.py`).
+- No se eliminan.
+
+**Antes / después.** En una cápsula nueva con p_A ≥ 25 % desaparecen **~100–130 s de
+bloqueo** antes de ver la página. La síntesis de imagen con p_V > 0 tampoco se ejecuta ya,
+pero no se midió, porque V está fuera de las pruebas. La espera del audio del visor
+(67–229 s) no cambia: el texto ya se puede leer mientras se sintetiza.
+
+**Tests** (`tests/test_api_capsulas.py`):
+
+- **Dobles de multimedia.** Los módulos se reemplazan por dobles en `sys.modules`, que
+  anotan la llamada y fallan. Se usan anotaciones porque el bloque antiguo se tragaba las
+  excepciones.
+- **Lo que cubren:**
+  - con A ≥ 25 %, con V > 0 y con A + V juntos no se llama a nada;
+  - la respuesta conserva exactamente los 17 campos de `CapsulaOut`;
+  - el visor de un perfil A ≥ 25 % sigue pidiendo su audio.
+- **Contra el código anterior**, los 4 tests nuevos fallan (anotan `GeneradorMultimedia`);
+  con el cambio, pasan.
+
+**Fuera de alcance.** `scripts/probar_perfiles_vark.py` sigue registrando
+`guion_ruta_api`, que describe la ruta ya eliminada; sirve de evidencia histórica.
+
+#### Medición para la espera del visor (sin cambios de código, script en el scratchpad)
+
+Se usó un guion real del visor de 530 caracteres (`B_A60-R10-K30`, 179 s en la batería),
+que produce ~45 s de audio. Las corridas fueron en un mismo proceso y en CPU.
+
+| Paso | Tiempo |
+|---|---|
+| `import torch` + `TTS` (una vez por proceso) | 7,3 s |
+| Carga del modelo XTTS (dos veces) | 19,0 s y 16,2 s (RSS: 4,6–4,7 GB) |
+| Síntesis con el modelo ya cargado (dos veces) | 194,5 s y 151,4 s (RTF 4,0 y 3,2) |
+| Ruta del servidor completa (`generar_audio`: carga + síntesis) | 89,8 s (síntesis 81,0 s, RTF 1,6) |
+
+- **La carga pesa 16–19 s; la síntesis, 81–195 s.** La variación de la síntesis entre
+  corridas del mismo texto es mayor que toda la carga.
+- **Con RTF ≥ 1,6, XTTS en esta CPU genera audio más lento de lo que se reproduce.** Por
+  eso ni un streaming por frases evitaría las pausas.
+- **DirectML (AMD Radeon RX 9060 XT, `torch-directml` 0.2.5) es incompatible tal como
+  está:**
+  - el modelo carga en 9,3 s;
+  - la síntesis falla con `Cannot set version_counter for inference tensor`;
+  - reemplazando `torch.inference_mode` por `no_grad`, el proceso aborta con `Invalid or
+    unsupported data type ComplexFloat`, porque la STFT de XTTS usa tensores complejos.
+- **Caché por guion:** entre los estudiantes con `audio_activo` de la BD (sin los de
+  test), 26 estudiantes caen en 24 huellas distintas. El caché compartido evitaría ~2 de
+  26 síntesis por objetivo.
+
 ## Limitaciones conocidas
 
 ### Canal Visual (excluido de esta batería)
@@ -734,9 +824,11 @@ No se ejecutó por decisión del equipo. Su comportamiento actual, leído del c�
   fragmentos.
 - Con p_V ≥ 25 %, `recursos_visuales ≥ 1`: el prompt pide bloques `tabla` o `esquema`
   (el «visual» que sí funciona, porque es texto estructurado), y después de persistir la
-  cápsula `POST /api/capsulas` llama a `GeneradorMultimedia`, que ejecuta **SDXL Base 1.0
+  cápsula `POST /api/capsulas` llamaba a `GeneradorMultimedia`, que ejecuta **SDXL Base 1.0
   en local sobre DirectML** ([`media/image.py`](../src/studify/media/image.py)), de forma
-  síncrona dentro del request. No hay ninguna API de imágenes de por medio.
+  síncrona dentro del request. No hay ninguna API de imágenes de por medio. **Desde la
+  corrección de H5 (04-oct) la API ya no lo llama;** lo que sigue describe el código de
+  `media/`, que se conserva sin cambios.
 - Si faltan dependencias o falla la carga del modelo, devuelve `None` y se sigue. Si
   falla **la inferencia**, la excepción sube hasta el `except` de
   [`capsules.py`](../src/studify/api/routers/capsules.py): la cápsula de texto se entrega
@@ -748,7 +840,7 @@ No se ejecutó por decisión del equipo. Su comportamiento actual, leído del c�
 
 ### Hallazgos reportados sin corregir
 
-La batería no toca lógica de negocio: cada corrección se hace aparte, por etapas (ver «Correcciones»). Estado al 04-oct-2026: H2 y H9 corregidos; H1 y H3 abiertos, a re-medir ahora que H2 está corregido; el resto, sin tocar. Ordenados por impacto. En H5, «el visor lo llama» se refiere a cada cápsula **nueva**: las que salen del caché no pasan por `GeneradorMultimedia`.
+La batería no toca lógica de negocio: cada corrección se hace aparte, por etapas (ver «Correcciones»). Estado al 04-oct-2026: H2, H5 y H9 corregidos; H1 y H3 abiertos, a re-medir ahora que H2 está corregido; H10 registrado sin corregir; el resto, sin tocar. Ordenados por impacto. En H5, «el visor lo llama» se refiere a cada cápsula **nueva**: las que salen del caché no pasaban por `GeneradorMultimedia`.
 
 | # | Hallazgo | Evidencia | Propuesta (pendiente de aprobación) |
 |---|---|---|---|
@@ -756,11 +848,12 @@ La batería no toca lógica de negocio: cada corrección se hace aparte, por eta
 | H2 | ✅ **Corregido (Etapa 4, 04-oct).** **El bucle de reparación vuelve a repetir la respuesta byte a byte.** | C05 (A2-R17-K81): los intentos 2 y 3 son idénticos (mismo MD5, 4.930 caracteres), así que el tercer intento se desperdició y la cápsula se perdió. Es el problema que la sección 5 sedecies de AVANCE daba por corregido con el mensaje de reparación. **Etapa 1:** las 2 cápsulas que perdió el brazo B repitieron los 3 intentos idénticos, con desviaciones de solo 8–21 palabras. | En `generation/generator.py`, detectar que `crudo` es igual al anterior y, en ese caso, reintentar con otra estrategia: subir la temperatura en esa llamada o reinyectar solo el error con la cápsula anterior resumida. |
 | H3 | 🟡 **Abierto (Etapa 1 sin aplicar).** **Las cápsulas K se pasan de largo y las R se quedan cortas** (patrón 1). | K +48, R −57 palabras respecto del objetivo. 4/4 reparaciones y el único contrato agotado son de K ≥ 40 % por pasar de 300 palabras. | Decisión de diseño del equipo: o bajar el objetivo de palabras de K cuando se pide `lista_pasos` + `ejemplo_resuelto`, o pedir explícitamente brevedad en esos bloques. **Etapa 1:** el reparto por paso como tope llevó R a +2 %, pero invirtió K a −21 % y acercó al piso de 150 a los perfiles de objetivo bajo. Retomar después de H2. |
 | H4 | **Con 25 ≤ p_K < 40 % se ignora la cantidad de componentes prácticos** (patrón 2). | 3/3 perfiles. | Que `componentes_practicos = 2` vaya acompañado de una directiva concreta (p. ej. `paso_a_paso`) en `vark/rules.py`. Toca la lectura de la tabla 11.1 aprobada el 06-ago, así que la decide el equipo. |
-| H5 | **Audio en el camino de la API: narra JSON, se pierde y bloquea.** `POST /api/capsulas` (y el visor, que lo llama) ejecuta `GeneradorMultimedia` **síncrono** con `json.dumps(capsula)[:250]` como guion, guarda el WAV en `data/media/` (nada lo sirve), y después el visor sintetiza **otro** audio con el guion correcto. | 29/29 cápsulas: el guion de la ruta API empieza con `{"titulo": …`. XTTS en CPU tardó 67–229 s por audio en esta batería. Por lectura de código, un estudiante con p_A ≥ 25 % espera esa síntesis inútil antes de ver su cápsula. | Quitar la síntesis de audio de `crear_capsula` (el visor ya la hace bajo demanda con el guion correcto). Corrige a la vez el guion JSON, el archivo huérfano, la doble síntesis y la espera. |
+| H5 | ✅ **Corregido (Etapa 2, 04-oct).** `crear_capsula` ya no llama a `GeneradorMultimedia`: se eliminan ~100–130 s de bloqueo (medidos) en cápsulas nuevas con p_A ≥ 25 % (ver «Correcciones»). **Audio en el camino de la API: narra JSON, se pierde y bloquea.** `POST /api/capsulas` (y el visor, que lo llama) ejecuta `GeneradorMultimedia` **síncrono** con `json.dumps(capsula)[:250]` como guion, guarda el WAV en `data/media/` (nada lo sirve), y después el visor sintetiza **otro** audio con el guion correcto. | 29/29 cápsulas: el guion de la ruta API empieza con `{"titulo": …`. XTTS en CPU tardó 67–229 s por audio en esta batería. Por lectura de código, un estudiante con p_A ≥ 25 % espera esa síntesis inútil antes de ver su cápsula. | Quitar la síntesis de audio de `crear_capsula` (el visor ya la hace bajo demanda con el guion correcto). Corrige a la vez el guion JSON, el archivo huérfano, la doble síntesis y la espera. |
 | H6 | **El modelo inventa cifras de ejemplo** (patrón 4). | 2/29 cápsulas con RUT ficticios. | Advertencia (no rechazo) en `generation/validator.py` para cifras que no están en los fragmentos, o permitir explícitamente los datos de ejemplo en el prompt. |
 | H7 | **«Preguntas reflexivas» casi nunca se cumple.** | 2/13 cápsulas con A ≥ 40 % intercalan una pregunta en la prosa. | Reformular la instrucción para que nombre dónde va (p. ej. dentro de `concepto_central`). |
 | H8 | **`pytest` completo carga SDXL y XTTS.** `tests/test_visual.py` y `tests/test_voz.py` ejecutan la generación **al importarse**. | Lectura de código. | Moverlos a `scripts/` o protegerlos con `if __name__ == "__main__"`. |
 | H9 | ✅ **Corregido (04-oct).** **`gruut` (dependencia de Coqui TTS) instala un paquete `tests` en site-packages** que le hacía sombra a `tests/` del repo: 12 archivos que hacen `from tests.conftest import …` no se podían ni importar. | `import tests` resolvía a `.venv/Lib/site-packages/tests/__init__.py` (instalado el 31-ago). Con `pytest`: 12 errores de colección. | `tests/__init__.py` convierte la carpeta en paquete regular y pytest antepone la raíz del repo a `sys.path`; los 4 tests que hacían `from material import` pasan a `from tests.material import`. Verificado: 432 pasan y 4 fallan (los mismos 4 previos), sin shim. |
+| H10 | **Caché de audio del visor frágil.** (1) Dos WAV generados en desarrollo están versionados en git. (2) El caché del visor se indexa por `id_capsula`, no por el contenido. | (1) `git ls-files` lista `src/studify/public/audio/capsula_620.wav` (48,6 s) y `capsula_1451.wav` (2,5 s), agregados en `1dc5286`; `public/audio/` no está en `.gitignore`. La cápsula 620 existe en la BD; **la 1451 no** (el id máximo es 1599 y quedan 5 cápsulas). (2) `generate_capsule_audio` sintetiza solo si no existe `capsula_{id}.wav` ([`student.py`](../src/studify/web/routers/student.py)). Si se recrea la BD y los ids se repiten, una cápsula nueva reproduciría el audio de otra. Además, cada copia del caché compartido recibe un id nuevo y **vuelve a sintetizar el mismo texto**. | Sin aplicar: (a) agregar `src/studify/public/audio/` a `.gitignore` y sacar los dos WAV del índice con `git rm --cached` (quedan en el historial; no se reescribe); (b) nombrar el archivo por un hash del guion y de la voz de referencia (p. ej. `sha256(guion + referencia)[:16].wav`) en vez de por `id_capsula`. Así una BD recreada no puede servir un audio ajeno, y las copias del caché compartido reutilizan el WAV. |
 
 **Aviso de XTTS, sin consecuencias en esta corrida:** 10/16 audios registraron «The text
 length exceeds the character limit of 239 for language 'es'». Ninguno quedó truncado (las

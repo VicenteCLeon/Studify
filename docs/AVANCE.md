@@ -2,7 +2,10 @@
 
 > Documento vivo. Se actualiza al cierre de cada fase para que cualquier sesión de trabajo
 > (o cualquier persona) pueda retomar el proyecto sin releer todo el hilo de conversación.
-> Última actualización: **04-oct-2026** — **H2 corregido** (sección 5 sexvicies): el bucle
+> Última actualización: **04-oct-2026** — **H5 corregido** (sección 5 septvicies):
+> `POST /api/capsulas` ya no sintetiza audio ni imagen. Se eliminan ~100–130 s de bloqueo
+> (medidos) en cada cápsula nueva con A ≥ 25 %; el audio del visor no cambia.
+> Antes, el mismo día: **H2 corregido** (sección 5 sexvicies): el bucle
 > de reparación ya no se queda repitiendo la misma respuesta. El mensaje «bajo mínimo» va
 > cuantificado y una respuesta idéntica reinicia la conversación. Cumple los criterios
 > fijados de antemano en dos corridas por semilla, y recupera las dos cápsulas que se
@@ -2170,6 +2173,55 @@ el modelo es en la práctica determinista, así que reintentar con la misma entr
 
 Siguiente paso: volver a medir H1 + H3 (brazo B) sobre este código, con comparaciones
 como promedio de al menos 2 corridas por brazo.
+
+## 5 septvicies. H5 corregido: la API ya no sintetiza audio ni imagen (04-oct-2026)
+
+Etapa 2 de las correcciones (rama `fix/h5-audio`). Detalle y evidencia en
+`PRUEBAS_VARK.md`, «Correcciones».
+
+### Qué pasaba
+
+- **La síntesis.** Después de guardar una cápsula **nueva**, `crear_capsula` llamaba a
+  `GeneradorMultimedia.generar_activos`.
+  - Con `audio_activo`, narraba con XTTS los primeros 250 caracteres del JSON de la cápsula.
+  - Con `recursos_visuales > 0`, generaba además una imagen.
+- **El destino de los archivos.** Ambos quedaban en `data/media/`, que nada sirve.
+- **El efecto para el estudiante.** El visor llama a `crear_capsula` antes de mostrar la
+  página, así que el estudiante esperaba esa síntesis y después el visor sintetizaba
+  **otro** audio con el guion correcto.
+- **Lo medido** con el guion de la API, XTTS en CPU: **99,5 s y 129,4 s** de bloqueo, para
+  21 s de audio que narraban claves de JSON.
+
+### Cambio (`api/routers/capsules.py`)
+
+- Se quita el bloque completo de la Fase 6. La API deja de llamar a `media/`.
+- `media/audio.py`, `media/image.py`, `media/generator.py` y el visor no cambian. La
+  imagen se retomará cuando se decida su API.
+- Quedan sin uso desde la aplicación, sin eliminarse:
+  - `GeneradorMultimedia`;
+  - `generar_imagen`;
+  - el ajuste `media_dir`.
+- El caché y el caché compartido retornaban antes de ese bloque, así que su camino no
+  cambia.
+
+### Verificación
+
+- **4 tests nuevos** en `tests/test_api_capsulas.py`, con dobles de los módulos de
+  multimedia que anotan cualquier llamada:
+  - A ≥ 25 %, V > 0 y A + V no llaman a nada;
+  - la respuesta conserva sus 17 campos;
+  - el visor de un perfil A ≥ 25 % sigue pidiendo su audio.
+- **Contra el código anterior**, los 4 fallan.
+- **Suite y lint.** `pytest` (sin `test_visual.py` ni `test_voz.py`, ver H8): 441 en verde
+  y los mismos 4 fallos previos. `ruff check .`: 41, igual que antes.
+
+### Registrado sin corregir
+
+- **H10:** dos WAV del visor están versionados en git, y uno corresponde a una cápsula que
+  no existe en la BD. Además, el caché de audio del visor se indexa por `id_capsula` y no
+  por el contenido.
+- **Archivos huérfanos:** `data/media/` contiene 1 archivo (`622_audio.wav`, 746.572
+  bytes), ignorado por git. Se deja para que el equipo decida.
 
 ## 6. Pendiente inmediato
 
