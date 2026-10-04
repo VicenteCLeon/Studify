@@ -2,7 +2,12 @@
 
 > Documento vivo. Se actualiza al cierre de cada fase para que cualquier sesión de trabajo
 > (o cualquier persona) pueda retomar el proyecto sin releer todo el hilo de conversación.
-> Última actualización: **04-oct-2026** — **corrección de H1 + H3 medida y no aplicada**
+> Última actualización: **04-oct-2026** — **H2 corregido** (sección 5 sexvicies): el bucle
+> de reparación ya no se queda repitiendo la misma respuesta. El mensaje «bajo mínimo» va
+> cuantificado y una respuesta idéntica reinicia la conversación. Cumple los criterios
+> fijados de antemano en dos corridas por semilla, y recupera las dos cápsulas que se
+> habían perdido en la Etapa 1.
+> Antes, el mismo día: **corrección de H1 + H3 medida y no aplicada**
 > (sección 5 quinvicies): el glosario de R aparece en el 100 % de los casos con el texto
 > nuevo, pero ningún brazo cumplió la regla de cierre fijada de antemano. La causa es el
 > bucle de reparación que repite la respuesta (H2), que pasa a ser prioritario. Además, se
@@ -2124,6 +2129,47 @@ importar** desde el 31-ago. Con `tests/__init__.py` y 4 imports `from tests.mate
 `pytest` vuelve a correr la suite completa: **432 en verde y los mismos 4 fallos previos**
 (2 de `test_interaccion_quiz`; 2 de `test_prompt_maestro`, por la etiqueta del perfil en
 el prompt, que es la Etapa 3).
+
+## 5 sexvicies. H2 corregido: el bucle de reparación ya no se queda repitiendo (04-oct-2026)
+
+Etapa 4 de las correcciones (rama `fix/h2-reparacion`). Era la causa que hizo fallar la
+Etapa 1 (sección 5 quinvicies). Detalle y evidencia en `PRUEBAS_VARK.md`, «Correcciones».
+
+### Diagnóstico
+
+Tras un error «bajo mínimo», el modelo devolvía su respuesta **idéntica** en 4 de 6
+reintentos; tras «sobre máximo», en 1 de 52. El mensaje de falta era vago («hay que
+desarrollarlo más»), mientras que el de exceso estaba cuantificado desde el 24-ago.
+Reenviando dos veces la misma conversación se obtuvo la misma respuesta: a temperatura 0,4
+el modelo es en la práctica determinista, así que reintentar con la misma entrada no sirve.
+
+### Cambio (`generation/validator.py` y `generation/generator.py`)
+
+- **Mensaje «bajo mínimo» cuantificado**, simétrico al de exceso: cuántas palabras faltan,
+  cuántas agregar (con el mismo margen de 15, ahora la constante `MARGEN_REPARACION`), el
+  techo de 300 y los campos donde desarrollar. Nombra campos del contrato y no tipos de
+  bloque.
+- **Detección de respuesta idéntica:** si el modelo repite su respuesta, el intento
+  siguiente arranca desde el prompt original, sin el turno repetido, con un aviso y los
+  errores cuantificados. El máximo sigue en 3 intentos y la temperatura no cambia.
+  `repeticiones_detectadas` vive solo en `ResultadoGeneracion`: no hay columnas ni
+  migraciones.
+
+### Verificación
+
+- Criterios D1–D3 fijados antes de ejecutar. D2 se comparó como promedio de dos corridas
+  del cambio contra dos líneas base, porque el ruido medido entre las líneas base es de
+  ±1 cápsula y ±2 reparaciones. Se cumple:
+  - S42: 30 válidas y 1,5 reparaciones de promedio (exigido ≥ 29,5 y ≤ 4);
+  - S43: 8 válidas y 1 reparación (exigido 8 y ≤ 1);
+  - ningún perfil estable perdido y 0 citas inventadas.
+- Las dos cápsulas que H2 hizo perder en la Etapa 1 se reprodujeron con el código nuevo y
+  **convergen en el intento 2** (129 → 168 y 142 → 177 palabras).
+- `pytest`: 437 en verde (5 tests nuevos) y los mismos 4 fallos previos. `ruff check .`:
+  41 errores, igual que antes.
+
+Siguiente paso: volver a medir H1 + H3 (brazo B) sobre este código, con comparaciones
+como promedio de al menos 2 corridas por brazo.
 
 ## 6. Pendiente inmediato
 

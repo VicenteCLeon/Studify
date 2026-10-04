@@ -639,6 +639,89 @@ Artefactos: `data/pruebas_vark/20261004-0128*` a `20261004-0136*`. Los brazos
 (`brazo_A.patch`, `brazo_B_c1.patch`, `brazo_B.patch`) y el comparador
 (`comparar_etapa1.py`) quedaron fuera del repo; se pueden versionar si se retoma la etapa.
 
+### Etapa 4 — H2: el bucle de reparación que repite la respuesta
+
+**Diagnóstico (04-oct-2026).** En las corridas guardadas hubo 58 pares de intentos
+consecutivos. Tras un error «bajo mínimo» la respuesta salió **idéntica** en 4 de 6 pares
+(67 %); tras «sobre máximo», en 1 de 52 (2 %). El mensaje «bajo mínimo» era vago («el
+contenido tiene 129 palabras y el mínimo es 150: hay que desarrollarlo más»: sin cuánto
+falta, ni dónde, ni hasta dónde), mientras que el de sobra ya estaba cuantificado. Al
+reenviar dos veces la misma conversación (temperatura 0,4, sin semilla) se obtuvieron
+dos respuestas idénticas entre sí: con la misma entrada el modelo es en la práctica
+determinista, así que reintentar con el mismo mensaje no sirve.
+
+**Cambio evaluado.**
+- **A:** el mensaje «bajo mínimo» queda cuantificado igual que el de sobra: cuántas
+  palabras faltan, cuántas agregar (con el mismo margen), el techo de 300 y los campos
+  donde desarrollar.
+- **B:** si una respuesta es idéntica a la anterior, el intento siguiente no repite la
+  conversación: arranca desde el prompt original con un aviso concreto y los errores
+  cuantificados. El máximo sigue en 3 intentos y la temperatura no se toca.
+
+**Criterios fijados antes de ejecutar** (no se modifican después de ver resultados):
+
+| # | Criterio | Cómo se mide |
+|---|---|---|
+| D1 (a) | 0 pares consecutivos idénticos en los que la segunda respuesta se pidió con la **misma conversación** | Test unitario con LLM falso (garantía, no medición) |
+| D1 (b) | Pares consecutivos idénticos devueltos por la API | Informativo, contra 5/58 de las corridas anteriores |
+| D2 | S42: promedio de válidas ≥ 29,5 y de reparaciones ≤ 4. S43: 8 válidas y promedio de reparaciones ≤ 1. Ninguno de los perfiles válidos en **ambas** líneas base (29 en S42, 8 en S43) queda inválido en ninguna corrida del cambio. 0 citas inventadas en todas las corridas | Dos corridas del cambio, sin audio, comparadas promedio contra promedio con las dos líneas base |
+| D3 | De los perfiles que necesitaron reparación, cuántos convergen, separando los que activaron la detección de repetición de los que no | Informativo; se espera n pequeño |
+
+**Líneas base** (código de `main`, sin audio, con todos los perfiles):
+
+| Corrida | Válidas | Reparaciones | Citas inventadas | Pares idénticos |
+|---|---|---|---|---|
+| S42 base 1 (`20261003-235748`) | 29/30 | 5 | 0 | 1/5 |
+| S42 base 2 (`20261004-015507`) | 30/30 | 3 | 0 | 0/3 |
+| S43 base 1 (`20261004-010726`) | 8/8 | 2 | 0 | 0/2 |
+| S43 base 2 (`20261004-015733`) | 8/8 | 0 | 0 | 0/0 |
+
+**Ruido medido entre las dos líneas base: ±1 cápsula válida y ±2 reparaciones.** Por eso
+D2 compara promedios de dos corridas y no corridas sueltas. Regla de cierre: si D1 y D2 se
+cumplen, el cambio queda aplicado sin commit; si no, se revierte y se analiza, sin iterar.
+
+#### Resultado (04-oct-2026): D1 y D2 se cumplen → el cambio queda aplicado
+
+| Corrida | Válidas | Reparaciones | Citas inventadas | Pares idénticos | Perfiles estables perdidos |
+|---|---|---|---|---|---|
+| S42 cambio 1 (`20261004-020427`) | 30/30 | 1 | 0 | 0/1 | ninguno |
+| S42 cambio 2 (`20261004-020729`) | 30/30 | 2 | 0 | 0/2 | ninguno |
+| S43 cambio 1 (`20261004-020647`) | 8/8 | 1 | 0 | 0/1 | ninguno |
+| S43 cambio 2 (`20261004-020948`) | 8/8 | 1 | 0 | 0/1 | ninguno |
+
+| Criterio | Exigido | Medido | Estado |
+|---|---|---|---|
+| D1 (a) | 0 en el test | 4 tests nuevos en verde (incluye el tope de 3 intentos) | ✅ |
+| D1 (b) *(informativo)* | — | 0/5 pares idénticos (antes: 5/58 histórico; 1/8 en las líneas base) | — |
+| D2 S42 | válidas ≥ 29,5 y reparaciones ≤ 4 (promedios) | 30 y 1,5 | ✅ |
+| D2 S43 | 8 válidas y reparaciones ≤ 1 (promedio) | 8 y 1 | ✅ |
+| D2 estables | ningún perfil válido en ambas bases queda inválido | ninguno, en las 4 corridas | ✅ |
+| D2 citas | 0 | 0 | ✅ |
+| D3 *(informativo)* | — | sin repetición: 5/5 convergen; con repetición: n = 0 | — |
+
+**Límite de esta medición:** las 5 reparaciones de las corridas del cambio fueron por
+**exceso** de palabras. Con el prompt de `main`, el caso «bajo mínimo» —el que disparaba
+las repeticiones— no apareció, así que ni el mensaje nuevo ni la detección se ejercitaron
+en las corridas (D3 con n = 0, como se esperaba). D2 demuestra que el cambio no empeora
+nada. Su efecto se mide por separado:
+
+**Reproducción de los dos casos que H2 hizo perder en la Etapa 1** (brazo B, semilla 42):
+primer intento = la respuesta guardada, inyectada tal cual; el resto lo respondió DeepSeek
+con el bucle nuevo.
+
+| Caso | Antes | Con el cambio |
+|---|---|---|
+| A75-R2-K23 | 129 → 129 → 129 (3 idénticos), cápsula perdida | 129 → **168**, válida en el intento 2 |
+| A2-R17-K81 | 142 → 142 → 142 (3 idénticos), cápsula perdida | 142 → **177**, válida en el intento 2 |
+
+En los dos casos el mensaje cuantificado («faltan 21; agrega al menos 36… sin pasar de
+300; desarrolla `concepto_central` y `representacion_adaptativa`») bastó, sin que hiciera
+falta la detección de repetición (n = 2). La detección queda como red de seguridad,
+cubierta por los tests.
+
+**Para la próxima ronda (H1 + H3):** todas las comparaciones se expresan como promedio de al
+menos 2 corridas por brazo, con el criterio declarado antes de ejecutar.
+
 ## Limitaciones conocidas
 
 ### Canal Visual (excluido de esta batería)
@@ -665,12 +748,12 @@ No se ejecutó por decisión del equipo. Su comportamiento actual, leído del c�
 
 ### Hallazgos reportados sin corregir
 
-La batería no toca lógica de negocio: cada corrección se hace aparte, por etapas (ver «Correcciones»). Estado al 04-oct-2026: H9 corregido; H1 y H3 abiertos tras la Etapa 1; el resto, sin tocar. Ordenados por impacto. En H5, «el visor lo llama» se refiere a cada cápsula **nueva**: las que salen del caché no pasan por `GeneradorMultimedia`.
+La batería no toca lógica de negocio: cada corrección se hace aparte, por etapas (ver «Correcciones»). Estado al 04-oct-2026: H2 y H9 corregidos; H1 y H3 abiertos, a re-medir ahora que H2 está corregido; el resto, sin tocar. Ordenados por impacto. En H5, «el visor lo llama» se refiere a cada cápsula **nueva**: las que salen del caché no pasan por `GeneradorMultimedia`.
 
 | # | Hallazgo | Evidencia | Propuesta (pendiente de aprobación) |
 |---|---|---|---|
 | H1 | 🟡 **Abierto; arreglo validado pero no aplicado (Etapa 1).** **El perfil R nunca recibe glosario.** La directiva dice «Cierra *el contenido* con un bloque `glosario`», y `contenido` es el campo del contrato anterior a los siete pasos (19-ago), que ya no existe. | 0/10 cápsulas con R ≥ 40 %. **Experimento** (scratchpad, sin tocar el repo): reescribiendo la instrucción como «El último bloque de `representacion_adaptativa` debe ser un bloque `glosario`…», **4/4** cápsulas lo traen (3 R puro + A20-R70-K10). **Etapa 1:** con el texto nuevo, el glosario aparece en todas las cápsulas válidas con R ≥ 40 % (S42 y S43, brazos A y B), pero la etapa no cumplió C3 (ver «Correcciones»). | Cambiar ese texto en `rag/prompts/maestro.py::INSTRUCCION_POR_DIRECTIVA["glosario"]` y revisar el resto de las instrucciones que digan «contenido». **Efecto colateral medido:** las cápsulas R suben a 255–299 palabras y 2/4 necesitaron una reparación por pasar de 300, así que conviene acompañarlo con un objetivo de palabras R algo menor (`MARGEN_PALABRAS_OBJETIVO`). |
-| H2 | 🔴 **Abierto y prioritario: bloquea H1 y H3.** **El bucle de reparación vuelve a repetir la respuesta byte a byte.** | C05 (A2-R17-K81): los intentos 2 y 3 son idénticos (mismo MD5, 4.930 caracteres), así que el tercer intento se desperdició y la cápsula se perdió. Es el problema que la sección 5 sedecies de AVANCE daba por corregido con el mensaje de reparación. **Etapa 1:** las 2 cápsulas que perdió el brazo B repitieron los 3 intentos idénticos, con desviaciones de solo 8–21 palabras. | En `generation/generator.py`, detectar que `crudo` es igual al anterior y, en ese caso, reintentar con otra estrategia: subir la temperatura en esa llamada o reinyectar solo el error con la cápsula anterior resumida. |
+| H2 | ✅ **Corregido (Etapa 4, 04-oct).** **El bucle de reparación vuelve a repetir la respuesta byte a byte.** | C05 (A2-R17-K81): los intentos 2 y 3 son idénticos (mismo MD5, 4.930 caracteres), así que el tercer intento se desperdició y la cápsula se perdió. Es el problema que la sección 5 sedecies de AVANCE daba por corregido con el mensaje de reparación. **Etapa 1:** las 2 cápsulas que perdió el brazo B repitieron los 3 intentos idénticos, con desviaciones de solo 8–21 palabras. | En `generation/generator.py`, detectar que `crudo` es igual al anterior y, en ese caso, reintentar con otra estrategia: subir la temperatura en esa llamada o reinyectar solo el error con la cápsula anterior resumida. |
 | H3 | 🟡 **Abierto (Etapa 1 sin aplicar).** **Las cápsulas K se pasan de largo y las R se quedan cortas** (patrón 1). | K +48, R −57 palabras respecto del objetivo. 4/4 reparaciones y el único contrato agotado son de K ≥ 40 % por pasar de 300 palabras. | Decisión de diseño del equipo: o bajar el objetivo de palabras de K cuando se pide `lista_pasos` + `ejemplo_resuelto`, o pedir explícitamente brevedad en esos bloques. **Etapa 1:** el reparto por paso como tope llevó R a +2 %, pero invirtió K a −21 % y acercó al piso de 150 a los perfiles de objetivo bajo. Retomar después de H2. |
 | H4 | **Con 25 ≤ p_K < 40 % se ignora la cantidad de componentes prácticos** (patrón 2). | 3/3 perfiles. | Que `componentes_practicos = 2` vaya acompañado de una directiva concreta (p. ej. `paso_a_paso`) en `vark/rules.py`. Toca la lectura de la tabla 11.1 aprobada el 06-ago, así que la decide el equipo. |
 | H5 | **Audio en el camino de la API: narra JSON, se pierde y bloquea.** `POST /api/capsulas` (y el visor, que lo llama) ejecuta `GeneradorMultimedia` **síncrono** con `json.dumps(capsula)[:250]` como guion, guarda el WAV en `data/media/` (nada lo sirve), y después el visor sintetiza **otro** audio con el guion correcto. | 29/29 cápsulas: el guion de la ruta API empieza con `{"titulo": …`. XTTS en CPU tardó 67–229 s por audio en esta batería. Por lectura de código, un estudiante con p_A ≥ 25 % espera esa síntesis inútil antes de ver su cápsula. | Quitar la síntesis de audio de `crear_capsula` (el visor ya la hace bajo demanda con el guion correcto). Corrige a la vez el guion JSON, el archivo huérfano, la doble síntesis y la espera. |
