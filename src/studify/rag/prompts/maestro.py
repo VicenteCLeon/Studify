@@ -155,7 +155,10 @@ INSTRUCCION_POR_DIRECTIVA = {
         "ordenados y accionables."
     ),
     "actividad_aplicada": (
-        "La actividad de cierre debe ser de práctica activa e interactiva obligatoriamente: cuando el perfil es kinestésico (o p_K >= 40%), el tipo de actividad DEBE SER `flashcards_y_quiz` conteniendo AMBAS cosas: entre 3 y 5 tarjetas interactivas (`tarjetas` con `anverso` y `reverso`) Y entre 3 y 5 preguntas de opción múltiple (`preguntas` con `enunciado`, `alternativas`, `indice_correcta` y `explicacion`). Si el perfil no es predominantemente kinestésico, se puede usar `flashcards`, `quiz_multi` o `quiz_mc`."
+        "La actividad de cierre es de práctica activa. El tipo DEBE SER `flashcards_y_quiz` "
+        "con AMBAS partes: entre 3 y 5 tarjetas (`tarjetas` con `anverso` y `reverso`) "
+        "Y entre 3 y 5 preguntas de opción múltiple (`preguntas` con `enunciado`, "
+        "`alternativas`, `indice_correcta` y `explicacion`)."
     ),
 }
 
