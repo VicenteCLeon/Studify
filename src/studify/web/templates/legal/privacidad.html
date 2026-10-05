@@ -100,6 +100,12 @@
                     <td data-label="De dónde sale">Tú, en el cuestionario, solo si das tu consentimiento expreso para ello</td>
                     <td data-label="¿Obligatorio?">No</td>
                 </tr>
+                <!-- BORRADOR TÉCNICO (05-oct-2026): fila nueva por voz_genero y voz_modo. No constituye asesoría legal; revisar antes de publicar. -->
+                <tr>
+                    <td data-label="Dato"><strong>Preferencia de voz de la narración</strong>: voz femenina o masculina, en modo calidad o rápido. Es una preferencia de audio, independiente del género con que te identificas, y nunca se deduce de él</td>
+                    <td data-label="De dónde sale">Tú, al elegirla en el visor o en tu perfil</td>
+                    <td data-label="¿Obligatorio?">No (si no eliges, se usa la voz por defecto)</td>
+                </tr>
                 <tr>
                     <td data-label="Dato"><strong>Cápsulas</strong> que se generan para ti (tema, contenido, fecha y modelo de IA usado) y su audio narrado, si lo pides</td>
                     <td data-label="De dónde sale">Se generan cuando abres un tema</td>
@@ -211,9 +217,10 @@
         Si cambiamos de proveedor de IA, actualizaremos esta sección y su versión.
     </p>
     <p>
-        La <strong>narración de audio</strong> la genera un modelo de voz (XTTS-v2) que corre en nuestro propio
-        servidor: el texto no sale a ningún tercero. La voz es sintética, creada a partir de una grabación de
-        referencia de dominio público de Linda Johnson, locutora de audiolibros del proyecto LibriVox. No es la voz de ningún docente ni estudiante.
+        La <strong>narración de audio</strong> la generan modelos de voz (Kokoro y Piper) que corren en nuestro
+        propio servidor: el texto no sale a ningún tercero. Las voces son sintéticas y vienen incluidas en esos
+        modelos; no son la voz de ningún docente ni estudiante. La voz que eliges se guarda como preferencia
+        (sección 2) y solo se usa para narrar tus cápsulas.
     </p>
 </section>
 
@@ -316,6 +323,7 @@
     <ul>
         <li><strong>ver</strong> lo que guardamos y <strong>descargarlo</strong> completo en un archivo JSON (acceso y portabilidad);</li>
         <li><strong>corregir o borrar</strong> tu rango de edad, género y carrera, y retirar la autorización para usar tu género (rectificación);</li>
+        <li><strong>cambiar tu preferencia de voz</strong> cuando quieras, desde el visor o tu perfil;</li>
         <li><strong>eliminar todos tus datos</strong> de forma definitiva (supresión).</li>
     </ul>
     <p>

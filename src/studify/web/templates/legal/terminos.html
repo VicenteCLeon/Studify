@@ -55,6 +55,13 @@
         perfil de aprendizaje ayudan a repasar los contenidos de asignaturas universitarias relacionadas con la Ingeniería Informática.
         Es <strong>gratuito y sin fines comerciales</strong>.
     </p>
+    <!-- BORRADOR TÉCNICO (05-oct-2026): redactado por el equipo con apoyo de una herramienta de IA. No constituye asesoría legal; revisar antes de publicar. -->
+    <p>
+        RepasAi es un <strong>prototipo académico de investigación</strong>. No cobramos por usarlo, no
+        mostramos publicidad y no vendemos ni licenciamos el servicio ni tus datos. Si alguna vez eso
+        cambiara, lo informaríamos antes en una nueva versión de estos términos, que tendrías que aceptar
+        para seguir usando el servicio (ver <a href="#cambios">sección 12</a>).
+    </p>
 </section>
 
 <section id="aceptacion" aria-labelledby="aceptacion-t">
@@ -178,13 +185,126 @@
         Las cápsulas son material de estudio derivado del material del curso. Puedes usarlas para tu estudio
         personal; no las redistribuyas fuera del curso. Los derechos sobre su contenido corresponden a los titulares del material del que provienen.
     </p>
-    <h3>El software y sus componentes</h3>
+    <!-- BORRADOR TÉCNICO (05-oct-2026): redactado por el equipo con apoyo de una herramienta de IA. No constituye asesoría legal; revisar antes de publicar. Licencias leídas del metadato de cada paquete o de su repositorio (ver docs/PRUEBAS_VARK.md). -->
+    <h3>El software</h3>
     <p>
-        El código de RepasAi es de sus autores y es público en GitHub (<a href="https://github.com/VicenteCLeon/Studify">github.com/VicenteCLeon/Studify</a>). No tiene una licencia de código abierto, así que puedes leerlo, pero no reutilizarlo sin autorización de sus autores.
-        Usa componentes de terceros bajo sus propias licencias: las tipografías Figtree y Fraunces (SIL Open
-        Font License 1.1), los íconos de Lucide (licencia ISC), la biblioteca HTMX (licencia BSD de cero
-        cláusulas) y el modelo de voz XTTS-v2 de Coqui, cuya licencia (Coqui Public Model License) solo
-        permite usos no comerciales. El resto de las bibliotecas que usa son de código abierto y se rigen por sus propias licencias.
+        El código fuente de RepasAi es software libre, © 2026 Patricio Hernández Vergara y Vicente
+        Cisternas León, y está disponible públicamente en su repositorio,
+        <a href="https://github.com/VicenteCLeon/Studify">github.com/VicenteCLeon/Studify</a>, bajo la
+        licencia <a href="https://github.com/VicenteCLeon/Studify/blob/main/LICENSE">GNU Affero General
+        Public License, versión 3 o posterior (AGPL-3.0-or-later)</a>. Puedes usarlo, estudiarlo,
+        modificarlo y redistribuirlo según esa licencia; si ofreces una versión modificada como servicio
+        en red, debes poner su código fuente a disposición de sus usuarios. Esa licencia cubre <strong>solo el código</strong> de
+        RepasAi: no cubre los modelos de voz, el material de estudio de los cursos ni las cápsulas generadas
+        a partir de él, que siguen lo descrito más arriba. Cada componente de terceros mantiene su propia
+        licencia, que se detalla a continuación.
+    </p>
+
+    <h3 id="componentes">Componentes de terceros y licencias</h3>
+    <p>
+        RepasAi se construye con los siguientes componentes. Esta lista incluye lo que forma parte de la
+        instalación con que funciona el servicio; cada componente se rige por su propia licencia.
+    </p>
+    <div class="table-container">
+        <table class="table table-stack">
+            <caption class="visually-hidden">Componentes de terceros y sus licencias</caption>
+            <thead>
+                <tr>
+                    <th scope="col">Componente</th>
+                    <th scope="col">Para qué se usa</th>
+                    <th scope="col">Licencia</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td data-label="Componente"><a href="https://huggingface.co/hexgrad/Kokoro-82M">Kokoro-82M</a> (modelo) y <a href="https://github.com/thewh1teagle/kokoro-onnx">kokoro-onnx</a></td>
+                    <td data-label="Para qué se usa">Voz de la narración en modo «calidad»</td>
+                    <td data-label="Licencia">Apache-2.0 (modelo) y MIT (biblioteca)</td>
+                </tr>
+                <tr>
+                    <td data-label="Componente"><a href="https://github.com/OHF-Voice/piper1-gpl">Piper</a> (<code>piper-tts</code>)</td>
+                    <td data-label="Para qué se usa">Voz de la narración en modo «rápido»</td>
+                    <td data-label="Licencia">GPL-3.0 o posterior</td>
+                </tr>
+                <tr>
+                    <td data-label="Componente">Voz <a href="https://huggingface.co/rhasspy/piper-voices/tree/main/es/es_ES/sharvard/medium"><code>es_ES-sharvard-medium</code></a> de Piper</td>
+                    <td data-label="Para qué se usa">Voz femenina y masculina del modo «rápido»</td>
+                    <td data-label="Licencia">Datos de entrenamiento bajo CC BY 3.0 (ver créditos)</td>
+                </tr>
+                <tr>
+                    <td data-label="Componente"><a href="https://github.com/espeak-ng/espeak-ng">eSpeak NG</a> y <a href="https://github.com/bootphon/phonemizer">phonemizer</a></td>
+                    <td data-label="Para qué se usa">Convertir el texto en fonemas antes de narrarlo</td>
+                    <td data-label="Licencia">GPL-3.0 (eSpeak NG) y GPL-3.0 o posterior (phonemizer)</td>
+                </tr>
+                <tr>
+                    <td data-label="Componente"><a href="https://github.com/microsoft/onnxruntime">ONNX Runtime</a></td>
+                    <td data-label="Para qué se usa">Ejecutar los modelos de voz en el servidor</td>
+                    <td data-label="Licencia">MIT</td>
+                </tr>
+                <tr>
+                    <td data-label="Componente"><a href="https://github.com/pymupdf/pymupdf">PyMuPDF</a></td>
+                    <td data-label="Para qué se usa">Leer los PDF del material de estudio que carga el docente</td>
+                    <td data-label="Licencia">AGPL-3.0 (o licencia comercial de Artifex)</td>
+                </tr>
+                <tr>
+                    <td data-label="Componente"><a href="https://github.com/scanny/python-pptx">python-pptx</a></td>
+                    <td data-label="Para qué se usa">Leer las presentaciones del material de estudio</td>
+                    <td data-label="Licencia">MIT</td>
+                </tr>
+                <tr>
+                    <td data-label="Componente"><a href="https://github.com/psycopg/psycopg">Psycopg</a></td>
+                    <td data-label="Para qué se usa">Conexión con la base de datos</td>
+                    <td data-label="Licencia">LGPL-3.0</td>
+                </tr>
+                <tr>
+                    <td data-label="Componente"><a href="https://github.com/fastapi/fastapi">FastAPI</a>, <a href="https://github.com/Kludex/starlette">Starlette</a>, <a href="https://github.com/encode/uvicorn">Uvicorn</a>, <a href="https://github.com/sqlalchemy/sqlalchemy">SQLAlchemy</a>, <a href="https://github.com/sqlalchemy/alembic">Alembic</a>, <a href="https://github.com/pydantic/pydantic">Pydantic</a>, <a href="https://github.com/pallets/jinja">Jinja</a>, <a href="https://github.com/encode/httpx">HTTPX</a>, <a href="https://github.com/run-llama/llama_index">LlamaIndex</a></td>
+                    <td data-label="Para qué se usa">Servidor web, base de datos, plantillas y conexión con el modelo de IA</td>
+                    <td data-label="Licencia">MIT o BSD-3-Clause, según el componente</td>
+                </tr>
+                <tr>
+                    <td data-label="Componente"><a href="https://github.com/bigskysoftware/htmx">HTMX</a> 1.9.10</td>
+                    <td data-label="Para qué se usa">Interacción de la página sin recargarla</td>
+                    <td data-label="Licencia">BSD-2-Clause</td>
+                </tr>
+                <tr>
+                    <td data-label="Componente"><a href="https://lucide.dev">Lucide</a></td>
+                    <td data-label="Para qué se usa">Íconos</td>
+                    <td data-label="Licencia">ISC (algunos íconos derivan de Feather, bajo MIT)</td>
+                </tr>
+                <tr>
+                    <td data-label="Componente">Tipografías Figtree y Fraunces</td>
+                    <td data-label="Para qué se usa">Texto de la interfaz</td>
+                    <td data-label="Licencia">SIL Open Font License 1.1</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <p>
+        El resto de las bibliotecas de las que dependen estos componentes son de código abierto y se rigen
+        por sus propias licencias. El detalle completo, con la licencia de cada paquete, está en el
+        repositorio.
+    </p>
+    <p>
+        <strong>Opción administrativa.</strong> El equipo puede activar, solo para pruebas internas, el
+        modelo de voz <a href="https://huggingface.co/coqui/XTTS-v2">XTTS-v2</a> de Coqui (biblioteca Coqui
+        TTS, MPL-2.0). Su licencia, la Coqui Public Model License, solo permite usos no comerciales, también
+        de los audios que genera. No se usa en la interfaz del estudiante.
+    </p>
+
+    <h3>Créditos de la voz</h3>
+    <p>
+        La voz del modo «rápido» es <code>es_ES-sharvard-medium</code>, del proyecto Piper. Se entrenó con
+        el corpus <em>Sharvard_IJA</em> de Vincent Aubanel, María Luisa García Lecumberri y Martin Cooke
+        (LISTA Consortium, 2014), publicado en Edinburgh DataShare
+        (<a href="https://hdl.handle.net/10283/574">hdl.handle.net/10283/574</a>) bajo la licencia
+        <a href="https://creativecommons.org/licenses/by/3.0/">Creative Commons Atribución 3.0</a>.
+        La voz se obtuvo ajustando una voz anterior de Piper (<code>en_US-lessac-medium</code>), entrenada
+        con datos de Lessac Technologies cuya licencia los autoriza <strong>solo para investigación</strong> y
+        excluye el uso comercial. Por eso la usamos únicamente dentro de este prototipo académico.
+    </p>
+    <p>
+        La voz del modo «calidad» es la del modelo Kokoro-82M (voces <code>ef_dora</code> y
+        <code>em_alex</code>), de hexgrad, bajo licencia Apache-2.0.
     </p>
 </section>
 

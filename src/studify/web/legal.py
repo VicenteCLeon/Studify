@@ -40,8 +40,10 @@ TERMINOS = Documento(
     titulo="Términos y Condiciones",
     ruta="/terminos",
     template="legal/terminos.html",
-    version="0.1",
-    actualizado=date(2026, 10, 2),
+    # 0.2: motores de voz, componentes de terceros y licencias, licencia del
+    # código y declaración de prototipo académico. Fecha = día en que se publique.
+    version="0.2",
+    actualizado=date(2026, 10, 5),
 )
 
 PRIVACIDAD = Documento(
@@ -49,8 +51,10 @@ PRIVACIDAD = Documento(
     titulo="Política de Privacidad",
     ruta="/privacidad",
     template="legal/privacidad.html",
-    version="0.1",
-    actualizado=date(2026, 10, 2),
+    # 0.2: motores de voz (Kokoro y Piper en vez de XTTS-v2) y preferencia de
+    # voz (`voz_genero`, `voz_modo`) como dato nuevo. Fecha = día en que se publique.
+    version="0.2",
+    actualizado=date(2026, 10, 5),
 )
 
 DOCUMENTOS = (TERMINOS, PRIVACIDAD)

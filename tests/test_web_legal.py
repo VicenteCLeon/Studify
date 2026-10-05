@@ -265,6 +265,7 @@ def test_una_version_nueva_se_vuelve_a_pedir_y_conserva_el_historial(
     creados.append(id_estudiante)
     assert http.get("/student/catalog", follow_redirects=False).status_code == 200
 
+    vigente = legal.TERMINOS.version
     nuevo = _nueva_version_de_terminos(monkeypatch)
 
     bloqueado = http.get("/student/catalog", follow_redirects=False)
@@ -288,7 +289,7 @@ def test_una_version_nueva_se_vuelve_a_pedir_y_conserva_el_historial(
     assert http.get("/student/catalog", follow_redirects=False).status_code == 200
 
     versiones = [(f.documento, f.version) for f in _aceptaciones(db, id_estudiante)]
-    assert ("terminos", "0.1") in versiones
+    assert ("terminos", vigente) in versiones
     assert ("terminos", nuevo.version) in versiones
 
 
