@@ -1,0 +1,104 @@
+--- a/src/studify/rag/orchestrator.py
++++ b/src/studify/rag/orchestrator.py
+@@ -54,6 +54,13 @@
+ # modelo en el prompt.
+ MARGEN_PALABRAS_OBJETIVO = 30
+ 
++# Palabras que el bloque `glosario` aporta a la cápsula y que `palabras_texto` no descuenta.
++# Medido en la ronda 2 de H1+H3 (PRUEBAS_VARK.md, 05-oct-2026): con el glosario, el primer intento
++# de los perfiles R ≥ 40 % sale 70 palabras más largo que sin él (pareado por perfil, 14 perfiles),
++# y el glosario mismo ocupa una mediana de 64 palabras (75 cápsulas): el modelo lo agrega sin
++# acortar el resto. Se descuenta el efecto medido, redondeado al tramo de 10.
++DESCUENTO_GLOSARIO = 70
++
+ 
+ class ErrorPrompt(Exception):
+     """No se puede construir un prompt maestro con los datos entregados."""
+@@ -203,6 +210,10 @@
+             ajustes.capsula_max_palabras - MARGEN_PALABRAS_OBJETIVO,
+         ),
+     )
++    if "glosario" in config.directivas:
++        palabras_objetivo = max(
++            ajustes.capsula_min_palabras, palabras_objetivo - DESCUENTO_GLOSARIO
++        )
+ 
+     usuario = "\n\n".join(
+         [
+--- a/src/studify/rag/prompts/maestro.py
++++ b/src/studify/rag/prompts/maestro.py
+@@ -134,9 +134,15 @@
+         "Define con precisión cada término técnico la primera vez que aparece, "
+         "usando la formulación del material entregado."
+     ),
++    # Hasta el 03-oct-2026 decía «Cierra el contenido con un bloque `glosario`»:
++    # `contenido` era el campo del contrato anterior a los siete pasos y el
++    # modelo no lo ubicaba (0 glosarios en 10 cápsulas con p_R ≥ 40%, hallazgo H1
++    # de PRUEBAS_VARK.md). Las entradas se acotan porque el glosario cuenta
++    # dentro de la extensión.
+     "glosario": (
+-        "Cierra el contenido con un bloque `glosario` cuyo cuerpo sea una lista "
+-        "de entradas «término: definición»."
++        "El último bloque de `representacion_adaptativa` es un bloque `glosario` "
++        "con 3 a 5 entradas «término: definición», de una línea cada una, con "
++        "términos que aparecen en el material entregado."
+     ),
+     "tono_oral": ("Redacta en segunda persona y con frases cortas, como una explicación hablada."),
+     "analogias_cotidianas": (
+--- a/tests/test_prompt_maestro.py
++++ b/tests/test_prompt_maestro.py
+@@ -338,6 +338,54 @@
+         assert maestro.palabras_objetivo == round(config.palabras_texto / 10) * 10
+ 
+ 
++# --- Descuento del glosario --------------------------------------------------
++
++
++def _objetivo_sin_descuento(config) -> int:
++    """El objetivo que `construir` calculaba antes de descontar el glosario."""
++    techo = 300 - orchestrator.MARGEN_PALABRAS_OBJETIVO
++    return max(150, min(round(config.palabras_texto / 10) * 10, techo))
++
++
++def test_el_glosario_descuenta_su_extension_del_objetivo():
++    config = aplicar_reglas(perfil(0, 0, 100, 0))
++    assert "glosario" in config.directivas
++    esperado = max(150, _objetivo_sin_descuento(config) - orchestrator.DESCUENTO_GLOSARIO)
++
++    maestro = construir(perfil(0, 0, 100, 0))
++
++    assert maestro.palabras_objetivo == esperado
++    assert f"aproximadamente {esperado} palabras" in maestro.usuario
++
++
++def test_sin_glosario_el_objetivo_no_cambia():
++    """V, A y K puros, el equilibrado y toda mezcla sin la directiva: mismo prompt que antes."""
++    for v, a, r in product(range(0, 101, 10), repeat=3):
++        if v + a + r > 100:
++            continue
++        p = perfil(v, a, r, 100 - v - a - r)
++        config = aplicar_reglas(p)
++        if "glosario" in config.directivas:
++            continue
++        assert construir(p).palabras_objetivo == _objetivo_sin_descuento(config), (v, a, r)
++
++
++def test_el_descuento_no_cambia_el_minimo_ni_el_maximo_del_prompt():
++    usuario = construir(perfil(0, 0, 100, 0)).usuario
++
++    assert "mínimo 150" in usuario
++    assert "máximo 300" in usuario
++
++
++def test_con_glosario_el_objetivo_nunca_baja_del_minimo():
++    for v, a, r in product(range(0, 101, 10), repeat=3):
++        if v + a + r > 100:
++            continue
++        p = perfil(v, a, r, 100 - v - a - r)
++        if "glosario" in aplicar_reglas(p).directivas:
++            assert construir(p).palabras_objetivo >= 150, (v, a, r)
++
++
+ # --- Invariantes del prompt completo -----------------------------------------
+ 
+ 

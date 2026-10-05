@@ -3,6 +3,8 @@
     # tabla por brazo (cada etiqueta lleva una o más corridas de data/pruebas_vark)
     python scripts/h1h3/comparar_h1h3.py ETIQUETA=corrida1,corrida2 [ETIQUETA=...]
 
+    # veredicto de la ronda 3 (brazos A y A_obj contra base; conjuntos S42, S43 y S45):
+    #   --veredicto-ronda3 S42:base=r1,r2 S42:A=... S42:A_obj=... S43:... S45:...
     # veredicto de los criterios de PRUEBAS_VARK (Etapa 1, ronda 2);
     # cada argumento es CONJUNTO:BRAZO=corridas
     python scripts/h1h3/comparar_h1h3.py --veredicto S42:base=r1,r2 S42:A=r3,r4 S42:B=r5,r6 \\
@@ -176,12 +178,17 @@ def parsear(args: list[str]) -> dict[str, list[str]]:
 
 
 # ------------------------------------------------------------------ veredicto de la ronda
-def c3_de_conjunto(conjunto: str, base: list[dict], brazo: list[dict]) -> tuple[bool, list[str]]:
-    """C3: lo más estricto entre los umbrales absolutos de la Etapa 1 (solo S42) y la base nueva."""
+def c3_de_conjunto(
+    conjunto: str, base: list[dict], brazo: list[dict], *, absolutos: bool = True
+) -> tuple[bool, list[str]]:
+    """C3: lo más estricto entre los umbrales absolutos de la Etapa 1 (solo S42) y la base nueva.
+
+    Con `absolutos=False` (ronda 3) solo cuenta la comparación con la base de la misma ronda.
+    """
     prom = lambda ms, k: mean(m[k][0] for m in ms)  # noqa: E731
     umbral_v = prom(base, "C3_validas") - 1
     umbral_r = prom(base, "C3_reparaciones") + 2
-    if conjunto == "S42":
+    if absolutos and conjunto == "S42":
         umbral_v = max(umbral_v, C3_ABSOLUTO_S42["validas"])
         umbral_r = min(umbral_r, C3_ABSOLUTO_S42["reparaciones"])
     notas, ok = [], True
@@ -284,6 +291,105 @@ def veredicto(grupos: dict[str, list[str]], rescates: dict[str, list[str]]) -> N
         print("  Ningún brazo cumple: se revierte y se analiza.")
 
 
+def veredicto_ronda3(grupos: dict[str, list[str]], rescates: dict[str, list[str]]) -> None:
+    """Criterios de la ronda 3 (PRUEBAS_VARK, «Etapa 1 — Ronda 3»): C1, C3, C4 y C6 por grupo.
+
+    Grupo de diseño = S42 + S43; grupo de validación = S45.
+    A+objetivo gana solo si cumple todo en ambos.
+    Los brazos son «A» y «A_obj»; la referencia es «base» en cada conjunto.
+    """
+    conjuntos = sorted({k.split(":")[0] for k in grupos})
+    grupos_eval = {
+        "S42+S43": [c for c in conjuntos if c in ("S42", "S43")],
+        "S45": [c for c in conjuntos if c == "S45"],
+    }
+    metr = {k: [metricas(cargar(c)) for c in v] for k, v in grupos.items()}
+    gano: dict[str, bool] = {}
+    for brazo in ("A", "A_obj"):
+        print(f"\n######## BRAZO {brazo}")
+        candidatos: list[tuple[str, str, str, int]] = []
+        duros: list[tuple[str, str]] = []  # (criterio, conjunto): 2 o más fallidos en una corrida
+        for crit in TODAS:
+            for conj in conjuntos:
+                if crit == "C4a":
+                    de_base = sum(len(m["C4a_fallan"]) for m in metr[f"{conj}:base"])
+                    del_brazo = sum(len(m["C4a_fallan"]) for m in metr[f"{conj}:{brazo}"])
+                    if del_brazo <= de_base:
+                        print(
+                            f"  C4a {conj}: {del_brazo} perfiles fallidos ≤ {de_base} de la base ✅"
+                        )
+                        continue
+                for i, m in enumerate(metr[f"{conj}:{brazo}"], start=1):
+                    fallan = m[f"{crit}_fallan"]
+                    if len(fallan) == 1:
+                        candidatos.append((crit, conj, fallan[0], i))
+                        print(f"  {crit} {conj} corrida {i}: UN fallo ({fallan[0]}), candidato R1")
+                    elif fallan:
+                        duros.append((crit, conj))
+                        print(f"  {crit} {conj} corrida {i}: {len(fallan)} fallos {fallan} ❌")
+        rescate_fallido: list[tuple[str, str]] = []
+        if len(candidatos) > 2:
+            print(f"    {len(candidatos)} rescates necesarios (máximo 2) → cuentan como falla ❌")
+            rescate_fallido = [(c, conj) for c, conj, _, _ in candidatos]
+        else:
+            for crit, conj, slug, _ in candidatos:
+                clave = f"{crit}:{slug}"
+                datos = next(
+                    (v for v in rescates.get(brazo, []) if v.startswith(clave + ":")), None
+                )
+                if datos is None:
+                    print(f"    rescate pendiente: {clave} ({conj}; 5 repeticiones de {brazo})")
+                    rescate_fallido.append((crit, conj))
+                    continue
+                filas = [
+                    r
+                    for c in datos.split(":", 2)[2].split(",")
+                    for r in cargar(c)
+                    if r["slug"] == slug
+                ]
+                n_ok = sum(EXIGE[crit][1](r) for r in filas)
+                paso = len(filas) == 5 and n_ok >= 4
+                if not paso:
+                    rescate_fallido.append((crit, conj))
+                print(f"    rescate {clave}: {n_ok}/{len(filas)} {'✅' if paso else '❌'}")
+        todo_ok = True
+        for nombre, conjs in grupos_eval.items():
+            if not conjs:
+                continue
+            c1c4 = not any(conj in conjs for _, conj in duros + rescate_fallido)
+            c3 = True
+            for conj in conjs:
+                ok, notas = c3_de_conjunto(
+                    conj, metr[f"{conj}:base"], metr[f"{conj}:{brazo}"], absolutos=False
+                )
+                c3 &= ok
+                for nota in notas:
+                    print(f"  C3 {nota}")
+            sin_valida = {
+                conj: [m["C1_sin_valida"][0] for m in metr[f"{conj}:{brazo}"]] for conj in conjs
+            }
+            c6 = all(n <= 1 for v in sin_valida.values() for n in v)
+            print(
+                f"  C6 {nombre}: R ≥ 40 % sin cápsula válida por corrida {sin_valida} (≤ 1) "
+                f"{'✅' if c6 else '❌'}"
+            )
+            ok_grupo = c1c4 and c3 and c6
+            todo_ok &= ok_grupo
+            print(
+                f"  ⇒ {nombre}: C1+C4 {'✅' if c1c4 else '❌'} · C3 {'✅' if c3 else '❌'}"
+                f" · C6 {'✅' if c6 else '❌'}"
+            )
+        gano[brazo] = todo_ok
+    print("\n######## REGLA DE CIERRE")
+    if gano.get("A_obj"):
+        print("  A+objetivo cumple en S42+S43 y en S45: gana y se aplica (commits separados).")
+    else:
+        print(
+            "  A+objetivo no cumple en ambos grupos: cuenta como falla. main queda como está; "
+            "H1 se documenta como limitación y se presentan alternativas estructurales."
+        )
+
+
 def efecto_fix(grupos: dict[str, list[str]]) -> None:
     for etiqueta, corridas in grupos.items():
         ms = [metricas(cargar(c)) for c in corridas]
@@ -310,6 +416,15 @@ def main() -> None:
             rescates.setdefault(brazo, []).append(dato)
             resto = resto[:i] + resto[i + 2 :]
         veredicto(parsear(resto), rescates)
+    elif args[0] == "--veredicto-ronda3":
+        resto = args[1:]
+        rescates: dict[str, list[str]] = {}
+        while "--rescate" in resto:
+            i = resto.index("--rescate")
+            brazo, _, dato = resto[i + 1].partition("=")
+            rescates.setdefault(brazo, []).append(dato)
+            resto = resto[:i] + resto[i + 2 :]
+        veredicto_ronda3(parsear(resto), rescates)
     elif args[0] == "--efecto-fix":
         efecto_fix(parsear(args[1:]))
     else:

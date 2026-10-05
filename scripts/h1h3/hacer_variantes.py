@@ -337,10 +337,94 @@ def _lineas(texto: str) -> list[str]:
     return re.findall(r"[^\n]*\n|[^\n]+", texto)
 
 
-def escribir_parche(variante: str, nombre: str) -> None:
+# --- Variante A_obj (ronda 3): A + descuento del glosario en el objetivo de palabras ---------
+OBJ_CONST_VIEJA = "MARGEN_PALABRAS_OBJETIVO = 30\n"
+OBJ_CONST_NUEVA = """MARGEN_PALABRAS_OBJETIVO = 30
+
+# Palabras que el bloque `glosario` aporta a la cápsula y que `palabras_texto` no descuenta.
+# Medido en la ronda 2 de H1+H3 (PRUEBAS_VARK.md, 05-oct-2026): con el glosario, el primer intento
+# de los perfiles R ≥ 40 % sale 70 palabras más largo que sin él (pareado por perfil, 14 perfiles),
+# y el glosario mismo ocupa una mediana de 64 palabras (75 cápsulas): el modelo lo agrega sin
+# acortar el resto. Se descuenta el efecto medido, redondeado al tramo de 10.
+DESCUENTO_GLOSARIO = 70
+"""
+OBJ_CALCULO_VIEJO = """            ajustes.capsula_max_palabras - MARGEN_PALABRAS_OBJETIVO,
+        ),
+    )
+"""
+OBJ_CALCULO_NUEVO = """            ajustes.capsula_max_palabras - MARGEN_PALABRAS_OBJETIVO,
+        ),
+    )
+    if "glosario" in config.directivas:
+        palabras_objetivo = max(
+            ajustes.capsula_min_palabras, palabras_objetivo - DESCUENTO_GLOSARIO
+        )
+"""
+OBJ_TESTS_ANCLA = (
+    "# --- Invariantes del prompt completo -----------------------------------------\n"
+)
+OBJ_TESTS = '''# --- Descuento del glosario --------------------------------------------------
+
+
+def _objetivo_sin_descuento(config) -> int:
+    """El objetivo que `construir` calculaba antes de descontar el glosario."""
+    techo = 300 - orchestrator.MARGEN_PALABRAS_OBJETIVO
+    return max(150, min(round(config.palabras_texto / 10) * 10, techo))
+
+
+def test_el_glosario_descuenta_su_extension_del_objetivo():
+    config = aplicar_reglas(perfil(0, 0, 100, 0))
+    assert "glosario" in config.directivas
+    esperado = max(150, _objetivo_sin_descuento(config) - orchestrator.DESCUENTO_GLOSARIO)
+
+    maestro = construir(perfil(0, 0, 100, 0))
+
+    assert maestro.palabras_objetivo == esperado
+    assert f"aproximadamente {esperado} palabras" in maestro.usuario
+
+
+def test_sin_glosario_el_objetivo_no_cambia():
+    """V, A y K puros, el equilibrado y toda mezcla sin la directiva: mismo prompt que antes."""
+    for v, a, r in product(range(0, 101, 10), repeat=3):
+        if v + a + r > 100:
+            continue
+        p = perfil(v, a, r, 100 - v - a - r)
+        config = aplicar_reglas(p)
+        if "glosario" in config.directivas:
+            continue
+        assert construir(p).palabras_objetivo == _objetivo_sin_descuento(config), (v, a, r)
+
+
+def test_el_descuento_no_cambia_el_minimo_ni_el_maximo_del_prompt():
+    usuario = construir(perfil(0, 0, 100, 0)).usuario
+
+    assert "mínimo 150" in usuario
+    assert "máximo 300" in usuario
+
+
+def test_con_glosario_el_objetivo_nunca_baja_del_minimo():
+    for v, a, r in product(range(0, 101, 10), repeat=3):
+        if v + a + r > 100:
+            continue
+        p = perfil(v, a, r, 100 - v - a - r)
+        if "glosario" in aplicar_reglas(p).directivas:
+            assert construir(p).palabras_objetivo >= 150, (v, a, r)
+
+
+'''
+
+
+def aplicar_objetivo(variante: str) -> None:
+    editar(
+        variante, ORQ, [(OBJ_CONST_VIEJA, OBJ_CONST_NUEVA), (OBJ_CALCULO_VIEJO, OBJ_CALCULO_NUEVO)]
+    )
+    editar(variante, TEST, [(OBJ_TESTS_ANCLA, OBJ_TESTS + OBJ_TESTS_ANCLA)])
+
+
+def escribir_parche(variante: str, nombre: str, desde: str = "base") -> None:
     lineas: list[str] = []
     for archivo in (ORQ, MAESTRO, TEST):
-        viejo = (SALIDA / "base" / archivo).read_bytes().decode("utf-8")
+        viejo = (SALIDA / desde / archivo).read_bytes().decode("utf-8")
         nuevo = (SALIDA / variante / archivo).read_bytes().decode("utf-8")
         if viejo == nuevo:
             continue
@@ -356,7 +440,7 @@ def escribir_parche(variante: str, nombre: str) -> None:
 
 
 def main() -> None:
-    for variante in ("base", "prefijo", "A", "B_topes", "B"):
+    for variante in ("base", "prefijo", "A", "B_topes", "B", "A_obj"):
         copiar_arbol(variante)
 
     previo = subprocess.run(
@@ -365,14 +449,17 @@ def main() -> None:
     _, crlf = leer(SALIDA / "base" / MAESTRO)
     escribir(SALIDA / "prefijo" / MAESTRO, previo.replace("\r\n", "\n"), crlf)
 
-    for variante in ("A", "B_topes", "B"):
+    for variante in ("A", "B_topes", "B", "A_obj"):
         editar(variante, MAESTRO, [(GLOSARIO_VIEJO, GLOSARIO_NUEVO)])
     aplicar_comun_b("B_topes", rangos=False)
     aplicar_comun_b("B", rangos=True)
+    aplicar_objetivo("A_obj")
 
     escribir_parche("A", "brazo_A.patch")
     escribir_parche("B_topes", "brazo_B_topes.patch")
     escribir_parche("B", "brazo_B.patch")
+    escribir_parche("A_obj", "brazo_A_obj.patch")
+    escribir_parche("A_obj", "objetivo_glosario.patch", desde="A")
     print(f"variantes en {SALIDA}\nparches en {PARCHES}")
 
 
