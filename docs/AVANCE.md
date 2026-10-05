@@ -2,7 +2,11 @@
 
 > Documento vivo. Se actualiza al cierre de cada fase para que cualquier sesión de trabajo
 > (o cualquier persona) pueda retomar el proyecto sin releer todo el hilo de conversación.
-> Última actualización: **05-oct-2026** — **motores de voz, Etapa 1** (sección 5
+> Última actualización: **05-oct-2026** — **preferencia de voz, Etapa 2** (sección 5
+> undetricies): el estudiante elige Dora, Alex, voz femenina rápida o voz masculina
+> rápida, en el visor o en el perfil. Se guarda en `estudiante.voz_genero` y `voz_modo`
+> (migración `c3a91f5e7d20`), y el visor narra con la voz del dueño de la cápsula.
+> Antes, el mismo día: **motores de voz, Etapa 1** (sección 5
 > duodetricies): Kokoro por defecto (Dora o Alex), Piper como modo rápido (sharvard, voces
 > masculina y femenina) y XTTS solo administrativo, detrás de la misma `generar_audio`. El
 > estudiante elige {género, modo}, y el guion se normaliza a palabras antes de narrarse.
@@ -2290,6 +2294,51 @@ Rama `feat/audio-motores`. Experimento, decisión, licencias y mediciones en
 - **H11:** `test_api_diagnosticos` se cuelga sin Postgres.
 - **Discrepancia de razón de Kokoro** (0,53–0,66 frente a 0,27–0,41): se vuelve a medir
   en la Etapa 3 con 5 corridas y mediana.
+
+## 5 undetricies. Preferencia de voz del estudiante, Etapa 2 (05-oct-2026)
+
+Rama `feat/audio-motores`. Detalle en `PRUEBAS_VARK.md`, «Etapa 2».
+
+### Base de datos
+
+- **Migración `c3a91f5e7d20`:** `estudiante.voz_genero` ('femenina' | 'masculina') y
+  `voz_modo` ('calidad' | 'rapida'), nullable y con CHECK. NULL = Dora.
+- **Por qué esos nombres:** no se llaman `genero` para no confundirse con el género
+  sociodemográfico, que es un dato sensible. La voz nunca se deduce de él, y un test lo
+  verifica.
+- **Antes de migrar:**
+  - respaldo `pg_dump` de la base local (contenedor `studify-db`, no compartida);
+  - upgrade, downgrade y upgrade probados sobre esa base;
+  - un test repite el viaje de ida y vuelta en una base temporal.
+
+### Web
+
+- **Selector de voz** en el visor y en el perfil:
+  - cuatro opciones, con radios nativos y un botón para guardar;
+  - habla de la voz, no del género de quien escucha;
+  - muestra las demoras medidas.
+- **`POST /student/preferencias/voz`:** el estudiante sale solo de la cookie.
+- **Visor:** narra con la voz del dueño de la cápsula, también para el docente.
+- **Nombre del WAV:** incluye la voz, así que cambiar de voz no reusa el audio de la
+  anterior.
+- **«Mis datos»** exporta la preferencia.
+- **`.gitignore`:** ignora los WAV nuevos de `public/audio`. Los versionados quedan para
+  H10.
+
+### Verificación
+
+- `tests/test_preferencia_voz.py`: 23 tests.
+- `pytest` completo con Postgres: solo fallan los 4 conocidos.
+- `ruff check .`: 41, igual que antes.
+
+### Registrado
+
+- **pymupdf (extra `ingest`) es AGPL-3.0**, que también obliga por uso a través de la
+  red. Se usa solo en `extraer_pdf`. Las alternativas permisivas son pdfminer.six (MIT,
+  la más cercana), pdfplumber (MIT) y pypdf (BSD); todas sin probar.
+- **`capsula_1904.wav` entró al repo en `4b04550`.** Se resuelve con H10.
+- **Lecturas por materia:** los `codigo_objetivo` existentes siguen `PREFIJO-Ux-NN`, pero
+  la API no lo exige; hace falta un archivo común de respaldo.
 
 ## 6. Pendiente inmediato
 

@@ -996,6 +996,90 @@ misma pasada.
 - **Normalización sobre la batería:** en los 269 guiones (activación + concepto central),
   ningún símbolo sobrevive (→, =, ⊆, `$`, `\`, `_`, `[ ]`, `+`). Antes había 870 «→».
 
+#### Licencias del árbol de dependencias (05-oct-2026)
+
+Leídas del metadato instalado (`License-Expression`, `License` o clasificador) y, si
+faltaba, de la API de licencias de GitHub o del COPYING incluido en el paquete.
+
+| Paquete | Licencia | Lo trae | ¿Obligatorio para Kokoro (motor por defecto)? |
+|---|---|---|---|
+| kokoro-onnx 0.6.1 | MIT (repo; sin metadato) | extra `audio` | Sí |
+| espeakng-loader 0.2.4 | MIT (repo), pero **incluye `espeak-ng.dll`, que es GPL-3.0** | kokoro-onnx | Sí |
+| phonemizer 3.4.0 | **GPL-3.0 o posterior** | kokoro-onnx | Sí |
+| onnxruntime 1.30.0 | MIT | kokoro-onnx, piper-tts | Sí |
+| numpy, flatbuffers, protobuf, packaging, joblib, attrs, dlinfo, typing-extensions | BSD, Apache-2.0, MIT o PSF (permisivas) | onnxruntime, phonemizer | Sí |
+| piper-tts 1.8.0 | **GPL-3.0 o posterior** (incluye `espeakbridge.pyd`) | extra `audio` | No (modo rápido) |
+| pathvalidate 3.3.1 | MIT | piper-tts | No |
+| Unidecode 1.4.0 | **GPL-2.0 o posterior** | TTS (`audio-xtts`) | No |
+| num2words 0.5.14 / soxr 1.1.0 | LGPL / LGPL-2.1 o posterior | TTS, gruut, librosa (`audio-xtts`) | No |
+| psycopg / psycopg-binary 3.3.4 | LGPL-3.0-only | base de la app | — |
+| **pymupdf 1.28.2** | **AGPL-3.0, o licencia comercial de Artifex** | extra `ingest` | — |
+
+**Conclusión:** el motor por defecto no se libra de la GPL. Necesita `phonemizer` y
+espeak-ng, este último dentro de `espeakng-loader`.
+
+**Riesgo abierto: pymupdf es AGPL-3.0.**
+
+- **Qué exige:** a diferencia de la GPL, la AGPL (§13) obliga también cuando el programa
+  se usa **a través de la red**. Si RepasAi se ofrece como servicio web con pymupdf
+  dentro, hay que ofrecer el código fuente completo a sus usuarios, bajo AGPL.
+- **Dónde se usa:** solo en la ingesta (`knowledge/extract.py::extraer_pdf`), que es una
+  tarea del docente y no del estudiante. Pero corre dentro de la misma aplicación
+  (`/teacher`).
+- **Qué hace con él:** lee bloques, líneas y spans de cada página con
+  `get_text("dict")`, con el **tamaño de fuente de cada span** para detectar títulos y el
+  número de página. Los tests además **escriben** PDFs con él (`new_page` e `insert_text`
+  con `fontsize`).
+
+**Alternativas permisivas** (licencias según PyPI; cobertura según su documentación,
+**sin probar**):
+
+| Paquete | Licencia | ¿Cubre la lectura? |
+|---|---|---|
+| `pdfminer.six` 20260107 | MIT | La más cercana: `LTTextBox` → `LTTextLine` → `LTChar`, con el tamaño de fuente de cada carácter y la página. Equivale a los bloques, líneas y spans de hoy |
+| `pdfplumber` 0.11.10 | MIT (sobre pdfminer.six, MIT, y pypdfium2, BSD-3/Apache-2.0) | Sí: `extract_words(extra_attrs=["size"])` y caracteres con tamaño; agrupa líneas, no bloques |
+| `pypdf` 6.19.0 | BSD-3-Clause | En parte: `extract_text(visitor_text=…)` entrega el tamaño de fuente, pero sin estructura de bloques; habría que agruparlos a mano |
+| `reportlab` 5.0.1 (para generar PDFs en los tests) | BSD | Sí. `fpdf2` es LGPL-3.0 |
+
+No se cambió nada.
+
+#### Etapa 2 (preferencia de voz e interfaz): cerrada el 05-oct-2026
+
+- **Base de datos:**
+  - antes de migrar se respaldó la base **local**: contenedor `studify-db`,
+    `localhost:5432`, volumen `studify_studify_pgdata`, con `pg_dump -Fc` (11 tablas con
+    datos, 147 estudiantes);
+  - la migración `c3a91f5e7d20` agrega `estudiante.voz_genero` y `voz_modo`, nullable y
+    con CHECK. Se probó upgrade → downgrade → upgrade sobre esa base, y `alembic check`
+    solo reporta el falso positivo conocido de `ix_fragmento_contenido_fts`;
+  - un test repite el viaje de ida y vuelta en una **base temporal** del mismo servidor,
+    que crea y borra.
+- **La preferencia nunca sale de `estudiante.genero`:**
+  - `preferencia_guardada(voz_genero, voz_modo)` recibe solo esos dos campos;
+  - NULL → Dora;
+  - un test cruza el género sociodemográfico con la voz y comprueba que no se mezclan.
+- **Interfaz:**
+  - selector con cuatro opciones (Dora, Alex, voz femenina rápida, voz masculina
+    rápida), en el visor (sobre el reproductor) y en el perfil (si hay audio activo);
+  - se habla de la voz, nunca del género de quien escucha;
+  - las demoras son las medidas: «Natural, tarda unos segundos» (Kokoro, 7–14 s) y «Casi
+    inmediata» (Piper, 1–4 s);
+  - se guarda con un botón, para no sintetizar una voz por cada opción que se recorre
+    con las flechas.
+- **Endpoint `POST /student/preferencias/voz`:** el estudiante sale solo de la cookie.
+- **Visor:** narra con la voz del **dueño** de la cápsula, también cuando la pide el
+  docente.
+- **Nombre del WAV:** lleva la voz (`capsula_{id}__{motor}-{voz}[-{hablante}].wav`), así
+  que cambiar de voz no reusa el audio de la anterior.
+- **«Mis datos»** exporta los dos campos.
+- **`.gitignore`:** ignora `src/studify/public/audio/*.wav`. Los WAV ya versionados
+  siguen en git hasta H10. `capsula_1904.wav` **entró al repo en el commit `4b04550`**
+  junto con la documentación; se resuelve con H10 en la Etapa 3.
+- **Lecturas por materia (para la Etapa 3):** los 4 `codigo_objetivo` existentes (en la
+  BD y en `data/objetivos.csv`) siguen el formato `PREFIJO-Ux-NN` (`BD`, `PROG`). La API
+  no lo exige (`codigo_objetivo: str`, máximo 30), así que el archivo común de respaldo es
+  necesario.
+
 ## Limitaciones conocidas
 
 ### Canal Visual (excluido de esta batería)
