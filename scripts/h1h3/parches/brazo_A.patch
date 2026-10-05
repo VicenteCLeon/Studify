@@ -1,0 +1,20 @@
+--- a/src/studify/rag/prompts/maestro.py
++++ b/src/studify/rag/prompts/maestro.py
+@@ -134,9 +134,15 @@
+         "Define con precisión cada término técnico la primera vez que aparece, "
+         "usando la formulación del material entregado."
+     ),
++    # Hasta el 03-oct-2026 decía «Cierra el contenido con un bloque `glosario`»:
++    # `contenido` era el campo del contrato anterior a los siete pasos y el
++    # modelo no lo ubicaba (0 glosarios en 10 cápsulas con p_R ≥ 40%, hallazgo H1
++    # de PRUEBAS_VARK.md). Las entradas se acotan porque el glosario cuenta
++    # dentro de la extensión.
+     "glosario": (
+-        "Cierra el contenido con un bloque `glosario` cuyo cuerpo sea una lista "
+-        "de entradas «término: definición»."
++        "El último bloque de `representacion_adaptativa` es un bloque `glosario` "
++        "con 3 a 5 entradas «término: definición», de una línea cada una, con "
++        "términos que aparecen en el material entregado."
+     ),
+     "tono_oral": ("Redacta en segunda persona y con frases cortas, como una explicación hablada."),
+     "analogias_cotidianas": (

@@ -1,0 +1,146 @@
+--- a/src/studify/rag/orchestrator.py
++++ b/src/studify/rag/orchestrator.py
+@@ -54,6 +54,29 @@
+ # modelo en el prompt.
+ MARGEN_PALABRAS_OBJETIVO = 30
+ 
++# Reparto del objetivo entre los pasos 2–5 (hallazgo H3 de PRUEBAS_VARK.md). Las
++# fracciones salen de lo que el modelo ya escribía en la batería del 03-oct: el
++# concepto central ronda el 35 % y el ejemplo el 20 %; la representación
++# adaptativa se lleva el resto, que es donde viven los bloques de cada perfil.
++PALABRAS_ACTIVACION = 20
++FRACCION_CONCEPTO = 0.30
++FRACCION_EJEMPLO = 0.20
++
++# Directivas de `vark/rules.py` que ya piden un bloque que reexpresa el concepto
++# central en otro formato. Si el perfil no trae ninguna, el código antepone
++# `parrafo_reexpresion`: sin eso, un perfil «solo R» quedaría con la
++# representación reducida al glosario. `tests/test_prompt_maestro.py` comprueba
++# que cada nombre exista en las directivas reales.
++DIRECTIVAS_REEXPRESIVAS = frozenset(
++    {
++        "analogias_cotidianas",
++        "paso_a_paso",
++        "incluir_mapa_conceptual",
++        "tabla_comparativa",
++        "recurso_visual_complementario",
++    }
++)
++
+ 
+ class ErrorPrompt(Exception):
+     """No se puede construir un prompt maestro con los datos entregados."""
+@@ -72,6 +95,18 @@
+ 
+ def _redondear_palabras(palabras: int) -> int:
+     return round(palabras / TRAMO_PALABRAS) * TRAMO_PALABRAS
++
++
++def reparto_palabras(palabras_objetivo: int) -> dict[str, int]:
++    """Cuántas palabras le tocan a cada paso; suman `palabras_objetivo`."""
++    concepto = _redondear_palabras(round(palabras_objetivo * FRACCION_CONCEPTO))
++    ejemplo = _redondear_palabras(round(palabras_objetivo * FRACCION_EJEMPLO))
++    return {
++        "palabras_activacion": PALABRAS_ACTIVACION,
++        "palabras_concepto": concepto,
++        "palabras_representacion": palabras_objetivo - PALABRAS_ACTIVACION - concepto - ejemplo,
++        "palabras_ejemplo": ejemplo,
++    }
+ 
+ 
+ def bloque_contexto(fragmentos: Sequence[FragmentoRecuperado]) -> str:
+@@ -97,8 +132,12 @@
+ 
+ def bloque_perfil(config: ConfiguracionGenerada, *, palabras_objetivo: int) -> str:
+     """Qué construir, derivado de `configuracion_contenido` (nunca de la etiqueta)."""
++    directivas = config.directivas
++    if not DIRECTIVAS_REEXPRESIVAS & set(directivas):
++        directivas = ("parrafo_reexpresion", *directivas)
++
+     instrucciones = []
+-    for directiva in config.directivas:
++    for directiva in directivas:
+         instruccion = prompts.INSTRUCCION_POR_DIRECTIVA.get(directiva)
+         if instruccion is None:
+             # Se levanta en vez de omitirla: una directiva sin instrucción es un
+@@ -124,6 +163,7 @@
+         peso_narrativo=f"{config.pesos.narrativo:.1f}",
+         peso_practico=f"{config.pesos.practico:.1f}",
+         palabras_texto=palabras_objetivo,
++        **reparto_palabras(palabras_objetivo),
+         palabras_min=ajustes.capsula_min_palabras,
+         palabras_max=ajustes.capsula_max_palabras,
+         recursos_visuales=config.recursos_visuales,
+--- a/src/studify/rag/prompts/maestro.py
++++ b/src/studify/rag/prompts/maestro.py
+@@ -78,8 +78,22 @@
+     "- Visual: {peso_visual} %\n"
+     "- Narrativo: {peso_narrativo} %\n"
+     "- Práctico: {peso_practico} %\n\n"
+-    "Extensión del contenido: aproximadamente {palabras_texto} palabras "
+-    "(mínimo {palabras_min}, máximo {palabras_max}). Sé conciso en cada sección para no sobrepasar el límite máximo.\n"
++    # Reparto por paso (hallazgo H3): con solo el total, la extensión la decide
++    # la cantidad de bloques y no el perfil. La línea sobre «únicamente los
++    # bloques que piden las instrucciones» existe porque, al nombrar tipos de
++    # bloque, el modelo los agregaba sin que nadie los pidiera (Etapa 1,
++    # intento 1: `lista_pasos` y glosarios espurios).
++    "Extensión de los pasos 2 a 5 (`activacion`, `concepto_central`, "
++    "`representacion_adaptativa` y `ejemplo`): aproximadamente {palabras_texto} "
++    "palabras (mínimo {palabras_min}, máximo {palabras_max}), repartidas así:\n"
++    "- `activacion`: como máximo {palabras_activacion} palabras.\n"
++    "- `concepto_central`: como máximo {palabras_concepto} palabras.\n"
++    "- `representacion_adaptativa`: como máximo {palabras_representacion} "
++    "palabras en total, sumando todos sus bloques.\n"
++    "- `ejemplo`: como máximo {palabras_ejemplo} palabras.\n"
++    "En `representacion_adaptativa` incluye únicamente los bloques que piden las "
++    "instrucciones estructurales de más abajo; no agregues bloques de otros tipos.\n"
++    "Sé conciso en cada sección para no sobrepasar el límite máximo.\n"
+     "Recursos visuales (bloques `tabla` o `esquema`): {recursos_visuales}.\n"
+     # No se nombran tipos de bloque acá: con p_K ≥ 40% la tabla 11.1 cuenta
+     # tres componentes prácticos —ejemplo aplicado, secuencia paso a paso y
+@@ -134,9 +148,15 @@
+         "Define con precisión cada término técnico la primera vez que aparece, "
+         "usando la formulación del material entregado."
+     ),
++    # Hasta el 03-oct-2026 decía «Cierra el contenido con un bloque `glosario`»:
++    # `contenido` era el campo del contrato anterior a los siete pasos y el
++    # modelo no lo ubicaba (0 glosarios en 10 cápsulas con p_R ≥ 40%, hallazgo H1
++    # de PRUEBAS_VARK.md). Las entradas se acotan porque el glosario cuenta
++    # dentro de la extensión.
+     "glosario": (
+-        "Cierra el contenido con un bloque `glosario` cuyo cuerpo sea una lista "
+-        "de entradas «término: definición»."
++        "El último bloque de `representacion_adaptativa` es un bloque `glosario` "
++        "con 3 a 5 entradas «término: definición», de una línea cada una, con "
++        "términos que aparecen en el material entregado."
+     ),
+     "tono_oral": ("Redacta en segunda persona y con frases cortas, como una explicación hablada."),
+     "analogias_cotidianas": (
+@@ -147,12 +167,24 @@
+         "Intercala al menos una pregunta directa al estudiante dentro de la "
+         "prosa, y respóndela a continuación."
+     ),
++    # Se fija dónde va cada bloque práctico: sin destino, el modelo a veces
++    # ponía un `ejemplo_resuelto` en la representación y otro en el `ejemplo`, y
++    # la cápsula K se alargaba por duplicado (hallazgo H3).
+     "ejemplo_resuelto": (
+-        "Incluye un bloque `ejemplo_resuelto` con un caso concreto desarrollado de principio a fin."
++        "El `ejemplo` (paso 5) es un bloque `ejemplo_resuelto` con un caso "
++        "concreto desarrollado de principio a fin."
+     ),
+     "paso_a_paso": (
+-        "Incluye un bloque `lista_pasos` cuyo cuerpo sea una lista de pasos "
+-        "ordenados y accionables."
++        "Incluye en `representacion_adaptativa` un bloque `lista_pasos` de 3 a 5 "
++        "pasos ordenados y accionables, de una oración cada uno."
++    ),
++    # No sale de `vark/rules.py`: la antepone `orchestrator.bloque_perfil` cuando
++    # ninguna directiva del perfil reexpresa el concepto (perfiles «solo R»).
++    # Decidirlo en código y no en el prompt evita nombrar tipos de bloque que el
++    # modelo luego agrega sin que nadie los pida.
++    "parrafo_reexpresion": (
++        "Incluye en `representacion_adaptativa` un bloque `parrafo` que reexprese "
++        "el concepto central con otras palabras."
+     ),
+     "actividad_aplicada": (
+         "La actividad de cierre es de práctica activa. El tipo DEBE SER `flashcards_y_quiz` "
