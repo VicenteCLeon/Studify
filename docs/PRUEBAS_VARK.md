@@ -641,7 +641,8 @@ Artefactos: `data/pruebas_vark/20261004-0128*` a `20261004-0136*`. Los brazos
 
 ### Etapa 1 — Ronda 2 (05-oct-2026): plan y criterios, fijados antes de ejecutar
 
-**Estado: planificada, sin ejecutar; pendiente del OK del autor.** H2 ya está corregido
+**Estado: ejecutada el 05-oct-2026 sobre el commit `2c9048f`; ningún brazo cumple la regla de
+cierre y no se aplicó nada (ver «Resultado de la ronda 2»).** H2 ya está corregido
 (`cf9cee7`), que era lo que impedía distinguir efecto de ruido en la ronda anterior. Los
 criterios de esta sección no se modifican después de ver resultados.
 
@@ -692,10 +693,20 @@ hacia adentro, a la palabra.
 | K30 (A60-R10-K30) | 220 | ±25,0 % | 50–82 | 68–112 | 33–55 | 269 | 151 |
 | A puro | 210 | ±21,1 % | 50–76 | 68–102 | 34–50 | 248 | 152 |
 
-En la batería (V = 0) todos los anchos quedan entre ±11,8 % y ±25 %. **Pendiente de decisión
-del autor, fuera de esta ronda:** con V > 0 hay 20.006 perfiles (11,7 % de los 171.700 con
-V > 0) con ancho menor de ±10 %, 6.936 de ellos con ancho 0 (objetivo menor de 170 palabras,
-donde los límites del perfil no dejan holgura). La regla no se ensancha para compensar.
+En la batería (V = 0) todos los anchos quedan entre ±11,8 % y ±25 %.
+
+**Limitación y condición para aplicar B (decisión del autor, 05-oct-2026).** Con V > 0 hay
+20.006 perfiles (11,7 % de los 171.700 con V > 0) con ancho menor de ±10 %, 6.936 de ellos con
+ancho 0 (objetivo menor de 170 palabras, donde los límites del perfil no dejan holgura: el
+rango sería «entre 40 y 40»). Esos perfiles **quedan fuera del dominio medido**: V no tiene API
+de imágenes y la batería los excluye. La regla no se ensancha para compensar. **Condición:
+antes de aplicar B en producción hay que agregar una guarda** que, cuando el ancho resulte
+menor que un piso, omita los rangos por paso y use solo el total. *No se implementa ni se
+aplica a la variante medida.* Piso propuesto: **±10 %**, que es el umbral que el propio autor
+fijó para revisar los anchos; con ±10 % el paso más angosto (`ejemplo`, ≈ 37 palabras con un
+objetivo de 187) queda en un rango de unas 7 palabras, y por debajo de eso un rango ya no se
+distingue de un valor puntual. Verificado el 05-oct-2026: la guarda **no cambiaría ninguno de
+los 44 prompts** de S42, S43 y S44 (ancho mínimo ±11,8 %, en A0-R0-K100).
 
 #### Conjuntos y corridas
 
@@ -714,15 +725,16 @@ donde los límites del perfil no dejan holgura). La regla no se ensancha para co
 
 #### Criterios
 
-C1, C2 y C4 quedan como en la tabla de la Etapa 1, sin cambios (C2 no bloqueante). C1 y los
-tres C4 son criterios «todas».
+C1, C2, C4b y C4c quedan como en la tabla de la Etapa 1, sin cambios (C2 no bloqueante); C4a
+se ajusta como se indica abajo. C1, C4b y C4c son criterios «todas».
 
 | # | Criterio | Éxito si |
 |---|---|---|
 | C1 | Glosario en las cápsulas válidas con R ≥ 40 % | todas, en todas las corridas |
 | C2 | Contenido dentro de ±15 % del objetivo (R > 0) | **no bloqueante**; se informa |
 | C3 | No regresión: lo más estricto entre los umbrales absolutos de la Etapa 1 (S42: válidas ≥ 25 y reparaciones ≤ 4 sobre los perfiles con R > 0) y lo relativo a la base nueva, **por conjunto** | válidas ≥ promedio de la base − 1; reparaciones ≤ promedio de la base + 2; 0 citas inventadas en todas las corridas; **ningún perfil válido en todas las corridas de la base se pierde en alguna corrida del brazo** |
-| C4a–c | Ejercicios K ≥ 40 %, guion de audio A ≥ 25 %, analogía A ≥ 40 % | todas, en todas las corridas |
+| C4a | Ejercicios K ≥ 40 % (**ajustado el 05-oct-2026, antes de ejecutar**) | un brazo falla C4a **solo si tiene más perfiles fallidos que la base de la misma ronda** (mismo conjunto, mismo número de corridas; se compara el total de perfiles fallidos) |
+| C4b–c | Guion de audio A ≥ 25 %, analogía A ≥ 40 % | todas, en todas las corridas |
 
 Los umbrales absolutos de C3 salen de una base sin H2, así que por sí solos son permisivos; el
 criterio relativo es el que detecta una regresión real. Las tolerancias (−1 válida, +2
@@ -734,11 +746,15 @@ perfil 5 veces con el mismo brazo; el criterio pasa si cumple en al menos 4 de 5
 rescates por brazo; con más, o con 2 o más perfiles fallidos en una misma corrida, el
 criterio cuenta como falla. La corrida original queda registrada.
 
-*Riesgo conocido de R1:* C4a depende de una heurística léxica («≥ 80 % de respuestas
-respaldadas») que falló por **un perfil distinto en 3 de las 4 corridas S42 guardadas con el
-código de `main`** (`015507`: B_A10-R30-K60; `020427`: B_A20-R10-K70; `020729`:
-C_C06_A41-R13-K46; `235748` no falló). Con 2 corridas S42 por brazo es esperable que un brazo
-consuma sus 2 rescates solo por ruido.
+**Por qué C4a se mide contra la base de la ronda.** C4a depende de una heurística léxica
+(«≥ 80 % de respuestas respaldadas») que falló por **un perfil distinto en 3 de las 4 corridas
+S42 guardadas con el código de `main`** (`015507`: B_A10-R30-K60; `020427`: B_A20-R10-K70;
+`020729`: C_C06_A41-R13-K46; `235748` no falló). Exigir «todas» a un brazo mediría el ruido de
+la heurística y no el efecto del prompt, y con 2 corridas S42 por brazo agotaría los 2 rescates
+solo por azar. Por eso C4a se compara con lo que falla la base en la misma ronda; los fallos
+del brazo que no superen a los de la base no cuentan. **R1 se mantiene** para C1, C4b y C4c,
+con la interpretación por par criterio–corrida y el máximo de 2 rescates por brazo (y para
+C4a solo si el brazo supera a la base).
 
 **Efecto del fix de la actividad.** La base nueva se compara, sobre los perfiles con K ≥ 40 %,
 contra las bases viejas guardadas en `data/pruebas_vark/`, con `comparar_h1h3.py
@@ -767,6 +783,134 @@ Con la tarifa supuesta del script (0,28 / 0,42 USD por millón de tokens, por ve
 
 Las llamadas esperadas salen de ≈ 1,07 por perfil en las corridas con H2, y el costo
 esperado de ≈ US$ 0,0017 por llamada medido en la batería completa.
+
+#### Resultado de la ronda 2 (05-oct-2026): ningún brazo cumple; no se aplica nada
+
+**Trazabilidad.** Código bajo prueba: `fix/h1h3` en `2c9048f63b37ce95d96476062bebee994f3b8264`, sin
+cambios en `src/` ni `tests/` durante las corridas (el lanzador lo verificó antes de cada una). Los
+brazos son las variantes de `scripts/h1h3/` generadas desde ese commit; sus prompts se verificaron
+con `fidelidad.py` antes de empezar: `prefijo` reproduce 38/38 los prompts de la base guardada, y
+`base`, A y B_topes reproducen los de sus corridas salvo la línea del fix; B (rangos) difiere de
+B_topes solo en las tres líneas de los pasos, en los 44 perfiles de S42, S43 y S44. Todo con
+`--sin-audio` y `--doc` fuera de `docs/`. Orden intercalado: [S42 base, A, B, S43 base, A, B] × 2,
+luego S44. Sin errores de la API en ninguna corrida.
+
+| Corrida | S42 base | S42 A | S42 B | S43 base | S43 A | S43 B |
+|---|---|---|---|---|---|---|
+| Ciclo 1 | `20261005-194453` | `-194719` | `-194955` | `20261005-195243` | `-195319` | `-195413` |
+| Ciclo 2 | `20261005-195503` | `-195726` | `-200045` | `20261005-200353` | `-200432` | `-200520` |
+
+S44: `prefijo` `20261005-200634` y `-200744`; `base` `-200709` y `-200817`. Rescate R1 del brazo A
+(C4b, `C_C03_A46-R53-K1`, 5 repeticiones): `20261005-200853`, `-200905`, `-200917`, `-200924`,
+`-200933`. Los artefactos están en `data/pruebas_vark/` (ignorado por git).
+
+**Tabla única** (cada celda: corrida 1 · corrida 2 · promedio; n entre paréntesis).
+
+| Métrica | S42 base | S42 A | S42 B | S43 base | S43 A | S43 B |
+|---|---|---|---|---|---|---|
+| Cápsulas válidas (n = 30 / 8) | 30 · 30 (30,0) | 29 · 28 (28,5) | 29 · 28 (28,5) | 8 · 8 (8,0) | 8 · 8 (8,0) | 8 · 7 (7,5) |
+| C3 válidas, R > 0 (n = 26 / 8) | 26 · 26 (26,0) | 25 · 24 (24,5) | 25 · 24 (24,5) | 8 · 8 (8,0) | 8 · 8 (8,0) | 8 · 7 (7,5) |
+| C3 reparaciones, R > 0 | 2 · 3 (2,5) | 6 · 12 (9,0) | 9 · 10 (9,5) | 0 · 0 (0,0) | 4 · 2 (3,0) | 3 · 8 (5,5) |
+| C3 citas inventadas | 0 · 0 | 0 · 0 | 0 · 0 | 0 · 0 | 0 · 0 | 0 · 0 |
+| Perfiles R ≥ 40 % sin cápsula válida (n = 9 / 5) | 0 · 0 | 1 · 2 | 1 · 2 | 0 · 0 | 0 · 0 | 0 · 1 |
+| C1 glosario en R ≥ 40 % válidas | 0/9 · 0/9 | 8/8 · 7/7 | 8/8 · 7/7 | 0/5 · 0/5 | 5/5 · 5/5 | 5/5 · 4/4 |
+| Glosarios sin directiva | 1/30 · 0/30 | 1/29 · 0/28 | 1/29 · 0/28 | 0/8 · 0/8 | 0/8 · 0/8 | 0/8 · 0/7 |
+| C2 dentro de ±15 % *(no bloqueante)* | 20/26 · 15/26 (17,5) | 16/25 · 19/24 (17,5) | 20/25 · 21/24 (20,5) | 2/8 · 4/8 (3,0) | 7/8 · 7/8 (7,0) | 8/8 · 5/7 (6,5) |
+| C2b desvío R ≥ 60 % | −4,5 % · −14,8 % (−9,7 %) (n=6) | +0,3 % · +1,0 % (+0,7 %) (n=5) | +1,9 % · +4,4 % (+3,2 %) (n=5) | −29,3 % · −24,1 % (n=1) | −12,2 % · −2,2 % (n=1) | +3,7 % · +5,9 % (n=1) |
+| C2c desvío K ≥ 60 % | −4,1 % · −2,4 % (−3,3 %) (n=7) | −3,6 % · −1,4 % (−2,5 %) (n=7) | +3,5 % · +0,2 % (+1,9 %) (n=7) | +16,2 % · +35,2 % (n=1) | +3,8 % · −24,3 % (n=1) | +3,3 % · +5,2 % (n=1) |
+| C4a perfiles fallidos (K ≥ 40 %, n = 13 / 4) | 2 · 1 | 0 · 1 | 0 · 0 | 0 · 1 | 0 · 0 | 0 · 1 |
+| C4b guion A ≥ 25 % | 16/16 · 16/16 | 15/15 · 15/15 | 16/16 · 16/16 | 3/3 · 3/3 | 3/3 · 2/3 | 3/3 · 2/2 |
+| C4c analogía A ≥ 40 % | 13/13 · 13/13 | 13/13 · 12/12 | 13/13 · 13/13 | 1/1 · 1/1 | 1/1 · 1/1 | 1/1 · 1/1 |
+
+*Perfiles sin cápsula válida:* A en S42, `B_A30-R60-K10`, `B_A50-R50-K0` y `B_A10-R60-K30`; B en S42,
+`B_A10-R60-K30`, `A_A0-R100-K0` y `C_C02_A9-R49-K42`; B en S43, `C_C05_A29-R51-K20`. Todos agotaron
+los 3 intentos **por sobrepasar las 300 palabras**.
+
+**Composición de `representacion_adaptativa` en los 9 perfiles «solo R»** (corrida 1 · corrida 2;
+n = 1 cápsula por perfil, brazo y corrida):
+
+| Perfil | Base | A | B |
+|---|---|---|---|
+| A0-R100-K0 | parrafo · parrafo | parrafo+glosario · parrafo+lista_pasos+glosario | parrafo+glosario · sin cápsula |
+| A10-R60-K30 | analogia · analogia | parrafo+lista_pasos+glosario · sin cápsula | sin cápsula · parrafo+glosario |
+| A10-R70-K20 | analogia · analogia | parrafo+glosario · parrafo+glosario | parrafo+glosario · parrafo+glosario |
+| A20-R70-K10 | analogia · analogia | parrafo+glosario · analogia+glosario | parrafo+glosario · parrafo+glosario |
+| A30-R60-K10 | analogia · analogia | sin cápsula · analogia+glosario | parrafo+glosario · parrafo+glosario |
+| A5-R90-K5 | analogia · lista_pasos | parrafo+glosario · parrafo+glosario | parrafo+glosario · parrafo+glosario |
+| S43 A3-R86-K11 | lista_pasos · lista_pasos | parrafo+glosario · parrafo+glosario | parrafo+glosario · parrafo+glosario |
+| S43 A29-R51-K20 | analogia · analogia | parrafo+glosario · analogia+glosario | parrafo+glosario · sin cápsula |
+| S43 A22-R48-K30 | analogia · analogia | parrafo+glosario · parrafo+lista_pasos+glosario | parrafo+glosario · parrafo+glosario |
+
+En B los 15 casos con cápsula son exactamente `parrafo+glosario`, sin bloques no pedidos; en A
+aparecen 3 `lista_pasos` y 3 `analogia` que nadie pidió.
+
+**Criterios** (los fijados antes de ejecutar; los umbrales de C3 salen de la base de esta ronda):
+
+| Criterio | Brazo A | Brazo B |
+|---|---|---|
+| C1 glosario en R ≥ 40 % válidas | ✅ todas las corridas | ✅ todas las corridas |
+| C2 ±15 % *(no bloqueante)* | informativo: 17,5 y 7,0 (la base: 17,5 y 3,0) | informativo: 20,5 y 6,5 |
+| **C3** S42 válidas | ❌ 24,5 (umbral ≥ 25,0) | ❌ 24,5 (≥ 25,0) |
+| **C3** S42 reparaciones | ❌ 9,0 (≤ 4,0) | ❌ 9,5 (≤ 4,0) |
+| **C3** S43 válidas / reparaciones | ✅ 8,0 (≥ 7,0) / ❌ 3,0 (≤ 2,0) | ✅ 7,5 (≥ 7,0) / ❌ 5,5 (≤ 2,0) |
+| **C3** citas inventadas | ✅ 0 | ✅ 0 |
+| **C3** perfiles estables de la base perdidos | ❌ 3 en S42, 0 en S43 | ❌ 3 en S42, 1 en S43 |
+| C4a (contra la base de la ronda: 4 fallidos) | ✅ 1 fallido | ✅ 1 fallido |
+| C4b | ✅ con R1: 1 fallo en S43 corrida 2 (`C_C03_A46-R53-K1`), rescate 4/5 | ✅ |
+| C4c | ✅ | ✅ |
+| C5 | no hubo un C5 aparte: el criterio relativo a la base quedó dentro de C3, como se fijó | ídem |
+
+R1 se usó una vez (brazo A, C4b: 4/5 repeticiones cumplen; en la que falló, el modelo pasó de 300
+palabras tras 3 intentos). B no necesitó rescates. El fallo único de C4a de B en S43 corrida 2 y el
+de A en S42 corrida 2 no se rescatan porque no superan los 4 de la base.
+
+**Regla de cierre: ningún brazo cumple C3, así que se revierte y se analiza, sin una tercera
+iteración sobre este prompt. No se aplicó ningún brazo; el repo queda en `main` + fix de la
+etiqueta.** H1 y H3 siguen abiertos.
+
+**Efecto del fix de la actividad aplicada** (perfiles con K ≥ 40 %; promedio de 2 corridas). El fix
+**no se revierte**: no empeora contra ninguno de los dos controles.
+
+| | Base nueva (`main` + fix) | Control 1: bases viejas literales (pre-H2) | Control 2: Etapa 4 (H2 sin fix) |
+|---|---|---|---|
+| S42 válidas (n = 13) | 13 · 13 | 12 · 13 | 13 · 13 |
+| S42 reparaciones | 2 · 3 (2,5) | 5 · 2 (3,5) | 1 · 1 (1,0) |
+| S42 C4a fallidos | 2 · 1 | 0 · 1 | 1 · 1 |
+| S42 componentes prácticos contados | 3 · 3 | 3 · 3 | 3 · 3 |
+| S43 válidas (n = 4) / reparaciones | 4 · 4 / 0 · 0 | 4 · 4 / 0 · 0 | 4 · 4 / 0 · 1 |
+| S43 componentes prácticos | 3 · 3 | 3 · 2,75 | 3 · 3 |
+
+Contra el control 2, la diferencia en reparaciones es +1,5 (dentro de ±2) y en válidas es 0. **S44**
+(6 perfiles con K de 38 a 39 %, 2 corridas por variante): con el texto anterior al fix **y** con el
+nuevo, los 6 perfiles entregan `flashcards_y_quiz` en las 2 corridas (12/12 y 12/12 válidas, 0
+reparaciones). Forzar la actividad no cambia lo que hace el modelo en esa zona.
+
+**Análisis.**
+
+1. **El glosario funciona, y su costo es la extensión de R.** C1 se cumple en A y B (0/9 en la base).
+   Pero el glosario empuja a los perfiles R ≥ 40 % sobre las 300 palabras: **59 de los 63 intentos
+   fallidos de A y B son de perfiles R ≥ 40 %, y 62 de los 63 son por «sobre el máximo» (el otro,
+   por alternativas repetidas en un quiz); no hubo ningún «bajo el mínimo»**, así que H2 ya no
+   interviene. La base tuvo 3 intentos fallidos de perfiles R ≥ 40 % en S42 y 0 en S43.
+   Es el efecto colateral que H1 ya anticipaba («las cápsulas R suben a 255–299 palabras»).
+2. **Los rangos de B corrigen el sesgo de K que causaban los topes.** Con topes, K pasó de +21 % a
+   −21 % (Etapa 1); con rangos queda en +1,9 % (n = 7) y R dominante en +3,2 % (base −9,7 %).
+   C2 sube a 20,5 de 26 contra 17,5 de la base y de A. Pero no evitan que R pase de 300: B tuvo 9,5
+   reparaciones por conjunto S42 contra 9,0 de A. Con R puro, el objetivo es 270 y la suma de los
+   extremos altos 298: un modelo que escribe en la parte alta de cada rango queda a un paso del
+   límite.
+3. **El prompt es más sensible de lo que se suponía.** En K ≥ 60 % el desvío respecto del objetivo
+   pasó de +14,5 % (Etapa 4, sin fix) a −3,3 % (base nueva), y en R ≥ 60 % de −19,6 % a −9,7 %. El
+   único cambio entre esas bases es el texto de `actividad_aplicada` (más el día de la corrida). No
+   estaba entre los criterios y se esperaba efecto nulo; si se mantiene, **la parte «K se pasa de
+   largo» de H3 no se reproduce en `main` hoy**, y queda la parte «R se queda corto» (−9,7 %).
+4. **Camino sin iterar sobre este prompt:** la propuesta original de H1 ya señalaba el ajuste
+   pendiente: un objetivo de palabras algo menor para R cuando se pide glosario
+   (`MARGEN_PALABRAS_OBJETIVO`), que es una decisión del autor sobre `vark/rules.py` y
+   `orchestrator.py` y no un cambio de redacción.
+
+**Costo:** US$ 0,461 las 16 corridas (315 llamadas) y US$ 0,019 el rescate, es decir ≈ US$ 0,48,
+dentro de lo declarado (esperado 0,45–0,50; tope 1,53).
 
 ### Etapa 4 — H2: el bucle de reparación que repite la respuesta
 
@@ -1402,7 +1546,7 @@ No se ejecutó por decisión del equipo. Su comportamiento actual, leído del c�
 
 ### Hallazgos reportados sin corregir
 
-La batería no toca lógica de negocio: cada corrección se hace aparte, por etapas (ver «Correcciones»). Estado al 05-oct-2026: H2, H5 y H9 corregidos; H1 y H3 abiertos, con la ronda 2 planificada (ver «Etapa 1 — Ronda 2»); H4, H8, H10, H11 y H12 registrados sin corregir; H13 es una decisión de diseño anotada, no un defecto; el resto, sin tocar. Ordenados por impacto. En H5, «el visor lo llama» se refiere a cada cápsula **nueva**: las que salen del caché no pasaban por `GeneradorMultimedia`.
+La batería no toca lógica de negocio: cada corrección se hace aparte, por etapas (ver «Correcciones»). Estado al 05-oct-2026: H2, H5 y H9 corregidos; H1 y H3 abiertos tras la ronda 2 (ejecutada el 05-oct: el glosario funciona, pero ningún brazo cumple C3 por la extensión de R; ver «Resultado de la ronda 2»); H4, H8, H10, H11 y H12 registrados sin corregir; H13 es una decisión de diseño anotada, no un defecto; el resto, sin tocar. Ordenados por impacto. En H5, «el visor lo llama» se refiere a cada cápsula **nueva**: las que salen del caché no pasaban por `GeneradorMultimedia`.
 
 | # | Hallazgo | Evidencia | Propuesta (pendiente de aprobación) |
 |---|---|---|---|
