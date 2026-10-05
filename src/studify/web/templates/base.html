@@ -128,12 +128,18 @@
                 </p>
             </div>
 
-            <nav class="site-footer-legal" aria-label="Legal y privacidad">
+            {# «Código fuente» y la licencia van en esta lista y no en otra parte
+               porque es la única del pie que sigue visible en el pie compacto:
+               la AGPL-3.0 (§13) pide ofrecer el código a todo el que usa el
+               servicio por la red, en cualquier página. #}
+            <nav class="site-footer-legal" aria-label="Legal, privacidad y código fuente">
                 <ul role="list">
                     <li><a href="/terminos" {% if ruta == '/terminos' %}aria-current="page"{% endif %}>Términos</a></li>
                     <li><a href="/privacidad" {% if ruta == '/privacidad' %}aria-current="page"{% endif %}>Privacidad</a></li>
                     <li><a href="/mis-datos" {% if ruta.startswith('/mis-datos') %}aria-current="page"{% endif %}>Ejercer mis derechos</a></li>
                     <li><a href="/privacidad#contacto">Contacto</a></li>
+                    <li><a href="https://github.com/VicenteCLeon/Studify">Código fuente</a></li>
+                    <li><a href="https://github.com/VicenteCLeon/Studify/blob/main/LICENSE">Licencia AGPL-3.0</a></li>
                 </ul>
             </nav>
 
