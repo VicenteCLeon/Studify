@@ -639,6 +639,135 @@ Artefactos: `data/pruebas_vark/20261004-0128*` a `20261004-0136*`. Los brazos
 (`brazo_A.patch`, `brazo_B_c1.patch`, `brazo_B.patch`) y el comparador
 (`comparar_etapa1.py`) quedaron fuera del repo; se pueden versionar si se retoma la etapa.
 
+### Etapa 1 — Ronda 2 (05-oct-2026): plan y criterios, fijados antes de ejecutar
+
+**Estado: planificada, sin ejecutar; pendiente del OK del autor.** H2 ya está corregido
+(`cf9cee7`), que era lo que impedía distinguir efecto de ruido en la ronda anterior. Los
+criterios de esta sección no se modifican después de ver resultados.
+
+#### Qué cambió desde la ronda anterior
+
+- **Línea base nueva = `main` + fix de la etiqueta.** La directiva `actividad_aplicada` ya no
+  dice «cuando el perfil es kinestésico» ni «p_K >= 40%»
+  ([`maestro.py`](../src/studify/rag/prompts/maestro.py)). Para K ≥ 40 % solo cambia la
+  redacción. **Para K de 31 a 39 % cambia el comportamiento:** esa directiva también llega por
+  la red de seguridad de `rules.py:193-194` (K primario, ningún canal ≥ 40 %, perfil no
+  multimodal; 2.848 perfiles enteros, 18 con V = 0), y antes el texto les dejaba elegir
+  `flashcards`, `quiz_multi` o `quiz_mc`; ahora exige `flashcards_y_quiz`. Decisión aprobada el
+  05-oct-2026.
+- **Los parches de la Etapa 1 se perdieron** (`brazo_A.patch`, `brazo_B.patch`,
+  `brazo_B_c1.patch`, `comparar_etapa1.py`, `comparar_etapa4.py`; solo quedaban snapshots
+  parciales). Se reconstruyeron desde los `prompt.txt` guardados y quedan versionados en
+  [`scripts/h1h3/`](../scripts/h1h3/). Comprobación: con `hacer_variantes.py`, A y B_topes
+  (B tal como se midió, con la regla de párrafo aprobada) reproducen **byte a byte los 38
+  prompts** de sus corridas, salvo la línea de `actividad_aplicada` (el fix); la variante
+  `prefijo` reproduce 38/38 de la base guardada. El comparador reproduce todas las cifras
+  publicadas de la tabla de la Etapa 1. De `brazo_B_c1.patch` no queda rastro.
+
+#### Variantes
+
+| Brazo | Qué cambia |
+|---|---|
+| **base** | `main` + fix de la etiqueta, sin más cambios |
+| **A** | Solo la instrucción nueva del glosario: «El último bloque de `representacion_adaptativa` es un bloque `glosario` con 3 a 5 entradas…» |
+| **B** | A, más: reparto del objetivo por paso con **rangos**; `ejemplo_resuelto` fijado en el `ejemplo` y `lista_pasos` en `representacion_adaptativa` (3 a 5 pasos de una oración); frase «incluye únicamente los bloques que piden las instrucciones estructurales»; y la directiva `parrafo_reexpresion`, antepuesta **por código** cuando ninguna directiva del perfil está en `DIRECTIVAS_REEXPRESIVAS` (`analogias_cotidianas`, `paso_a_paso`, `incluir_mapa_conceptual`, `tabla_comparativa`, `recurso_visual_complementario`). Un test comprueba que cada nombre exista en las directivas reales de `rules.py`. |
+
+La regla de párrafo aprobada y la que se había deducido de los prompts guardados («las
+directivas son solo las de R») **coinciden en los 176.851 perfiles enteros del símplex**,
+incluidos todos los V > 0, y en S42 y S43 (9 perfiles con párrafo, los mismos de la ronda
+anterior). Adoptar la regla aprobada no cambia ningún prompt.
+
+**Anchos de los rangos.** Centros: concepto = 30 % del objetivo, ejemplo = 20 %,
+representación = el resto menos 20 palabras de activación (que queda con tope «como máximo
+20»). Semiancho relativo común a los tres: el mayor tal que la suma de los extremos altos más
+el tope de la activación no pase de `palabras_max` (300) y la de los bajos (la activación
+aporta 0, porque solo tiene tope) no baje de `palabras_min` (150). Los extremos se redondean
+hacia adentro, a la palabra.
+
+| Perfil | Objetivo | Ancho | `concepto_central` | `representacion_adaptativa` | `ejemplo` | Σ altos (+20) | Σ bajos |
+|---|---|---|---|---|---|---|---|
+| R puro | 270 | ±12,0 % | 72–90 | 102–128 | 48–60 | 298 | 222 |
+| K puro | 190 | ±11,8 % | 51–63 | 67–83 | 34–42 | 208 | 152 |
+| K30 (A10-R60-K30) | 260 | ±16,7 % | 65–91 | 92–128 | 44–60 | 299 | 201 |
+| K30 (A60-R10-K30) | 220 | ±25,0 % | 50–82 | 68–112 | 33–55 | 269 | 151 |
+| A puro | 210 | ±21,1 % | 50–76 | 68–102 | 34–50 | 248 | 152 |
+
+En la batería (V = 0) todos los anchos quedan entre ±11,8 % y ±25 %. **Pendiente de decisión
+del autor, fuera de esta ronda:** con V > 0 hay 20.006 perfiles (11,7 % de los 171.700 con
+V > 0) con ancho menor de ±10 %, 6.936 de ellos con ancho 0 (objetivo menor de 170 palabras,
+donde los límites del perfil no dejan holgura). La regla no se ensancha para compensar.
+
+#### Conjuntos y corridas
+
+- **S42:** los 30 perfiles de la semilla 42, sin audio. **S43:** las 8 mezclas de la Fase C con
+  semilla 43, sin audio. C1–C3 se miden sobre los perfiles con R > 0; C4, sobre todos.
+- **Tres brazos (base, A, B), cada uno con al menos 2 corridas por conjunto:** 12 corridas,
+  intercaladas (base, A, B, base, A, B…) para que la hora no se confunda con el brazo. Cada
+  corrida es la batería real contra la variante (`scripts/h1h3/correr_brazo.py`), que no toca
+  el repo. Se comparan **promedios contra promedios**.
+- **S44 (informativo, fuera de la regla de cierre):** 6 perfiles fijos con K de 38 a 39 %
+  (A25-R37-K38, A37-R25-K38, A25-R36-K39, A33-R28-K39, A38-R23-K39, A23-R38-K39), todos con la
+  actividad forzada por la red de seguridad. Se corren con la variante `prefijo` (texto
+  anterior al fix) y con `base`, 2 corridas cada una, para ver qué hace el modelo con la
+  actividad forzada. **Motivo:** entre S42 y S43 solo hay 1 perfil con K de 31 a 39 %
+  (A34-R33-K33, multimodal, **sin** la actividad forzada) y ninguno con ella.
+
+#### Criterios
+
+C1, C2 y C4 quedan como en la tabla de la Etapa 1, sin cambios (C2 no bloqueante). C1 y los
+tres C4 son criterios «todas».
+
+| # | Criterio | Éxito si |
+|---|---|---|
+| C1 | Glosario en las cápsulas válidas con R ≥ 40 % | todas, en todas las corridas |
+| C2 | Contenido dentro de ±15 % del objetivo (R > 0) | **no bloqueante**; se informa |
+| C3 | No regresión: lo más estricto entre los umbrales absolutos de la Etapa 1 (S42: válidas ≥ 25 y reparaciones ≤ 4 sobre los perfiles con R > 0) y lo relativo a la base nueva, **por conjunto** | válidas ≥ promedio de la base − 1; reparaciones ≤ promedio de la base + 2; 0 citas inventadas en todas las corridas; **ningún perfil válido en todas las corridas de la base se pierde en alguna corrida del brazo** |
+| C4a–c | Ejercicios K ≥ 40 %, guion de audio A ≥ 25 %, analogía A ≥ 40 % | todas, en todas las corridas |
+
+Los umbrales absolutos de C3 salen de una base sin H2, así que por sí solos son permisivos; el
+criterio relativo es el que detecta una regresión real. Las tolerancias (−1 válida, +2
+reparaciones) son el ruido medido entre corridas idénticas en la Etapa 4.
+
+**R1 (rescate), simétrica para base, A y B.** Si un criterio «todas» falla por **un único
+perfil en una única corrida** (cada par criterio–corrida cuenta por separado), se repite ese
+perfil 5 veces con el mismo brazo; el criterio pasa si cumple en al menos 4 de 5. Máximo 2
+rescates por brazo; con más, o con 2 o más perfiles fallidos en una misma corrida, el
+criterio cuenta como falla. La corrida original queda registrada.
+
+*Riesgo conocido de R1:* C4a depende de una heurística léxica («≥ 80 % de respuestas
+respaldadas») que falló por **un perfil distinto en 3 de las 4 corridas S42 guardadas con el
+código de `main`** (`015507`: B_A10-R30-K60; `020427`: B_A20-R10-K70; `020729`:
+C_C06_A41-R13-K46; `235748` no falló). Con 2 corridas S42 por brazo es esperable que un brazo
+consuma sus 2 rescates solo por ruido.
+
+**Efecto del fix de la actividad.** La base nueva se compara, sobre los perfiles con K ≥ 40 %,
+contra las bases viejas guardadas en `data/pruebas_vark/`, con `comparar_h1h3.py
+--efecto-fix`. Se reporta la cantidad de válidas, las reparaciones, C4a y los componentes
+prácticos contados por perfil. **Si los perfiles con K ≥ 40 % pierden componentes prácticos o
+las reparaciones o las válidas salen del ruido medido (±1 válida, ±2 reparaciones), se
+revierte el fix.** Dos controles, porque las bases viejas literales (`235748` y `015507` en
+S42; `010726` y `015733` en S43) son anteriores a H2 y mezclarían los dos cambios: además de
+ellas se usan las cuatro corridas de la Etapa 4, que tienen H2 y no tienen el fix (`020427` y
+`020729` en S42; `020647` y `020948` en S43). Se revierte si empeora contra cualquiera de los
+dos controles. Para K ≥ 40 % se espera efecto nulo, porque el cambio es solo de redacción.
+
+**Regla de cierre (sin cambios):** se aplica B si cumple C1, C3 y C4; si no, A; si ninguno,
+se revierte todo y se analiza. S44 no entra en la regla.
+
+#### Costo estimado
+
+Con la tarifa supuesta del script (0,28 / 0,42 USD por millón de tokens, por verificar):
+
+| Parte | Perfiles | Llamadas (mín.–máx.) | Costo |
+|---|---|---|---|
+| 3 brazos × 2 corridas × (S42 + S43) | 228 | 228–684 | US$ 0,33–1,34 |
+| S44: 2 variantes × 2 corridas × 6 perfiles | 24 | 24–72 | US$ 0,04–0,14 |
+| Rescates R1 (hasta 2 por brazo × 5 repeticiones) | ≤ 30 | ≤ 30 | ≤ US$ 0,05 |
+| **Total** | | **252–786** (esperado ≈ 280) | **US$ 0,37–1,53** (esperado ≈ US$ 0,45–0,50) |
+
+Las llamadas esperadas salen de ≈ 1,07 por perfil en las corridas con H2, y el costo
+esperado de ≈ US$ 0,0017 por llamada medido en la batería completa.
+
 ### Etapa 4 — H2: el bucle de reparación que repite la respuesta
 
 **Diagnóstico (04-oct-2026).** En las corridas guardadas hubo 58 pares de intentos
@@ -1273,21 +1402,23 @@ No se ejecutó por decisión del equipo. Su comportamiento actual, leído del c�
 
 ### Hallazgos reportados sin corregir
 
-La batería no toca lógica de negocio: cada corrección se hace aparte, por etapas (ver «Correcciones»). Estado al 04-oct-2026: H2, H5 y H9 corregidos; H1 y H3 abiertos, a re-medir ahora que H2 está corregido; H10 registrado sin corregir; el resto, sin tocar. Ordenados por impacto. En H5, «el visor lo llama» se refiere a cada cápsula **nueva**: las que salen del caché no pasaban por `GeneradorMultimedia`.
+La batería no toca lógica de negocio: cada corrección se hace aparte, por etapas (ver «Correcciones»). Estado al 05-oct-2026: H2, H5 y H9 corregidos; H1 y H3 abiertos, con la ronda 2 planificada (ver «Etapa 1 — Ronda 2»); H4, H8, H10, H11 y H12 registrados sin corregir; H13 es una decisión de diseño anotada, no un defecto; el resto, sin tocar. Ordenados por impacto. En H5, «el visor lo llama» se refiere a cada cápsula **nueva**: las que salen del caché no pasaban por `GeneradorMultimedia`.
 
 | # | Hallazgo | Evidencia | Propuesta (pendiente de aprobación) |
 |---|---|---|---|
 | H1 | 🟡 **Abierto; arreglo validado pero no aplicado (Etapa 1).** **El perfil R nunca recibe glosario.** La directiva dice «Cierra *el contenido* con un bloque `glosario`», y `contenido` es el campo del contrato anterior a los siete pasos (19-ago), que ya no existe. | 0/10 cápsulas con R ≥ 40 %. **Experimento** (scratchpad, sin tocar el repo): reescribiendo la instrucción como «El último bloque de `representacion_adaptativa` debe ser un bloque `glosario`…», **4/4** cápsulas lo traen (3 R puro + A20-R70-K10). **Etapa 1:** con el texto nuevo, el glosario aparece en todas las cápsulas válidas con R ≥ 40 % (S42 y S43, brazos A y B), pero la etapa no cumplió C3 (ver «Correcciones»). | Cambiar ese texto en `rag/prompts/maestro.py::INSTRUCCION_POR_DIRECTIVA["glosario"]` y revisar el resto de las instrucciones que digan «contenido». **Efecto colateral medido:** las cápsulas R suben a 255–299 palabras y 2/4 necesitaron una reparación por pasar de 300, así que conviene acompañarlo con un objetivo de palabras R algo menor (`MARGEN_PALABRAS_OBJETIVO`). |
 | H2 | ✅ **Corregido (Etapa 4, 04-oct).** **El bucle de reparación vuelve a repetir la respuesta byte a byte.** | C05 (A2-R17-K81): los intentos 2 y 3 son idénticos (mismo MD5, 4.930 caracteres), así que el tercer intento se desperdició y la cápsula se perdió. Es el problema que la sección 5 sedecies de AVANCE daba por corregido con el mensaje de reparación. **Etapa 1:** las 2 cápsulas que perdió el brazo B repitieron los 3 intentos idénticos, con desviaciones de solo 8–21 palabras. | En `generation/generator.py`, detectar que `crudo` es igual al anterior y, en ese caso, reintentar con otra estrategia: subir la temperatura en esa llamada o reinyectar solo el error con la cápsula anterior resumida. |
 | H3 | 🟡 **Abierto (Etapa 1 sin aplicar).** **Las cápsulas K se pasan de largo y las R se quedan cortas** (patrón 1). | K +48, R −57 palabras respecto del objetivo. 4/4 reparaciones y el único contrato agotado son de K ≥ 40 % por pasar de 300 palabras. | Decisión de diseño del equipo: o bajar el objetivo de palabras de K cuando se pide `lista_pasos` + `ejemplo_resuelto`, o pedir explícitamente brevedad en esos bloques. **Etapa 1:** el reparto por paso como tope llevó R a +2 %, pero invirtió K a −21 % y acercó al piso de 150 a los perfiles de objetivo bajo. Retomar después de H2. |
-| H4 | **Con 25 ≤ p_K < 40 % se ignora la cantidad de componentes prácticos** (patrón 2). | 3/3 perfiles. | Que `componentes_practicos = 2` vaya acompañado de una directiva concreta (p. ej. `paso_a_paso`) en `vark/rules.py`. Toca la lectura de la tabla 11.1 aprobada el 06-ago, así que la decide el equipo. |
+| H4 | **Con 25 ≤ p_K < 40 % el prompt promete componentes prácticos sin pedirlos** (patrón 2). Es una **inconsistencia entre dos reglas del mismo módulo**, no una decisión de diseño: `_cantidad_componentes_practicos` da `componentes_practicos = 2` desde K ≥ 25 % ([`rules.py:112`](../src/studify/vark/rules.py#L112)), pero las directivas de K (`ejemplo_resuelto`, `paso_a_paso`, `actividad_aplicada`) solo se emiten desde K ≥ 40 % ([`rules.py:173-174`](../src/studify/vark/rules.py#L173-L174)). El prompt dice «componentes prácticos: 2» y ninguna instrucción nombra un bloque que lo cumpla. | 3/3 perfiles de la batería (K = 30, 30, 33) reciben «2» y entregan 1. En S42 y S43 hay 4 perfiles con K de 25 a 39 %. **La inconsistencia no es uniforme:** con K entre 31 y 39 %, K como canal primario, ningún canal ≥ 40 % y perfil no multimodal, la red de seguridad de [`rules.py:193-194`](../src/studify/vark/rules.py#L193-L194) sí emite las tres directivas de K (2.848 perfiles enteros del símplex; 18 con V = 0). El resto de la zona, no. | Que `componentes_practicos` y las directivas usen el mismo umbral, o que el «2» vaya acompañado de una directiva concreta (p. ej. `paso_a_paso`). Toca la lectura de la tabla 11.1 aprobada el 06-ago, así que la decide el equipo. **Sin corregir.** |
 | H5 | ✅ **Corregido (Etapa 2, 04-oct).** `crear_capsula` ya no llama a `GeneradorMultimedia`: se eliminan ~100–130 s de bloqueo (medidos) en cápsulas nuevas con p_A ≥ 25 % (ver «Correcciones»). **Audio en el camino de la API: narra JSON, se pierde y bloquea.** `POST /api/capsulas` (y el visor, que lo llama) ejecuta `GeneradorMultimedia` **síncrono** con `json.dumps(capsula)[:250]` como guion, guarda el WAV en `data/media/` (nada lo sirve), y después el visor sintetiza **otro** audio con el guion correcto. | 29/29 cápsulas: el guion de la ruta API empieza con `{"titulo": …`. XTTS en CPU tardó 67–229 s por audio en esta batería. Por lectura de código, un estudiante con p_A ≥ 25 % espera esa síntesis inútil antes de ver su cápsula. | Quitar la síntesis de audio de `crear_capsula` (el visor ya la hace bajo demanda con el guion correcto). Corrige a la vez el guion JSON, el archivo huérfano, la doble síntesis y la espera. |
 | H6 | **El modelo inventa cifras de ejemplo** (patrón 4). | 2/29 cápsulas con RUT ficticios. | Advertencia (no rechazo) en `generation/validator.py` para cifras que no están en los fragmentos, o permitir explícitamente los datos de ejemplo en el prompt. |
 | H7 | **«Preguntas reflexivas» casi nunca se cumple.** | 2/13 cápsulas con A ≥ 40 % intercalan una pregunta en la prosa. | Reformular la instrucción para que nombre dónde va (p. ej. dentro de `concepto_central`). |
-| H8 | **`pytest` completo carga SDXL y XTTS.** `tests/test_visual.py` y `tests/test_voz.py` ejecutan la generación **al importarse**. | Lectura de código. | Moverlos a `scripts/` o protegerlos con `if __name__ == "__main__"`. |
+| H8 | **`pytest` completo carga SDXL y XTTS, y se interrumpe.** `tests/test_visual.py` y `tests/test_voz.py` ejecutan la generación **al importarse**. | Lectura de código y, el 05-oct-2026, ejecución: `pytest` a secas termina con «Interrupted: 2 errors during collection». `test_visual.py` falla al importar `diffusers`; `test_voz.py` carga XTTS-v2 y falla al abrir `referencia.wav`. La suite solo corre completa con `--ignore=tests/test_visual.py --ignore=tests/test_voz.py` (525 pasan; fallan los 2 de `test_interaccion_quiz.py`). | Moverlos a `scripts/` o protegerlos con `if __name__ == "__main__"`. **Sin corregir.** |
 | H9 | ✅ **Corregido (04-oct).** **`gruut` (dependencia de Coqui TTS) instala un paquete `tests` en site-packages** que le hacía sombra a `tests/` del repo: 12 archivos que hacen `from tests.conftest import …` no se podían ni importar. | `import tests` resolvía a `.venv/Lib/site-packages/tests/__init__.py` (instalado el 31-ago). Con `pytest`: 12 errores de colección. | `tests/__init__.py` convierte la carpeta en paquete regular y pytest antepone la raíz del repo a `sys.path`; los 4 tests que hacían `from material import` pasan a `from tests.material import`. Verificado: 432 pasan y 4 fallan (los mismos 4 previos), sin shim. |
 | H11 | **`tests/test_api_diagnosticos.py` se cuelga indefinidamente sin Postgres.** Su propio `_hay_base_de_datos()` (línea 34, llamado desde la fixture `limpiar_lo_que_cree_el_test`) abre la conexión sin tiempo límite, así que la suite completa nunca termina si la BD no está arriba. | 05-oct-2026, con Docker apagado: `faulthandler` mostró el proceso detenido en `psycopg.waiting.wait_conn` dentro de esa fixture, más de 60 s, incluso con `DATABASE_URL` apuntando a un puerto cerrado. `tests/conftest.py::hay_base_de_datos` tiene el mismo patrón. | Sin aplicar: pasar `connect_args={"connect_timeout": 3}` al probar la conexión (o reutilizar `conftest.hay_base_de_datos` con ese límite), para que los tests de BD se omitan en vez de colgarse. |
 | H10 | 🟡 **(2) corregido en la Etapa 3, Parte A (05-oct): el caché se indexa por la huella del guion normalizado + voz + motor; (1) pendiente de `git rm --cached` por el autor.** **Caché de audio del visor frágil.** (1) Dos WAV generados en desarrollo están versionados en git. (2) El caché del visor se indexa por `id_capsula`, no por el contenido. | (1) `git ls-files` lista `src/studify/public/audio/capsula_620.wav` (48,6 s) y `capsula_1451.wav` (2,5 s), agregados en `1dc5286`; `public/audio/` no está en `.gitignore`. La cápsula 620 existe en la BD; **la 1451 no** (el id máximo es 1599 y quedan 5 cápsulas). (2) `generate_capsule_audio` sintetiza solo si no existe `capsula_{id}.wav` ([`student.py`](../src/studify/web/routers/student.py)). Si se recrea la BD y los ids se repiten, una cápsula nueva reproduciría el audio de otra. Además, cada copia del caché compartido recibe un id nuevo y **vuelve a sintetizar el mismo texto**. | Sin aplicar: (a) agregar `src/studify/public/audio/` a `.gitignore` y sacar los dos WAV del índice con `git rm --cached` (quedan en el historial; no se reescribe); (b) nombrar el archivo por un hash del guion y de la voz de referencia (p. ej. `sha256(guion + referencia)[:16].wav`) en vez de por `id_capsula`. Así una BD recreada no puede servir un audio ajeno, y las copias del caché compartido reutilizan el WAV. |
+| H12 | **Un texto con la etiqueta del perfil llega al estudiante.** Cuando una actividad `flashcards_y_quiz` llega sin `pregunta`, el validador la rellena con «Sesión práctica kinestésica: Repaso activo con tarjetas interactivas y cuestionario formativo.» ([`generation/schemas.py:297-298`](../src/studify/generation/schemas.py#L297-L298)). Se guarda en la cápsula y el visor lo muestra como introducción de la actividad ([`_capsula.html:279-280`](../src/studify/web/templates/student/_capsula.html#L279-L280)). | Lectura de código (05-oct-2026). No es un prompt: el modelo no lo ve, pero el cap. 17.2 prohíbe persistir la etiqueta del perfil y este texto la nombra dentro de un campo de la cápsula. No se midió con qué frecuencia el modelo omite `pregunta`. | Sin aplicar: un texto por defecto sin la etiqueta («Repaso activo con tarjetas y cuestionario»). **Sin corregir.** |
+| H13 | **Los pesos por canal viajan al prompt con sus nombres** (decisión de diseño, no defecto). El bloque «Perfil de representación» de [`maestro.py`](../src/studify/rag/prompts/maestro.py) muestra `Texto / Visual / Narrativo / Práctico: N %`, los `C_*` del cap. 11.2, derivados del vector VARK. | Revisión de fuga de etiquetas (05-oct-2026): ninguna etiqueta VARK («visual», «auditivo», «lector», «kinestésico», «VARK») llega al modelo, pero estos cuatro porcentajes dejan inferir el perfil. `test_el_prompt_no_le_dice_al_modelo_la_etiqueta_del_perfil` no los detecta: busca «visual,» con coma y aquí aparece «Visual: N %». | **Se mantiene.** Los comentarios de la plantilla explican que van además de las instrucciones estructurales: dicen cuánto énfasis lleva cada canal. Si el criterio del cap. 17.2 se lee de forma estricta, hay que decidirlo aparte; no se toca en esta ronda. |
 
 **Aviso de XTTS, sin consecuencias en esta corrida:** 10/16 audios registraron «The text
 length exceeds the character limit of 239 for language 'es'». Ninguno quedó truncado (las
