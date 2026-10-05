@@ -539,13 +539,18 @@ CAMPOS_CAPSULA_OUT = {
 
 @pytest.fixture
 def sin_multimedia(monkeypatch):
-    """Sustituye los módulos de multimedia por dobles que anotan y fallan.
+    """Sustituye la síntesis de audio e imagen por dobles que anotan y fallan.
 
-    Van en `sys.modules` y no con `monkeypatch.setattr` sobre las funciones
-    reales para no importar `media/image.py` ni TTS, y para que cualquier import
-    perezoso dentro de un handler reciba el doble. Lo que cuenta es la anotación,
-    no la excepción: el bloque que se quitó tragaba todo con `except Exception`.
+    Imagen y generador van en `sys.modules`, no con `monkeypatch.setattr` sobre
+    las funciones reales, para no importar `media/image.py` y para que cualquier
+    import perezoso dentro de un handler reciba el doble. `media/audio.py` se deja
+    real porque el visor lo usa también para leer la preferencia de voz, y
+    cargarlo ya no carga ningún motor (`test_audio.py`). Ahí se reemplazan
+    `generar_audio` y cada motor. Lo que cuenta es la anotación, no la
+    excepción: el bloque que se quitó tragaba todo con `except Exception`.
     """
+    from studify.media import audio
+
     llamadas: list[str] = []
 
     def _prohibida(nombre: str):
@@ -555,14 +560,14 @@ def sin_multimedia(monkeypatch):
 
         return _llamada
 
-    audio = types.ModuleType("studify.media.audio")
-    audio.generar_audio = _prohibida("generar_audio")
     imagen = types.ModuleType("studify.media.image")
     imagen.generar_imagen = _prohibida("generar_imagen")
     generador = types.ModuleType("studify.media.generator")
     generador.GeneradorMultimedia = _prohibida("GeneradorMultimedia")
 
-    monkeypatch.setitem(sys.modules, "studify.media.audio", audio)
+    monkeypatch.setattr(audio, "generar_audio", _prohibida("generar_audio"))
+    for motor in list(audio.MOTORES):
+        monkeypatch.setitem(audio.MOTORES, motor, _prohibida(f"motor {motor}"))
     monkeypatch.setitem(sys.modules, "studify.media.image", imagen)
     monkeypatch.setitem(sys.modules, "studify.media.generator", generador)
     return llamadas
