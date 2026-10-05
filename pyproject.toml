@@ -3,6 +3,15 @@ name = "studify"
 version = "0.1.0"
 description = "Generación de micro-aprendizaje adaptativo mediante IA generativa y RAG estructurado sobre base de datos relacional"
 requires-python = ">=3.11"
+# Expresión SPDX y archivo de licencia según PEP 639 (requiere hatchling >= 1.27,
+# ver [build-system]). La licencia cubre solo el código: modelos de voz, material
+# de estudio y componentes de terceros tienen la suya (README, «Licencia»).
+license = "AGPL-3.0-or-later"
+license-files = ["LICENSE"]
+authors = [
+    { name = "Patricio Hernández Vergara" },
+    { name = "Vicente Cisternas León" },
+]
 dependencies = [
     "fastapi>=0.115",
     "uvicorn[standard]>=0.32",
@@ -59,7 +68,8 @@ dev = [
 ]
 
 [build-system]
-requires = ["hatchling"]
+# 1.27 es la primera que emite metadatos 2.4, los de `license` SPDX y `license-files`.
+requires = ["hatchling>=1.27"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
