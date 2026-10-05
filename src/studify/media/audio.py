@@ -28,6 +28,7 @@ directorio y se renombra al terminar. El visor sirve el archivo apenas existe,
 así que un WAV a medio escribir llegaría cortado al navegador.
 """
 
+import hashlib
 import logging
 import os
 import threading
@@ -86,12 +87,33 @@ def preferencia_guardada(voz_genero: str | None, voz_modo: str | None) -> Prefer
     return PreferenciaVoz(genero=voz_genero or defecto.genero, modo=voz_modo or defecto.modo)
 
 
-def clave_de_voz(eleccion: VozElegida) -> str:
-    """Identifica la voz en el nombre del WAV: cambiar de voz no reusa el audio de otra."""
-    partes = [eleccion.motor, eleccion.voz or "referencia"]
-    if eleccion.hablante is not None:
-        partes.append(str(eleccion.hablante))
-    return "-".join(partes)
+# Versión del esquema de la clave de caché. Subirla invalida todos los audios
+# guardados, para cuando cambie algo que la clave no ve (p. ej. el modelo).
+VERSION_CACHE_AUDIO = "1"
+
+
+def huella_de_audio(texto: str, eleccion: VozElegida, ajustes: Settings | None = None) -> str:
+    """Clave del caché de audio: guion normalizado + motor + voz (+ hablante y acento).
+
+    Se calcula sobre el texto **ya normalizado**: si cambian las reglas de
+    `media/guion.py`, cambia la clave y el audio se vuelve a sintetizar solo; y
+    dos textos que se narran igual («X → Y» y «X -> Y») comparten archivo.
+
+    No depende del `id_capsula`: las copias del caché compartido de cápsulas
+    tienen el mismo texto, así que reutilizan el mismo WAV, y una base recreada
+    no puede servir el audio de otra cápsula (hallazgo H10).
+    """
+    ajustes = ajustes or get_settings()
+    variante = ajustes.tts_kokoro_idioma if eleccion.motor == "kokoro" else ""
+    partes = (
+        VERSION_CACHE_AUDIO,
+        eleccion.motor,
+        eleccion.voz or "",
+        "" if eleccion.hablante is None else str(eleccion.hablante),
+        variante,
+        normalizar_guion(texto),
+    )
+    return hashlib.sha256("\x1f".join(partes).encode("utf-8")).hexdigest()[:32]
 
 
 def resolver_voz(

@@ -522,10 +522,13 @@ def generate_capsule_audio(
 
     **Con qué voz.** La que eligió el **dueño de la cápsula** (`estudiante.voz_*`),
     también cuando la pide el docente: así oye lo mismo que el estudiante. Sin
-    preferencia guardada, y en el simulador, Dora. El nombre del archivo lleva la
-    voz, para que cambiar de voz no siga sirviendo el audio de la anterior.
+    preferencia guardada, y en el simulador, Dora.
+
+    **Caché.** El archivo se llama por `audio.huella_de_audio`: el hash del guion
+    normalizado más la voz y el motor, no el `id_capsula`. Cambiar de voz da otro
+    archivo, las copias del caché compartido de cápsulas reutilizan el mismo, y
+    una base recreada no puede servir el audio de otra cápsula (H10).
     """
-    import hashlib
     from pathlib import Path
 
     from studify.media import audio
@@ -550,7 +553,6 @@ def generate_capsule_audio(
         if not es_docente:
             raise HTTPException(status_code=403, detail="el audio del simulador es del docente")
         texto = texto_override.strip()
-    clave = audio.clave_de_voz(audio.resolver_voz(preferencia))
 
     public_audio_dir = Path("src/studify/public/audio")
     public_audio_dir.mkdir(parents=True, exist_ok=True)
@@ -558,12 +560,8 @@ def generate_capsule_audio(
     if not texto:
         texto = "Esta es una microcápsula adaptativa sintetizada con IA para el canal auditivo."
 
-    if id_capsula > 0:
-        filename = f"capsula_{id_capsula}__{clave}.wav"
-    else:
-        h = hashlib.md5(texto.encode("utf-8")).hexdigest()[:8]
-        filename = f"capsula_sim_{h}__{clave}.wav"
-
+    eleccion = audio.resolver_voz(preferencia)
+    filename = f"{audio.huella_de_audio(texto, eleccion)}.wav"
     audio_file = public_audio_dir / filename
     web_audio_url = f"/public/audio/{filename}"
 
@@ -571,7 +569,7 @@ def generate_capsule_audio(
         try:
             audio.generar_audio(texto, audio_file, preferencia=preferencia)
         except Exception as exc:
-            logger.error("Error al generar audio (%s): %s", clave, exc)
+            logger.error("Error al generar audio (%s, %s): %s", eleccion.motor, eleccion.voz, exc)
             return templates.TemplateResponse(
                 request=request,
                 name="student/_audio.html",
