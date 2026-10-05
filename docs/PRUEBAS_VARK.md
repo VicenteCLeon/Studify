@@ -914,7 +914,8 @@ dentro de lo declarado (esperado 0,45–0,50; tope 1,53).
 
 ### Etapa 1 — Ronda 3 (05-oct-2026): descuento del glosario en el objetivo de R
 
-**Estado: preparada, sin ejecutar; pendiente del OK del autor.** Los criterios de esta sección
+**Estado: piloto ejecutado el 05-oct-2026 y NO autoriza la ronda completa; la ronda completa y S45 no
+se ejecutaron ni se miraron. No se aplica nada (ver «Resultado del piloto»).** Los criterios de esta sección
 se fijan antes de ejecutar y no se modifican después de ver resultados.
 
 **Decisiones previas del autor.** El brazo B (reparto por paso con rangos y párrafo condicionado)
@@ -1001,11 +1002,12 @@ el prompt idéntico byte a byte y con la misma huella** que la base; en los que 
 la línea «Extensión del contenido: aproximadamente N palabras…».
 
 - **S42** y **S43** como en la ronda anterior, 2 corridas por brazo.
-- **S45 (validación, no usada para diseñar el descuento):** semilla 45. **Corrección a lo pedido,
-  pendiente de confirmar:** con `--fases ABC` las fases A y B son *fijas* y repiten los 22 perfiles
-  de S42, así que solo 8 perfiles serían nuevos (3 con R ≥ 40 %), y los 9 R ≥ 40 % de S42 sí
-  informaron el descuento. Se propone **solo Fase C con 24 mezclas aleatorias** (`--fases C
-  --n-aleatorias 24 --semilla 45`): 13 con R ≥ 40 %, ninguna coincide con S42 ni S43.
+- **S45 (validación, no usada para diseñar el descuento):** semilla 45. Con `--fases ABC` las
+  fases A y B son *fijas* y repiten los 22 perfiles de S42, así que solo 8 serían nuevos (3 con
+  R ≥ 40 %). **Aprobado por el autor el 05-oct-2026: solo Fase C con 24 mezclas aleatorias**
+  (`--fases C --n-aleatorias 24 --semilla 45`). Verificado: 24 perfiles, 0 repetidos entre sí, 0
+  repetidos con S42 y 0 con S43, **13 con R ≥ 40 %**. S45 no se ejecuta ni se mira hasta que el
+  piloto autorice la ronda completa.
 - Todo con `--sin-audio`, `--doc` fuera de `docs/`, corridas intercaladas por brazo
   (base, A, A+objetivo, base, A, A+objetivo…), 2 corridas por brazo y conjunto.
 
@@ -1033,7 +1035,125 @@ purga de las cápsulas cacheadas** (hoy `huella` no incluye el texto del prompt)
 queda como está, **H1 se documenta como limitación conocida (R sin glosario)** y se presentan
 alternativas estructurales al autor para que decida; sin iterar.
 
-#### Costo estimado
+#### Aprobaciones del autor (05-oct-2026)
+
+R1 **no se aplica a C6**; C4a se compara con la base **por conjunto**; tope de **US$ 1,40** para la
+ronda completa (las paradas por doble costo esperado por brazo y 3 errores de la API se mantienen).
+
+#### Piloto previo a la ronda completa (regla fijada antes de ejecutar)
+
+**Qué es.** Una comprobación del mecanismo, **no una validación**: los 70 salieron de estos mismos
+perfiles, así que el piloto no se usa para aprobar nada.
+
+**Diseño.** Los 14 perfiles con R ≥ 40 % de S42 (9) y S43 (5); brazos **base** (`main` + fix) y
+**A+objetivo**; 2 corridas por brazo intercaladas (base, A+objetivo, base, A+objetivo); todo con
+`--sin-audio` y `--doc` fuera de `docs/`. Son 28 perfiles-corrida por brazo. **Tope de gasto:
+US$ 0,20.** Si se supera o se acumulan 3 errores de la API, se detiene.
+
+**Métricas.** (1) Primeros intentos con más de 300 palabras, de 28 por brazo (palabras de la primera
+respuesta, contadas como las cuenta el validador sobre `respuestas_crudas.json`); (2) cápsulas
+**sin ninguna válida**; (3) las palabras de cada primer intento, por perfil.
+
+**Regla de paso.** Se pasa a la ronda completa solo si A+objetivo tiene **al menos 3 desbordes menos
+que la base del piloto** (no que la base histórica) **sin aumentar las cápsulas inválidas** (las de
+A+objetivo ≤ las de la base del piloto). **Si no se cumple, se detiene el proceso: no se corre la
+ronda completa ni S45, y no se itera.** Se entrega el resultado y una comparación de alternativas
+estructurales para que el autor decida: (a) subir el máximo de R cuando hay glosario (regla del
+cap. 11.1, decisión del autor), (b) que el glosario reemplace al párrafo en vez de sumarse, (c)
+acotar el glosario a exactamente 3 entradas.
+
+**Cumplimiento real del descuento (solo informativo).** Reducción media, por perfil, de las palabras
+del primer intento entre A (ronda 2, mismo prompt salvo el objetivo) y A+objetivo (piloto), en
+palabras y como fracción de 70. **Cualquier descuento distinto de 70 requiere una declaración nueva
+y validarse en S45; nunca se ajusta sobre S45.**
+
+#### Resultado del piloto (05-oct-2026): no autoriza la ronda completa
+
+**Trazabilidad.** Código: `fix/h1h3` en `00b70b3b76539f8bc51562b0765b6797bcaac8d4`, sin cambios en
+`src/` ni `tests/`. Las 8 invocaciones (cada corrida = S42 con 9 perfiles + S43 con 5), todas con
+`--sin-audio`, sin errores de la API y con US$ 0,132 de gasto (tope US$ 0,20):
+
+| Corrida | base | A+objetivo |
+|---|---|---|
+| Ciclo 1 | S42 `20261005-204339`, S43 `20261005-204418` | S42 `20261005-204440`, S43 `20261005-204606` |
+| Ciclo 2 | S42 `20261005-204658`, S43 `20261005-204745` | S42 `20261005-204807`, S43 `20261005-204911` |
+
+| Métrica (28 perfiles-corrida por brazo) | Base (piloto) | A+objetivo (piloto) | A (ronda 2, referencia) |
+|---|---|---|---|
+| Primeros intentos con más de 300 palabras | **2** | **17** | 17 |
+| Cápsulas sin ninguna válida | **0** | **6** | 3 |
+| Llamadas (reparaciones) | 31 (3) | 55 (27) | 52 (24) |
+| Media de palabras del primer intento | 223 | 323 | 315 |
+
+**Regla de paso: no se cumple.** Exigía al menos 3 desbordes *menos* que la base del piloto y no
+más cápsulas inválidas; A+objetivo tuvo **15 desbordes más** y 6 inválidas contra 0. Por la regla
+fijada antes de ejecutar, se detiene: no se corre la ronda completa ni S45 y no se itera.
+
+**Cumplimiento real del descuento (solo informativo, n = 14 perfiles).** Reducción media del primer
+intento entre A (ronda 2) y A+objetivo: **−7,7 palabras** (mediana −10,5; sd 48,9), es decir, **−11 %
+de las 70**: el modelo no acortó nada medible (dentro del ruido). Frente a la base sin glosario del
+piloto, A+objetivo quedó +100 palabras más largo (A − base fue +70,2 en la ronda 2). Es lo que
+anticipaba la pendiente de 0,24 del total sobre el objetivo: **el modelo no escala la longitud con el
+número que se le da**. Un descuento distinto de 70 requeriría una declaración nueva y validarse en
+S45; este resultado no sugiere que otro valor cambie algo.
+
+Palabras de cada primer intento por perfil (`✗` = la cápsula terminó sin ninguna válida):
+
+| Perfil | Base c1, c2 | A+objetivo c1, c2 | A ronda 2 (2 corridas) |
+|---|---|---|---|
+| S42 A0-R100-K0 | 171, 327 | 344, 283 | 256, 368 |
+| S42 A0-R50-K50 | 271, 234 | 386✗, 260 | 357, 355 |
+| S42 A10-R60-K30 | 200, 192 | 246, 275 | 298, 338✗ |
+| S42 A10-R70-K20 | 267, 176 | 383✗, 409 | 286, 300 |
+| S42 A20-R70-K10 | 187, 187 | 301, 293 | 230, 317 |
+| S42 A30-R60-K10 | 179, 351 | 343✗, 275 | 340✗, 304 |
+| S42 A5-R90-K5 | 196, 204 | 287, 237 | 341, 304 |
+| S42 A50-R50-K0 | 269, 231 | 331, 323 | 358, 397✗ |
+| S42 C02 A9-R49-K42 | 266, 197 | 367, 347 | 291, 337 |
+| S43 C01 A3-R86-K11 | 239, 189 | 284, 284 | 237, 264 |
+| S43 C03 A46-R53-K1 | 213, 183 | 397✗, 425✗ | 346, 320 |
+| S43 C05 A29-R51-K20 | 238, 209 | 352, 319 | 303, 273 |
+| S43 C06 A5-R50-K45 | 246, 252 | 368✗, 345 | 353, 414 |
+| S43 C08 A22-R48-K30 | 173, 196 | 245, 334 | 255, 285 |
+
+#### Persistencia del error y probabilidad de verlo dos veces seguidas
+
+Con datos guardados (perfiles R ≥ 40 %, cápsula sin ninguna válida; «de nuevo» = otra corrida del
+mismo perfil, que equivale a pulsar «Intentar de nuevo»):
+
+| Brazo | Falla en la 1.ª vez | Dos seguidas si fueran independientes | Persistencia observada (falló y vuelve a fallar) |
+|---|---|---|---|
+| base (2 corridas) | 0/28 | 0 % | — |
+| A (ronda 2 + Etapa 1) | 5/42 (11,9 %) | 1,4 % | **0/10** |
+| B (ronda 2 + Etapa 1) | 4/42 (9,5 %) | 0,9 % | **0/8** |
+| A+objetivo (piloto) | 6/28 (21,4 %) | 4,6 % | 2/6 (una vez el perfil C03 falló en las 2 corridas) |
+
+**Los fallos no se concentran en perfiles fijos:** cada perfil que falló con A o B lo hizo en 1 de 3
+corridas, y ninguno repitió; `A10-R60-K30` y `C02` aparecen en ambos brazos, con un solo fallo
+cada uno. Con A, un estudiante R ≥ 40 % vería el error una vez en ≈ 12 de cada 100 primeros
+intentos y **dos seguidas en ≈ 1,4 %** (cota alta del 95 % por falta de repeticiones observadas:
+≈ 3,6 %); con B, ≈ 0,9 % (cota 3,6 %). Con A+objetivo subiría a ≈ 4,6–7 %.
+
+#### Alternativas estructurales para decidir (no implementadas)
+
+Efecto esperado calculado sobre los **42 primeros intentos de A con R ≥ 40 %** (ronda 2 y Etapa 1,
+mismo prompt), quitando o recortando lo indicado y dejando el resto del texto igual: es una
+estimación optimista (el modelo puede compensar). Hoy: **60 % sobre 300** (25/42; media 316, p90
+372); la base sin glosario: 7 %.
+
+| Alternativa | Efecto esperado (primeros intentos sobre 300) | Riesgo pedagógico | Cambio de código |
+|---|---|---|---|
+| **(a) Subir el máximo de R con glosario** (regla del cap. 11.1, decisión del autor) | Caben en el primer intento: máximo 320 → 60 %; 340 → 69 %; 360 → 83 %; **380 → 90 %**; 400 → 95 % | La cápsula R llega a ≈ 380 palabras: sale del rango de 3–7 minutos que define el cap. 11.1 y queda más larga que las de los otros perfiles; sienta el precedente de un máximo por perfil | `capsula_max_palabras` (`config.py:70`) es global: haría falta un máximo por perfil, que viajaría en `PromptMaestro` (campo nuevo) hacia `orchestrator.bloque_perfil`/`bloque_formato` y `validator.py:336-343`, y entraría en la huella. No cambian `rules.py` ni el CHECK de `models.py:224` (lo persistido sigue ≤ 300). Enmendar PLAN_DESARROLLO.md líneas 113 y 150. Tests de validador y orquestador |
+| **(b) El glosario reemplaza al párrafo** en vez de sumarse | Sin el bloque `parrafo` (presente en 29/42, mediana 49 palabras): media 280; **38 % sobre 300** (16/42) | La representación (paso 4) quedaría en un glosario de términos, que define pero no reexpresa el concepto en otras palabras; el perfil R pierde la explicación alternativa | Solo texto de la directiva `glosario` en `maestro.py` («es el único bloque de reexpresión; no agregues un `parrafo`») y un test; no se toca `rules.py` ni el validador. En perfiles R con directivas que ya reexpresan (analogía, pasos) habría que decidir si se conservan |
+| **(c) Glosario de exactamente 3 entradas** | Los glosarios hoy tienen 4 (23) o 5 (19) entradas, **ninguno 3** aunque el prompt dice «3 a 5». Con 3: mediana de 69 a 46 palabras; media 294; **43 % sobre 300** (18/42) | Menos términos de apoyo para el lector-escritor; riesgo bajo si se eligen los centrales | Texto «exactamente 3 entradas» en `maestro.py` (1 archivo y su test). Para que se cumpla de forma firme, validar el número de entradas en `generation/validator.py` y que el bucle de reparación lo corrija |
+| (b) + (c) | **24 % sobre 300** (10/42), media 259 | Suma de los dos riesgos | Los dos cambios de texto |
+
+Ninguna alternativa sola devuelve el 7 % de la base; la combinación (b)+(c) es la más cercana sin
+tocar la regla de 150–300 y es la única de las tres que no depende de que el modelo siga un
+número, que es justo lo que el piloto mostró que no hace. (a) es la única que elimina casi todos
+los desbordes, a costa de la regla de diseño.
+
+#### Costo estimado de la ronda completa (no ejecutada)
 
 Referencia: la ronda 2 costó US$ 0,48 (315 llamadas más el rescate; ≈ US$ 0,0015 por llamada).
 
