@@ -2,7 +2,11 @@
 
 > Documento vivo. Se actualiza al cierre de cada fase para que cualquier sesión de trabajo
 > (o cualquier persona) pueda retomar el proyecto sin releer todo el hilo de conversación.
-> Última actualización: **05-oct-2026** — **audio, Etapa 3 Parte A** (sección 5
+> Última actualización: **05-oct-2026** — **licencia AGPL-3.0-or-later** (sección 5
+> tritricies): el código es software libre. Se agregan `LICENSE` y los metadatos en
+> `pyproject.toml`, Términos y Política suben a 0.2 (motores de voz, componentes de terceros,
+> preferencia de voz) y el pie de todas las páginas ofrece el código fuente.
+> Antes, el mismo día: **audio, Etapa 3 Parte A** (sección 5
 > duotricies): el audio del visor se cachea por la huella del guion normalizado + voz +
 > motor, no por `id_capsula` (H10, parte 2). Medición final: Kokoro ~0,19 × la duración
 > del audio (con episodios de ~0,6 no explicados) y Piper 0,026.
@@ -2289,8 +2293,9 @@ Rama `feat/audio-motores`. Experimento, decisión, licencias y mediciones en
 
 ### Riesgos y pendientes registrados
 
-- **Licencias GPL-3.0** (piper-tts, phonemizer y espeak-ng) frente a unos Términos que
-  declaran el código sin licencia abierta.
+- **Licencias GPL-3.0** (piper-tts, phonemizer y espeak-ng) frente a los Términos 0.1, que
+  negaban reutilizar el código. Resuelto el 05-oct-2026 con AGPL-3.0-or-later (sección 5
+  tritricies).
 - **CPML** de XTTS: solo uso no comercial.
 - **sharvard parte de la voz lessac**, cuyos datos son solo para investigación.
 - **Créditos de atribución:** propuestos, sin implementar.
@@ -2382,11 +2387,52 @@ Rama `feat/audio-motores`. Detalle en `PRUEBAS_VARK.md`, «Etapa 3, Parte A».
 - Diff de la versión 0.2 de Términos y Privacidad, que aplica limpio:
   - motores de voz y componentes de terceros con sus licencias;
   - créditos de sharvard y declaración de prototipo académico;
-  - frase de licencia del código con [PENDIENTE];
+  - frase de licencia del código (entonces pendiente; aplicada el 05-oct-2026 con AGPL-3.0-or-later);
   - preferencia de voz como dato nuevo;
   - corrección de la licencia de HTMX 1.9.10 (BSD-2-Clause).
 - Comparación GPL-3.0 / AGPL-3.0 y textos oficiales listos para `LICENSE`.
 - Revisión de archivos versionados con derechos de terceros.
+
+## 5 tritricies. Licencia AGPL-3.0-or-later y actualización legal 0.2 (05-oct-2026)
+
+Decisión de Patricio Hernández Vergara y Vicente Cisternas León: el código de RepasAi es
+software libre bajo **AGPL-3.0-or-later**, © 2026 de ambos. Detalle y verificaciones en
+`PRUEBAS_VARK.md`, «Licencia del repositorio».
+
+### Aplicado (sin commit)
+
+- **`LICENSE`:** texto oficial, verificado contra gnu.org y contra la API de GitHub.
+- **`pyproject.toml`:**
+  - `license`, `license-files` y los autores;
+  - `hatchling>=1.27` (PEP 639);
+  - la rueda construida en aislamiento trae `License-Expression` y el archivo `LICENSE`;
+  - el venv no cambió.
+- **Términos y Política 0.2:**
+  - motores de voz y componentes de terceros con su licencia y enlace;
+  - créditos de sharvard y la aclaración de lessac;
+  - XTTS como opción administrativa;
+  - declaración de prototipo académico sin cobro;
+  - licencia del código;
+  - preferencia de voz como dato nuevo;
+  - HTMX corregido a BSD-2-Clause.
+- **Pie de página:** «Código fuente» y «Licencia AGPL-3.0» en todas las páginas, también en
+  el pie compacto (AGPL §13).
+- **README:** sección «Licencia».
+
+### Efecto en los estudiantes ya registrados
+
+- Como Términos y Política suben de 0.1 a 0.2, la próxima vez que un estudiante entre a
+  cualquier vista de `/student/*` lo llevan a `/aceptar` para aceptar los dos documentos de
+  nuevo. Con HTMX, la vista responde 409.
+- Sus aceptaciones 0.1 quedan en el historial.
+- No se le vuelve a pedir el consentimiento de género.
+
+### Investigado, sin mover nada
+
+Material de origen no documentado: `animacionCarga.mp4`, `School Background.dc.html`, las
+imágenes de prueba, `referencia.wav` y `prueba_entorno.wav`. La tabla con lo que cada uno
+necesita confirmar, una redacción neutra para `referencia.wav` y una sección propuesta
+«Material gráfico y de prueba» para los Términos están en PRUEBAS_VARK.
 
 ## 6. Pendiente inmediato
 

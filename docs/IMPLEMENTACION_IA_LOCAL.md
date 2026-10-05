@@ -28,7 +28,7 @@ Para evitarlo, se ha implementado un **Context Manager de Aislamiento de VRAM** 
 - [x] Crear el gestor de memoria estricta (`src/studify/media/memory_manager.py`).
 - [x] Crear los adaptadores para cada modelo de IA:
   - [x] `image.py`: Integración de **FLUX.1 [schnell] FP8** con CPU offload activo.
-  - [x] `audio.py`: Integración de **XTTS-v2** para clonación/síntesis de voz.
+  - [x] `audio.py`: Integración de **XTTS-v2** para clonación/síntesis de voz. *(Desde el 05-oct-2026 el audio usa Kokoro (modo calidad) y Piper (modo rápido); XTTS-v2 queda solo como opción administrativa, `TTS_MOTOR=xtts`. Ver PRUEBAS_VARK.md.)*
   - [x] `video.py`: Integración de **Stable Video Diffusion (SVD)** para img2vid.
 - [x] Crear el orquestador multimedia (`generator.py`) que lee las reglas VARK de la base de datos y decide qué adaptador ejecutar secuencialmente.
 - [x] Interceptar el endpoint `POST /api/capsulas` en `capsules.py` para gatillar la generación multimedia **después** de persistir el texto JSON de DeepSeek y **antes** de retornar la respuesta a la interfaz web.

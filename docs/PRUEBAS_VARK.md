@@ -926,11 +926,9 @@ Piper (`sharvard`) con el código del repo, mismas 3 cápsulas:
 con GPL-3.0, o usar esos componentes como **programa externo por subproceso** (agregación
 y no obra derivada). Conviene confirmarlo con la universidad; esto no es asesoría legal.
 
-- **Agravante:** los Términos vigentes (`terminos.html`, «El software y sus componentes»)
-  declaran que el código de RepasAi «no tiene una licencia de código abierto» y no se puede
-  reutilizar sin autorización. Una obra que importa bibliotecas GPL-3.0 y se distribuye
-  con esa restricción es justo el caso que la GPL no admite. La decisión de licencia del
-  repo y el texto de los Términos tienen que resolverse juntos.
+- **Agravante (resuelto el 05-oct-2026):** los Términos 0.1 negaban la reutilización del
+  código, lo que chocaba con importar bibliotecas GPL-3.0. Los autores publicaron el código
+  bajo **AGPL-3.0-or-later**, y los Términos 0.2 lo declaran (ver «Licencia del repositorio»).
 - **XTTS-v2:** queda limitado a usos no comerciales (CPML).
 - **sharvard (encontrado al preparar los créditos):**
   - su MODEL_CARD dice «Finetuned from U.S. English lessac voice»;
@@ -976,7 +974,7 @@ falla en los 4 casos conocidos y las dos páginas se renderizan. Cambia:
 | Lugar | Cambio |
 |---|---|
 | `terminos.html` §1 | Declaración de **prototipo académico de investigación**: no se cobra, no hay publicidad y no se venden ni licencian el servicio ni los datos. Si eso cambiara, se avisaría en una versión nueva que habría que aceptar |
-| `terminos.html` §8, «El software» | Reemplaza «No tiene una licencia de código abierto… no reutilizarlo» por: «El código fuente… está disponible públicamente en su repositorio… bajo la licencia [PENDIENTE: la elegirán sus autores]. Esa licencia cubre solo el código… no los modelos de voz, el material de estudio ni las cápsulas… Cada componente de terceros mantiene su propia licencia.» |
+| `terminos.html` §8, «El software» | Reemplaza la frase de la versión 0.1, que negaba la reutilización, por: «El código fuente… es software libre… bajo la licencia AGPL-3.0-or-later (enlace a `LICENSE`)… cubre solo el código… no los modelos de voz, el material de estudio ni las cápsulas… Cada componente de terceros mantiene su propia licencia.» |
 | `terminos.html` §8, apartado nuevo «Componentes de terceros y licencias» | Tabla con lo que usa el servicio: Kokoro-82M y kokoro-onnx (Apache-2.0 y MIT), Piper (GPL-3.0 o posterior), voz sharvard (datos CC BY 3.0), eSpeak NG y phonemizer (GPL-3.0), ONNX Runtime (MIT), PyMuPDF (AGPL-3.0), python-pptx (MIT), Psycopg (LGPL-3.0), la base web (MIT/BSD-3-Clause), **HTMX 1.9.10 (BSD-2-Clause**; los Términos actuales dicen por error «BSD de cero cláusulas», que es la licencia de HTMX 2), Lucide (ISC, con íconos de Feather bajo MIT) y las tipografías (OFL-1.1). Cada componente lleva enlace a su fuente. XTTS-v2 (CPML, solo no comercial) aparece como **opción administrativa** |
 | `terminos.html` §8, «Créditos de la voz» | Atribución CC BY 3.0 de sharvard: corpus *Sharvard_IJA*, de V. Aubanel, M. L. García Lecumberri y M. Cooke (LISTA Consortium, 2014), `hdl.handle.net/10283/574`. Aclara que la voz se ajustó desde lessac, con datos **solo para investigación**. Incluye el crédito de Kokoro |
 | `privacidad.html` §2, tabla de datos | Fila nueva: **preferencia de voz** (`voz_genero`, `voz_modo`). Es un dato personal nuevo y opcional: una preferencia de audio **independiente del género con que te identificas, que nunca se deduce de él** |
@@ -1007,6 +1005,73 @@ comentario HTML `<!-- BORRADOR TÉCNICO … No constituye asesoría legal -->`, 
 frente a las dependencias obligatorias, los textos oficiales listos para `LICENSE`, el
 campo `license` de `pyproject.toml`, la sección de licencia del README y la revisión de
 archivos versionados con derechos de terceros se entregaron aparte, sin aplicar.
+
+#### Licencia del repositorio: AGPL-3.0-or-later (05-oct-2026, aplicada sin commit)
+
+**Decisión de los autores**, Patricio Hernández Vergara y Vicente Cisternas León: el
+código es software libre bajo **AGPL-3.0-or-later**, © 2026 de ambos. Repositorio:
+`https://github.com/VicenteCLeon/Studify` (confirmado con `git remote -v`).
+
+**Qué quedó aplicado:**
+
+- **`LICENSE`:** el texto oficial íntegro, sin modificar. Se verificó de dos formas:
+  - su SHA-256 (`0d96a4ff…abcb0`) es igual al de una descarga nueva de
+    `gnu.org/licenses/agpl-3.0.txt`;
+  - es idéntico, salvo espacios, al texto de la API de licencias de GitHub (`agpl-3.0`,
+    5.535 palabras en ambos).
+
+  Ningún paquete instalado trae el texto AGPL en su `dist-info` para un tercer contraste.
+- **`pyproject.toml`:**
+  - `license = "AGPL-3.0-or-later"`, `license-files = ["LICENSE"]` y los dos autores;
+  - el backend es **hatchling**, no setuptools, y se fija `hatchling>=1.27`, la primera
+    versión que emite metadatos 2.4 (PEP 639);
+  - verificado construyendo la rueda en un entorno aislado: `Metadata-Version: 2.5`,
+    `License-Expression: AGPL-3.0-or-later`, `License-File: LICENSE` (incluido en la rueda)
+    y ambos autores;
+  - `pip install -e . --dry-run` solo instalaría `studify`, y `pip freeze` no cambió.
+- **Actualización legal 0.2** (Términos y Política), aplicada desde el parche. La frase de
+  licencia pasa a «software libre… AGPL-3.0-or-later», con enlace a `LICENSE`. Se mantienen
+  el comentario de borrador técnico y la corrección de HTMX a BSD-2-Clause. En el repo ya no
+  queda ningún marcador de licencia por definir ni frases que nieguen la reutilización.
+- **Oferta del código (AGPL §13):** el pie de todas las páginas enlaza «Código fuente» y
+  «Licencia AGPL-3.0». Van en la lista legal, que sigue visible en el pie compacto, con los
+  estilos existentes (tokens definidos para el tema claro y el oscuro). Lo cubren 8 tests
+  en `tests/test_web_codigo_fuente.py`.
+- **README:** sección «Licencia».
+
+#### Material de origen no documentado (investigado, nada movido ni borrado)
+
+| Archivo | Origen que se pudo comprobar | Licencia conocida | Qué tiene que confirmar el equipo |
+|---|---|---|---|
+| `src/studify/public/animacionCarga.mp4` | Lo agregó Vicente en `614238e` (03-sep), como pantalla de carga (`docs/sesion de testeo y mejoras 03-09.md`). Su metadato dice `encoder=Google`. Ya no se usa: la reemplazó la animación CSS de `_generando.html` | Desconocida | Con qué herramienta o de qué fuente se obtuvo (¿un generador de video de Google?) y sus condiciones de uso. Si no se puede saber, conviene sacarlo del repo, porque no se usa |
+| `docs/School Background.dc.html` | Lo agregó Vicente en `7b34ba3` (13-ago). Es la exportación de una herramienta de diseño: carga `./support.js`, que no está en el repo. De él sale la textura `static/img/textura-escolar.svg` (AVANCE §5) | Desconocida | Con qué herramienta se hizo y si sus íconos y dibujos son propios o de una biblioteca con licencia |
+| `docs/images/ciclo_del_agua*.png`, `prueba_flux_klein.png` | Los agregó Vicente en `614238e`. Según `docs/decicionesIAlocal.md` son salidas de **FLUX.2 [klein] 4B**, en local | El modelo `black-forest-labs/FLUX.2-klein-4B` declara Apache-2.0 en Hugging Face | Que es exactamente ese modelo; por ejemplo, el GGUF de `unsloth/FLUX.2-klein-4B-GGUF`, también Apache-2.0 |
+| `docs/images/prueba_sdxl.png` | Movido por Patricio en `b6b9beb`; viene de `614238e`. `image.py` usa `stabilityai/stable-diffusion-xl-base-1.0` | CreativeML OpenRAIL++-M (Hugging Face) | Que salió de ese modelo |
+| `docs/images/prueba_stable_diffusion_3.png` | Mismo historial. El repo **no** guarda qué variante de SD3 se usó | SD3 Medium: Stability NC Research Community; SD 3.5: Stability Community License | Qué variante exacta se usó. La primera es **solo para investigación sin uso comercial** |
+| `docs/images/prueba_z_image.png` | Agregado por Patricio en `cee69ec` (02-sep). `image.py` dice «Z-Image Turbo (Alibaba)», sin id del modelo | `Tongyi-MAI/Z-Image-Turbo` declara Apache-2.0 | Que es ese modelo |
+| `tests/referencia.wav` | Lo agregó Patricio en `da2fe5a` (31-ago). Es mono a 22.050 Hz, 16 bits y 9,7 s, **el mismo formato que los clips de LJSpeech**. AVANCE §5 lo declara «Linda Johnson, LibriVox, dominio público», sin evidencia adjunta | Si es un clip de LJSpeech, dominio público. **No comprobado** | El nombre del clip de LJSpeech (p. ej. `LJ001-0001.wav`) o la URL de descarga. Con eso se compara el hash |
+| `tests/prueba_realista.wav` | Misma fecha y commit. Sale a 24 kHz, como XTTS, y su texto («Hola Vicente Cisternas…») está en `tests/test_voz.py` | Salida de XTTS-v2: CPML, solo no comercial | — (comprobado) |
+| `tests/prueba_entorno.wav` | Mismo commit. Mono a 22.050 Hz y 6,1 s. Ningún archivo del repo ni de su historial lo genera o lo menciona | Desconocida | Con qué se generó; el nombre sugiere una prueba de instalación de Coqui TTS |
+
+**Política (sin aplicar).** La versión 0.2 ya **no** afirma el origen de `referencia.wav`:
+el parche quitó la mención a Linda Johnson, porque la narración del estudiante no usa XTTS.
+En los documentos internos, donde todavía se afirma, se propone esta redacción neutra:
+
+> «La voz de referencia de XTTS (`tests/referencia.wav`) se declaró como un clip de LJSpeech
+> (Linda Johnson, LibriVox, dominio público); su origen no está verificado en el repositorio.
+> XTTS-v2 queda solo como opción administrativa.»
+
+**Sección corta para los Términos (propuesta, sin aplicar).** «Material gráfico y de prueba»:
+
+> «El repositorio incluye material de prueba que no forma parte del servicio que usas: imágenes
+> generadas en local con modelos abiertos durante la evaluación de la generación de imágenes
+> (FLUX.2 [klein] 4B, Stable Diffusion XL y Z-Image Turbo, cada uno con su propia licencia), y
+> grabaciones cortas usadas para probar la síntesis de voz. Ese material no se muestra a los
+> estudiantes ni se usa para generar sus cápsulas. Las narraciones que escuchas se generan con
+> los modelos indicados en «Componentes de terceros y licencias».»
+
+Antes de publicarla, conviene confirmar la variante de SD3, o bien omitir esa imagen. Si se
+saca `animacionCarga.mp4` del repo, la sección no necesita mencionarlo.
 
 #### Etapa 1 (backend): cerrada el 05-oct-2026
 

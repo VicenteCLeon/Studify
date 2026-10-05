@@ -168,6 +168,38 @@ código. Candidatos evaluados en el bake-off de la Fase 3: **DeepSeek**, Qwen y 
 | [`docs/PLAN_DESARROLLO.md`](docs/PLAN_DESARROLLO.md) | Roadmap por fases, decisiones de stack, riesgos y contrato de la microcápsula. |
 | [`docs/AVANCE.md`](docs/AVANCE.md) | Bitácora viva del proyecto: qué se hizo, qué se verificó y qué queda pendiente. |
 
+---
+
+## ⚖️ Licencia
+
+Copyright © 2026 Patricio Hernández Vergara y Vicente Cisternas León.
+
+El código de RepasAi (Studify) es software libre: puedes usarlo, estudiarlo, modificarlo y
+redistribuirlo bajo la **GNU Affero General Public License, versión 3 o posterior**
+(`AGPL-3.0-or-later`). El texto completo está en [`LICENSE`](LICENSE). Si ofreces una versión
+modificada como servicio en red, la AGPL te obliga a poner su código fuente a disposición de
+sus usuarios; por eso la aplicación enlaza este repositorio desde el pie de cada página.
+
+**Qué cubre la licencia y qué no:**
+
+- **Cubre** el código de este repositorio.
+- **No cubre:**
+  - los **modelos de voz**, que se descargan aparte con `scripts/descargar_voces.py`.
+    Kokoro-82M es Apache-2.0. La voz `es_ES-sharvard-medium` de Piper se entrenó con datos
+    CC BY 3.0, que exigen atribución, y se ajustó desde una voz con datos de uso solo para
+    investigación. XTTS-v2, opción administrativa, está bajo la CPML, solo para uso no
+    comercial;
+  - el **material de estudio** de los cursos ni las cápsulas generadas a partir de él, que
+    pertenecen a sus titulares;
+  - los **componentes de terceros**, cada uno con su propia licencia. Entre ellos hay varios
+    GPL o AGPL: `phonemizer`, espeak-ng y `piper-tts` son GPL-3.0, `pymupdf` es AGPL-3.0 y
+    `psycopg` es LGPL-3.0.
+
+La lista de componentes con su licencia y los créditos de atribución están en los
+[Términos y Condiciones](src/studify/web/templates/legal/terminos.html), sección 8 (en la
+aplicación, `/terminos#componentes`). El detalle técnico de cada licencia, leído del metadato
+de cada paquete, está en [`docs/PRUEBAS_VARK.md`](docs/PRUEBAS_VARK.md).
+
 <div align="center">
 
 <sub>Patricio Hernández Vergara · Vicente Cisternas León · Ingeniería en Informática · PUCV.</sub>
