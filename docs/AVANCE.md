@@ -2,7 +2,11 @@
 
 > Documento vivo. Se actualiza al cierre de cada fase para que cualquier sesión de trabajo
 > (o cualquier persona) pueda retomar el proyecto sin releer todo el hilo de conversación.
-> Última actualización: **05-oct-2026** — **preferencia de voz, Etapa 2** (sección 5
+> Última actualización: **05-oct-2026** — **audio, Etapa 3 Parte A** (sección 5
+> duotricies): el audio del visor se cachea por la huella del guion normalizado + voz +
+> motor, no por `id_capsula` (H10, parte 2). Medición final: Kokoro ~0,19 × la duración
+> del audio (con episodios de ~0,6 no explicados) y Piper 0,026.
+> Antes, el mismo día: **preferencia de voz, Etapa 2** (sección 5
 > undetricies): el estudiante elige Dora, Alex, voz femenina rápida o voz masculina
 > rápida, en el visor o en el perfil. Se guarda en `estudiante.voz_genero` y `voz_modo`
 > (migración `c3a91f5e7d20`), y el visor narra con la voz del dueño de la cápsula.
@@ -2339,6 +2343,50 @@ Rama `feat/audio-motores`. Detalle en `PRUEBAS_VARK.md`, «Etapa 2».
 - **`capsula_1904.wav` entró al repo en `4b04550`.** Se resuelve con H10.
 - **Lecturas por materia:** los `codigo_objetivo` existentes siguen `PREFIJO-Ux-NN`, pero
   la API no lo exige; hace falta un archivo común de respaldo.
+
+## 5 duotricies. Audio del visor, Etapa 3 Parte A: caché por huella y H10 (05-oct-2026)
+
+Rama `feat/audio-motores`. Detalle en `PRUEBAS_VARK.md`, «Etapa 3, Parte A».
+
+### Caché por huella
+
+- **El WAV se llama `{huella}.wav`**, con la huella calculada sobre el guion **normalizado**,
+  el motor, la voz, el hablante y el acento de Kokoro (`media/audio.py::huella_de_audio`).
+- **Las copias del caché compartido** de cápsulas reutilizan el archivo.
+- **Cambiar las reglas de normalización** invalida el audio solo.
+- **El nombre ya no depende del `id_capsula`** (H10, parte 2).
+
+### H10, parte 1 (pendiente del autor)
+
+- **Los WAV versionados** `capsula_620`, `capsula_1451` y `capsula_1904` se desversionan con
+  `git rm --cached`; el autor corre los comandos.
+- **Ninguno se vuelve a servir:** en disco solo quedan esos tres y `data/media/622_audio.wav`.
+
+### Medición final
+
+5 corridas por voz y guion; se reporta la mediana:
+- **Kokoro:** ~0,19 en procesos normales (`ef_dora` y `em_alex`, con `es` o `es-419`), con
+  un proceso entero a 0,66.
+- **Piper (sharvard, ambos hablantes):** 0,026, es decir, 0,7–1,3 s por cápsula.
+- **La discrepancia con el experimento** queda **no explicada**: se descartaron el venv, la
+  voz, el acento y la normalización, y apunta al estado de la máquina.
+- **El veredicto del criterio fijado de antemano no cambia.**
+
+### Verificación
+
+- `pytest`: 515 pasan y fallan los 4 conocidos.
+- `ruff check .`: 41, igual que antes.
+
+### Preparado sin aplicar (legal)
+
+- Diff de la versión 0.2 de Términos y Privacidad, que aplica limpio:
+  - motores de voz y componentes de terceros con sus licencias;
+  - créditos de sharvard y declaración de prototipo académico;
+  - frase de licencia del código con [PENDIENTE];
+  - preferencia de voz como dato nuevo;
+  - corrección de la licencia de HTMX 1.9.10 (BSD-2-Clause).
+- Comparación GPL-3.0 / AGPL-3.0 y textos oficiales listos para `LICENSE`.
+- Revisión de archivos versionados con derechos de terceros.
 
 ## 6. Pendiente inmediato
 

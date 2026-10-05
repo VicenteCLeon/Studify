@@ -964,21 +964,49 @@ y no obra derivada). Conviene confirmarlo con la universidad; esto no es asesor�
 #### Propuesta de actualización legal (sin aplicar)
 
 Va en **una sola versión nueva** de Términos y Privacidad, cuando el autor lo decida.
-Cambiar los textos legales sube su versión en `web/legal.py`, y cada estudiante vuelve a
-aceptarlos.
 
-| Lugar | Texto actual | Reemplazo propuesto |
-|---|---|---|
-| `privacidad.html:214` | «La narración de audio la genera un modelo de voz (XTTS-v2) que corre en nuestro propio servidor: el texto no sale a ningún tercero. La voz es sintética, creada a partir de una grabación de referencia de dominio público de Linda Johnson…» | «La narración de audio la generan modelos de voz (Kokoro y Piper) que corren en nuestro propio servidor: el texto no sale a ningún tercero. Las voces son sintéticas y vienen incluidas en esos modelos; no son la voz de ningún docente ni estudiante.» (Se quita la mención a Linda Johnson, que era la referencia de XTTS.) |
-| `privacidad.html` (sección de datos, si la preferencia de voz se guarda en la BD) | — | «Si eliges una voz para la narración (femenina o masculina, calidad o rápida), guardamos esa preferencia junto a tu perfil para usarla en tus próximas cápsulas. No es un dato sensible y puedes cambiarla cuando quieras desde el visor.» |
-| `terminos.html:186` | «…y el modelo de voz XTTS-v2 de Coqui, cuya licencia (Coqui Public Model License) solo permite usos no comerciales.» | «…y los motores de voz Kokoro (Apache-2.0) y Piper (GPL-3.0), con la voz `sharvard` (datos CC BY 3.0; ver «Créditos»).» Sobre la frase «No tiene una licencia de código abierto», ver el agravante GPL de arriba. |
-| `terminos.html` (sección nueva «Créditos») | — | «Voz de narración rápida: Piper `es_ES-sharvard-medium`, entrenada con el corpus *Sharvard_IJA* de V. Aubanel, M. L. García Lecumberri y M. Cooke (LISTA Consortium, 2014), bajo licencia CC BY 3.0 (hdl.handle.net/10283/574). Voz de narración de calidad: Kokoro-82M (hexgrad), Apache-2.0. Fonemización: espeak-ng, GPL-3.0.» |
-| `terminos.html:102` y `:123` | «voz sintética generada por computador» | Sin cambio: no nombra el motor. |
-| `docs/PLAN_DESARROLLO.md:244` | «Piper TTS … licencia MIT» | «Piper TTS (`piper-tts` 1.8, GPL-3.0; el Piper original de rhasspy era MIT)». |
-| `docs/IMPLEMENTACION_IA_LOCAL.md:31` y `:44` | XTTS-v2 como motor de audio | Nota: «Desde el 05-oct-2026 el audio usa Kokoro (calidad) y Piper (rápida); XTTS-v2 queda solo como opción administrativa (`TTS_MOTOR=xtts`).» |
+**Decisión del equipo (05-oct-2026).** Se siguen usando las bibliotecas actuales (Kokoro,
+Piper, phonemizer, espeak-ng, pymupdf…). Se mencionarán en un apartado de los Términos,
+por tratarse de un prototipo académico de investigación sin cobro. El código del proyecto
+será **público y abierto**, con una licencia que todavía está por elegirse.
 
-Estos documentos son internos: se pueden corregir sin versionar, pero se dejan para la
-misma pasada.
+**El diff completo está listo y probado, pero no aplicado.** Con él puesto, la suite solo
+falla en los 4 casos conocidos y las dos páginas se renderizan. Cambia:
+
+| Lugar | Cambio |
+|---|---|
+| `terminos.html` §1 | Declaración de **prototipo académico de investigación**: no se cobra, no hay publicidad y no se venden ni licencian el servicio ni los datos. Si eso cambiara, se avisaría en una versión nueva que habría que aceptar |
+| `terminos.html` §8, «El software» | Reemplaza «No tiene una licencia de código abierto… no reutilizarlo» por: «El código fuente… está disponible públicamente en su repositorio… bajo la licencia [PENDIENTE: la elegirán sus autores]. Esa licencia cubre solo el código… no los modelos de voz, el material de estudio ni las cápsulas… Cada componente de terceros mantiene su propia licencia.» |
+| `terminos.html` §8, apartado nuevo «Componentes de terceros y licencias» | Tabla con lo que usa el servicio: Kokoro-82M y kokoro-onnx (Apache-2.0 y MIT), Piper (GPL-3.0 o posterior), voz sharvard (datos CC BY 3.0), eSpeak NG y phonemizer (GPL-3.0), ONNX Runtime (MIT), PyMuPDF (AGPL-3.0), python-pptx (MIT), Psycopg (LGPL-3.0), la base web (MIT/BSD-3-Clause), **HTMX 1.9.10 (BSD-2-Clause**; los Términos actuales dicen por error «BSD de cero cláusulas», que es la licencia de HTMX 2), Lucide (ISC, con íconos de Feather bajo MIT) y las tipografías (OFL-1.1). Cada componente lleva enlace a su fuente. XTTS-v2 (CPML, solo no comercial) aparece como **opción administrativa** |
+| `terminos.html` §8, «Créditos de la voz» | Atribución CC BY 3.0 de sharvard: corpus *Sharvard_IJA*, de V. Aubanel, M. L. García Lecumberri y M. Cooke (LISTA Consortium, 2014), `hdl.handle.net/10283/574`. Aclara que la voz se ajustó desde lessac, con datos **solo para investigación**. Incluye el crédito de Kokoro |
+| `privacidad.html` §2, tabla de datos | Fila nueva: **preferencia de voz** (`voz_genero`, `voz_modo`). Es un dato personal nuevo y opcional: una preferencia de audio **independiente del género con que te identificas, que nunca se deduce de él** |
+| `privacidad.html` §5 | La narración pasa de XTTS-v2 (y la referencia de Linda Johnson) a Kokoro y Piper, en el servidor propio |
+| `privacidad.html` §9 | Derecho a cambiar la preferencia de voz desde el visor o el perfil |
+| `web/legal.py` | Términos y Política suben de **0.1 a 0.2**, con fecha de publicación |
+| `tests/test_web_legal.py` | El test de nueva versión deja de fijar `"0.1"`: captura la versión vigente |
+| `docs/PLAN_DESARROLLO.md:244`, `docs/IMPLEMENTACION_IA_LOCAL.md:31` | Notas internas: Piper es GPL-3.0, y Kokoro y Piper reemplazan a XTTS |
+
+**Cómo funciona hoy la re-aceptación** (`web/consentimiento.py`):
+
+1. **Al subir la versión,** `pendientes()` compara las aceptaciones guardadas con las
+   versiones vigentes, y el documento queda pendiente para todos.
+2. **Al entrar a cualquier vista de `/student/*`,** `exigir_vigente` manda a
+   `/aceptar?next=…`. Con HTMX responde 409, para no pegar la pantalla dentro de un
+   fragmento.
+3. **En `/aceptar`** se piden solo los documentos que cambiaron.
+4. **Al aceptar,** se inserta una fila nueva por documento y versión. Las anteriores no se
+   tocan: el historial queda.
+5. **El consentimiento de género** (`documento = 'genero'`) se guarda contra la versión de
+   la Política vigente al darlo, y `pendientes()` no lo vuelve a pedir.
+
+**Advertencia:** es un borrador técnico, no asesoría legal. Las plantillas lo dicen en un
+comentario HTML `<!-- BORRADOR TÉCNICO … No constituye asesoría legal -->`, junto al
+`<!-- BORRADOR: requiere revisión legal… -->` que ya tenían.
+
+**Licencia del repositorio:** pendiente de decisión. La comparación GPL-3.0 / AGPL-3.0
+frente a las dependencias obligatorias, los textos oficiales listos para `LICENSE`, el
+campo `license` de `pyproject.toml`, la sección de licencia del README y la revisión de
+archivos versionados con derechos de terceros se entregaron aparte, sin aplicar.
 
 #### Etapa 1 (backend): cerrada el 05-oct-2026
 
@@ -1080,6 +1108,78 @@ No se cambió nada.
   no lo exige (`codigo_objetivo: str`, máximo 30), así que el archivo común de respaldo es
   necesario.
 
+#### Etapa 3, Parte A (caché del audio y H10): 05-oct-2026
+
+**Caché por huella.**
+
+- **Qué cambia:** el WAV del visor se llama `{huella}.wav`, donde
+  `huella = sha256(versión del esquema, motor, voz, hablante, acento de Kokoro, guion
+  normalizado)[:32]` (`media/audio.py::huella_de_audio`). Ya no lleva el `id_capsula`.
+- **Qué se gana:**
+  - las copias del caché compartido de cápsulas tienen el mismo texto, así que
+    **reutilizan el mismo archivo**;
+  - una base recreada con ids repetidos no puede servir el audio de otra cápsula;
+  - si cambian las reglas de `media/guion.py`, cambia la huella y el audio se vuelve a
+    sintetizar solo;
+  - dos textos que se narran igual («X → Y» y «X -> Y») comparten archivo.
+- **Tests:** 11 nuevos. Cubren la huella (estable, sobre el texto normalizado, por voz,
+  hablante y acento), que un audio existente no se vuelve a sintetizar, que la copia del
+  caché compartido reutiliza el WAV y que el nombre no depende del id. Los tests de
+  endpoint escriben en un directorio temporal.
+
+**WAV del esquema antiguo.** En disco hay solo cuatro:
+
+| Archivo | Situación |
+|---|---|
+| `src/studify/public/audio/capsula_620.wav` (2,3 MB) | Versionado. Narración XTTS; la cápsula 620 existe |
+| `src/studify/public/audio/capsula_1451.wav` (0,1 MB) | Versionado. Narración XTTS; la cápsula 1451 no existe en la BD |
+| `src/studify/public/audio/capsula_1904.wav` (1,8 MB) | Versionado en `4b04550` |
+| `data/media/622_audio.wav` (0,7 MB) | No versionado. Huérfano de H5, nunca servido |
+
+- Con el esquema nuevo **ninguno se vuelve a servir**.
+- No hay archivos del esquema intermedio de la Etapa 2 (`capsula_{id}__{voz}.wav`).
+- Desversionarlos, y después borrarlos, queda en manos del autor.
+
+**Medición final de los motores.**
+
+- **Método:** 5 corridas por voz y guion, con la mediana. Mismos guiones de 383, 530 y
+  752 caracteres. Un proceso por voz, así que la 1.ª llamada incluye cargar el modelo.
+- **Repo:** `generar_audio`, guion normalizado, Kokoro `es-419`.
+- **Experimento:** el método original, en el venv aparte, con Kokoro directo y texto
+  crudo.
+
+| Voz | 383 car. | 530 car. | 752 car. | Mediana global |
+|---|---|---|---|---|
+| Repo Kokoro `ef_dora` (1.er proceso de la serie) | 0,575 | 0,676 | 0,660 | **0,660** (rango 0,47–0,75) |
+| Repo Kokoro `em_alex` | 0,192 | 0,188 | 0,187 | **0,188** |
+| Repo Piper sharvard, hablante 1 (femenina) | 0,026 | 0,026 | 0,026 | **0,026** (0,7–1,3 s) |
+| Repo Piper sharvard, hablante 0 (masculina) | 0,026 | 0,026 | 0,027 | **0,026** |
+| Experimento `ef_dora` `es` / `es-419` | 0,194 / 0,193 | 0,186 / 0,186 | 0,191 / 0,191 | 0,191 / 0,190 |
+| Experimento `em_alex` `es` / `es-419` | 0,195 / 0,192 | 0,188 / 0,187 | 0,192 / 0,191 | 0,192 / 0,190 |
+
+Repetición de control: 4 procesos nuevos de `ef_dora` en el repo (guion de 530, 3 corridas
+cada uno) dieron **0,186–0,189**, salvo la 1.ª llamada de cada proceso, que da 0,23–0,25
+porque incluye la carga.
+
+**Sobre la discrepancia de Kokoro (0,53–0,66 en el experimento frente a 0,27–0,41 en la
+Etapa 1).**
+
+- **Lo descartado:** el venv, la voz, el acento (`es` o `es-419`) y la normalización.
+  Medido ahora, el método del experimento da 0,19 con las dos voces y los dos acentos, y
+  el repo también da 0,19.
+- **Lo observado:** los episodios lentos (0,5–0,75) afectan a un proceso entero, en todas
+  sus llamadas, y no se repiten al relanzar.
+- **Hipótesis, sin confirmar:**
+  - el estado de la máquina en ese momento: durante la serie lenta había otra actividad,
+    un `uvicorn --reload` de otro proyecto consumiendo ~45 % de un núcleo y el
+    `uvicorn --reload` de Studify recargándose con las ediciones;
+  - el reparto de hilos de ONNX Runtime entre los núcleos P y E del i5-14600KF.
+- **Queda marcada como no explicada.** La razón típica de Kokoro en esta máquina es
+  **~0,19**, con episodios ocasionales de ~0,6.
+- **El criterio no cambia:** Kokoro sigue registrado como no candidato según la medición
+  fijada de antemano, y su elección sigue siendo una decisión de producto. Que hoy mida
+  0,19 no corrige ese veredicto.
+
 ## Limitaciones conocidas
 
 ### Canal Visual (excluido de esta batería)
@@ -1122,7 +1222,7 @@ La batería no toca lógica de negocio: cada corrección se hace aparte, por eta
 | H8 | **`pytest` completo carga SDXL y XTTS.** `tests/test_visual.py` y `tests/test_voz.py` ejecutan la generación **al importarse**. | Lectura de código. | Moverlos a `scripts/` o protegerlos con `if __name__ == "__main__"`. |
 | H9 | ✅ **Corregido (04-oct).** **`gruut` (dependencia de Coqui TTS) instala un paquete `tests` en site-packages** que le hacía sombra a `tests/` del repo: 12 archivos que hacen `from tests.conftest import …` no se podían ni importar. | `import tests` resolvía a `.venv/Lib/site-packages/tests/__init__.py` (instalado el 31-ago). Con `pytest`: 12 errores de colección. | `tests/__init__.py` convierte la carpeta en paquete regular y pytest antepone la raíz del repo a `sys.path`; los 4 tests que hacían `from material import` pasan a `from tests.material import`. Verificado: 432 pasan y 4 fallan (los mismos 4 previos), sin shim. |
 | H11 | **`tests/test_api_diagnosticos.py` se cuelga indefinidamente sin Postgres.** Su propio `_hay_base_de_datos()` (línea 34, llamado desde la fixture `limpiar_lo_que_cree_el_test`) abre la conexión sin tiempo límite, así que la suite completa nunca termina si la BD no está arriba. | 05-oct-2026, con Docker apagado: `faulthandler` mostró el proceso detenido en `psycopg.waiting.wait_conn` dentro de esa fixture, más de 60 s, incluso con `DATABASE_URL` apuntando a un puerto cerrado. `tests/conftest.py::hay_base_de_datos` tiene el mismo patrón. | Sin aplicar: pasar `connect_args={"connect_timeout": 3}` al probar la conexión (o reutilizar `conftest.hay_base_de_datos` con ese límite), para que los tests de BD se omitan en vez de colgarse. |
-| H10 | **Caché de audio del visor frágil.** (1) Dos WAV generados en desarrollo están versionados en git. (2) El caché del visor se indexa por `id_capsula`, no por el contenido. | (1) `git ls-files` lista `src/studify/public/audio/capsula_620.wav` (48,6 s) y `capsula_1451.wav` (2,5 s), agregados en `1dc5286`; `public/audio/` no está en `.gitignore`. La cápsula 620 existe en la BD; **la 1451 no** (el id máximo es 1599 y quedan 5 cápsulas). (2) `generate_capsule_audio` sintetiza solo si no existe `capsula_{id}.wav` ([`student.py`](../src/studify/web/routers/student.py)). Si se recrea la BD y los ids se repiten, una cápsula nueva reproduciría el audio de otra. Además, cada copia del caché compartido recibe un id nuevo y **vuelve a sintetizar el mismo texto**. | Sin aplicar: (a) agregar `src/studify/public/audio/` a `.gitignore` y sacar los dos WAV del índice con `git rm --cached` (quedan en el historial; no se reescribe); (b) nombrar el archivo por un hash del guion y de la voz de referencia (p. ej. `sha256(guion + referencia)[:16].wav`) en vez de por `id_capsula`. Así una BD recreada no puede servir un audio ajeno, y las copias del caché compartido reutilizan el WAV. |
+| H10 | 🟡 **(2) corregido en la Etapa 3, Parte A (05-oct): el caché se indexa por la huella del guion normalizado + voz + motor; (1) pendiente de `git rm --cached` por el autor.** **Caché de audio del visor frágil.** (1) Dos WAV generados en desarrollo están versionados en git. (2) El caché del visor se indexa por `id_capsula`, no por el contenido. | (1) `git ls-files` lista `src/studify/public/audio/capsula_620.wav` (48,6 s) y `capsula_1451.wav` (2,5 s), agregados en `1dc5286`; `public/audio/` no está en `.gitignore`. La cápsula 620 existe en la BD; **la 1451 no** (el id máximo es 1599 y quedan 5 cápsulas). (2) `generate_capsule_audio` sintetiza solo si no existe `capsula_{id}.wav` ([`student.py`](../src/studify/web/routers/student.py)). Si se recrea la BD y los ids se repiten, una cápsula nueva reproduciría el audio de otra. Además, cada copia del caché compartido recibe un id nuevo y **vuelve a sintetizar el mismo texto**. | Sin aplicar: (a) agregar `src/studify/public/audio/` a `.gitignore` y sacar los dos WAV del índice con `git rm --cached` (quedan en el historial; no se reescribe); (b) nombrar el archivo por un hash del guion y de la voz de referencia (p. ej. `sha256(guion + referencia)[:16].wav`) en vez de por `id_capsula`. Así una BD recreada no puede servir un audio ajeno, y las copias del caché compartido reutilizan el WAV. |
 
 **Aviso de XTTS, sin consecuencias en esta corrida:** 10/16 audios registraron «The text
 length exceeds the character limit of 239 for language 'es'». Ninguno quedó truncado (las
