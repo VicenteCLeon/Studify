@@ -1,6 +1,7 @@
 """Configuración central leída desde variables de entorno / archivo .env."""
 
 from functools import lru_cache
+from typing import Literal
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -75,6 +76,34 @@ class Settings(BaseSettings):
 
     # Dónde se guardan los recursos multimedia generados (Fase 6).
     media_dir: str = "data/media"
+
+    # --- Narración del visor (perfil auditivo) --------------------------------
+    #
+    # Motor con que se sintetiza el audio. `kokoro` es el de la interfaz del
+    # estudiante: la voz sale de su preferencia {género, modo} (ver
+    # `media/audio.py::resolver_voz`). `xtts` es una opción administrativa
+    # explícita: fuerza XTTS-v2 para todos, sin respaldo automático, y necesita
+    # el extra `audio-xtts`. Mediciones y decisión en PRUEBAS_VARK.md (Etapa 2).
+    tts_motor: Literal["kokoro", "xtts"] = "kokoro"
+    # Modelos ONNX y voces descargados por `scripts/descargar_voces.py`. Están
+    # bajo `data/`, ignorado por git: pesan cientos de MB y no se versionan.
+    tts_modelos_dir: str = "data/voces"
+    # Voces del modo «calidad» (Kokoro). Género según VOICES.md de
+    # hexgrad/Kokoro-82M: ef_dora 🚺, em_alex 🚹.
+    tts_voz_calidad_femenina: str = "ef_dora"
+    tts_voz_calidad_masculina: str = "em_alex"
+    # Variante de espeak-ng con que Kokoro fonemiza. Kokoro documenta `es`, que
+    # pronuncia con distinción (z/ce/ci como θ, a la española); se usa `es-419`,
+    # la latinoamericana con seseo, porque los estudiantes del piloto son
+    # chilenos (decisión del autor tras escuchar ambas, 05-oct-2026).
+    tts_kokoro_idioma: str = "es-419"
+    # Voz del modo «rápida» (Piper): un solo modelo con dos hablantes, así que
+    # una sola licencia (CC BY 3.0, exige atribución). Los ids salen de
+    # `speaker_id_map` del `.onnx.json` ({"M": 0, "F": 1}) y se fijan acá en vez
+    # de depender del hablante por defecto de Piper.
+    tts_voz_rapida_modelo: str = "es_ES-sharvard-medium"
+    tts_hablante_rapida_femenina: int = 1
+    tts_hablante_rapida_masculina: int = 0
 
 
 @lru_cache
