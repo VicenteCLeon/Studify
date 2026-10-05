@@ -67,6 +67,16 @@ class Estudiante(Base):
     """
 
     __tablename__ = "estudiante"
+    __table_args__ = (
+        CheckConstraint(
+            "voz_genero IS NULL OR voz_genero IN ('femenina', 'masculina')",
+            name="ck_estudiante_voz_genero",
+        ),
+        CheckConstraint(
+            "voz_modo IS NULL OR voz_modo IN ('calidad', 'rapida')",
+            name="ck_estudiante_voz_modo",
+        ),
+    )
 
     id_estudiante: Mapped[int] = mapped_column(primary_key=True)
     rango_etario: Mapped[str | None] = mapped_column(String(20))
@@ -80,6 +90,16 @@ class Estudiante(Base):
     fecha_registro: Mapped[datetime] = mapped_column(
         TS, server_default=func.now(), nullable=False
     )
+
+    # --- Preferencia de voz de la narración (05-oct-2026) ---------------------
+    #
+    # Qué voz quiere oír el estudiante en el visor: 'femenina' | 'masculina' y
+    # 'calidad' | 'rapida'. NULL = sin preferencia, que `media/audio.py`
+    # resuelve a Dora (femenina, calidad). Se llaman `voz_*` para no confundirse
+    # con `genero`, que es el dato sociodemográfico sensible de arriba: la voz
+    # **nunca** se deduce de él.
+    voz_genero: Mapped[str | None] = mapped_column(String(10))
+    voz_modo: Mapped[str | None] = mapped_column(String(10))
 
     diagnosticos: Mapped[list["DiagnosticoVark"]] = relationship(
         back_populates="estudiante", cascade="all, delete-orphan"
