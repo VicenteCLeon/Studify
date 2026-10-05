@@ -19,15 +19,31 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# Dependencias para síntesis multimedia (Fase 6)
+# Narración del visor (perfil auditivo): Kokoro por defecto y Piper como opción
+# rápida, ambos sobre ONNX en CPU. Traen espeak-ng empaquetado, así que en
+# Windows no hay que instalar nada aparte. Licencias: piper-tts, phonemizer y
+# espeak-ng son GPL-3.0 (riesgo abierto, ver PRUEBAS_VARK.md).
+# Versiones exactas: son las medidas en PRUEBAS_VARK.md, y los modelos que baja
+# `scripts/descargar_voces.py` están fijados por SHA-256 contra ellas.
+audio = [
+    "kokoro-onnx==0.6.1",
+    "piper-tts==1.8.0",
+]
+# XTTS-v2, solo como opción administrativa (`TTS_MOTOR=xtts`). Va aparte porque
+# arrastra torch y choca con el resto de la pila (gruut pide numpy<2, TTS 0.22
+# pide pandas<2). Modelo bajo licencia CPML: solo uso no comercial.
+audio-xtts = [
+    "torch>=2.4.0",
+    "torchaudio>=2.4.0",
+    "TTS>=0.22.0",
+]
+# Generación de imágenes (Fase 6), hoy sin uso desde la API (H5).
 media = [
     "torch>=2.4.0",
     "torchvision>=0.19.0",
-    "torchaudio>=2.4.0",
     "diffusers>=0.30.0",
     "transformers>=4.44.0",
     "accelerate>=0.33.0",
-    "TTS>=0.22.0",
     "sentencepiece>=0.2.0",
     "imageio-ffmpeg>=0.5.1",
 ]
