@@ -812,6 +812,190 @@ que produce ~45 s de audio. Las corridas fueron en un mismo proceso y en CPU.
   test), 26 estudiantes caen en 24 huellas distintas. El caché compartido evitaría ~2 de
   26 síntesis por objetivo.
 
+### Motor de voz del visor: experimento y decisión (04-oct-2026)
+
+#### Experimento (d): motores livianos frente a XTTS
+
+**Criterio fijado antes de medir** (sin cambios después). Un motor es candidato si
+cumple tres condiciones:
+
+- sintetiza en ≤ 0,3 × la duración del audio;
+- su licencia permite uso académico;
+- su calidad la aprueba el autor escuchando.
+
+**Cómo se midió.**
+
+- **Entorno:** un venv aparte, sin tocar el del proyecto, en CPU (i5-14600KF, sin GPU).
+- **Guiones:** tres guiones reales del visor sacados de la batería (383, 530 y 752
+  caracteres); los tres contienen «X → Y».
+- **Repeticiones:** dos cargas y dos síntesis por guion.
+- **Voces:**
+  - Piper: las 5 voces en español de calidad media o alta del `voices.json` oficial
+    (hay 9 en total; las 4 de calidad baja quedaron fuera);
+  - Kokoro: las voces `ef_dora`, `em_alex` y `em_santa` de su `VOICES.md`.
+
+| Motor y voz | Carga | Razón síntesis/audio (6 corridas) | ¿≤ 0,3? | RAM con modelo / pico |
+|---|---|---|---|---|
+| XTTS-v2 (referencia, medición de H5) | 16–19 s | 1,6 – 4,0 | ❌ | 4,7 GB |
+| Piper `es_MX-claude-high` | 1,0 s | 0,05 – 0,10 | ✅ 6/6 | 142 / 755 MB |
+| Piper `es_MX-ald-medium` | 1,4–1,7 s | 0,09 – 0,12 | ✅ 6/6 | 134 / 565 MB |
+| Piper `es_ES-sharvard-medium` | 1,4 s | 0,105 – 0,113 | ✅ 6/6 | 149 / 554 MB |
+| Piper `es_ES-davefx-medium` | 1,5–1,8 s | 0,11 – 0,16 | ✅ 6/6 | 134 / 541 MB |
+| Piper `es_AR-daniela-high` | 1,7–3,5 s | 0,14 – 0,66 | ❌ 1/6 | 193 / 490 MB |
+| Kokoro `ef_dora` / `em_alex` / `em_santa` | 0,8 s | 0,53 – 0,66 | ❌ 0/6 | 397 / 1.310 MB |
+
+espeak-ng, que usan Piper y Kokoro, lee «Se escribe X → Y» como «se escribe équis i»: la
+flecha se pierde y la «Y» suena como conjunción. De ahí sale la normalización del guion
+(ver más abajo).
+
+#### Decisión del autor
+
+- **Motor por defecto: Kokoro**, con `ef_dora` (femenina) y `em_alex` (masculina) a
+  elección del estudiante.
+  - **Kokoro no cumplió el criterio ≤ 0,3 fijado antes de medir** (razón 0,53–0,66).
+  - Elegirlo es una **decisión de producto del autor**, no una relajación del criterio:
+    el criterio sigue igual, y Kokoro queda registrado como no candidato.
+- **Opción «rápida»: Piper con `es_ES-sharvard-medium`**, hablante 0 (masculina) y
+  hablante 1 (femenina). Es un solo modelo y una sola licencia de datos; el autor eligió
+  esta voz el 05-oct después de escuchar los dos hablantes. `claude-high` queda descartada.
+- **Acento de Kokoro: `es-419`** (seseo) por defecto (`TTS_KOKORO_IDIOMA`), y no la `es`
+  que documenta Kokoro, porque los estudiantes del piloto son chilenos. Decisión del autor
+  tras escuchar ambas variantes.
+- **XTTS** sale de la interfaz del estudiante.
+  - Queda como opción administrativa explícita (`TTS_MOTOR=xtts`), sin respaldo
+    automático.
+  - Necesita el extra `audio-xtts`.
+
+**Medición posterior con el código del repo** (`generar_audio` con Kokoro y el guion
+normalizado; proceso nuevo, así que la primera llamada incluye la carga):
+
+| Voz | 383 car. | 530 car. | 752 car. |
+|---|---|---|---|
+| `ef_dora` | 10,1 s / 24,3 s de audio (0,41) | 9,5 s / 34,3 s (0,28) | 14,0 s / 49,5 s (0,28) |
+| `em_alex` | 6,8 s / 24,2 s (0,28) | 9,4 s / 34,4 s (0,27) | 13,3 s / 49,5 s (0,27) |
+
+**Discrepancia no explicada.** Con el mismo motor y las mismas voces, estas razones
+(0,27–0,41) salen más bajas que las del experimento (0,53–0,66). Lo único distinto es el
+venv, y en los dos estaba onnxruntime 1.30. **Esta medición no reemplaza a la del
+criterio**: Kokoro sigue figurando como no candidato. En la Etapa 3 se vuelve a medir con
+al menos 5 corridas por voz y guion, y se reporta la mediana.
+
+Piper (`sharvard`) con el código del repo, mismas 3 cápsulas:
+
+| Hablante | 383 car. | 530 car. | 752 car. |
+|---|---|---|---|
+| 1 (femenina) | 4,3 s / 25,9 s (0,17, incluye la carga) | 0,9 s / 34,9 s (0,03) | 1,3 s / 49,1 s (0,03) |
+| 0 (masculina) | 0,8 s / 26,4 s (0,03) | 2,3 s / 35,1 s (0,07) | 3,2 s / 50,7 s (0,06) |
+
+#### Voces: género y hablantes (verificado en la fuente)
+
+| Voz | Fuente | Género | Hablantes |
+|---|---|---|---|
+| Kokoro `ef_dora` | `VOICES.md` de hexgrad/Kokoro-82M (Spanish: 1F 2M) | 🚺 femenina | 1 |
+| Kokoro `em_alex` | mismo archivo | 🚹 masculina | 1 |
+| Piper `es_ES-sharvard-medium` | MODEL_CARD («Speakers: 2») y `.onnx.json` (`speaker_id_map = {"M": 0, "F": 1}`) | uno de cada | 2 |
+| Piper `es_MX-claude-high` | MODEL_CARD («Speakers: 1») y `.onnx.json` (`num_speakers 1`) | **no consta** | 1 |
+
+- **sharvard trae 2 hablantes.** Como el `.onnx.json` no define `default_speaker_id`,
+  Piper 1.8 usaría el hablante 0 («M») por defecto. El código **fija el `speaker_id`
+  explícito**, 1 para femenina y 0 para masculina (`tts_hablante_rapida_*`), y un test lo
+  verifica.
+- **claude-high (descartada):** que sea femenina **consta solo por la escucha del autor**.
+  Ni su MODEL_CARD, ni su `.onnx.json`, ni el Space de origen (`HirCoir/Piper-TTS-Spanish`)
+  lo indican.
+
+#### Licencias (riesgo abierto, sin LICENSE en el repo)
+
+| Componente | Licencia | Condición |
+|---|---|---|
+| Pesos de Kokoro-82M | Apache-2.0 | Uso libre, con aviso de licencia |
+| `kokoro-onnx` | MIT | Uso libre, con aviso de licencia |
+| `piper-tts` 1.8 (`OHF-Voice/piper1-gpl`) | **GPL-3.0-or-later** | Ver el riesgo debajo |
+| `phonemizer` 3.4 | **GPL-3.0** | Ídem |
+| `espeak-ng` (vía `espeakng-loader` y `piper-tts`) | **GPL-3.0** | Ídem |
+| Voz `es_ES-sharvard-medium`: sus datos | CC BY 3.0 (corpus Sharvard) | **Exige atribución** |
+| Voz `es_ES-sharvard-medium`: su punto de partida | Ajustada desde la voz `en_US-lessac-medium`, entrenada con los datos Lessac de Blizzard 2013 | **Licencia de Lessac: solo para investigación, sin uso comercial** (ver debajo) |
+| Voz `es_MX-claude-high` (descartada) | Declara Apache-2.0 | Sus datos apuntan a un Space de Hugging Face: procedencia menos clara que la del resto |
+| Repositorio `rhasspy/piper-voices` | MIT | — |
+| Modelo XTTS-v2 | **CPML** | Solo uso no comercial, también de sus audios. Coqui cerró, así que no hay licencia comercial disponible |
+| Biblioteca Coqui `TTS` 0.22 | MPL-2.0 | — |
+
+**Riesgo abierto.** Studify no declara licencia (no hay LICENSE ni campo `license` en
+`pyproject.toml`). Si el código se publica importando `piper-tts`, `phonemizer` o
+`espeak-ng`, que son GPL-3.0, hay dos alternativas: publicarlo con una licencia compatible
+con GPL-3.0, o usar esos componentes como **programa externo por subproceso** (agregación
+y no obra derivada). Conviene confirmarlo con la universidad; esto no es asesoría legal.
+
+- **Agravante:** los Términos vigentes (`terminos.html`, «El software y sus componentes»)
+  declaran que el código de RepasAi «no tiene una licencia de código abierto» y no se puede
+  reutilizar sin autorización. Una obra que importa bibliotecas GPL-3.0 y se distribuye
+  con esa restricción es justo el caso que la GPL no admite. La decisión de licencia del
+  repo y el texto de los Términos tienen que resolverse juntos.
+- **XTTS-v2:** queda limitado a usos no comerciales (CPML).
+- **sharvard (encontrado al preparar los créditos):**
+  - su MODEL_CARD dice «Finetuned from U.S. English lessac voice»;
+  - la voz lessac se entrenó con los datos de Lessac Technologies del Blizzard Challenge
+    2013, cuya licencia los autoriza «exclusively for Research Purposes» y excluye
+    expresamente cualquier uso comercial, incluido el de productos o servicios de síntesis
+    de voz;
+  - no está claro si esa restricción se hereda en una voz ajustada desde ese punto de
+    partida. Un proyecto de título es uso de investigación, pero el riesgo queda abierto,
+    igual que el de XTTS, para cualquier uso fuera de lo académico;
+  - Kokoro no declara ese origen.
+
+**Créditos de atribución** (propuesto, sin implementar).
+
+- **Qué:** una sección «Créditos» en la página de Términos con el autor, la licencia y el
+  enlace de cada voz y motor:
+  - sharvard: CC BY 3.0. Corpus *Sharvard_IJA* de Vincent Aubanel, María Luisa García
+    Lecumberri y Martin Cooke (LISTA Consortium, 2014), publicado en Edinburgh DataShare
+    (`hdl.handle.net/10283/574`). Voz de Piper ajustada desde `en_US-lessac-medium`;
+  - Kokoro: Apache-2.0;
+  - espeak-ng: GPL-3.0.
+- **Dónde enlazarla:**
+  - desde el pie de página, junto a Términos y Privacidad;
+  - desde el reproductor (`_audio.html`), con una línea «Voz: … · créditos».
+- **Por qué ahí:** la atribución de CC BY tiene que ser razonablemente visible donde se usa
+  la obra, y el reproductor es ese lugar.
+- **Antes de implementarla:** Términos y Privacidad todavía nombran a XTTS-v2. Cambiarlos
+  implica una nueva versión de los documentos legales, que los estudiantes vuelven a
+  aceptar (`web/legal.py`), así que queda pendiente de decisión.
+
+#### Propuesta de actualización legal (sin aplicar)
+
+Va en **una sola versión nueva** de Términos y Privacidad, cuando el autor lo decida.
+Cambiar los textos legales sube su versión en `web/legal.py`, y cada estudiante vuelve a
+aceptarlos.
+
+| Lugar | Texto actual | Reemplazo propuesto |
+|---|---|---|
+| `privacidad.html:214` | «La narración de audio la genera un modelo de voz (XTTS-v2) que corre en nuestro propio servidor: el texto no sale a ningún tercero. La voz es sintética, creada a partir de una grabación de referencia de dominio público de Linda Johnson…» | «La narración de audio la generan modelos de voz (Kokoro y Piper) que corren en nuestro propio servidor: el texto no sale a ningún tercero. Las voces son sintéticas y vienen incluidas en esos modelos; no son la voz de ningún docente ni estudiante.» (Se quita la mención a Linda Johnson, que era la referencia de XTTS.) |
+| `privacidad.html` (sección de datos, si la preferencia de voz se guarda en la BD) | — | «Si eliges una voz para la narración (femenina o masculina, calidad o rápida), guardamos esa preferencia junto a tu perfil para usarla en tus próximas cápsulas. No es un dato sensible y puedes cambiarla cuando quieras desde el visor.» |
+| `terminos.html:186` | «…y el modelo de voz XTTS-v2 de Coqui, cuya licencia (Coqui Public Model License) solo permite usos no comerciales.» | «…y los motores de voz Kokoro (Apache-2.0) y Piper (GPL-3.0), con la voz `sharvard` (datos CC BY 3.0; ver «Créditos»).» Sobre la frase «No tiene una licencia de código abierto», ver el agravante GPL de arriba. |
+| `terminos.html` (sección nueva «Créditos») | — | «Voz de narración rápida: Piper `es_ES-sharvard-medium`, entrenada con el corpus *Sharvard_IJA* de V. Aubanel, M. L. García Lecumberri y M. Cooke (LISTA Consortium, 2014), bajo licencia CC BY 3.0 (hdl.handle.net/10283/574). Voz de narración de calidad: Kokoro-82M (hexgrad), Apache-2.0. Fonemización: espeak-ng, GPL-3.0.» |
+| `terminos.html:102` y `:123` | «voz sintética generada por computador» | Sin cambio: no nombra el motor. |
+| `docs/PLAN_DESARROLLO.md:244` | «Piper TTS … licencia MIT» | «Piper TTS (`piper-tts` 1.8, GPL-3.0; el Piper original de rhasspy era MIT)». |
+| `docs/IMPLEMENTACION_IA_LOCAL.md:31` y `:44` | XTTS-v2 como motor de audio | Nota: «Desde el 05-oct-2026 el audio usa Kokoro (calidad) y Piper (rápida); XTTS-v2 queda solo como opción administrativa (`TTS_MOTOR=xtts`).» |
+
+Estos documentos son internos: se pueden corregir sin versionar, pero se dejan para la
+misma pasada.
+
+#### Etapa 1 (backend): cerrada el 05-oct-2026
+
+- **Hecho:**
+  - ajustes `tts_*` en `config.py`;
+  - `scripts/descargar_voces.py`: SHA-256 fijo, escritura atómica y commit fijo de
+    `piper-voices`, verificado contra el MD5 de su `voices.json`;
+  - `generar_audio` con Kokoro, Piper y XTTS administrativo detrás de la misma firma. El
+    cuerpo de XTTS se movió sin cambios (verificado con diff).
+  - `PreferenciaVoz(genero, modo)` y `resolver_voz`;
+  - la normalización del guion (`media/guion.py`);
+  - los extras `audio` (versiones exactas), `audio-xtts` y `media`;
+  - el texto genérico en el reproductor;
+  - `tests/test_audio.py`.
+- **Normalización sobre la batería:** en los 269 guiones (activación + concepto central),
+  ningún símbolo sobrevive (→, =, ⊆, `$`, `\`, `_`, `[ ]`, `+`). Antes había 870 «→».
+
 ## Limitaciones conocidas
 
 ### Canal Visual (excluido de esta batería)
@@ -853,6 +1037,7 @@ La batería no toca lógica de negocio: cada corrección se hace aparte, por eta
 | H7 | **«Preguntas reflexivas» casi nunca se cumple.** | 2/13 cápsulas con A ≥ 40 % intercalan una pregunta en la prosa. | Reformular la instrucción para que nombre dónde va (p. ej. dentro de `concepto_central`). |
 | H8 | **`pytest` completo carga SDXL y XTTS.** `tests/test_visual.py` y `tests/test_voz.py` ejecutan la generación **al importarse**. | Lectura de código. | Moverlos a `scripts/` o protegerlos con `if __name__ == "__main__"`. |
 | H9 | ✅ **Corregido (04-oct).** **`gruut` (dependencia de Coqui TTS) instala un paquete `tests` en site-packages** que le hacía sombra a `tests/` del repo: 12 archivos que hacen `from tests.conftest import …` no se podían ni importar. | `import tests` resolvía a `.venv/Lib/site-packages/tests/__init__.py` (instalado el 31-ago). Con `pytest`: 12 errores de colección. | `tests/__init__.py` convierte la carpeta en paquete regular y pytest antepone la raíz del repo a `sys.path`; los 4 tests que hacían `from material import` pasan a `from tests.material import`. Verificado: 432 pasan y 4 fallan (los mismos 4 previos), sin shim. |
+| H11 | **`tests/test_api_diagnosticos.py` se cuelga indefinidamente sin Postgres.** Su propio `_hay_base_de_datos()` (línea 34, llamado desde la fixture `limpiar_lo_que_cree_el_test`) abre la conexión sin tiempo límite, así que la suite completa nunca termina si la BD no está arriba. | 05-oct-2026, con Docker apagado: `faulthandler` mostró el proceso detenido en `psycopg.waiting.wait_conn` dentro de esa fixture, más de 60 s, incluso con `DATABASE_URL` apuntando a un puerto cerrado. `tests/conftest.py::hay_base_de_datos` tiene el mismo patrón. | Sin aplicar: pasar `connect_args={"connect_timeout": 3}` al probar la conexión (o reutilizar `conftest.hay_base_de_datos` con ese límite), para que los tests de BD se omitan en vez de colgarse. |
 | H10 | **Caché de audio del visor frágil.** (1) Dos WAV generados en desarrollo están versionados en git. (2) El caché del visor se indexa por `id_capsula`, no por el contenido. | (1) `git ls-files` lista `src/studify/public/audio/capsula_620.wav` (48,6 s) y `capsula_1451.wav` (2,5 s), agregados en `1dc5286`; `public/audio/` no está en `.gitignore`. La cápsula 620 existe en la BD; **la 1451 no** (el id máximo es 1599 y quedan 5 cápsulas). (2) `generate_capsule_audio` sintetiza solo si no existe `capsula_{id}.wav` ([`student.py`](../src/studify/web/routers/student.py)). Si se recrea la BD y los ids se repiten, una cápsula nueva reproduciría el audio de otra. Además, cada copia del caché compartido recibe un id nuevo y **vuelve a sintetizar el mismo texto**. | Sin aplicar: (a) agregar `src/studify/public/audio/` a `.gitignore` y sacar los dos WAV del índice con `git rm --cached` (quedan en el historial; no se reescribe); (b) nombrar el archivo por un hash del guion y de la voz de referencia (p. ej. `sha256(guion + referencia)[:16].wav`) en vez de por `id_capsula`. Así una BD recreada no puede servir un audio ajeno, y las copias del caché compartido reutilizan el WAV. |
 
 **Aviso de XTTS, sin consecuencias en esta corrida:** 10/16 audios registraron «The text

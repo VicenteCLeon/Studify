@@ -2,7 +2,12 @@
 
 > Documento vivo. Se actualiza al cierre de cada fase para que cualquier sesión de trabajo
 > (o cualquier persona) pueda retomar el proyecto sin releer todo el hilo de conversación.
-> Última actualización: **04-oct-2026** — **H5 corregido** (sección 5 septvicies):
+> Última actualización: **05-oct-2026** — **motores de voz, Etapa 1** (sección 5
+> duodetricies): Kokoro por defecto (Dora o Alex), Piper como modo rápido (sharvard, voces
+> masculina y femenina) y XTTS solo administrativo, detrás de la misma `generar_audio`. El
+> estudiante elige {género, modo}, y el guion se normaliza a palabras antes de narrarse.
+> Falta la interfaz (Etapa 2) y el servicio de audio (Etapa 3).
+> Antes: **04-oct-2026** — **H5 corregido** (sección 5 septvicies):
 > `POST /api/capsulas` ya no sintetiza audio ni imagen. Se eliminan ~100–130 s de bloqueo
 > (medidos) en cada cápsula nueva con A ≥ 25 %; el audio del visor no cambia.
 > Antes, el mismo día: **H2 corregido** (sección 5 sexvicies): el bucle
@@ -2222,6 +2227,69 @@ Etapa 2 de las correcciones (rama `fix/h5-audio`). Detalle y evidencia en
   por el contenido.
 - **Archivos huérfanos:** `data/media/` contiene 1 archivo (`622_audio.wav`, 746.572
   bytes), ignorado por git. Se deja para que el equipo decida.
+
+## 5 duodetricies. Motores de voz del visor, Etapa 1: backend (05-oct-2026)
+
+Rama `feat/audio-motores`. Experimento, decisión, licencias y mediciones en
+`PRUEBAS_VARK.md`, «Motor de voz del visor».
+
+### Decisión del autor
+
+- **Kokoro** es el motor por defecto (modo «calidad»), con `ef_dora` (femenina) y `em_alex`
+  (masculina).
+  - No cumplió el criterio ≤ 0,3 fijado antes de medir: elegirlo es una decisión de
+    producto, no una relajación del criterio.
+  - Usa espeak `es-419` (seseo) porque los estudiantes son chilenos.
+- **Piper** es el modo «rápida», con `es_ES-sharvard-medium`: hablante 0 masculina,
+  hablante 1 femenina, con `speaker_id` explícito.
+- **XTTS-v2** sale de la interfaz y queda como opción administrativa (`TTS_MOTOR=xtts`),
+  sin respaldo automático.
+
+### Cambios
+
+- **`media/audio.py`:** `generar_audio` mantiene su firma.
+  - La voz sale de `PreferenciaVoz(genero, modo)` vía `resolver_voz`, así que el
+    estudiante conserva el género si cambia de modo.
+  - Cada motor carga su modelo la primera vez que se usa y no importa los motores que no
+    usa.
+  - El WAV se escribe de forma atómica.
+  - Si un motor falla, el error se ve en el visor; no hay respaldo automático.
+  - El cuerpo de XTTS se movió sin cambios.
+- **`media/guion.py`:** normaliza el guion antes de cualquier motor:
+  - símbolos (→, ⇒, =, ⊆…) y LaTeX → palabras;
+  - letras sueltas que son variables → su nombre (X → «equis», Y → «ye»);
+  - siglas del dominio → su expansión (DF, 3FN, BD…).
+
+  En los 269 guiones de la batería no queda ningún símbolo.
+- **`config.py`:** ajustes `tts_*`. Los modelos van en `data/voces` (ignorado por git).
+- **`scripts/descargar_voces.py`:** descarga Kokoro y sharvard, con SHA-256 y commit fijos.
+- **`pyproject.toml`:** extras `audio` (kokoro-onnx 0.6.1 y piper-tts 1.8.0 exactos),
+  `audio-xtts` y `media` (solo imagen).
+- **El reproductor** ya no nombra a XTTS.
+
+### Verificación
+
+- **Dependencias:** instalar el extra `audio` solo agregó paquetes; torch, numpy y
+  protobuf no cambiaron, y `pip check` muestra los mismos avisos que antes.
+- **Tiempo real con el código del repo** (3 cápsulas de la batería):
+  - Kokoro: 7–14 s para 24–50 s de audio;
+  - Piper: 0,8–4,3 s.
+- **Suite y lint:**
+  - `tests/test_audio.py`: 40 tests con motores y voces falsos;
+  - `pytest` completo: 481 pasan y fallan los 4 conocidos;
+  - `ruff check .`: 41, igual que antes.
+
+### Riesgos y pendientes registrados
+
+- **Licencias GPL-3.0** (piper-tts, phonemizer y espeak-ng) frente a unos Términos que
+  declaran el código sin licencia abierta.
+- **CPML** de XTTS: solo uso no comercial.
+- **sharvard parte de la voz lessac**, cuyos datos son solo para investigación.
+- **Créditos de atribución:** propuestos, sin implementar.
+- **Actualización legal:** preparada en una sola versión nueva, sin aplicar.
+- **H11:** `test_api_diagnosticos` se cuelga sin Postgres.
+- **Discrepancia de razón de Kokoro** (0,53–0,66 frente a 0,27–0,41): se vuelve a medir
+  en la Etapa 3 con 5 corridas y mediana.
 
 ## 6. Pendiente inmediato
 
