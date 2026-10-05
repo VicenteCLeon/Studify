@@ -145,6 +145,14 @@
             </div>
         </div>
 
+        {% if audio_activo %}
+        <div class="card mt-4">
+            {% set contexto = "perfil" %}
+            {% include "student/_selector_voz.html" %}
+            <div id="voz-guardada" role="status"></div>
+        </div>
+        {% endif %}
+
         {% if directivas %}
         <h3 class="perfil-directivas-titulo">Lo que incluirá cada cápsula</h3>
         <ul class="perfil-directivas" role="list">

@@ -21,6 +21,9 @@ data/*
 # cubre data/*, pero se declaran aparte para que no se versionen si alguien
 # vuelve a incluir data/ completo.
 data/pruebas_vark/
+# Narraciones que genera el visor (hallazgo H10). Solo afecta a los WAV nuevos:
+# capsula_620.wav y capsula_1451.wav siguen versionados hasta resolver H10.
+src/studify/public/audio/*.wav
 *.pdf
 *.pptx
 *.docx

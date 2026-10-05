@@ -1,0 +1,42 @@
+{# Selector de la voz de la narración (visor y perfil).
+
+   Variables: `voz_actual` ("femenina-calidad" si no hay preferencia guardada),
+   `contexto` ("visor" | "perfil") y, en el visor, `audio_id` y `uid` (para
+   reemplazar el widget de audio). Las opciones salen de `textos.OPCIONES_VOZ`.
+
+   Accesibilidad:
+   - `fieldset` + `legend`: el lector de pantalla anuncia el grupo y cada opción;
+   - radios nativos: Tab entra al grupo y las flechas cambian la opción, sin JS;
+   - se guarda con el botón, no al cambiar la opción: con un envío por cada
+     `change`, recorrer las opciones con las flechas lanzaría una síntesis por
+     cada voz que se cruza;
+   - sin JavaScript el formulario se envía igual (POST y vuelta a la página). #}
+{% import "components/ui.html" as ui %}
+<form class="selector-voz" method="post" action="/student/preferencias/voz"
+      hx-post="/student/preferencias/voz"
+      {% if contexto == "visor" %}hx-target="#audio-widget-{{ uid }}" hx-swap="outerHTML"
+      {% else %}hx-target="#voz-guardada" hx-swap="innerHTML"{% endif %}>
+    <input type="hidden" name="contexto" value="{{ contexto }}">
+    {% if contexto == "visor" %}
+    <input type="hidden" name="id_capsula" value="{{ audio_id }}">
+    <input type="hidden" name="uid" value="{{ uid }}">
+    {% endif %}
+    <fieldset class="form-group">
+        <legend class="form-label">{{ ui.icon("volume-2", cls="icon-sm") }}Voz de la narración</legend>
+        <div class="choice-group auto-grid" style="--grid-min: 13rem">
+            {% for valor, nombre, voz, demora in OPCIONES_VOZ %}
+            <label class="choice">
+                <input type="radio" name="voz" value="{{ valor }}" {% if valor == voz_actual %}checked{% endif %}>
+                <span>
+                    <strong>{{ nombre }}</strong>
+                    <span class="form-hint">{{ voz }}. {{ demora }}</span>
+                </span>
+            </label>
+            {% endfor %}
+        </div>
+    </fieldset>
+    <button type="submit" class="btn btn-secondary btn-sm">
+        <span class="idle-only">{{ ui.icon("check") }}</span>Usar esta voz
+        <span class="htmx-indicator">{{ ui.spinner("Guardando") }}</span>
+    </button>
+</form>

@@ -1,0 +1,5 @@
+{# Respuesta de POST /student/preferencias/voz desde el perfil. Entra en
+   #voz-guardada, que ya es role="status": el lector de pantalla la anuncia sin
+   mover el foco. Por eso no usa ui.alert, que traería una segunda región viva. #}
+{% import "components/ui.html" as ui %}
+<p class="form-hint">{{ ui.icon("circle-check", cls="icon-sm") }}Voz guardada: tus próximas narraciones usarán {{ nombre_voz }}.</p>

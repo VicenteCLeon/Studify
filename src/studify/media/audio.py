@@ -75,6 +75,25 @@ class VozElegida:
     hablante: int | None = None
 
 
+def preferencia_guardada(voz_genero: str | None, voz_modo: str | None) -> PreferenciaVoz:
+    """La preferencia tal como está en `estudiante.voz_*`. NULL → la por defecto (Dora).
+
+    Recibe los dos campos y **no la fila del estudiante**, a propósito: así no
+    tiene cómo leer `estudiante.genero`, el dato sociodemográfico sensible, que
+    no tiene nada que ver con la voz que alguien prefiere oír.
+    """
+    defecto = PreferenciaVoz()
+    return PreferenciaVoz(genero=voz_genero or defecto.genero, modo=voz_modo or defecto.modo)
+
+
+def clave_de_voz(eleccion: VozElegida) -> str:
+    """Identifica la voz en el nombre del WAV: cambiar de voz no reusa el audio de otra."""
+    partes = [eleccion.motor, eleccion.voz or "referencia"]
+    if eleccion.hablante is not None:
+        partes.append(str(eleccion.hablante))
+    return "-".join(partes)
+
+
 def resolver_voz(
     preferencia: PreferenciaVoz | None = None, *, ajustes: Settings | None = None
 ) -> VozElegida:

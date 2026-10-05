@@ -285,7 +285,8 @@ def get_profile(request: Request, db: Session = Depends(get_db)):
     if id_estudiante is None:
         return _sin_sesion()
 
-    if db.get(Estudiante, id_estudiante) is None:
+    estudiante = db.get(Estudiante, id_estudiante)
+    if estudiante is None:
         # Cookie de una base que ya no está (p. ej. tras un `--reset`).
         respuesta = _sin_sesion()
         sesion.cerrar(respuesta)
@@ -337,6 +338,10 @@ def get_profile(request: Request, db: Session = Depends(get_db)):
         },
         "directivas": [textos.glosa_directiva(d) for d in config.directivas],
         "id_diagnostico": diagnostico.id_diagnostico,
+        # La narración solo existe con audio activo (p_A ≥ 25 %): sin ella, el
+        # selector de voz no tendría nada que cambiar.
+        "audio_activo": config.audio_activo,
+        "voz_actual": _voz_actual(estudiante),
     }
     return templates.TemplateResponse(
         request=request, name="student/profile.html", context=contexto
@@ -469,6 +474,9 @@ def get_viewer(
             "bloques": _preparar_bloques(capsula.bloques_legibles()),
             "referencias": _referencias(db, capsula.fuentes),
             "audio_activo": audio_activo,
+            # El selector de voz es del estudiante dueño: solo existe en su visor.
+            "mostrar_selector_voz": True,
+            "voz_actual": _voz_actual(db.get(Estudiante, id_estudiante)),
             # `indice_correcta` y `retroalimentacion` NO viajan al navegador: si
             # fueran al HTML, la respuesta correcta estaría en el código fuente
             # de la página y el quiz dejaría de medir nada.
@@ -500,10 +508,10 @@ def generate_capsule_audio(
     texto_override: str = Form(default=""),
     db: Session = Depends(get_db),
 ):
-    """Genera (o recupera) el audio narrativo con XTTS-v2 en local.
+    """Genera (o recupera) la narración de la cápsula en local (`media/audio.py`).
 
-    **Quién puede pedirlo.** La síntesis clona una voz real y ocupa la GPU por
-    decenas de segundos, así que no queda abierta:
+    **Quién puede pedirlo.** La síntesis ocupa la CPU por segundos (y por
+    minutos con XTTS), así que no queda abierta:
 
     - una cápsula guardada (`id_capsula > 0`) la narra solo su dueño o el
       docente, y **siempre con el texto de la base**: `texto_override` se
@@ -511,14 +519,20 @@ def generate_capsule_audio(
       lo que quisiera;
     - la cápsula del simulador (`id_capsula == 0`) no está en la base, así que
       su texto viene en el formulario; por eso es solo del docente.
+
+    **Con qué voz.** La que eligió el **dueño de la cápsula** (`estudiante.voz_*`),
+    también cuando la pide el docente: así oye lo mismo que el estudiante. Sin
+    preferencia guardada, y en el simulador, Dora. El nombre del archivo lleva la
+    voz, para que cambiar de voz no siga sirviendo el audio de la anterior.
     """
     import hashlib
     from pathlib import Path
 
-    from studify.media.audio import generar_audio
+    from studify.media import audio
 
     es_docente = sesion.es_docente(request)
     texto = ""
+    preferencia = audio.PreferenciaVoz()
     if id_capsula > 0:
         fila = db.get(MicrocapsulaGenerada, id_capsula)
         if fila is None or (
@@ -529,10 +543,14 @@ def generate_capsule_audio(
             concepto = fila.contenido_json.get("concepto_central", "")
             activacion = fila.contenido_json.get("activacion", "")
             texto = f"{activacion} {concepto}".strip()
+        dueno = db.get(Estudiante, fila.id_estudiante)
+        if dueno is not None:
+            preferencia = audio.preferencia_guardada(dueno.voz_genero, dueno.voz_modo)
     else:
         if not es_docente:
             raise HTTPException(status_code=403, detail="el audio del simulador es del docente")
         texto = texto_override.strip()
+    clave = audio.clave_de_voz(audio.resolver_voz(preferencia))
 
     public_audio_dir = Path("src/studify/public/audio")
     public_audio_dir.mkdir(parents=True, exist_ok=True)
@@ -541,19 +559,19 @@ def generate_capsule_audio(
         texto = "Esta es una microcápsula adaptativa sintetizada con IA para el canal auditivo."
 
     if id_capsula > 0:
-        filename = f"capsula_{id_capsula}.wav"
+        filename = f"capsula_{id_capsula}__{clave}.wav"
     else:
         h = hashlib.md5(texto.encode("utf-8")).hexdigest()[:8]
-        filename = f"capsula_sim_{h}.wav"
+        filename = f"capsula_sim_{h}__{clave}.wav"
 
     audio_file = public_audio_dir / filename
     web_audio_url = f"/public/audio/{filename}"
 
     if not audio_file.exists():
         try:
-            generar_audio(texto, audio_file)
+            audio.generar_audio(texto, audio_file, preferencia=preferencia)
         except Exception as exc:
-            logger.error("Error al generar audio XTTS-v2: %s", exc)
+            logger.error("Error al generar audio (%s): %s", clave, exc)
             return templates.TemplateResponse(
                 request=request,
                 name="student/_audio.html",
@@ -564,6 +582,71 @@ def generate_capsule_audio(
         request=request,
         name="student/_audio.html",
         context={"url": web_audio_url},
+    )
+
+
+# Las cuatro opciones del selector de voz, como "<voz_genero>-<voz_modo>". Lo
+# que se guarda es el género **de la voz** y el modo, nunca un nombre de voz: si
+# cambia el motor, el estudiante conserva lo que eligió (ver media/audio.py).
+OPCIONES_VOZ = tuple(valor for valor, *_ in textos.OPCIONES_VOZ)
+
+
+def _voz_actual(estudiante: Estudiante) -> str:
+    """La opción del selector que corresponde a la preferencia guardada (o Dora)."""
+    from studify.media.audio import preferencia_guardada
+
+    preferencia = preferencia_guardada(estudiante.voz_genero, estudiante.voz_modo)
+    return f"{preferencia.genero}-{preferencia.modo}"
+
+
+@router.post("/preferencias/voz", response_class=HTMLResponse)
+def guardar_preferencia_voz(
+    request: Request,
+    voz: str = Form(...),
+    contexto: str = Form(default="perfil"),
+    id_capsula: int = Form(default=0),
+    uid: str = Form(default=""),
+    db: Session = Depends(get_db),
+):
+    """Guarda la voz con que el estudiante quiere oír sus narraciones.
+
+    El estudiante sale **solo de la cookie firmada**: el formulario no trae
+    `id_estudiante`, así que nadie puede cambiar la preferencia de otro.
+
+    Con HTMX responde un fragmento: en el visor, el widget de audio, que vuelve
+    a pedir la narración con la voz nueva; en el perfil, un aviso. Sin
+    JavaScript, redirige de vuelta a la página donde estaba el selector.
+    """
+    id_estudiante = sesion.estudiante_actual(request)
+    estudiante = db.get(Estudiante, id_estudiante) if id_estudiante is not None else None
+    if estudiante is None:
+        return _sin_sesion()
+    if voz not in OPCIONES_VOZ:
+        raise HTTPException(status_code=422, detail="opción de voz desconocida")
+
+    estudiante.voz_genero, estudiante.voz_modo = voz.split("-")
+    db.commit()
+
+    fila = None
+    if contexto == "visor" and id_capsula > 0:
+        fila = db.get(MicrocapsulaGenerada, id_capsula)
+        if fila is None or fila.id_estudiante != id_estudiante:
+            raise HTTPException(status_code=404, detail=f"no existe la cápsula {id_capsula}")
+
+    if request.headers.get("HX-Request") != "true":
+        destino = f"/student/viewer/{fila.id_objetivo}" if fila else "/student/profile"
+        return RedirectResponse(url=destino, status_code=303)
+
+    if fila is not None:
+        return templates.TemplateResponse(
+            request=request,
+            name="student/_audio_widget.html",
+            context={"audio_id": fila.id_capsula, "uid": uid or fila.id_capsula},
+        )
+    return templates.TemplateResponse(
+        request=request,
+        name="student/_voz_guardada.html",
+        context={"nombre_voz": textos.NOMBRE_VOZ[voz]},
     )
 
 

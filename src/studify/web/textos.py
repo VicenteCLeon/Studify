@@ -116,3 +116,17 @@ GLOSA_DIRECTIVA = {
 
 def glosa_directiva(directiva: str) -> str:
     return GLOSA_DIRECTIVA.get(directiva, directiva.replace("_", " ").capitalize())
+
+
+# Opciones del selector de voz de la narración: (valor, nombre, voz, demora).
+# El valor es "<voz_genero>-<voz_modo>", lo que se guarda en `estudiante`. Se
+# habla siempre de la **voz** («voz femenina»), nunca del género de quien
+# escucha. Las demoras son las medidas, sin prometer de más (PRUEBAS_VARK.md):
+# Kokoro tardó 7–14 s en cápsulas típicas y Piper 1–4 s.
+OPCIONES_VOZ: tuple[tuple[str, str, str, str], ...] = (
+    ("femenina-calidad", "Dora", "Voz femenina · calidad", "Natural, tarda unos segundos."),
+    ("masculina-calidad", "Alex", "Voz masculina · calidad", "Natural, tarda unos segundos."),
+    ("femenina-rapida", "Voz femenina rápida", "Voz femenina · rápida", "Casi inmediata."),
+    ("masculina-rapida", "Voz masculina rápida", "Voz masculina · rápida", "Casi inmediata."),
+)
+NOMBRE_VOZ = {valor: nombre for valor, nombre, _, _ in OPCIONES_VOZ}

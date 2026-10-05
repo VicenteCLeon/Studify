@@ -40,6 +40,9 @@ def datos_de(db: Session, estudiante: Estudiante) -> dict:
             "genero": estudiante.genero,
             "carrera": estudiante.carrera,
             "ano_ingreso": estudiante.ano_ingreso,
+            # Preferencia de la voz de la narración (null = la por defecto).
+            "voz_genero": estudiante.voz_genero,
+            "voz_modo": estudiante.voz_modo,
         },
         "diagnosticos_vark": [
             {

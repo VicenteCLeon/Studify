@@ -1,0 +1,24 @@
+{# Widget de la narración: se monta «cargando» y, con hx-trigger="load", pide el
+   audio a /student/viewer/{id}/generate-audio, que lo reemplaza por el
+   reproductor (_audio.html) o por el aviso de error.
+
+   Lo incluye _capsula.html y lo devuelve POST /student/preferencias/voz al
+   cambiar de voz: como llega completo (con su hx-trigger="load"), HTMX vuelve a
+   pedir la narración, ahora con la voz nueva.
+
+   Variables: `audio_id` (id de la cápsula, 0 en el simulador), `uid` (sufijo
+   del id del elemento) y `audio_texto` (solo el simulador, que no está en la
+   base; para una cápsula guardada el servidor usa siempre el texto de la base). #}
+<div id="audio-widget-{{ uid }}"
+     hx-post="/student/viewer/{{ audio_id }}/generate-audio"
+     hx-trigger="load"
+     {% if audio_texto %}hx-vals='{{ {"texto_override": audio_texto} | tojson }}'{% endif %}
+     hx-swap="innerHTML">
+    <div class="audio-generando" data-canal="A" role="status">
+        <div class="equalizer" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
+        <div>
+            <p class="audio-player-titulo">Preparando la narración…</p>
+            <p class="audio-player-sub">Sintetizando el audio de tu cápsula. Puedes empezar a leer mientras tanto.</p>
+        </div>
+    </div>
+</div>

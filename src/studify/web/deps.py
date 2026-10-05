@@ -32,3 +32,4 @@ templates = Jinja2Templates(
 # `textos` que usan los routers, así un chip VARK no puede decir algo distinto
 # de la barra del perfil.
 templates.env.globals["NOMBRE_CANAL"] = textos.NOMBRE_CANAL
+templates.env.globals["OPCIONES_VOZ"] = textos.OPCIONES_VOZ

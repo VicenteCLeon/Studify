@@ -191,19 +191,13 @@
     {% set es_auditivo = (capsula and capsula.configuracion and capsula.configuracion.audio_activo) or (perfil_simulado == 'Auditivo') or (audio_activo) %}
     {% if es_auditivo %}
     <section class="capsula-audio" aria-label="Narración en audio">
-        <div id="audio-widget-{{ uid }}"
-             hx-post="/student/viewer/{{ capsula.id_capsula if (capsula and capsula.id_capsula) else 0 }}/generate-audio"
-             hx-trigger="load"
-             hx-vals='{{ {"texto_override": capsula.activacion ~ " " ~ capsula.concepto_central} | tojson }}'
-             hx-swap="innerHTML">
-            <div class="audio-generando" data-canal="A" role="status">
-                <div class="equalizer" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
-                <div>
-                    <p class="audio-player-titulo">Preparando la narración…</p>
-                    <p class="audio-player-sub">Sintetizando el audio de tu cápsula. Puedes empezar a leer mientras tanto.</p>
-                </div>
-            </div>
-        </div>
+        {% set audio_id = capsula.id_capsula if (capsula and capsula.id_capsula) else 0 %}
+        {% set audio_texto = capsula.activacion ~ " " ~ capsula.concepto_central %}
+        {% if mostrar_selector_voz %}
+        {% set contexto = "visor" %}
+        {% include "student/_selector_voz.html" %}
+        {% endif %}
+        {% include "student/_audio_widget.html" %}
     </section>
     {% endif %}
 
