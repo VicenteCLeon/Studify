@@ -219,6 +219,19 @@ def veredicto(grupos: dict[str, list[str]], rescates: dict[str, list[str]]) -> N
             for nota in notas:
                 print(f"  C3 {nota}")
         for crit in TODAS:
+            if crit == "C4a":
+                # C4a se mide contra la base de la misma ronda: la heurística léxica es ruidosa
+                # (falló por un perfil distinto en 3 de 4 corridas S42 de `main`).
+                de_base = sum(len(m["C4a_fallan"]) for c in conjuntos for m in metr[f"{c}:base"])
+                del_brazo = sum(
+                    len(m["C4a_fallan"]) for c in conjuntos for m in metr[f"{c}:{brazo}"]
+                )
+                if del_brazo <= de_base:
+                    print(f"  C4a: {del_brazo} perfiles fallidos ≤ {de_base} de la base ✅")
+                    continue
+                print(
+                    f"  C4a: {del_brazo} perfiles fallidos > {de_base} de la base: se evalúa con R1"
+                )
             hubo = False
             for conj in conjuntos:
                 for i, m in enumerate(metr[f"{conj}:{brazo}"], start=1):
