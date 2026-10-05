@@ -40,6 +40,9 @@ from tests.test_api_capsulas import TEXTO_LARGO, ClienteObediente, _estudiante_c
 RAIZ = Path(__file__).resolve().parents[1]
 CARRERA = "Ingeniería Informática (test capsulas)"  # la que limpia `_estudiante_con_perfil`
 AUDITIVO = PerfilVark(v=Decimal(0), a=Decimal(60), r=Decimal(20), k=Decimal(20))
+# Lo que narra el visor: activación + concepto central de la cápsula del escenario.
+ACTIVACION, CONCEPTO = "¿Por qué?", "Porque X → Y."
+GUION = f"{ACTIVACION} {CONCEPTO}"
 
 
 # --- Sin base de datos ----------------------------------------------------------
@@ -155,7 +158,7 @@ def escenario(db):
         id_estudiante=duenio.id_estudiante,
         id_objetivo=objetivo.id_objetivo,
         titulo="Segunda forma normal",
-        contenido_json={"activacion": "¿Por qué?", "concepto_central": "Porque X → Y."},
+        contenido_json={"activacion": ACTIVACION, "concepto_central": CONCEPTO},
         estado_validacion="validada",
     )
     db.add(capsula)
@@ -307,7 +310,8 @@ def test_el_visor_narra_con_la_voz_del_duenio(db, escenario, sintesis_falsa):
 
     preferencia, archivo = sintesis_falsa[0]
     assert preferencia == PreferenciaVoz("masculina", "rapida")
-    assert archivo == f"capsula_{id_capsula}__piper-es_ES-sharvard-medium-0.wav"
+    piper_masculina = audio.VozElegida("piper", "es_ES-sharvard-medium", 0)
+    assert archivo == f"{audio.huella_de_audio(GUION, piper_masculina)}.wav"
 
 
 @necesita_bd
@@ -319,7 +323,8 @@ def test_el_docente_oye_la_voz_del_duenio(db, escenario, sintesis_falsa, http_do
     http_docente.post(f"/student/viewer/{escenario['capsula'].id_capsula}/generate-audio")
 
     assert sintesis_falsa[0][0] == PreferenciaVoz("masculina", "calidad")
-    assert sintesis_falsa[0][1].endswith("__kokoro-em_alex.wav")
+    alex = audio.VozElegida("kokoro", "em_alex")
+    assert sintesis_falsa[0][1] == f"{audio.huella_de_audio(GUION, alex)}.wav"
 
 
 @necesita_bd
@@ -357,6 +362,80 @@ def test_cambiar_de_voz_no_reusa_el_audio_de_la_anterior(db, escenario, sintesis
     navegador.post(ruta)
 
     assert sintesis_falsa[0][1] != sintesis_falsa[1][1]
+
+
+# --- Caché por huella (H10) -------------------------------------------------------
+
+
+@pytest.fixture
+def sintesis_que_escribe(monkeypatch, tmp_path):
+    """Síntesis falsa que sí deja el WAV, en un directorio temporal.
+
+    El visor escribe en `src/studify/public/audio` relativo al directorio de
+    trabajo; con `chdir` a `tmp_path` el test no toca la carpeta del repo.
+    """
+    monkeypatch.chdir(tmp_path)
+    pedidos: list[str] = []
+
+    def _escribe(texto, destino, language="es", *, preferencia=None):
+        pedidos.append(destino.name)
+        destino.parent.mkdir(parents=True, exist_ok=True)
+        destino.write_bytes(b"RIFF")
+
+    monkeypatch.setattr(audio, "generar_audio", _escribe)
+    return pedidos
+
+
+@necesita_bd
+def test_un_audio_ya_sintetizado_no_se_vuelve_a_sintetizar(escenario, sintesis_que_escribe):
+    navegador = _navegador(escenario["duenio"].id_estudiante)
+    ruta = f"/student/viewer/{escenario['capsula'].id_capsula}/generate-audio"
+
+    primera = navegador.post(ruta).text
+    segunda = navegador.post(ruta).text
+
+    assert len(sintesis_que_escribe) == 1
+    assert f"/public/audio/{sintesis_que_escribe[0]}" in primera
+    assert f"/public/audio/{sintesis_que_escribe[0]}" in segunda
+
+
+@necesita_bd
+def test_la_copia_del_cache_compartido_reutiliza_el_mismo_archivo(
+    db, escenario, sintesis_que_escribe
+):
+    """Otro estudiante con la misma cápsula (copia) y la misma voz: un solo WAV."""
+    ajeno = escenario["ajeno"]
+    copia = MicrocapsulaGenerada(
+        id_estudiante=ajeno.id_estudiante,
+        id_objetivo=escenario["objetivo"].id_objetivo,
+        titulo=escenario["capsula"].titulo,
+        contenido_json=dict(escenario["capsula"].contenido_json),
+        estado_validacion="validada",
+    )
+    db.add(copia)
+    db.commit()
+
+    original = _navegador(escenario["duenio"].id_estudiante).post(
+        f"/student/viewer/{escenario['capsula'].id_capsula}/generate-audio"
+    )
+    de_la_copia = _navegador(ajeno.id_estudiante).post(
+        f"/student/viewer/{copia.id_capsula}/generate-audio"
+    )
+
+    assert len(sintesis_que_escribe) == 1
+    url = f"/public/audio/{sintesis_que_escribe[0]}"
+    assert url in original.text and url in de_la_copia.text
+
+
+@necesita_bd
+def test_el_nombre_del_archivo_no_depende_del_id_de_la_capsula(escenario, sintesis_falsa):
+    """Una base recreada con ids repetidos no puede servir el audio de otra cápsula."""
+    _navegador(escenario["duenio"].id_estudiante).post(
+        f"/student/viewer/{escenario['capsula'].id_capsula}/generate-audio"
+    )
+
+    # La huella no recibe el id: solo guion, motor y voz.
+    assert sintesis_falsa[0][1] == f"{audio.huella_de_audio(GUION, audio.resolver_voz())}.wav"
 
 
 @necesita_bd

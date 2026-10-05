@@ -301,6 +301,67 @@ def test_el_motor_recibe_el_guion_normalizado(ajustes, motores_falsos, tmp_path)
     assert motores_falsos[0][2] == "Se escribe equis determina ye."
 
 
+# --- Clave del caché de audio (H10) -------------------------------------------------
+
+DORA = VozElegida(motor="kokoro", voz="ef_dora")
+
+
+def test_la_huella_es_un_nombre_de_archivo_estable(ajustes):
+    huella = audio.huella_de_audio("Se escribe X → Y.", DORA, ajustes)
+
+    assert len(huella) == 32 and all(c in "0123456789abcdef" for c in huella)
+    assert huella == audio.huella_de_audio("Se escribe X → Y.", DORA, ajustes)
+
+
+def test_la_huella_usa_el_guion_ya_normalizado(ajustes):
+    """Dos textos que se narran igual comparten audio."""
+    assert audio.huella_de_audio("Se escribe X → Y.", DORA, ajustes) == audio.huella_de_audio(
+        "Se escribe X -> Y.", DORA, ajustes
+    )
+
+
+def test_cambiar_una_regla_de_normalizacion_invalida_el_cache(ajustes, monkeypatch):
+    antes = audio.huella_de_audio("Se escribe X → Y.", DORA, ajustes)
+
+    monkeypatch.setattr(audio, "normalizar_guion", lambda texto: texto)
+
+    assert audio.huella_de_audio("Se escribe X → Y.", DORA, ajustes) != antes
+
+
+@pytest.mark.parametrize(
+    "otra",
+    [
+        VozElegida(motor="kokoro", voz="em_alex"),
+        VozElegida(motor="piper", voz="es_ES-sharvard-medium", hablante=1),
+        VozElegida(motor="xtts"),
+    ],
+)
+def test_otra_voz_u_otro_motor_da_otro_archivo(ajustes, otra):
+    assert audio.huella_de_audio("Hola.", otra, ajustes) != audio.huella_de_audio(
+        "Hola.", DORA, ajustes
+    )
+
+
+def test_los_dos_hablantes_de_sharvard_no_comparten_archivo(ajustes):
+    femenina = VozElegida(motor="piper", voz="es_ES-sharvard-medium", hablante=1)
+    masculina = VozElegida(motor="piper", voz="es_ES-sharvard-medium", hablante=0)
+
+    assert audio.huella_de_audio("Hola.", femenina, ajustes) != audio.huella_de_audio(
+        "Hola.", masculina, ajustes
+    )
+
+
+def test_el_acento_de_kokoro_entra_en_la_clave_y_no_afecta_a_piper(ajustes, monkeypatch):
+    piper = VozElegida(motor="piper", voz="es_ES-sharvard-medium", hablante=1)
+    kokoro_419 = audio.huella_de_audio("Hola.", DORA, ajustes)
+    piper_419 = audio.huella_de_audio("Hola.", piper, ajustes)
+
+    monkeypatch.setattr(ajustes, "tts_kokoro_idioma", "es")
+
+    assert audio.huella_de_audio("Hola.", DORA, ajustes) != kokoro_419
+    assert audio.huella_de_audio("Hola.", piper, ajustes) == piper_419
+
+
 # --- Normalización del guion -------------------------------------------------------
 
 
