@@ -165,7 +165,12 @@ def test_la_diferencia_entre_perfiles_es_estructural_y_no_de_tono():
 
 
 def test_el_perfil_kinestesico_cambia_el_tipo_de_actividad_de_cierre():
-    """`p_K ≥ 40%` convierte el quiz en un ejercicio aplicado (tabla 11.1)."""
+    """`p_K ≥ 40%` exige `flashcards_y_quiz` como actividad de cierre (tabla 11.1).
+
+    Desde `1dc5286` la directiva de actividad aplicada ya no pide `intentalo_tu`
+    sino `flashcards_y_quiz`. El test mira el bloque del prompt, no el contrato:
+    `intentalo_tu` sigue siendo un tipo válido de `Actividad`.
+    """
     kinestesico = orchestrator.bloque_perfil(
         aplicar_reglas(perfil(0, 0, 0, 100)), palabras_objetivo=200
     )
@@ -173,8 +178,8 @@ def test_el_perfil_kinestesico_cambia_el_tipo_de_actividad_de_cierre():
         aplicar_reglas(perfil(0, 0, 100, 0)), palabras_objetivo=200
     )
 
-    assert "intentalo_tu" in kinestesico
-    assert "intentalo_tu" not in lector
+    assert "flashcards_y_quiz" in kinestesico
+    assert "flashcards_y_quiz" not in lector
 
 
 def test_el_prompt_no_le_dice_al_modelo_la_etiqueta_del_perfil():
