@@ -912,6 +912,141 @@ reparaciones). Forzar la actividad no cambia lo que hace el modelo en esa zona.
 **Costo:** US$ 0,461 las 16 corridas (315 llamadas) y US$ 0,019 el rescate, es decir ≈ US$ 0,48,
 dentro de lo declarado (esperado 0,45–0,50; tope 1,53).
 
+### Etapa 1 — Ronda 3 (05-oct-2026): descuento del glosario en el objetivo de R
+
+**Estado: preparada, sin ejecutar; pendiente del OK del autor.** Los criterios de esta sección
+se fijan antes de ejecutar y no se modifican después de ver resultados.
+
+**Decisiones previas del autor.** El brazo B (reparto por paso con rangos y párrafo condicionado)
+se **descarta** por no mejorar a A en nada que importe; sus parches quedan guardados en
+`scripts/h1h3/parches/` por si H3 reaparece. Esta ronda es otra palanca, no una tercera iteración
+del texto del prompt: **bajar el objetivo de palabras de R cuando el perfil lleva la directiva del
+glosario**.
+
+#### Diagnóstico con los datos guardados (sin llamadas)
+
+| Medida | Resultado |
+|---|---|
+| Palabras que ocupa el bloque `glosario` (cápsulas R ≥ 40 % válidas de A y B; ronda 2 y Etapa 1) | **n = 75; mediana 64**; rango 54–78; Q1–Q3 61–70; mediana de 24 % del contenido (18–29 %) |
+| Cápsulas R ≥ 40 % que agotaron los 3 intentos (A y B) | n = 9. Primer intento: **+80,9 palabras sobre el máximo** de 300 (rango +38 a +131; +124 sobre el objetivo del prompt). Último intento: +17,0 (+2 a +37) |
+| Efecto del glosario en el primer intento, **pareado por perfil** contra la base (14 perfiles R ≥ 40 %, ronda 2) | A − base: **+70,2** (mediana +69,2; sd 37,5). B − base: +85,2 |
+| Primer intento de R ≥ 40 % (n = 28 por brazo) | base: media 245, sobre 300 en 2/28 (7 %); A: media 315, 17/28 (61 %); B: media 330, 22/28 (79 %) |
+
+**Descuento que sale de los datos: 70 palabras.** Es el efecto pareado del glosario sobre el primer
+intento (+70,2), redondeado al tramo de 10 que ya usa el objetivo (`TRAMO_PALABRAS`). Lo corrobora
+una medida independiente, la mediana del glosario (64 palabras): el modelo agrega el glosario sin
+acortar el resto. No se eligió a ojo ni se ajustó a los perfiles que fallaron. Con el descuento, los
+objetivos de R pasan de 250–270 a 180–200 (mínimo posible 150: 357 de una muestra de 5.780 perfiles con
+glosario, tomada con paso 2 en el símplex, tocan el piso y quedan en 150).
+
+**Advertencia sobre la hipótesis (dato, no opinión).** El modelo **casi no sigue el número del
+objetivo**: en las 4 corridas base (76 cápsulas, objetivos de 190 a 270) la pendiente del total del
+primer intento sobre el objetivo es **0,24** (r = 0,13). Es coherente con lo aprendido en H3 («el
+largo lo decide la cantidad de bloques»). Si el modelo acata solo esa fracción, el descuento de 70
+equivale a unas 17 palabras y el primer intento sobre 300 bajaría de 61 % a 50 % (14/28); con
+cumplimiento del 50 % bajaría a 43 % y solo con cumplimiento total volvería al 7 % de la base. La
+medición decide; esta ronda existe para saberlo, y se prevé que el efecto sea parcial.
+
+#### Cómo se calcula hoy el objetivo (verificado en el código)
+
+- **Rango 150–300:** viene del cap. 11.1 del informe y es una regla de diseño: `PALABRAS_MIN`/`PALABRAS_MAX`
+  en [`rules.py:47-48`](../src/studify/vark/rules.py#L47-L48); PLAN_DESARROLLO.md (línea 113: el
+  validador rechaza fuera de 150–300; línea 150: límite 150–300 en el prompt); el CHECK
+  `palabras_texto BETWEEN 150 AND 300` de [`models.py:224`](../src/studify/db/models.py#L224); y la
+  validación en [`validator.py:336-343`](../src/studify/generation/validator.py#L336-L343) con
+  `capsula_min_palabras`/`capsula_max_palabras` de [`config.py:69-70`](../src/studify/config.py#L69-L70).
+  **Subir el máximo es una decisión del autor**, no de esta ronda.
+- **Objetivo del perfil:** `_palabras_objetivo` interpola C_texto sobre 150–300
+  ([`rules.py:119-126`](../src/studify/vark/rules.py#L119-L126)) y se persiste como `palabras_texto`
+  ([`rules.py:219`](../src/studify/vark/rules.py#L219)).
+- **Objetivo que ve el modelo:** `construir` redondea a 10 y lo limita entre el mínimo y
+  `capsula_max_palabras − MARGEN_PALABRAS_OBJETIVO` ([`orchestrator.py:199-205`](../src/studify/rag/orchestrator.py#L199-L205)).
+  `MARGEN_PALABRAS_OBJETIVO = 30` ([`orchestrator.py:55`](../src/studify/rag/orchestrator.py#L55)) existe
+  porque el R puro quedaba exactamente en 300, igual que el techo.
+- **Bajar el objetivo no cambia el mínimo ni el máximo:** esos dos números del prompt salen de la
+  configuración ([`orchestrator.py:127-128`](../src/studify/rag/orchestrator.py#L127-L128)) y la validación
+  sigue exigiendo 150–300. El descuento solo toca el número «aproximadamente N palabras». Tampoco toca lo
+  que se persiste en `configuracion_contenido` (`rules.py` no cambia).
+- **Cómo cuenta el validador:** `palabras_contenido` suma activación, concepto central, representación
+  adaptativa (el glosario está dentro) y ejemplo, con `split()` ([`schemas.py:96-103`, `408-421`](../src/studify/generation/schemas.py#L408-L421)).
+
+#### Qué ve el estudiante cuando se agotan los 3 intentos
+
+- No se guarda nada (el fallo no entra al caché) y no hay cápsula alternativa ni versión anterior:
+  `crear_capsula` registra el error y responde 502
+  ([`capsules.py:353-362`](../src/studify/api/routers/capsules.py#L353-L362)).
+- El visor muestra «El modelo no logró una cápsula válida» con el texto «La respuesta no pasó la
+  validación en ninguno de los reintentos. Puedes volver a intentarlo…»
+  ([`student.py:867-873`](../src/studify/web/routers/student.py#L867-L873)) y dos botones: **«Intentar de
+  nuevo»** (otra generación completa de 3 intentos) y «Elegir otro tema».
+- Costo medido: la espera con 3 llamadas agotadas fue de **12,9 s** en promedio (n = 7) contra una
+  mediana de 4,5 s con cápsula válida, sin contar la pantalla de carga; más ≈ US$ 0,005 por las 3
+  llamadas.
+- Frecuencia medida en R ≥ 40 % (perfil-corrida, ronda 2): base **0/28**, A **3/28 (11 %)**, B 4/28
+  (14 %). Con A en producción, 1 de cada 9 estudiantes con R ≥ 40 % vería esa pantalla en su primer
+  intento.
+
+#### Variantes y conjuntos
+
+| Brazo | Qué cambia |
+|---|---|
+| **base** | `main` + fix de la etiqueta, sin más cambios |
+| **A** | solo el texto nuevo del glosario (el de la ronda 2) |
+| **A+objetivo** | A, más `DESCUENTO_GLOSARIO = 70` en `orchestrator.construir`: si el perfil lleva la directiva `glosario`, el objetivo que ve el modelo baja 70 palabras (sin pasar del mínimo). Con 4 tests nuevos en `tests/test_prompt_maestro.py` |
+
+Variante generada por `scripts/h1h3/hacer_variantes.py` (`A_obj`); parches `brazo_A_obj.patch` y
+`objetivo_glosario.patch` (solo el descuento, sobre A). **Verificado antes de ejecutar:** en S42,
+S43, S45, V/K/A puros y perfiles con V > 0, **todos los perfiles sin la directiva `glosario` quedan con
+el prompt idéntico byte a byte y con la misma huella** que la base; en los que la llevan solo cambia
+la línea «Extensión del contenido: aproximadamente N palabras…».
+
+- **S42** y **S43** como en la ronda anterior, 2 corridas por brazo.
+- **S45 (validación, no usada para diseñar el descuento):** semilla 45. **Corrección a lo pedido,
+  pendiente de confirmar:** con `--fases ABC` las fases A y B son *fijas* y repiten los 22 perfiles
+  de S42, así que solo 8 perfiles serían nuevos (3 con R ≥ 40 %), y los 9 R ≥ 40 % de S42 sí
+  informaron el descuento. Se propone **solo Fase C con 24 mezclas aleatorias** (`--fases C
+  --n-aleatorias 24 --semilla 45`): 13 con R ≥ 40 %, ninguna coincide con S42 ni S43.
+- Todo con `--sin-audio`, `--doc` fuera de `docs/`, corridas intercaladas por brazo
+  (base, A, A+objetivo, base, A, A+objetivo…), 2 corridas por brazo y conjunto.
+
+#### Criterios
+
+| # | Criterio | Éxito si |
+|---|---|---|
+| C1 | Glosario en las cápsulas válidas con R ≥ 40 % | todas, en todas las corridas |
+| C3 | No regresión **contra la base de la misma ronda, por conjunto** | válidas ≥ promedio de la base − 1; reparaciones ≤ promedio de la base + 2; 0 citas inventadas; ningún perfil estable de la base perdido (sin umbrales absolutos) |
+| C4 | Como en la ronda 2 | C4a: no más perfiles fallidos que la base, por conjunto; C4b y C4c: todas |
+| C6 *(nuevo, orientado al estudiante)* | Perfiles con R ≥ 40 % **sin ninguna cápsula válida** | **≤ 1 por conjunto y corrida** |
+| R1 | Rescate con las mismas reglas | un único perfil fallido en una única corrida de un criterio «todas» → 5 repeticiones, pasa con 4 de 5; máximo 2 rescates por brazo |
+
+C2 se informa pero no bloquea; sobre A+objetivo se mide contra su propio objetivo, que es más
+bajo, así que no es comparable con el de los otros brazos. R1 no se aplica a C6 (mide la
+experiencia de cada corrida, no un criterio «todas»).
+
+**A+objetivo gana solo si cumple C1, C3, C4 y C6 tanto en S42 + S43 como en S45.** Si cumple en uno
+y no en el otro, cuenta como falla.
+
+**Regla de cierre.** Si A+objetivo gana, se aplica en commits separados (el cambio de objetivo y el
+texto del glosario), y **antes de producción quedan como condiciones**: la guarda de ancho de B, si B
+se reactiva (no aplica a este cambio), y que **la huella del caché incluya la versión del prompt, con
+purga de las cápsulas cacheadas** (hoy `huella` no incluye el texto del prompt). Si no gana, `main`
+queda como está, **H1 se documenta como limitación conocida (R sin glosario)** y se presentan
+alternativas estructurales al autor para que decida; sin iterar.
+
+#### Costo estimado
+
+Referencia: la ronda 2 costó US$ 0,48 (315 llamadas más el rescate; ≈ US$ 0,0015 por llamada).
+
+| Parte | Perfiles | Llamadas (mín.–máx.) | Costo (mín.–máx.) |
+|---|---|---|---|
+| Por brazo: 2 × (S42 + S43 + S45) | 124 | 124–372 | US$ 0,18–0,72 |
+| 3 brazos | 372 | 372–1.116 | US$ 0,54–2,16 |
+| Rescates R1 (≤ 2 por brazo × 5) | ≤ 30 | ≤ 30 | ≤ US$ 0,05 |
+| **Esperado** (≈ 1,1 / 1,4 / 1,2 llamadas por perfil en base / A / A+objetivo) | | **≈ 455** | **≈ US$ 0,65–0,70** |
+
+Paradas: se detiene si un brazo supera el doble de su costo esperado, si se acumulan 3 errores de la
+API o si el gasto total pasa de US$ 1,40.
+
 ### Etapa 4 — H2: el bucle de reparación que repite la respuesta
 
 **Diagnóstico (04-oct-2026).** En las corridas guardadas hubo 58 pares de intentos
