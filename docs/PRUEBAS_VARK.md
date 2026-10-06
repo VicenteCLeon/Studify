@@ -1169,9 +1169,10 @@ API o si el gasto total pasa de US$ 1,40.
 
 ### Etapa 1 — Ronda 4 (05-oct-2026): variante E, glosario de 3 entradas que reemplaza al párrafo
 
-**Estado: regla del piloto APROBADA por el autor el 05-oct-2026; sin ejecutar. El piloto se ejecuta
-solo cuando el autor lo indique, después de commitear esta preparación.** Este piloto es **la última
-ronda sobre H1**.
+**Estado: ejecutada el 05-oct-2026. El piloto pasó; la ronda completa con S45 NO cumple los criterios
+(E no gana). Se aplica el cierre previsto: no se aplica nada al repo, `main` queda como está y H1 queda
+como limitación conocida (ver «Resultado de la ronda completa de la variante E»).** Fue la última ronda
+sobre H1.
 
 **Decisiones previas del autor.** La hipótesis del descuento queda descartada (el modelo no sigue
 números de palabras; cumplimiento −11 %), no se corre la ronda completa de la ronda 3 ni S45, y
@@ -1352,6 +1353,92 @@ se cumplan.
 **Estado.** El piloto no valida nada (son los perfiles que dieron origen a la hipótesis). Por la regla
 aprobada se muestra el costo de la ronda completa con S45 y se **espera el OK del autor**; S45 sigue sin
 ejecutarse ni mirarse. No se aplicó nada al repo: `src/` y `tests/` son idénticos a `HEAD`.
+
+#### Resultado de la ronda completa de la variante E (05-oct-2026): E no gana
+
+**Trazabilidad.** Código: `fix/h1h3` en `e2e4d354687ed638732e418b9eb38a09d5f08412`, sin cambios en `src/` ni `tests/` durante las
+corridas (el lanzador `scripts/h1h3/ronda_completa.py` lo verificó antes de cada una). Orden
+intercalado [S42, S43, S45] × [base, E] × 2 ciclos, `--sin-audio`, `--doc` fuera de `docs/`. S45 (Fase C,
+24 mezclas, semilla 45) no se había ejecutado ni mirado. Sin errores de la API; 283 llamadas y
+**US$ 0.395** de un tope de US$ 1,40 (estimado ≈ 0,40–0,43).
+
+| Corrida | S42 base | S42 E | S43 base | S43 E | S45 base | S45 E |
+|---|---|---|---|---|---|---|
+| Ciclo 1 | `20261005-212510` | `20261005-212743` | `20261005-213017` | `20261005-213104` | `20261005-213157` | `20261005-213425` |
+| Ciclo 2 | `20261005-213616` | `20261005-213844` | `20261005-214122` | `20261005-214203` | `20261005-214249` | `20261005-214436` |
+
+**Tabla única** (corrida 1 · corrida 2 y, entre paréntesis, el promedio).
+
+| Métrica | S42 base | S42 E | S43 base | S43 E | S45 base | S45 E |
+|---|---|---|---|---|---|---|
+| Cápsulas válidas (n = 30 / 8 / 24) | 30 · 30 | 29 · 29 | 8 · 8 | 8 · 8 | 23 · 24 | 24 · 24 |
+| C3 válidas, R > 0 (n = 26 / 8 / 24) | 26 · 26 (26,0) | 25 · 25 (25,0) | 8 · 8 | 8 · 8 | 23 · 24 (23,5) | 24 · 24 (24,0) |
+| C3 reparaciones, R > 0 | 3 · 3 (3,0) | 3 · 6 (4,5) | 1 · 0 (0,5) | 2 · 1 (1,5) | 7 · 2 (4,5) | 1 · 3 (2,0) |
+| C3 citas inventadas | 0 · 0 | 0 · 0 | 0 · 0 | 0 · 0 | 0 · 0 | 0 · 0 |
+| C6 perfiles R ≥ 40 % sin cápsula válida (n = 9 / 5 / 13) | 0 · 0 | 1 · 1 | 0 · 0 | 0 · 0 | 1 · 0 | 0 · 0 |
+| C1 glosario en R ≥ 40 % válidas | 0/9 · 1/9 | 8/8 · 8/8 | 0/5 · 0/5 | 5/5 · 5/5 | 0/12 · 0/13 | 13/13 · 13/13 |
+| Glosarios sin directiva | 0 · 0 | 0 · 0 | 0 · 0 | 0 · 0 | 0 · 0 | 0 · 0 |
+| C4a perfiles fallidos (K ≥ 40 %) | 2 · 2 | 0 · 3 | 0 · 0 | 0 · 0 | 0 · 1 | 0 · 2 |
+| C4b guion A ≥ 25 % / C4c analogía A ≥ 40 % | todas | todas | todas | todas | todas | todas |
+| C2 ±15 % *(no bloqueante)* | 20/26 · 17/26 (18,5) | 18/25 · 17/25 (17,5) | 6/8 · 7/8 (6,5) | 5/8 · 7/8 (6,0) | 13/23 · 15/24 (14,0) | 14/24 · 12/24 (13,0) |
+
+*Perfiles sin cápsula válida:* E en S42, `B_A0-R50-K50` en las dos corridas (301 y 322 palabras tras 3
+intentos); base en S45, `C_C14_A1-R49-K50` en la corrida 1 (318 palabras). Todos por pasar de 300.
+
+**Criterios** (los fijados antes de ejecutar; C3 contra la base de la misma ronda, por conjunto):
+
+| Criterio | S42 + S43 (diseño) | S45 (validación) |
+|---|---|---|
+| C1 glosario en todas las válidas con R ≥ 40 % | ✅ | ✅ |
+| C3 válidas ≥ promedio de la base − 1 | ✅ 25,0 (umbral 25,0) / 8,0 | ✅ 24,0 (umbral 22,5) |
+| C3 reparaciones ≤ promedio de la base + 2 | ✅ 4,5 (≤ 5,0) / 1,5 (≤ 2,5) | ✅ 2,0 (≤ 6,5) |
+| C3 citas inventadas | ✅ 0 | ✅ 0 |
+| **C3 ningún perfil estable perdido** | **❌ `B_A0-R50-K50`** (válido en las 2 corridas de la base; sin cápsula en las 2 de E) | ✅ ninguno |
+| C4a (no más perfiles fallidos que la base, por conjunto) | ✅ S42: 3 ≤ 4; S43: 0 ≤ 0 | **❌ corrida 2: 2 fallidos** (la base tuvo 1 en el conjunto); con 2 perfiles en una corrida no es rescatable por R1 |
+| C4b, C4c | ✅ | ✅ |
+| C6 (≤ 1 por conjunto y corrida) | ✅ S42: 1 · 1; S43: 0 · 0 | ✅ 0 · 0 |
+
+**Regla de cierre: E cumple C1, C3 y C6 en un grupo y no en el otro, y falla en C3 (diseño) y C4a (S45),
+así que cuenta como falla.** Los dos fallos son de naturaleza distinta: el de C3 es **real**
+(`A0-R50-K50` desborda 300 palabras con E en las dos corridas); el de C4a en S45 es **la heurística
+léxica** de «respuestas respaldadas por los fragmentos» (los dos perfiles fallidos, `C14` y `C24`,
+fallan por eso; `C24` también falló en la base en esa corrida), la misma que ya había fallado en la base
+en rondas anteriores.
+
+**Análisis.**
+
+1. **E resuelve el perfil «solo R».** En 38 perfil-corridas (19 perfiles × 2): 38/38 válidas, **0
+   primeros intentos sobre 300, 0 reparaciones**, representación = solo glosario, y el glosario con
+   **exactamente 3 entradas en 54/54 primeros intentos y 52/52 cápsulas válidas**. La base tuvo en esos
+   mismos perfiles 5 desbordes y 6 reparaciones, y ningún glosario.
+2. **Los fallos están en los perfiles R ≥ 40 % que además tienen otra directiva reexpresiva**
+   (8 perfiles × 2 = 16 perfil-corridas). Con E: 10/16 primeros intentos sobre 300, 13 reparaciones y 2
+   sin cápsula (ambas `A0-R50-K50`); con la base: 5/16, 7 y 1. En ellos E suma el glosario a
+   `lista_pasos` o `analogia` (y a veces agrega un `parrafo` por su cuenta): `A0-R50-K50` pasó de
+   `lista_pasos` (246–276 palabras) a `parrafo+lista_pasos+glosario` (349–378).
+3. **En total, sobre los 54 perfil-corridas con R ≥ 40 %, E iguala a la base en desbordes y
+   reparaciones** (10/54 y 13 en ambos) y trae glosario en 52/52 válidas contra 1/53; la diferencia está
+   en las cápsulas sin válida (2 contra 1).
+4. **Observación posterior a los datos (no es un criterio ni se ejecuta):** aplicar E solo a los perfiles
+   «solo R» y dejar sin glosario a los demás R ≥ 40 % daría, con estos mismos datos, 1 cápsula sin válida
+   y ≈ 7 reparaciones sobre los 54 perfil-corridas (contra 13 de la base), con glosario en 39 de 53
+   válidas (38 de E y 1 espontáneo de la base). Se deriva de los resultados de esta ronda, incluida S45, así que no se puede usar para
+   validarse a sí misma; queda registrada para el autor. **Por la decisión previa, no habrá más rondas
+   sobre H1.**
+5. **Condiciones previas a producción (verificadas aunque E no se aplique).** La guarda de ancho de B
+   **no aplica a E**: E no usa rangos por paso, y en el símplex entero los 30.730 perfiles que reciben
+   la variante única no tienen recursos visuales ni directivas fuera del kit de R (0 conflictos con «único
+   bloque»). Sí aplicaría la condición de la **huella del caché**: `huella` ([`orchestrator.py`](../src/studify/rag/orchestrator.py))
+   se compone de objetivo, modelo, palabras, recursos visuales, componentes prácticos, tono, directivas y
+   fragmentos, **no del texto del prompt**, y el caché se consulta por `huella_generacion`
+   ([`capsules.py:213-230`](../src/studify/api/routers/capsules.py#L213-L230)); cambiar el texto del glosario
+   serviría cápsulas viejas hasta incluir una versión del prompt en la huella y purgar las cacheadas.
+
+**Cierre de H1.** No se aplica ningún brazo: `src/` y `tests/` quedan idénticos a `HEAD` y `main` queda
+como está. **H1 queda como limitación conocida: el perfil R no incluye glosario.** Quedan guardados los
+parches de A (`brazo_A.patch`) y de E (`brazo_E.patch`, `estructura_glosario.patch`) en
+`scripts/h1h3/parches/`, y la degradación elegante y la validación del número de entradas del glosario
+quedan documentadas como alternativas no implementadas.
 
 ### Etapa 4 — H2: el bucle de reparación que repite la respuesta
 
@@ -1987,11 +2074,11 @@ No se ejecutó por decisión del equipo. Su comportamiento actual, leído del c�
 
 ### Hallazgos reportados sin corregir
 
-La batería no toca lógica de negocio: cada corrección se hace aparte, por etapas (ver «Correcciones»). Estado al 05-oct-2026: H2, H5 y H9 corregidos; H1 y H3 abiertos tras la ronda 2 (ejecutada el 05-oct: el glosario funciona, pero ningún brazo cumple C3 por la extensión de R; ver «Resultado de la ronda 2»); H4, H8, H10, H11 y H12 registrados sin corregir; H13 es una decisión de diseño anotada, no un defecto; el resto, sin tocar. Ordenados por impacto. En H5, «el visor lo llama» se refiere a cada cápsula **nueva**: las que salen del caché no pasaban por `GeneradorMultimedia`.
+La batería no toca lógica de negocio: cada corrección se hace aparte, por etapas (ver «Correcciones»). Estado al 05-oct-2026: H2, H5 y H9 corregidos; H1 cerrado como limitación conocida (el perfil R no incluye glosario; ver «Etapa 1 — Ronda 4») y H3 abierto; H4, H8, H10, H11 y H12 registrados sin corregir; H13 es una decisión de diseño anotada, no un defecto; el resto, sin tocar. Ordenados por impacto. En H5, «el visor lo llama» se refiere a cada cápsula **nueva**: las que salen del caché no pasaban por `GeneradorMultimedia`.
 
 | # | Hallazgo | Evidencia | Propuesta (pendiente de aprobación) |
 |---|---|---|---|
-| H1 | 🟡 **Abierto; arreglo validado pero no aplicado (Etapa 1).** **El perfil R nunca recibe glosario.** La directiva dice «Cierra *el contenido* con un bloque `glosario`», y `contenido` es el campo del contrato anterior a los siete pasos (19-ago), que ya no existe. | 0/10 cápsulas con R ≥ 40 %. **Experimento** (scratchpad, sin tocar el repo): reescribiendo la instrucción como «El último bloque de `representacion_adaptativa` debe ser un bloque `glosario`…», **4/4** cápsulas lo traen (3 R puro + A20-R70-K10). **Etapa 1:** con el texto nuevo, el glosario aparece en todas las cápsulas válidas con R ≥ 40 % (S42 y S43, brazos A y B), pero la etapa no cumplió C3 (ver «Correcciones»). | Cambiar ese texto en `rag/prompts/maestro.py::INSTRUCCION_POR_DIRECTIVA["glosario"]` y revisar el resto de las instrucciones que digan «contenido». **Efecto colateral medido:** las cápsulas R suben a 255–299 palabras y 2/4 necesitaron una reparación por pasar de 300, así que conviene acompañarlo con un objetivo de palabras R algo menor (`MARGEN_PALABRAS_OBJETIVO`). |
+| H1 | ⚪ **Limitación conocida (cierre del 05-oct-2026, tras 4 rondas; no se aplicó ningún arreglo).** **El perfil R no incluye glosario.** La directiva dice «Cierra *el contenido* con un bloque `glosario`», y `contenido` es el campo del contrato anterior a los siete pasos (19-ago), que ya no existe. | 0/10 cápsulas con R ≥ 40 %. **Experimento** (scratchpad, sin tocar el repo): reescribiendo la instrucción como «El último bloque de `representacion_adaptativa` debe ser un bloque `glosario`…», **4/4** cápsulas lo traen (3 R puro + A20-R70-K10). **Etapa 1:** con el texto nuevo, el glosario aparece en todas las cápsulas válidas con R ≥ 40 % (S42 y S43, brazos A y B), pero la etapa no cumplió C3 (ver «Correcciones»). | Cambiar ese texto en `rag/prompts/maestro.py::INSTRUCCION_POR_DIRECTIVA["glosario"]` y revisar el resto de las instrucciones que digan «contenido». **Efecto colateral medido:** las cápsulas R suben a 255–299 palabras y 2/4 necesitaron una reparación por pasar de 300, así que conviene acompañarlo con un objetivo de palabras R algo menor (`MARGEN_PALABRAS_OBJETIVO`). **Cierre:** rondas 2 a 4 (ver «Etapa 1»): el texto del glosario funciona pero alarga a R; bajar el objetivo no sirve (el modelo no sigue números de palabras); la variante estructural E (glosario único de 3 entradas) es perfecta en los perfiles «solo R» pero no cumple C3 y C4a en la ronda completa. Quedan guardados los parches de A y E en `scripts/h1h3/parches/`, y como alternativas no implementadas la degradación elegante y la validación del número de entradas. |
 | H2 | ✅ **Corregido (Etapa 4, 04-oct).** **El bucle de reparación vuelve a repetir la respuesta byte a byte.** | C05 (A2-R17-K81): los intentos 2 y 3 son idénticos (mismo MD5, 4.930 caracteres), así que el tercer intento se desperdició y la cápsula se perdió. Es el problema que la sección 5 sedecies de AVANCE daba por corregido con el mensaje de reparación. **Etapa 1:** las 2 cápsulas que perdió el brazo B repitieron los 3 intentos idénticos, con desviaciones de solo 8–21 palabras. | En `generation/generator.py`, detectar que `crudo` es igual al anterior y, en ese caso, reintentar con otra estrategia: subir la temperatura en esa llamada o reinyectar solo el error con la cápsula anterior resumida. |
 | H3 | 🟡 **Abierto (Etapa 1 sin aplicar).** **Las cápsulas K se pasan de largo y las R se quedan cortas** (patrón 1). | K +48, R −57 palabras respecto del objetivo. 4/4 reparaciones y el único contrato agotado son de K ≥ 40 % por pasar de 300 palabras. | Decisión de diseño del equipo: o bajar el objetivo de palabras de K cuando se pide `lista_pasos` + `ejemplo_resuelto`, o pedir explícitamente brevedad en esos bloques. **Etapa 1:** el reparto por paso como tope llevó R a +2 %, pero invirtió K a −21 % y acercó al piso de 150 a los perfiles de objetivo bajo. Retomar después de H2. |
 | H4 | **Con 25 ≤ p_K < 40 % el prompt promete componentes prácticos sin pedirlos** (patrón 2). Es una **inconsistencia entre dos reglas del mismo módulo**, no una decisión de diseño: `_cantidad_componentes_practicos` da `componentes_practicos = 2` desde K ≥ 25 % ([`rules.py:112`](../src/studify/vark/rules.py#L112)), pero las directivas de K (`ejemplo_resuelto`, `paso_a_paso`, `actividad_aplicada`) solo se emiten desde K ≥ 40 % ([`rules.py:173-174`](../src/studify/vark/rules.py#L173-L174)). El prompt dice «componentes prácticos: 2» y ninguna instrucción nombra un bloque que lo cumpla. | 3/3 perfiles de la batería (K = 30, 30, 33) reciben «2» y entregan 1. En S42 y S43 hay 4 perfiles con K de 25 a 39 %. **La inconsistencia no es uniforme:** con K entre 31 y 39 %, K como canal primario, ningún canal ≥ 40 % y perfil no multimodal, la red de seguridad de [`rules.py:193-194`](../src/studify/vark/rules.py#L193-L194) sí emite las tres directivas de K (2.848 perfiles enteros del símplex; 18 con V = 0). El resto de la zona, no. | Que `componentes_practicos` y las directivas usen el mismo umbral, o que el «2» vaya acompañado de una directiva concreta (p. ej. `paso_a_paso`). Toca la lectura de la tabla 11.1 aprobada el 06-ago, así que la decide el equipo. **Sin corregir.** |
