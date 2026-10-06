@@ -291,12 +291,18 @@ def veredicto(grupos: dict[str, list[str]], rescates: dict[str, list[str]]) -> N
         print("  Ningún brazo cumple: se revierte y se analiza.")
 
 
-def veredicto_ronda3(grupos: dict[str, list[str]], rescates: dict[str, list[str]]) -> None:
+def veredicto_ronda3(
+    grupos: dict[str, list[str]],
+    rescates: dict[str, list[str]],
+    brazos: tuple[str, ...] = ("A", "A_obj"),
+    ganador: str = "A_obj",
+) -> None:
     """Criterios de la ronda 3 (PRUEBAS_VARK, «Etapa 1 — Ronda 3»): C1, C3, C4 y C6 por grupo.
 
     Grupo de diseño = S42 + S43; grupo de validación = S45.
-    A+objetivo gana solo si cumple todo en ambos.
-    Los brazos son «A» y «A_obj»; la referencia es «base» en cada conjunto.
+    El brazo `ganador` gana solo si cumple todo en ambos grupos.
+    Por defecto los brazos son «A» y «A_obj» (ronda 3); en la ronda 4: `--brazos E --ganador E`.
+    La referencia es siempre «base» en cada conjunto.
     """
     conjuntos = sorted({k.split(":")[0] for k in grupos})
     grupos_eval = {
@@ -305,7 +311,7 @@ def veredicto_ronda3(grupos: dict[str, list[str]], rescates: dict[str, list[str]
     }
     metr = {k: [metricas(cargar(c)) for c in v] for k, v in grupos.items()}
     gano: dict[str, bool] = {}
-    for brazo in ("A", "A_obj"):
+    for brazo in brazos:
         print(f"\n######## BRAZO {brazo}")
         candidatos: list[tuple[str, str, str, int]] = []
         duros: list[tuple[str, str]] = []  # (criterio, conjunto): 2 o más fallidos en una corrida
@@ -381,11 +387,11 @@ def veredicto_ronda3(grupos: dict[str, list[str]], rescates: dict[str, list[str]
             )
         gano[brazo] = todo_ok
     print("\n######## REGLA DE CIERRE")
-    if gano.get("A_obj"):
-        print("  A+objetivo cumple en S42+S43 y en S45: gana y se aplica (commits separados).")
+    if gano.get(ganador):
+        print(f"  {ganador} cumple en S42+S43 y en S45: gana y se aplica (commits separados).")
     else:
         print(
-            "  A+objetivo no cumple en ambos grupos: cuenta como falla. main queda como está; "
+            f"  {ganador} no cumple en ambos grupos: cuenta como falla. main queda como está; "
             "H1 se documenta como limitación y se presentan alternativas estructurales."
         )
 
@@ -424,7 +430,16 @@ def main() -> None:
             brazo, _, dato = resto[i + 1].partition("=")
             rescates.setdefault(brazo, []).append(dato)
             resto = resto[:i] + resto[i + 2 :]
-        veredicto_ronda3(parsear(resto), rescates)
+        brazos, ganador = ("A", "A_obj"), "A_obj"
+        if "--brazos" in resto:
+            i = resto.index("--brazos")
+            brazos = tuple(resto[i + 1].split(","))
+            resto = resto[:i] + resto[i + 2 :]
+        if "--ganador" in resto:
+            i = resto.index("--ganador")
+            ganador = resto[i + 1]
+            resto = resto[:i] + resto[i + 2 :]
+        veredicto_ronda3(parsear(resto), rescates, brazos, ganador)
     elif args[0] == "--efecto-fix":
         efecto_fix(parsear(args[1:]))
     else:
