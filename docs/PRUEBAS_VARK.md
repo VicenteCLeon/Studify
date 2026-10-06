@@ -1169,8 +1169,9 @@ API o si el gasto total pasa de US$ 1,40.
 
 ### Etapa 1 — Ronda 4 (05-oct-2026): variante E, glosario de 3 entradas que reemplaza al párrafo
 
-**Estado: preparada, sin ejecutar; las reglas del piloto son una propuesta pendiente de aprobación del
-autor.**
+**Estado: regla del piloto APROBADA por el autor el 05-oct-2026; sin ejecutar. El piloto se ejecuta
+solo cuando el autor lo indique, después de commitear esta preparación.** Este piloto es **la última
+ronda sobre H1**.
 
 **Decisiones previas del autor.** La hipótesis del descuento queda descartada (el modelo no sigue
 números de palabras; cumplimiento −11 %), no se corre la ronda completa de la ronda 3 ni S45, y
@@ -1244,7 +1245,7 @@ cápsula se guardaría bajo la huella del prompt completo, así que **el caché 
 otros estudiantes con el mismo perfil, que nunca tendrían glosario**: hay que no cachearla o marcarla.
 Convertiría el ≈ 12 % de pantallas de error de A en cápsulas sin glosario.
 
-#### Piloto de la variante E (regla propuesta, fijada antes de ejecutar)
+#### Piloto de la variante E (regla APROBADA el 05-oct-2026, fijada antes de ejecutar)
 
 **Qué es.** Una comprobación del mecanismo, **no una validación**: son los mismos perfiles que dieron
 origen a la hipótesis.
@@ -1252,7 +1253,10 @@ origen a la hipótesis.
 **Diseño.** Los 14 perfiles con R ≥ 40 % de S42 (9) y S43 (5): 9 «solo R» y 5 con otra directiva
 reexpresiva. Brazos **base** (`main` + fix) y **E**, 2 corridas por brazo intercaladas (base, E,
 base, E; cada corrida = S42 + S43), `--sin-audio` y `--doc` fuera de `docs/`. 28 perfiles-corrida por
-brazo. **Tope de gasto: US$ 0,15** (se detiene además con 3 errores de la API).
+brazo. **Tope de gasto: US$ 0,15; si el gasto lo supera, se detiene** (también con 3 errores de la
+API o con cambios sin commitear en `src/` o `tests/`). Se ejecuta con `scripts/h1h3/piloto.py` y se
+evalúa con `scripts/h1h3/metricas_piloto.py`; cada corrida queda atada al `HEAD` que el lanzador
+registra al iniciar.
 
 **Pasa si cumple todo:**
 
@@ -1260,28 +1264,37 @@ brazo. **Tope de gasto: US$ 0,15** (se detiene además con 3 errores de la API).
    anterior, 2; la estimación optimista de (b)+(c) era ≈ 7).
 2. **Cápsulas sin ninguna válida: como máximo 1 de 28.**
 3. **Glosario presente en todas las cápsulas válidas.**
-4. **Ningún perfil estable de la base perdido.** *Cambio propuesto sobre lo pedido:* «estable» = válido en
-   las 2 corridas de la base del piloto; «perdido» = inválido en las 2 corridas de E. Justificación: leído
-   como «inválido en alguna corrida», este punto contradice el 2 cuando la base no tiene inválidas (como
-   en el piloto anterior), porque cualquier inválida de E sería un perfil estable perdido y el umbral
-   real sería 0 y no 1. Con la definición propuesta el 4 se deduce del 2 y se conserva por
-   trazabilidad. Si el autor prefiere la lectura original, el 2 pasa a «0 de 28».
+4. **Ningún perfil estable de la base perdido.** *Definición aprobada:* «estable» = válido en las 2
+   corridas de la base del piloto; «perdido» = inválido en las 2 corridas de E. Leído como «inválido en
+   alguna corrida», este punto contradiría el 2 cuando la base no tiene inválidas (como en el piloto
+   anterior), porque cualquier inválida de E sería un perfil estable perdido. Con la definición
+   aprobada el 4 se deduce del 2 y se conserva por trazabilidad.
 
 *Consistencia con la ronda completa:* con 9 desbordes de 28 se esperan ≈ 3 reparaciones por corrida de
 S42 en los perfiles R, frente a un límite de C3 de ≈ 4,5 (promedio de la base, 2,5, más 2); el umbral
 no es más laxo que lo que exigiría después la ronda completa.
 
-**Se reporta además (no condiciona):** cuántas entradas trae el glosario en cada cápsula (cumplimiento
-de «exactamente 3»); cuántas palabras bajó E frente a A (primer intento, pareado por perfil, con A de la
-ronda 2); y la composición de `representacion_adaptativa` en los 9 perfiles «solo R», para ver qué
-quedó sin párrafo.
+**Métricas informativas (no bloquean; declaradas antes de ejecutar y aprobadas):**
 
-**Si pasa:** ronda completa con **S45** (Fase C de 24 mezclas de semilla 45, sin tocarla ni mirarla
-hasta ahora), brazos base y E (A ya falló C3 en la ronda 2) y los criterios C1, C3 contra la base de la
-ronda, C4, C6 y R1 tal como están en la ronda 3. Se muestra el costo y se espera el OK del autor antes
-de ejecutarla. **Si no pasa:** no se itera; se restaura el estado base (no se aplicó nada), **H1 se
-documenta como limitación conocida (el perfil R no incluye glosario)** y quedan guardados los parches de
-A y de E por si se retoma.
+- **Primeros intentos bajo 150 palabras**, en base y en E (si el glosario único recorta de más).
+- **Entradas por glosario**, en los primeros intentos y en las cápsulas válidas de E: cumplimiento de
+  «exactamente 3» (el modelo escribía 4 o 5 con «3 a 5»).
+- **Composición de `representacion_adaptativa` en los 9 perfiles «solo R»**, por brazo y corrida: si
+  E queda con solo el glosario y qué hay en la base.
+- **Cuántas palabras bajó E frente a A** (primer intento, pareado por perfil, con A de la ronda 2).
+- **Muestras para lectura humana** en `data/h1h3/muestras_ronda4.md` (ignorado por git): la cápsula
+  completa, base y E, de **A0-R100-K0**, **A20-R70-K10** y **A50-R50-K0** (una mezcla con otra
+  directiva reexpresiva), una corrida cada una (la primera de S42). El autor las lee antes de aprobar
+  nada más.
+
+**Si pasa:** se muestran las muestras y el costo de la ronda completa con **S45** (Fase C de 24
+mezclas de semilla 45, sin tocarla ni mirarla hasta ahora; brazos base y E, porque A ya falló C3 en la
+ronda 2; criterios C1, C3 contra la base de la ronda, C4, C6 y R1 tal como están en la ronda 3) y se
+espera el OK del autor antes de ejecutarla. **Si no pasa:** no se itera; se restaura el estado base
+(no se aplicó nada: `src/` y `tests/` quedan idénticos a `HEAD`), **H1 se documenta como limitación
+conocida (el perfil R no incluye glosario)**, quedan guardados los parches de A y de E, y la
+**degradación elegante** y la **validación del número de entradas del glosario** quedan documentadas
+como alternativas no implementadas. En ningún caso se aplica nada al repo.
 
 **Costo del piloto** (planificador, tarifa supuesta de 0,28/0,42 USD por millón de tokens): de 56 a 168
 llamadas, **US$ 0,080–0,324 en el peor caso** (todos los intentos agotados) y **esperado ≈ US$ 0,08–0,13**
