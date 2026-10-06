@@ -421,6 +421,126 @@ def aplicar_objetivo(variante: str) -> None:
     editar(variante, TEST, [(OBJ_TESTS_ANCLA, OBJ_TESTS + OBJ_TESTS_ANCLA)])
 
 
+# --- Variante E (ronda 4): glosario de exactamente 3 entradas que reemplaza al párrafo ---------
+# Sobre el texto del glosario de A. La condición «solo R» (ninguna directiva del perfil reexpresa el
+# concepto) usa el mismo conjunto DIRECTIVAS_REEXPRESIVAS que B. En `main` no existe: allí el párrafo
+# lo agrega el modelo por su cuenta (29 de 42 primeros intentos de A).
+GLOSARIO_E = """    # Hasta el 03-oct-2026 decía «Cierra el contenido con un bloque `glosario`»:
+    # `contenido` era el campo del contrato anterior a los siete pasos y el
+    # modelo no lo ubicaba (0 glosarios en 10 cápsulas con p_R ≥ 40%, hallazgo H1
+    # de PRUEBAS_VARK.md). «3 a 5 entradas» no se cumplía: el modelo escribía 4 o 5 y
+    # nunca 3 (42 cápsulas), así que se pide exactamente 3.
+    "glosario": (
+        "El último bloque de `representacion_adaptativa` es un bloque `glosario` "
+        "con exactamente 3 entradas «término: definición», de una línea cada una, "
+        "con términos que aparecen en el material entregado."
+    ),
+    # Variante para el perfil «solo R»: la sustituye `orchestrator.bloque_perfil` cuando
+    # ninguna otra directiva pide un bloque en la representación. Sin ella el modelo
+    # agrega por su cuenta un párrafo antes del glosario (mediana de 49 palabras).
+    "glosario_unico": (
+        "La `representacion_adaptativa` es un único bloque `glosario` con exactamente "
+        "3 entradas «término: definición», de una línea cada una, con términos que "
+        "aparecen en el material entregado. No agregues otros bloques en ella."
+    ),
+"""
+E_ORQ_CONST = """MARGEN_PALABRAS_OBJETIVO = 30
+
+# Directivas de `vark/rules.py` que ya piden un bloque que reexpresa el concepto central en otro
+# formato. Si el perfil lleva el glosario y ninguna de estas, el glosario es el único bloque de la
+# representación adaptativa. `tests/test_prompt_maestro.py` comprueba que cada nombre exista.
+DIRECTIVAS_REEXPRESIVAS = frozenset(
+    {
+        "analogias_cotidianas",
+        "paso_a_paso",
+        "incluir_mapa_conceptual",
+        "tabla_comparativa",
+        "recurso_visual_complementario",
+    }
+)
+"""
+E_ORQ_BUCLE_VIEJO = """    instrucciones = []
+    for directiva in config.directivas:
+        instruccion = prompts.INSTRUCCION_POR_DIRECTIVA.get(directiva)
+"""
+E_ORQ_BUCLE_NUEVO = """    glosario_unico = "glosario" in config.directivas and not (
+        DIRECTIVAS_REEXPRESIVAS & set(config.directivas)
+    )
+
+    instrucciones = []
+    for directiva in config.directivas:
+        clave = "glosario_unico" if directiva == "glosario" and glosario_unico else directiva
+        instruccion = prompts.INSTRUCCION_POR_DIRECTIVA.get(clave)
+"""
+E_TEST_VIEJO = """    glosario = prompts.INSTRUCCION_POR_DIRECTIVA["glosario"]
+    definiciones"""
+E_TEST_NUEVO = """    # El lector-escritor puro es un perfil «solo R»: recibe la variante del glosario único.
+    glosario = prompts.INSTRUCCION_POR_DIRECTIVA["glosario_unico"]
+    definiciones"""
+E_TESTS_ANCLA = "# --- Invariantes del prompt completo -----------------------------------------\n"
+E_TESTS = '''# --- Glosario de 3 entradas que reemplaza al párrafo -------------------------
+
+
+def test_las_directivas_reexpresivas_existen_en_rules():
+    """Si `rules.py` renombra una directiva, el conjunto dejaría de reconocerla en silencio."""
+    inexistentes = orchestrator.DIRECTIVAS_REEXPRESIVAS - _todas_las_directivas_posibles()
+
+    assert not inexistentes, f"directivas que ya no existen en vark/rules.py: {sorted(inexistentes)}"
+
+
+def test_el_glosario_pide_exactamente_tres_entradas():
+    """El modelo escribía 4 o 5 con «3 a 5» y nunca 3: se pide el número exacto."""
+    for clave in ("glosario", "glosario_unico"):
+        texto = prompts.INSTRUCCION_POR_DIRECTIVA[clave]
+        assert "exactamente 3 entradas" in texto
+        assert "3 a 5" not in texto
+
+
+def test_el_perfil_solo_r_recibe_el_glosario_como_unico_bloque():
+    config = aplicar_reglas(perfil(0, 0, 100, 0))
+    assert "glosario" in config.directivas
+    texto = orchestrator.bloque_perfil(config, palabras_objetivo=270)
+
+    assert prompts.INSTRUCCION_POR_DIRECTIVA["glosario_unico"] in texto
+    assert prompts.INSTRUCCION_POR_DIRECTIVA["glosario"] not in texto
+
+
+def test_con_otra_directiva_reexpresiva_el_glosario_conserva_su_forma_general():
+    """R con K o A ≥ 40 % ya tiene un bloque propio en la representación: el glosario se suma."""
+    for vector in [(0, 0, 50, 50), (0, 50, 50, 0)]:
+        config = aplicar_reglas(perfil(*vector))
+        assert "glosario" in config.directivas
+        assert orchestrator.DIRECTIVAS_REEXPRESIVAS & set(config.directivas)
+        texto = orchestrator.bloque_perfil(config, palabras_objetivo=250)
+
+        assert prompts.INSTRUCCION_POR_DIRECTIVA["glosario"] in texto, vector
+        assert prompts.INSTRUCCION_POR_DIRECTIVA["glosario_unico"] not in texto, vector
+
+
+def test_sin_la_directiva_del_glosario_no_aparece_ninguna_de_sus_instrucciones():
+    for v, a, r in product(range(0, 101, 10), repeat=3):
+        if v + a + r > 100:
+            continue
+        config = aplicar_reglas(perfil(v, a, r, 100 - v - a - r))
+        if "glosario" in config.directivas:
+            continue
+        texto = orchestrator.bloque_perfil(config, palabras_objetivo=200)
+        assert prompts.INSTRUCCION_POR_DIRECTIVA["glosario"] not in texto, (v, a, r)
+        assert prompts.INSTRUCCION_POR_DIRECTIVA["glosario_unico"] not in texto, (v, a, r)
+
+
+'''
+
+
+def aplicar_estructural(variante: str) -> None:
+    editar(variante, ORQ, [(OBJ_CONST_VIEJA, E_ORQ_CONST), (E_ORQ_BUCLE_VIEJO, E_ORQ_BUCLE_NUEVO)])
+    editar(
+        variante,
+        TEST,
+        [(E_TEST_VIEJO, E_TEST_NUEVO), (E_TESTS_ANCLA, E_TESTS + E_TESTS_ANCLA)],
+    )
+
+
 def escribir_parche(variante: str, nombre: str, desde: str = "base") -> None:
     lineas: list[str] = []
     for archivo in (ORQ, MAESTRO, TEST):
@@ -440,7 +560,7 @@ def escribir_parche(variante: str, nombre: str, desde: str = "base") -> None:
 
 
 def main() -> None:
-    for variante in ("base", "prefijo", "A", "B_topes", "B", "A_obj"):
+    for variante in ("base", "prefijo", "A", "B_topes", "B", "A_obj", "E"):
         copiar_arbol(variante)
 
     previo = subprocess.run(
@@ -454,12 +574,16 @@ def main() -> None:
     aplicar_comun_b("B_topes", rangos=False)
     aplicar_comun_b("B", rangos=True)
     aplicar_objetivo("A_obj")
+    editar("E", MAESTRO, [(GLOSARIO_VIEJO, GLOSARIO_E)])
+    aplicar_estructural("E")
 
     escribir_parche("A", "brazo_A.patch")
     escribir_parche("B_topes", "brazo_B_topes.patch")
     escribir_parche("B", "brazo_B.patch")
     escribir_parche("A_obj", "brazo_A_obj.patch")
     escribir_parche("A_obj", "objetivo_glosario.patch", desde="A")
+    escribir_parche("E", "brazo_E.patch")
+    escribir_parche("E", "estructura_glosario.patch", desde="A")
     print(f"variantes en {SALIDA}\nparches en {PARCHES}")
 
 

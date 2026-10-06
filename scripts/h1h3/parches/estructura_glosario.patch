@@ -1,0 +1,135 @@
+--- a/src/studify/rag/orchestrator.py
++++ b/src/studify/rag/orchestrator.py
+@@ -54,6 +54,19 @@
+ # modelo en el prompt.
+ MARGEN_PALABRAS_OBJETIVO = 30
+ 
++# Directivas de `vark/rules.py` que ya piden un bloque que reexpresa el concepto central en otro
++# formato. Si el perfil lleva el glosario y ninguna de estas, el glosario es el único bloque de la
++# representación adaptativa. `tests/test_prompt_maestro.py` comprueba que cada nombre exista.
++DIRECTIVAS_REEXPRESIVAS = frozenset(
++    {
++        "analogias_cotidianas",
++        "paso_a_paso",
++        "incluir_mapa_conceptual",
++        "tabla_comparativa",
++        "recurso_visual_complementario",
++    }
++)
++
+ 
+ class ErrorPrompt(Exception):
+     """No se puede construir un prompt maestro con los datos entregados."""
+@@ -97,9 +110,14 @@
+ 
+ def bloque_perfil(config: ConfiguracionGenerada, *, palabras_objetivo: int) -> str:
+     """Qué construir, derivado de `configuracion_contenido` (nunca de la etiqueta)."""
++    glosario_unico = "glosario" in config.directivas and not (
++        DIRECTIVAS_REEXPRESIVAS & set(config.directivas)
++    )
++
+     instrucciones = []
+     for directiva in config.directivas:
+-        instruccion = prompts.INSTRUCCION_POR_DIRECTIVA.get(directiva)
++        clave = "glosario_unico" if directiva == "glosario" and glosario_unico else directiva
++        instruccion = prompts.INSTRUCCION_POR_DIRECTIVA.get(clave)
+         if instruccion is None:
+             # Se levanta en vez de omitirla: una directiva sin instrucción es un
+             # elemento del perfil que desaparece de la cápsula sin dejar rastro,
+--- a/src/studify/rag/prompts/maestro.py
++++ b/src/studify/rag/prompts/maestro.py
+@@ -137,12 +137,20 @@
+     # Hasta el 03-oct-2026 decía «Cierra el contenido con un bloque `glosario`»:
+     # `contenido` era el campo del contrato anterior a los siete pasos y el
+     # modelo no lo ubicaba (0 glosarios en 10 cápsulas con p_R ≥ 40%, hallazgo H1
+-    # de PRUEBAS_VARK.md). Las entradas se acotan porque el glosario cuenta
+-    # dentro de la extensión.
++    # de PRUEBAS_VARK.md). «3 a 5 entradas» no se cumplía: el modelo escribía 4 o 5 y
++    # nunca 3 (42 cápsulas), así que se pide exactamente 3.
+     "glosario": (
+         "El último bloque de `representacion_adaptativa` es un bloque `glosario` "
+-        "con 3 a 5 entradas «término: definición», de una línea cada una, con "
+-        "términos que aparecen en el material entregado."
++        "con exactamente 3 entradas «término: definición», de una línea cada una, "
++        "con términos que aparecen en el material entregado."
++    ),
++    # Variante para el perfil «solo R»: la sustituye `orchestrator.bloque_perfil` cuando
++    # ninguna otra directiva pide un bloque en la representación. Sin ella el modelo
++    # agrega por su cuenta un párrafo antes del glosario (mediana de 49 palabras).
++    "glosario_unico": (
++        "La `representacion_adaptativa` es un único bloque `glosario` con exactamente "
++        "3 entradas «término: definición», de una línea cada una, con términos que "
++        "aparecen en el material entregado. No agregues otros bloques en ella."
+     ),
+     "tono_oral": ("Redacta en segunda persona y con frases cortas, como una explicación hablada."),
+     "analogias_cotidianas": (
+--- a/tests/test_prompt_maestro.py
++++ b/tests/test_prompt_maestro.py
+@@ -150,7 +150,8 @@
+     # distingue nada.
+     tabla = prompts.INSTRUCCION_POR_DIRECTIVA["tabla_comparativa"]
+     mapa = prompts.INSTRUCCION_POR_DIRECTIVA["incluir_mapa_conceptual"]
+-    glosario = prompts.INSTRUCCION_POR_DIRECTIVA["glosario"]
++    # El lector-escritor puro es un perfil «solo R»: recibe la variante del glosario único.
++    glosario = prompts.INSTRUCCION_POR_DIRECTIVA["glosario_unico"]
+     definiciones = prompts.INSTRUCCION_POR_DIRECTIVA["definiciones_exactas"]
+ 
+     assert tabla in visual and mapa in visual
+@@ -338,6 +339,57 @@
+         assert maestro.palabras_objetivo == round(config.palabras_texto / 10) * 10
+ 
+ 
++# --- Glosario de 3 entradas que reemplaza al párrafo -------------------------
++
++
++def test_las_directivas_reexpresivas_existen_en_rules():
++    """Si `rules.py` renombra una directiva, el conjunto dejaría de reconocerla en silencio."""
++    inexistentes = orchestrator.DIRECTIVAS_REEXPRESIVAS - _todas_las_directivas_posibles()
++
++    assert not inexistentes, f"directivas que ya no existen en vark/rules.py: {sorted(inexistentes)}"
++
++
++def test_el_glosario_pide_exactamente_tres_entradas():
++    """El modelo escribía 4 o 5 con «3 a 5» y nunca 3: se pide el número exacto."""
++    for clave in ("glosario", "glosario_unico"):
++        texto = prompts.INSTRUCCION_POR_DIRECTIVA[clave]
++        assert "exactamente 3 entradas" in texto
++        assert "3 a 5" not in texto
++
++
++def test_el_perfil_solo_r_recibe_el_glosario_como_unico_bloque():
++    config = aplicar_reglas(perfil(0, 0, 100, 0))
++    assert "glosario" in config.directivas
++    texto = orchestrator.bloque_perfil(config, palabras_objetivo=270)
++
++    assert prompts.INSTRUCCION_POR_DIRECTIVA["glosario_unico"] in texto
++    assert prompts.INSTRUCCION_POR_DIRECTIVA["glosario"] not in texto
++
++
++def test_con_otra_directiva_reexpresiva_el_glosario_conserva_su_forma_general():
++    """R con K o A ≥ 40 % ya tiene un bloque propio en la representación: el glosario se suma."""
++    for vector in [(0, 0, 50, 50), (0, 50, 50, 0)]:
++        config = aplicar_reglas(perfil(*vector))
++        assert "glosario" in config.directivas
++        assert orchestrator.DIRECTIVAS_REEXPRESIVAS & set(config.directivas)
++        texto = orchestrator.bloque_perfil(config, palabras_objetivo=250)
++
++        assert prompts.INSTRUCCION_POR_DIRECTIVA["glosario"] in texto, vector
++        assert prompts.INSTRUCCION_POR_DIRECTIVA["glosario_unico"] not in texto, vector
++
++
++def test_sin_la_directiva_del_glosario_no_aparece_ninguna_de_sus_instrucciones():
++    for v, a, r in product(range(0, 101, 10), repeat=3):
++        if v + a + r > 100:
++            continue
++        config = aplicar_reglas(perfil(v, a, r, 100 - v - a - r))
++        if "glosario" in config.directivas:
++            continue
++        texto = orchestrator.bloque_perfil(config, palabras_objetivo=200)
++        assert prompts.INSTRUCCION_POR_DIRECTIVA["glosario"] not in texto, (v, a, r)
++        assert prompts.INSTRUCCION_POR_DIRECTIVA["glosario_unico"] not in texto, (v, a, r)
++
++
+ # --- Invariantes del prompt completo -----------------------------------------
+ 
+ 
