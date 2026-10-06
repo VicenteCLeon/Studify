@@ -1303,6 +1303,56 @@ por corrida). Dentro del tope de US$ 0,15. *Ronda completa si el piloto pasa (es
 2 corridas de S42, S43 y S45: 248 perfiles, de 248 a 744 llamadas, US$ 0,36–1,44, esperado ≈ US$ 0,40–0,50,
 dentro del tope de US$ 1,40 aprobado; se confirmará antes de ejecutar.
 
+#### Resultado del piloto de la variante E (05-oct-2026): pasa
+
+**Trazabilidad.** Código: `fix/h1h3` en `d7f67ebff1f81e5b760f7e813977eceb22c19b2c`, sin cambios en `src/` ni `tests/`.
+Lanzador `scripts/h1h3/piloto.py` y métricas `scripts/h1h3/metricas_piloto.py`. Gasto US$ 0.092
+(tope US$ 0,15), sin errores de la API.
+
+| Corrida | base | E |
+|---|---|---|
+| Ciclo 1 | S42 `20261005-211244`, S43 `20261005-211332` | S42 `20261005-211355`, S43 `20261005-211445` |
+| Ciclo 2 | S42 `20261005-211520`, S43 `20261005-211559` | S42 `20261005-211626`, S43 `20261005-211716` |
+
+| Criterio (28 perfiles-corrida por brazo) | Umbral | Base | E | |
+|---|---|---|---|---|
+| 1. Primeros intentos con más de 300 palabras | ≤ 9 | 3 | **7** | ✅ |
+| 2. Cápsulas sin ninguna válida | ≤ 1 | 0 | **0** | ✅ |
+| 3. Glosario en todas las cápsulas válidas | todas | — | 28/28 | ✅ |
+| 4. Perfiles estables perdidos (inválidos en las 2 corridas de E) | ninguno | — | ninguno | ✅ |
+
+Frente a A+objetivo del piloto anterior (17 desbordes, 6 inválidas) y a A de la ronda 2 (17 desbordes),
+E reduce los desbordes a 7, que coincide con la estimación optimista de (b)+(c) (≈ 7).
+
+**Informativas.**
+
+- **Primeros intentos bajo 150 palabras:** 0/28 en base y 0/28 en E (el glosario único no recorta de más).
+- **Entradas por glosario:** **exactamente 3 en 28/28** primeros intentos y en 28/28 cápsulas válidas
+  (con «3 a 5» el modelo escribía 4 o 5 y nunca 3): «exactamente 3» se cumple al 100 % sin validador.
+- **Composición de `representacion_adaptativa` en los 9 perfiles «solo R»:** E trae **solo el glosario
+  en 18/18** cápsulas válidas. La base traía `analogia` (14 de 18), `parrafo` (2) o `lista_pasos` (2).
+- **Palabras que bajó E frente a A** (primer intento, pareado, 14 perfiles): media 49,4 y mediana 69,8.
+- **Reparaciones:** base 3, E 8 (en 28 perfiles-corrida); media del primer intento 235 y 266 palabras.
+
+**Lectura de las muestras** (`data/h1h3/muestras_ronda4.md`, una corrida cada una; anecdótica):
+
+- En los perfiles «solo R» (A0-R100-K0, A20-R70-K10) la representación de E es un glosario de 3
+  términos que **repite casi literal las definiciones que ya están en `concepto_central`**; el estudiante
+  ve dos veces lo mismo y pierde la reexpresión que traía la base (la analogía del RUT en A20-R70-K10, un
+  párrafo en A0-R100-K0). Es el riesgo pedagógico de la alternativa (b) anticipado más arriba.
+- En la mezcla con otra directiva reexpresiva (A50-R50-K0), E conserva la analogía y suma el glosario;
+  esta vez el modelo agregó además un `parrafo` por su cuenta (368 palabras, 2 llamadas); la base ya
+  traía `analogia` + `glosario` (349 palabras, 2 llamadas).
+
+**Riesgo para la ronda completa.** Las reparaciones de E fueron 8 contra 3 de la base: ≈ +2,5 por
+corrida de 14 perfiles R ≥ 40 %. En S45 hay 13 perfiles R ≥ 40 % de 24, así que C3 (reparaciones ≤
+promedio de la base + 2) queda en el límite; es el criterio más probable de fallar aunque C1, C4 y C6
+se cumplan.
+
+**Estado.** El piloto no valida nada (son los perfiles que dieron origen a la hipótesis). Por la regla
+aprobada se muestra el costo de la ronda completa con S45 y se **espera el OK del autor**; S45 sigue sin
+ejecutarse ni mirarse. No se aplicó nada al repo: `src/` y `tests/` son idénticos a `HEAD`.
+
 ### Etapa 4 — H2: el bucle de reparación que repite la respuesta
 
 **Diagnóstico (04-oct-2026).** En las corridas guardadas hubo 58 pares de intentos
