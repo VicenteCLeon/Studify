@@ -1167,6 +1167,129 @@ Referencia: la ronda 2 costó US$ 0,48 (315 llamadas más el rescate; ≈ US$ 0,
 Paradas: se detiene si un brazo supera el doble de su costo esperado, si se acumulan 3 errores de la
 API o si el gasto total pasa de US$ 1,40.
 
+### Etapa 1 — Ronda 4 (05-oct-2026): variante E, glosario de 3 entradas que reemplaza al párrafo
+
+**Estado: preparada, sin ejecutar; las reglas del piloto son una propuesta pendiente de aprobación del
+autor.**
+
+**Decisiones previas del autor.** La hipótesis del descuento queda descartada (el modelo no sigue
+números de palabras; cumplimiento −11 %), no se corre la ronda completa de la ronda 3 ni S45, y
+A+objetivo se abandona. **Último intento acotado con la palanca estructural (b)+(c):** el glosario
+reemplaza al párrafo de reexpresión y tiene exactamente 3 entradas, sin tocar la regla de 150–300 ni
+el informe. **Si falla, el glosario queda fuera, `main` se queda como está, H1 se documenta como
+limitación conocida y no habrá más rondas sobre H1.**
+
+#### Variante E
+
+Se parte del texto del glosario de A y se cambian dos cosas:
+
+1. **«Exactamente 3 entradas»** en lugar de «3 a 5»: con «3 a 5» el modelo escribía 4 (23 cápsulas) o
+   5 (19) y nunca 3.
+2. **El glosario es el único bloque de la representación adaptativa en el perfil «solo R»** (el que
+   lleva la directiva `glosario` y ninguna directiva reexpresiva). Cuando el perfil tiene otra
+   (`analogias_cotidianas`, `paso_a_paso`, `incluir_mapa_conceptual`, `tabla_comparativa`,
+   `recurso_visual_complementario`), el glosario conserva su forma general (último bloque, 3 entradas)
+   y se suma a ese bloque.
+
+**Cómo se decide hoy el párrafo.** **No existe esa condición en `main`**: ni `parrafo_reexpresion` ni
+`DIRECTIVAS_REEXPRESIVAS` están en `src/` (existen solo en el parche de B, descartado). En `main` y en A
+nadie pide el párrafo: lo agrega el modelo por su cuenta (29 de 42 primeros intentos de A, mediana de
+49 palabras). Por eso «que no se agregue» no se resuelve quitando una directiva sino diciéndole al
+modelo cuál es el único bloque. **Cambio mínimo:** `orchestrator.bloque_perfil`
+([`orchestrator.py:98-113`](../src/studify/rag/orchestrator.py#L98-L113)) elige, para el perfil «solo
+R», la instrucción `glosario_unico` en lugar de `glosario`; el resto de los perfiles queda igual. Son
+1 entrada modificada y 1 nueva en `INSTRUCCION_POR_DIRECTIVA` (`maestro.py`), una constante y ≈ 6 líneas
+en `orchestrator.py`. Tests: 5 nuevos (cada nombre de `DIRECTIVAS_REEXPRESIVAS` existe en `rules.py`; las
+dos instrucciones piden «exactamente 3 entradas» y no «3 a 5»; el perfil «solo R» recibe la variante
+única; R con K o A ≥ 40 % conserva la general; sin la directiva del glosario no aparece ninguna) y 1
+ajustado (`test_la_diferencia_entre_perfiles…` espera ahora la variante única en el lector-escritor
+puro). Con la variante, 165 tests pasan. Parches `scripts/h1h3/parches/brazo_E.patch` (contra `main`) y
+`estructura_glosario.patch` (contra A).
+
+**Verificado (prompts, sin llamadas).** En S42, S43 y S45 (Fase C, 24 mezclas, semilla 45) los perfiles
+**sin glosario quedan idénticos byte a byte y con la misma huella** que la base (21/21, 3/3 y 11/11).
+Cambian exactamente los que llevan glosario, y solo la línea 3 de las instrucciones estructurales:
+
+| Conjunto | Con glosario | «Solo R» (variante única) | Con otra directiva reexpresiva (variante general) |
+|---|---|---|---|
+| S42 | 9 | A0-R100-K0, A20-R70-K10, A10-R70-K20, A30-R60-K10, A10-R60-K30, A5-R90-K5 | A50-R50-K0, A0-R50-K50, C02 A9-R49-K42 |
+| S43 | 5 | C01 A3-R86-K11, C05 A29-R51-K20, C08 A22-R48-K30 | C03 A46-R53-K1, C06 A5-R50-K45 |
+| S45 | 13 | C01 A30-R62-K8, C06 A7-R56-K37, C09 A31-R67-K2, C10 A5-R75-K20, C11 A12-R53-K35, C12 A24-R46-K30, C15 A30-R69-K1, C16 A34-R49-K17, C17 A22-R72-K6, C21 A38-R40-K22 | C05 A5-R52-K43, C14 A1-R49-K50, C23 A6-R50-K44 |
+
+#### Para informar (no implementado)
+
+**¿Cuenta el validador las entradas del glosario? No.** `BloqueContenido` solo exige que el cuerpo no
+esté vacío ([`schemas.py:106-157`](../src/studify/generation/schemas.py#L106-L157)) y `validator.py` no
+mira el glosario. Si el modelo devuelve 4 o 5 entradas, la cápsula es válida y pasa sin aviso. Exigir 3
+costaría unas 12 líneas (en `schemas.py` o `validator.py`) más 3 tests, y revisar los fixtures con
+glosario (`tests/test_perfiles_vark.py:187`, `tests/test_web_estudiante.py:371`,
+`tests/test_generacion_contrato.py:449`). El costo real está en la operación: cada cápsula con otro
+número de entradas gasta un intento de los 3 (≈ US$ 0,0015 y ≈ 4 s más), y como el modelo nunca
+escribió 3 con «3 a 5», si ignora también «exactamente 3» **todas** las cápsulas R pedirían reparación y
+algunas agotarían los intentos. **No se justifica hacerlo todavía:** el piloto mide el cumplimiento; si
+es alto, se puede agregar; si es bajo, la validación empeoraría C6.
+
+**Degradación elegante (opción aparte).** Que el tercer intento se pida sin la directiva del glosario
+cuando los dos primeros desbordan. Se haría en [`generator.py:206-227`](../src/studify/generation/generator.py#L206-L227),
+dentro del `if intento < total_intentos`: `generar` recibiría un `prompt_sin_glosario` opcional y, si es
+el último intento restante y los dos anteriores superaron el máximo (se lee de
+`resultado.metricas["palabras_contenido"]`), reemplazaría `mensajes` por una conversación nueva con ese
+prompt. **Interacción con H2:** es la misma salida que ya usa la detección de repeticiones (conversación
+nueva desde el prompt y los errores cuantificados); ambas ramas coinciden en el tercer intento y la
+degradación tendría prioridad, mientras que `repeticiones_detectadas` seguiría contándose. **Tamaño:**
+≈ 30 líneas en `generator.py`, ≈ 10 en `capsules.py` (construir el prompt degradado con la
+configuración sin la directiva `glosario`) y ≈ 60 de tests con un cliente falso. **Riesgos:** el
+estudiante recibiría una cápsula R sin glosario (la limitación de H1, pero sin pantalla de error); y la
+cápsula se guardaría bajo la huella del prompt completo, así que **el caché compartido la serviría a
+otros estudiantes con el mismo perfil, que nunca tendrían glosario**: hay que no cachearla o marcarla.
+Convertiría el ≈ 12 % de pantallas de error de A en cápsulas sin glosario.
+
+#### Piloto de la variante E (regla propuesta, fijada antes de ejecutar)
+
+**Qué es.** Una comprobación del mecanismo, **no una validación**: son los mismos perfiles que dieron
+origen a la hipótesis.
+
+**Diseño.** Los 14 perfiles con R ≥ 40 % de S42 (9) y S43 (5): 9 «solo R» y 5 con otra directiva
+reexpresiva. Brazos **base** (`main` + fix) y **E**, 2 corridas por brazo intercaladas (base, E,
+base, E; cada corrida = S42 + S43), `--sin-audio` y `--doc` fuera de `docs/`. 28 perfiles-corrida por
+brazo. **Tope de gasto: US$ 0,15** (se detiene además con 3 errores de la API).
+
+**Pasa si cumple todo:**
+
+1. **Primeros intentos con más de 300 palabras: como máximo 9 de 28** (A tuvo 17; la base del piloto
+   anterior, 2; la estimación optimista de (b)+(c) era ≈ 7).
+2. **Cápsulas sin ninguna válida: como máximo 1 de 28.**
+3. **Glosario presente en todas las cápsulas válidas.**
+4. **Ningún perfil estable de la base perdido.** *Cambio propuesto sobre lo pedido:* «estable» = válido en
+   las 2 corridas de la base del piloto; «perdido» = inválido en las 2 corridas de E. Justificación: leído
+   como «inválido en alguna corrida», este punto contradice el 2 cuando la base no tiene inválidas (como
+   en el piloto anterior), porque cualquier inválida de E sería un perfil estable perdido y el umbral
+   real sería 0 y no 1. Con la definición propuesta el 4 se deduce del 2 y se conserva por
+   trazabilidad. Si el autor prefiere la lectura original, el 2 pasa a «0 de 28».
+
+*Consistencia con la ronda completa:* con 9 desbordes de 28 se esperan ≈ 3 reparaciones por corrida de
+S42 en los perfiles R, frente a un límite de C3 de ≈ 4,5 (promedio de la base, 2,5, más 2); el umbral
+no es más laxo que lo que exigiría después la ronda completa.
+
+**Se reporta además (no condiciona):** cuántas entradas trae el glosario en cada cápsula (cumplimiento
+de «exactamente 3»); cuántas palabras bajó E frente a A (primer intento, pareado por perfil, con A de la
+ronda 2); y la composición de `representacion_adaptativa` en los 9 perfiles «solo R», para ver qué
+quedó sin párrafo.
+
+**Si pasa:** ronda completa con **S45** (Fase C de 24 mezclas de semilla 45, sin tocarla ni mirarla
+hasta ahora), brazos base y E (A ya falló C3 en la ronda 2) y los criterios C1, C3 contra la base de la
+ronda, C4, C6 y R1 tal como están en la ronda 3. Se muestra el costo y se espera el OK del autor antes
+de ejecutarla. **Si no pasa:** no se itera; se restaura el estado base (no se aplicó nada), **H1 se
+documenta como limitación conocida (el perfil R no incluye glosario)** y quedan guardados los parches de
+A y de E por si se retoma.
+
+**Costo del piloto** (planificador, tarifa supuesta de 0,28/0,42 USD por millón de tokens): de 56 a 168
+llamadas, **US$ 0,080–0,324 en el peor caso** (todos los intentos agotados) y **esperado ≈ US$ 0,08–0,13**
+(el piloto anterior costó US$ 0,132 con A+objetivo, que desbordaba mucho más; la base cuesta ≈ US$ 0,02
+por corrida). Dentro del tope de US$ 0,15. *Ronda completa si el piloto pasa (estimación):* base y E,
+2 corridas de S42, S43 y S45: 248 perfiles, de 248 a 744 llamadas, US$ 0,36–1,44, esperado ≈ US$ 0,40–0,50,
+dentro del tope de US$ 1,40 aprobado; se confirmará antes de ejecutar.
+
 ### Etapa 4 — H2: el bucle de reparación que repite la respuesta
 
 **Diagnóstico (04-oct-2026).** En las corridas guardadas hubo 58 pares de intentos
