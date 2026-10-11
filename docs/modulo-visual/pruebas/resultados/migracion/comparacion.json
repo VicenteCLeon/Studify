@@ -1,0 +1,1802 @@
+{
+  "detenido": null,
+  "filas": [
+    {
+      "valida": true,
+      "reparaciones": 0,
+      "errores_por_intento": [],
+      "titulo": "Primera Forma Normal: atomicidad y grupos repetitivos",
+      "palabras": 216,
+      "bloques": [
+        "esquema",
+        "tabla"
+      ],
+      "capsula": {
+        "titulo": "Primera Forma Normal: atomicidad y grupos repetitivos",
+        "objetivo_aprendizaje": "Eliminar grupos repetitivos y valores multivaluados de una tabla no normalizada para llevarla a la Primera Forma Normal.",
+        "activacion": "¿Qué problemas crees que ocurren cuando guardas varios teléfonos separados por comas en una sola celda?",
+        "concepto_central": "La Primera Forma Normal (1FN) es el nivel básico de la normalización relacional propuesto por Edgar F. Codd. Una tabla está en 1FN si cumple tres reglas: todos los valores de las celdas son atómicos, no existen columnas repetidas para el mismo tipo de información y la relación posee una clave primaria única que identifica cada fila. Cuando una celda contiene listas, la clave primaria no puede identificar de forma unívoca cada valor, por lo que la tabla viola la 1FN.",
+        "representacion_adaptativa": [
+          {
+            "tipo": "esquema",
+            "encabezado": "Jerarquía de la 1FN",
+            "cuerpo": [
+              "Normalización relacional",
+              "Primera Forma Normal (1FN)",
+              "Atomicidad de atributos",
+              "Eliminación de grupos repetitivos",
+              "Clave primaria definida"
+            ]
+          },
+          {
+            "tipo": "tabla",
+            "encabezado": "Comparación: antes y después de aplicar 1FN",
+            "cuerpo": [
+              [
+                "Aspecto",
+                "Tabla no normalizada",
+                "Tabla en 1FN"
+              ],
+              [
+                "Valores en celdas",
+                "Listas separadas por comas",
+                "Valores atómicos por fila"
+              ],
+              [
+                "Clave primaria",
+                "ID_Estudiante",
+                "Clave compuesta (ID_Estudiante, Asignatura)"
+              ],
+              [
+                "Búsqueda por índice",
+                "Requiere LIKE '%987%'",
+                "Búsqueda directa por índice"
+              ]
+            ]
+          }
+        ],
+        "ejemplo": {
+          "tipo": "ejemplo_resuelto",
+          "encabezado": "De una celda con lista a filas atómicas",
+          "cuerpo": "En la tabla no normalizada, Ana Silva tiene en Asignaturas_Inscritas 'Bases de Datos, Programación, Redes'. Al aplicar 1FN, se descompone en tres filas: Ana Silva con Bases de Datos, Ana Silva con Programación y Ana Silva con Redes. La clave primaria pasa a ser la clave compuesta (ID_Estudiante, Asignatura)."
+        },
+        "actividad": {
+          "tipo": "quiz_mc",
+          "pregunta": "¿Cuál de las siguientes acciones es necesaria para llevar una tabla a la Primera Forma Normal?",
+          "alternativas": [
+            "Mantener las listas de valores en una sola celda para no duplicar filas.",
+            "Eliminar la clave primaria para evitar dependencias.",
+            "Descomponer los valores multivaluados en filas atómicas y redefinir la clave primaria.",
+            "Agregar columnas repetidas para cada valor de la lista."
+          ],
+          "indice_correcta": 2,
+          "retroalimentacion": "La 1FN exige atomicidad de atributos y eliminación de grupos repetitivos. Por eso, los valores multivaluados se descomponen en filas atómicas y la clave primaria se redefine incorporando la nueva columna descompuesta, tal como muestra el paso a paso de la guía.",
+          "tarjetas": [],
+          "preguntas": []
+        },
+        "fuentes": [
+          {
+            "id_fragmento": 12,
+            "documento": "Guía de Normalización: Primera Forma Normal (1FN)",
+            "pagina": 1
+          },
+          {
+            "id_fragmento": 13,
+            "documento": "Guía de Normalización: Primera Forma Normal (1FN)",
+            "pagina": 1
+          },
+          {
+            "id_fragmento": 14,
+            "documento": "Guía de Normalización: Primera Forma Normal (1FN)",
+            "pagina": 1
+          },
+          {
+            "id_fragmento": 15,
+            "documento": "Guía de Normalización: Primera Forma Normal (1FN)",
+            "pagina": 1
+          },
+          {
+            "id_fragmento": 16,
+            "documento": "Guía de Normalización: Primera Forma Normal (1FN)",
+            "pagina": 2
+          }
+        ]
+      },
+      "llamadas": 1,
+      "tokens_entrada": 2918,
+      "tokens_entrada_cache": 2688,
+      "tokens_salida": 1035,
+      "tokens_razonamiento": 0,
+      "segundos": 4.98,
+      "costo_usd": 0.000663564,
+      "costo_usd_sin_cache": 0.0010587,
+      "modelo_respondido": "deepseek-flash",
+      "fin": [
+        "stop"
+      ],
+      "codigo_objetivo": "BD-U3-01",
+      "tarea": "cápsula",
+      "configuracion": "anterior",
+      "modelo_pedido": "deepseek-chat",
+      "thinking": ""
+    },
+    {
+      "valida": true,
+      "reparaciones": 0,
+      "errores_por_intento": [
+        []
+      ],
+      "advertencias": [],
+      "tipo_de_diagrama": "mapa_conceptual",
+      "nodos": 6,
+      "spec": {
+        "version": 1,
+        "titulo": "Primera Forma Normal",
+        "tipo_de_diagrama": "mapa_conceptual",
+        "nodos": [
+          {
+            "id": "n1",
+            "etiqueta": "Primera Forma Normal",
+            "detalle": "Nivel básico de normalización relacional",
+            "rol": "principal"
+          },
+          {
+            "id": "n2",
+            "etiqueta": "Atomicidad de Atributos",
+            "detalle": "Valores indivisibles en cada celda",
+            "rol": "secundario"
+          },
+          {
+            "id": "n3",
+            "etiqueta": "Eliminación de Grupos Repetitivos",
+            "detalle": "Sin columnas repetidas del mismo tipo",
+            "rol": "secundario"
+          },
+          {
+            "id": "n4",
+            "etiqueta": "Clave Primaria Definida",
+            "detalle": "Identifica de forma unívoca cada fila",
+            "rol": "secundario"
+          },
+          {
+            "id": "n5",
+            "etiqueta": "Descomponer en filas",
+            "detalle": "Duplicar fila por cada elemento",
+            "rol": "resultado"
+          },
+          {
+            "id": "n6",
+            "etiqueta": "Reasignar clave primaria",
+            "detalle": "Incorporar nueva columna descompuesta",
+            "rol": "resultado"
+          }
+        ],
+        "relaciones": [
+          {
+            "desde": "n1",
+            "hacia": "n2",
+            "verbo": "requiere"
+          },
+          {
+            "desde": "n1",
+            "hacia": "n3",
+            "verbo": "requiere"
+          },
+          {
+            "desde": "n1",
+            "hacia": "n4",
+            "verbo": "requiere"
+          },
+          {
+            "desde": "n2",
+            "hacia": "n5",
+            "verbo": "produce"
+          },
+          {
+            "desde": "n5",
+            "hacia": "n6",
+            "verbo": "conlleva"
+          }
+        ],
+        "paleta": "studify",
+        "estilo": "plano",
+        "texto_alternativo": "La Primera Forma Normal requiere atomicidad de atributos, eliminación de grupos repetitivos y una clave primaria definida. La atomicidad conduce a descomponer en filas y a reasignar la clave primaria.",
+        "fuentes": [
+          12,
+          14,
+          16
+        ]
+      },
+      "llamadas": 1,
+      "tokens_entrada": 2196,
+      "tokens_entrada_cache": 2048,
+      "tokens_salida": 609,
+      "tokens_razonamiento": 0,
+      "segundos": 2.57,
+      "costo_usd": 0.00039374399999999996,
+      "costo_usd_sin_cache": 0.0006948,
+      "modelo_respondido": "deepseek-flash",
+      "fin": [
+        "stop"
+      ],
+      "codigo_objetivo": "BD-U3-01",
+      "tarea": "especificación",
+      "configuracion": "anterior",
+      "modelo_pedido": "deepseek-chat",
+      "thinking": ""
+    },
+    {
+      "valida": true,
+      "reparaciones": 0,
+      "errores_por_intento": [],
+      "titulo": "Primera Forma Normal: atomicidad y grupos repetitivos",
+      "palabras": 185,
+      "bloques": [
+        "esquema",
+        "tabla"
+      ],
+      "capsula": {
+        "titulo": "Primera Forma Normal: atomicidad y grupos repetitivos",
+        "objetivo_aprendizaje": "Eliminar grupos repetitivos y valores multivaluados de una tabla para llevarla a la Primera Forma Normal.",
+        "activacion": "¿Alguna vez has guardado varios datos en una sola celda, como una lista de asignaturas separadas por comas?",
+        "concepto_central": "La Primera Forma Normal (1FN) es el nivel básico de la normalización relacional propuesto por Edgar F. Codd. Una tabla está en 1FN si cumple tres reglas: todos los valores de las celdas son atómicos (indivisibles), no existen columnas repetidas para el mismo tipo de información (por ejemplo, Telefono1, Telefono2) y la relación posee una clave primaria única que identifica cada fila. Para resolver una violación se identifica la celda no atómica, se descompone en filas duplicando la fila por cada elemento de la lista y se redefine la clave primaria incorporando la nueva columna descompuesta.",
+        "representacion_adaptativa": [
+          {
+            "tipo": "esquema",
+            "encabezado": "Jerarquía de la 1FN",
+            "cuerpo": [
+              "Normalización relacional",
+              "Primera Forma Normal (1FN)",
+              "Atomicidad de atributos",
+              "Eliminación de grupos repetitivos",
+              "Clave primaria definida"
+            ]
+          },
+          {
+            "tipo": "tabla",
+            "encabezado": "Antes y después de aplicar 1FN",
+            "cuerpo": [
+              [
+                "ID_Estudiante",
+                "Nombre",
+                "Asignaturas_Inscritas"
+              ],
+              [
+                "101",
+                "Ana Silva",
+                "Bases de Datos, Programación, Redes"
+              ],
+              [
+                "102",
+                "Pedro Gómez",
+                "Programación, Álgebra"
+              ]
+            ]
+          }
+        ],
+        "ejemplo": {
+          "tipo": "tabla",
+          "encabezado": "Tabla normalizada en 1FN",
+          "cuerpo": [
+            [
+              "ID_Estudiante",
+              "Nombre",
+              "Asignatura"
+            ],
+            [
+              "101",
+              "Ana Silva",
+              "Bases de Datos"
+            ],
+            [
+              "101",
+              "Ana Silva",
+              "Programación"
+            ],
+            [
+              "101",
+              "Ana Silva",
+              "Redes"
+            ],
+            [
+              "102",
+              "Pedro Gómez",
+              "Programación"
+            ],
+            [
+              "102",
+              "Pedro Gómez",
+              "Álgebra"
+            ]
+          ]
+        },
+        "actividad": {
+          "tipo": "quiz_mc",
+          "pregunta": "¿Cuál de las siguientes tablas cumple con la Primera Forma Normal?",
+          "alternativas": [
+            "Una tabla con una columna Teléfonos que contiene '912345678, 987654321'.",
+            "Una tabla con columnas Telefono1, Telefono2 y Telefono3.",
+            "Una tabla donde cada teléfono ocupa una fila atómica y la clave primaria es compuesta.",
+            "Una tabla sin clave primaria definida pero con valores atómicos."
+          ],
+          "indice_correcta": 2,
+          "retroalimentacion": "La 1FN exige atomicidad, ausencia de grupos repetitivos y clave primaria única. Separar cada teléfono en su propia fila atómica cumple las tres reglas. Las opciones con listas en una celda o columnas repetidas violan la atomicidad y la eliminación de grupos repetitivos; la tabla sin clave primaria tampoco cumple.",
+          "tarjetas": [],
+          "preguntas": []
+        },
+        "fuentes": [
+          {
+            "id_fragmento": 12,
+            "documento": "Guía de Normalización: Primera Forma Normal (1FN)",
+            "pagina": 1
+          },
+          {
+            "id_fragmento": 13,
+            "documento": "Guía de Normalización: Primera Forma Normal (1FN)",
+            "pagina": 1
+          },
+          {
+            "id_fragmento": 14,
+            "documento": "Guía de Normalización: Primera Forma Normal (1FN)",
+            "pagina": 1
+          },
+          {
+            "id_fragmento": 16,
+            "documento": "Guía de Normalización: Primera Forma Normal (1FN)",
+            "pagina": 2
+          }
+        ]
+      },
+      "llamadas": 1,
+      "tokens_entrada": 2918,
+      "tokens_entrada_cache": 2688,
+      "tokens_salida": 984,
+      "tokens_razonamiento": 0,
+      "segundos": 3.84,
+      "costo_usd": 0.000632964,
+      "costo_usd_sin_cache": 0.0010280999999999999,
+      "modelo_respondido": "deepseek-flash",
+      "fin": [
+        "stop"
+      ],
+      "codigo_objetivo": "BD-U3-01",
+      "tarea": "cápsula",
+      "configuracion": "nueva",
+      "modelo_pedido": "deepseek-flash",
+      "thinking": "disabled"
+    },
+    {
+      "valida": true,
+      "reparaciones": 0,
+      "errores_por_intento": [
+        []
+      ],
+      "advertencias": [
+        "relación n1 → n3 entre pasos no consecutivos: el render no la dibuja",
+        "relación n1 → n4 entre pasos no consecutivos: el render no la dibuja",
+        "falta la relación n3 → n4 entre pasos consecutivos",
+        "falta la relación n4 → n5 entre pasos consecutivos",
+        "falta la relación n2 → n3 entre pasos consecutivos"
+      ],
+      "tipo_de_diagrama": "flujo",
+      "nodos": 7,
+      "spec": {
+        "version": 1,
+        "titulo": "Primera Forma Normal: Reglas y Proceso",
+        "tipo_de_diagrama": "flujo",
+        "nodos": [
+          {
+            "id": "n1",
+            "etiqueta": "Primera Forma Normal",
+            "detalle": "Nivel básico de normalización relacional",
+            "rol": "principal"
+          },
+          {
+            "id": "n2",
+            "etiqueta": "Atomicidad de Atributos",
+            "detalle": "Valores indivisibles en cada celda",
+            "rol": "secundario"
+          },
+          {
+            "id": "n3",
+            "etiqueta": "Eliminación de Grupos Repetitivos",
+            "detalle": "Sin columnas repetidas del mismo tipo",
+            "rol": "secundario"
+          },
+          {
+            "id": "n4",
+            "etiqueta": "Clave Primaria Definida",
+            "detalle": "Identifica de forma unívoca cada fila",
+            "rol": "secundario"
+          },
+          {
+            "id": "n5",
+            "etiqueta": "Identificar celda no atómica",
+            "detalle": "Localizar listas separadas por comas",
+            "rol": "secundario"
+          },
+          {
+            "id": "n6",
+            "etiqueta": "Descomponer en filas",
+            "detalle": "Duplicar fila por cada elemento",
+            "rol": "secundario"
+          },
+          {
+            "id": "n7",
+            "etiqueta": "Definir clave primaria",
+            "detalle": "Reasignar clave incorporando nueva columna",
+            "rol": "secundario"
+          }
+        ],
+        "relaciones": [
+          {
+            "desde": "n1",
+            "hacia": "n2",
+            "verbo": "requiere"
+          },
+          {
+            "desde": "n1",
+            "hacia": "n3",
+            "verbo": "requiere"
+          },
+          {
+            "desde": "n1",
+            "hacia": "n4",
+            "verbo": "requiere"
+          },
+          {
+            "desde": "n5",
+            "hacia": "n6",
+            "verbo": "lleva a"
+          },
+          {
+            "desde": "n6",
+            "hacia": "n7",
+            "verbo": "lleva a"
+          }
+        ],
+        "paleta": "studify",
+        "estilo": "plano",
+        "texto_alternativo": "Diagrama de flujo que muestra la Primera Forma Normal como concepto principal, con tres reglas requeridas: atomicidad, eliminación de grupos repetitivos y clave primaria definida. Luego presenta los pasos para resolver violaciones: identificar celda no atómica, descomponer en filas y definir clave primaria.",
+        "fuentes": [
+          12,
+          16
+        ]
+      },
+      "llamadas": 1,
+      "tokens_entrada": 2196,
+      "tokens_entrada_cache": 2048,
+      "tokens_salida": 689,
+      "tokens_razonamiento": 0,
+      "segundos": 2.69,
+      "costo_usd": 0.000441744,
+      "costo_usd_sin_cache": 0.0007428,
+      "modelo_respondido": "deepseek-flash",
+      "fin": [
+        "stop"
+      ],
+      "codigo_objetivo": "BD-U3-01",
+      "tarea": "especificación",
+      "configuracion": "nueva",
+      "modelo_pedido": "deepseek-flash",
+      "thinking": "disabled"
+    },
+    {
+      "valida": true,
+      "reparaciones": 0,
+      "errores_por_intento": [],
+      "titulo": "Dependencias funcionales: identificar determinantes entre atributos",
+      "palabras": 218,
+      "bloques": [
+        "esquema",
+        "tabla"
+      ],
+      "capsula": {
+        "titulo": "Dependencias funcionales: identificar determinantes entre atributos",
+        "objetivo_aprendizaje": "Identificar dependencias funcionales entre atributos de una relación, reconociendo cuándo un conjunto de atributos determina funcionalmente a otro.",
+        "activacion": "Si dos personas tienen el mismo RUT, ¿pueden tener nombres distintos?",
+        "concepto_central": "Una Dependencia Funcional (DF) es una restricción entre conjuntos de atributos de una relación, denotada X → Y, que se lee 'X determina funcionalmente a Y'. Significa que si dos tuplas coinciden en los valores de X, obligatoriamente coinciden en los valores de Y. Existen tipos: plena, cuando Y depende de X pero no de ningún subconjunto propio de X; transitiva, cuando X → Y e Y → Z implican X → Z; y trivial, cuando Y es subconjunto de X.",
+        "representacion_adaptativa": [
+          {
+            "tipo": "esquema",
+            "encabezado": "Jerarquía de las dependencias funcionales",
+            "cuerpo": [
+              "Dependencia Funcional (X → Y)",
+              "  Dependencia Funcional Plena: Y depende de X, no de un subconjunto propio de X",
+              "  Dependencia Transitiva: X → Y e Y → Z implican X → Z",
+              "  Dependencia Trivial: Y es subconjunto de X"
+            ]
+          },
+          {
+            "tipo": "tabla",
+            "encabezado": "Validación de la DF RUT → Nombre",
+            "cuerpo": [
+              [
+                "RUT (X)",
+                "Nombre (Y)",
+                "¿Cumple RUT → Nombre?"
+              ],
+              [
+                "19.876.543-2",
+                "Carlos Vera",
+                "Válido"
+              ],
+              [
+                "19.876.543-2",
+                "Carlos Vera",
+                "Válido"
+              ],
+              [
+                "19.876.543-2",
+                "Juan Perez",
+                "Inválido"
+              ]
+            ]
+          }
+        ],
+        "ejemplo": {
+          "tipo": "ejemplo_resuelto",
+          "encabezado": "Cierre del atributo A",
+          "cuerpo": "Dado R(A, B, C, D) y F = { A → B, B → C }: se inicia (A)+ = {A}; como A ∈ {A}, se agrega B y queda {A, B}; como B ∈ {A, B}, se agrega C y queda {A, B, C}. Resultado: (A)+ = {A, B, C}."
+        },
+        "actividad": {
+          "tipo": "quiz_mc",
+          "pregunta": "En la tabla de validación, ¿por qué la tercera fila con RUT 19.876.543-2 y Nombre Juan Perez invalida la DF RUT → Nombre?",
+          "alternativas": [
+            "Porque un mismo RUT tiene nombres distintos, incumpliendo que mismo X implica mismo Y.",
+            "Porque el nombre Juan Perez es más largo que Carlos Vera.",
+            "Porque la carrera es Informática y no Industrial.",
+            "Porque el RUT tiene más dígitos que el nombre."
+          ],
+          "indice_correcta": 0,
+          "retroalimentacion": "La DF X → Y exige que si dos tuplas coinciden en X, coincidan en Y. Aquí el mismo RUT aparece con dos nombres distintos, por lo que la restricción no se cumple y la fila se marca como inválida.",
+          "tarjetas": [],
+          "preguntas": []
+        },
+        "fuentes": [
+          {
+            "id_fragmento": 18,
+            "documento": "Teoría de Dependencias Funcionales y Cierre de Atributos",
+            "pagina": 1
+          },
+          {
+            "id_fragmento": 20,
+            "documento": "Teoría de Dependencias Funcionales y Cierre de Atributos",
+            "pagina": 1
+          },
+          {
+            "id_fragmento": 23,
+            "documento": "Teoría de Dependencias Funcionales y Cierre de Atributos",
+            "pagina": 2
+          }
+        ]
+      },
+      "llamadas": 1,
+      "tokens_entrada": 3119,
+      "tokens_entrada_cache": 128,
+      "tokens_salida": 954,
+      "tokens_razonamiento": 0,
+      "segundos": 4.94,
+      "costo_usd": 0.0010214339999999999,
+      "costo_usd_sin_cache": 0.00104025,
+      "modelo_respondido": "deepseek-flash",
+      "fin": [
+        "stop"
+      ],
+      "codigo_objetivo": "BD-U3-02",
+      "tarea": "cápsula",
+      "configuracion": "nueva",
+      "modelo_pedido": "deepseek-flash",
+      "thinking": "disabled"
+    },
+    {
+      "valida": true,
+      "reparaciones": 1,
+      "errores_por_intento": [
+        [
+          "falta el campo obligatorio `version`",
+          "falta el campo obligatorio `titulo`",
+          "falta el campo obligatorio `tipo_de_diagrama`",
+          "falta el campo obligatorio `nodos`",
+          "falta el campo obligatorio `relaciones`",
+          "falta el campo obligatorio `paleta`",
+          "falta el campo obligatorio `estilo`",
+          "falta el campo obligatorio `texto_alternativo`"
+        ],
+        []
+      ],
+      "advertencias": [],
+      "tipo_de_diagrama": "mapa_conceptual",
+      "nodos": 5,
+      "spec": {
+        "version": 1,
+        "titulo": "Dependencias Funcionales y Cierre",
+        "tipo_de_diagrama": "mapa_conceptual",
+        "nodos": [
+          {
+            "id": "n1",
+            "etiqueta": "Dependencia Funcional",
+            "detalle": "X determina funcionalmente a Y",
+            "rol": "principal"
+          },
+          {
+            "id": "n2",
+            "etiqueta": "Dependencia Funcional Plena",
+            "detalle": "Y no depende de subconjunto propio",
+            "rol": "secundario"
+          },
+          {
+            "id": "n3",
+            "etiqueta": "Dependencia Transitiva",
+            "detalle": "X→Y y Y→Z implica X→Z",
+            "rol": "secundario"
+          },
+          {
+            "id": "n4",
+            "etiqueta": "Dependencia Trivial",
+            "detalle": "Y es subconjunto de X",
+            "rol": "secundario"
+          },
+          {
+            "id": "n5",
+            "etiqueta": "Cierre de Atributos",
+            "detalle": "(X)+ conjunto de atributos determinados",
+            "rol": "resultado"
+          }
+        ],
+        "relaciones": [
+          {
+            "desde": "n1",
+            "hacia": "n2",
+            "verbo": "se clasifica en"
+          },
+          {
+            "desde": "n1",
+            "hacia": "n3",
+            "verbo": "se clasifica en"
+          },
+          {
+            "desde": "n1",
+            "hacia": "n4",
+            "verbo": "se clasifica en"
+          },
+          {
+            "desde": "n1",
+            "hacia": "n5",
+            "verbo": "permite calcular"
+          }
+        ],
+        "paleta": "studify",
+        "estilo": "plano",
+        "texto_alternativo": "Esquema que muestra la Dependencia Funcional como concepto principal, del cual se desprenden tres tipos: plena, transitiva y trivial. Además, la Dependencia Funcional permite calcular el Cierre de Atributos.",
+        "fuentes": [
+          18,
+          22
+        ]
+      },
+      "llamadas": 2,
+      "tokens_entrada": 5581,
+      "tokens_entrada_cache": 5120,
+      "tokens_salida": 1055,
+      "tokens_razonamiento": 0,
+      "segundos": 4.57,
+      "costo_usd": 0.00071751,
+      "costo_usd_sin_cache": 0.0014701500000000001,
+      "modelo_respondido": "deepseek-flash",
+      "fin": [
+        "stop",
+        "stop"
+      ],
+      "codigo_objetivo": "BD-U3-02",
+      "tarea": "especificación",
+      "configuracion": "nueva",
+      "modelo_pedido": "deepseek-flash",
+      "thinking": "disabled"
+    },
+    {
+      "valida": true,
+      "reparaciones": 0,
+      "errores_por_intento": [],
+      "titulo": "Dependencias Funcionales: Identificación y Análisis",
+      "palabras": 206,
+      "bloques": [
+        "esquema",
+        "tabla"
+      ],
+      "capsula": {
+        "titulo": "Dependencias Funcionales: Identificación y Análisis",
+        "objetivo_aprendizaje": "Identificar dependencias funcionales entre atributos en una relación de base de datos.",
+        "activacion": "¿Qué significa que un atributo determine funcionalmente a otro?",
+        "concepto_central": "Una Dependencia Funcional (DF) es una restricción entre conjuntos de atributos en una relación. Se denota X → Y y significa que si dos tuplas coinciden en X, entonces deben coincidir en Y. Existen tipos: plena, transitiva y trivial. La plena ocurre cuando Y depende de X pero no de un subconjunto propio de X. La transitiva se da si X → Y y Y → Z, entonces X → Z. La trivial es cuando Y es subconjunto de X.",
+        "representacion_adaptativa": [
+          {
+            "tipo": "esquema",
+            "encabezado": "Jerarquía de conceptos",
+            "cuerpo": [
+              "Dependencia Funcional (DF)",
+              "  - Definición formal: X → Y",
+              "  - Tipos:",
+              "    - Plena: Y depende de X, no de subconjunto propio",
+              "    - Transitiva: X → Y y Y → Z implica X → Z",
+              "    - Trivial: Y ⊆ X"
+            ]
+          },
+          {
+            "tipo": "tabla",
+            "encabezado": "Validación de DF RUT → Nombre",
+            "cuerpo": [
+              [
+                "RUT (X)",
+                "Nombre (Y)",
+                "Carrera",
+                "¿Cumple DF?"
+              ],
+              [
+                "19.876.543-2",
+                "Carlos Vera",
+                "Informática",
+                "Válido"
+              ],
+              [
+                "19.876.543-2",
+                "Carlos Vera",
+                "Industrial",
+                "Válido"
+              ],
+              [
+                "19.876.543-2",
+                "Juan Perez",
+                "Informática",
+                "Inválido"
+              ]
+            ]
+          }
+        ],
+        "ejemplo": {
+          "tipo": "ejemplo_resuelto",
+          "encabezado": "Cálculo del cierre de A",
+          "cuerpo": "Dado R(A, B, C, D) y F = {A → B, B → C}, el cierre (A)+ se calcula: inicio {A}; por A → B se agrega B, quedando {A, B}; por B → C se agrega C, resultando {A, B, C}."
+        },
+        "actividad": {
+          "tipo": "quiz_mc",
+          "pregunta": "Si X → Y y Y → Z, ¿qué dependencia se deduce?",
+          "alternativas": [
+            "X → Z",
+            "Z → X",
+            "Y → X",
+            "No se deduce ninguna"
+          ],
+          "indice_correcta": 0,
+          "retroalimentacion": "Por propiedad transitiva, si X determina Y y Y determina Z, entonces X determina Z.",
+          "tarjetas": [],
+          "preguntas": []
+        },
+        "fuentes": [
+          {
+            "id_fragmento": 18,
+            "documento": "Teoría de Dependencias Funcionales y Cierre de Atributos",
+            "pagina": 1
+          },
+          {
+            "id_fragmento": 20,
+            "documento": "Teoría de Dependencias Funcionales y Cierre de Atributos",
+            "pagina": 1
+          },
+          {
+            "id_fragmento": 23,
+            "documento": "Teoría de Dependencias Funcionales y Cierre de Atributos",
+            "pagina": 2
+          }
+        ]
+      },
+      "llamadas": 1,
+      "tokens_entrada": 3119,
+      "tokens_entrada_cache": 2944,
+      "tokens_salida": 838,
+      "tokens_razonamiento": 0,
+      "segundos": 3.46,
+      "costo_usd": 0.0005378819999999999,
+      "costo_usd_sin_cache": 0.0009706499999999999,
+      "modelo_respondido": "deepseek-flash",
+      "fin": [
+        "stop"
+      ],
+      "codigo_objetivo": "BD-U3-02",
+      "tarea": "cápsula",
+      "configuracion": "anterior",
+      "modelo_pedido": "deepseek-chat",
+      "thinking": ""
+    },
+    {
+      "valida": true,
+      "reparaciones": 0,
+      "errores_por_intento": [
+        []
+      ],
+      "advertencias": [],
+      "tipo_de_diagrama": "mapa_conceptual",
+      "nodos": 5,
+      "spec": {
+        "version": 1,
+        "titulo": "Dependencias Funcionales y Cierre",
+        "tipo_de_diagrama": "mapa_conceptual",
+        "nodos": [
+          {
+            "id": "n1",
+            "etiqueta": "Dependencia Funcional",
+            "detalle": "Restricción entre conjuntos de atributos",
+            "rol": "principal"
+          },
+          {
+            "id": "n2",
+            "etiqueta": "Dependencia Funcional Plena",
+            "detalle": "Y depende de X, no de subconjunto propio",
+            "rol": "secundario"
+          },
+          {
+            "id": "n3",
+            "etiqueta": "Dependencia Transitiva",
+            "detalle": "Si X→Y y Y→Z, entonces X→Z",
+            "rol": "secundario"
+          },
+          {
+            "id": "n4",
+            "etiqueta": "Dependencia Trivial",
+            "detalle": "Y es subconjunto de X",
+            "rol": "secundario"
+          },
+          {
+            "id": "n5",
+            "etiqueta": "Cierre de Atributos",
+            "detalle": "Conjunto de atributos determinados por X",
+            "rol": "resultado"
+          }
+        ],
+        "relaciones": [
+          {
+            "desde": "n1",
+            "hacia": "n2",
+            "verbo": "se clasifica en"
+          },
+          {
+            "desde": "n1",
+            "hacia": "n3",
+            "verbo": "se clasifica en"
+          },
+          {
+            "desde": "n1",
+            "hacia": "n4",
+            "verbo": "se clasifica en"
+          },
+          {
+            "desde": "n1",
+            "hacia": "n5",
+            "verbo": "permite calcular"
+          }
+        ],
+        "paleta": "studify",
+        "estilo": "plano",
+        "texto_alternativo": "El esquema muestra la Dependencia Funcional como concepto principal, que se clasifica en Plena, Transitiva y Trivial, y que permite calcular el Cierre de Atributos.",
+        "fuentes": [
+          18,
+          22
+        ]
+      },
+      "llamadas": 1,
+      "tokens_entrada": 2400,
+      "tokens_entrada_cache": 2176,
+      "tokens_salida": 522,
+      "tokens_razonamiento": 0,
+      "segundos": 2.64,
+      "costo_usd": 0.000353328,
+      "costo_usd_sin_cache": 0.0006732,
+      "modelo_respondido": "deepseek-flash",
+      "fin": [
+        "stop"
+      ],
+      "codigo_objetivo": "BD-U3-02",
+      "tarea": "especificación",
+      "configuracion": "anterior",
+      "modelo_pedido": "deepseek-chat",
+      "thinking": ""
+    },
+    {
+      "valida": true,
+      "reparaciones": 0,
+      "errores_por_intento": [],
+      "titulo": "Variables y tipos de datos primitivos",
+      "palabras": 174,
+      "bloques": [
+        "esquema",
+        "tabla"
+      ],
+      "capsula": {
+        "titulo": "Variables y tipos de datos primitivos",
+        "objetivo_aprendizaje": "Comprender y utilizar variables y tipos de datos básicos en programación.",
+        "activacion": "¿Alguna vez has guardado un dato en una caja etiquetada y luego has necesitado saber qué tipo de objeto contiene?",
+        "concepto_central": "Una variable es una ubicación en la memoria RAM asociada a un nombre, que almacena un valor de un tipo de dato específico. El tipo determina las operaciones posibles y la memoria que ocupa. Los tipos primitivos comunes son int (enteros), float (decimales), bool (verdadero/falso) y str (cadenas de texto).",
+        "representacion_adaptativa": [
+          {
+            "tipo": "esquema",
+            "encabezado": "Jerarquía de conceptos",
+            "cuerpo": [
+              "Variable: ubicación en memoria con nombre",
+              "Tipo de dato: define operaciones y memoria",
+              "int: números enteros",
+              "float: números con decimales",
+              "bool: valores lógicos",
+              "str: secuencias de caracteres"
+            ]
+          },
+          {
+            "tipo": "tabla",
+            "encabezado": "Comparación de tipos de datos",
+            "cuerpo": [
+              [
+                "Tipo",
+                "Tamaño",
+                "Ejemplo",
+                "Uso recomendado"
+              ],
+              [
+                "int",
+                "4 a 8 bytes",
+                "42",
+                "Contadores, edades"
+              ],
+              [
+                "float",
+                "8 bytes",
+                "3.14159",
+                "Precios, notas"
+              ],
+              [
+                "bool",
+                "1 byte",
+                "True",
+                "Banderas de estado"
+              ],
+              [
+                "str",
+                "Variable",
+                "\"Hola\"",
+                "Nombres, mensajes"
+              ]
+            ]
+          }
+        ],
+        "ejemplo": {
+          "tipo": "ejemplo_resuelto",
+          "encabezado": "Declaración y conversión de tipos",
+          "cuerpo": "Se declara nombre_estudiante = \"Camila\", edad = 21, promedio_notas = 6.5, esta_inscrito = True. Luego se calcula edad_futura = edad + 1 y se construye un mensaje convirtiendo edad_futura a texto con str()."
+        },
+        "actividad": {
+          "tipo": "quiz_mc",
+          "pregunta": "¿Qué tipo de dato usarías para almacenar el precio de un producto con decimales?",
+          "alternativas": [
+            "int",
+            "float",
+            "bool",
+            "str"
+          ],
+          "indice_correcta": 1,
+          "retroalimentacion": "El tipo float representa números reales con parte decimal, como los precios.",
+          "tarjetas": [],
+          "preguntas": []
+        },
+        "fuentes": [
+          {
+            "id_fragmento": 1,
+            "documento": "Variables y Tipos de Datos Primitivos",
+            "pagina": 1
+          },
+          {
+            "id_fragmento": 2,
+            "documento": "Variables y Tipos de Datos Primitivos",
+            "pagina": 1
+          },
+          {
+            "id_fragmento": 4,
+            "documento": "Variables y Tipos de Datos Primitivos",
+            "pagina": 2
+          }
+        ]
+      },
+      "llamadas": 1,
+      "tokens_entrada": 2839,
+      "tokens_entrada_cache": 128,
+      "tokens_salida": 738,
+      "tokens_razonamiento": 0,
+      "segundos": 3.65,
+      "costo_usd": 0.000849834,
+      "costo_usd_sin_cache": 0.00086865,
+      "modelo_respondido": "deepseek-flash",
+      "fin": [
+        "stop"
+      ],
+      "codigo_objetivo": "PROG-U1-01",
+      "tarea": "cápsula",
+      "configuracion": "anterior",
+      "modelo_pedido": "deepseek-chat",
+      "thinking": ""
+    },
+    {
+      "valida": true,
+      "reparaciones": 0,
+      "errores_por_intento": [
+        []
+      ],
+      "advertencias": [],
+      "tipo_de_diagrama": "mapa_conceptual",
+      "nodos": 7,
+      "spec": {
+        "version": 1,
+        "titulo": "Variables y Tipos de Datos",
+        "tipo_de_diagrama": "mapa_conceptual",
+        "nodos": [
+          {
+            "id": "n1",
+            "etiqueta": "Variable",
+            "detalle": "Ubicación en memoria RAM",
+            "rol": "principal"
+          },
+          {
+            "id": "n2",
+            "etiqueta": "Identificador simbólico",
+            "detalle": "Nombre de la variable",
+            "rol": "secundario"
+          },
+          {
+            "id": "n3",
+            "etiqueta": "Tipo de dato",
+            "detalle": "Determina operaciones y memoria",
+            "rol": "secundario"
+          },
+          {
+            "id": "n4",
+            "etiqueta": "int",
+            "detalle": "Números sin parte decimal",
+            "rol": "secundario"
+          },
+          {
+            "id": "n5",
+            "etiqueta": "float",
+            "detalle": "Números con parte decimal",
+            "rol": "secundario"
+          },
+          {
+            "id": "n6",
+            "etiqueta": "bool",
+            "detalle": "True o False",
+            "rol": "secundario"
+          },
+          {
+            "id": "n7",
+            "etiqueta": "str",
+            "detalle": "Secuencia inmutable de caracteres",
+            "rol": "secundario"
+          }
+        ],
+        "relaciones": [
+          {
+            "desde": "n1",
+            "hacia": "n2",
+            "verbo": "asociada a"
+          },
+          {
+            "desde": "n1",
+            "hacia": "n3",
+            "verbo": "almacena un"
+          },
+          {
+            "desde": "n3",
+            "hacia": "n4",
+            "verbo": "incluye"
+          },
+          {
+            "desde": "n3",
+            "hacia": "n5",
+            "verbo": "incluye"
+          },
+          {
+            "desde": "n3",
+            "hacia": "n6",
+            "verbo": "incluye"
+          },
+          {
+            "desde": "n3",
+            "hacia": "n7",
+            "verbo": "incluye"
+          }
+        ],
+        "paleta": "studify",
+        "estilo": "plano",
+        "texto_alternativo": "El esquema muestra que una variable es una ubicación en memoria RAM asociada a un identificador simbólico y que almacena un tipo de dato. Los tipos de datos primitivos incluidos son int, float, bool y str.",
+        "fuentes": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "llamadas": 1,
+      "tokens_entrada": 2117,
+      "tokens_entrada_cache": 1920,
+      "tokens_salida": 644,
+      "tokens_razonamiento": 0,
+      "segundos": 2.73,
+      "costo_usd": 0.00042171,
+      "costo_usd_sin_cache": 0.0007039500000000001,
+      "modelo_respondido": "deepseek-flash",
+      "fin": [
+        "stop"
+      ],
+      "codigo_objetivo": "PROG-U1-01",
+      "tarea": "especificación",
+      "configuracion": "anterior",
+      "modelo_pedido": "deepseek-chat",
+      "thinking": ""
+    },
+    {
+      "valida": true,
+      "reparaciones": 0,
+      "errores_por_intento": [],
+      "titulo": "Variables y Tipos de Datos Primitivos",
+      "palabras": 173,
+      "bloques": [
+        "esquema",
+        "tabla"
+      ],
+      "capsula": {
+        "titulo": "Variables y Tipos de Datos Primitivos",
+        "objetivo_aprendizaje": "Comprender y utilizar variables y tipos de datos básicos en programación.",
+        "activacion": "¿Alguna vez has guardado un dato en una caja etiquetada para encontrarlo después?",
+        "concepto_central": "Una variable es una ubicación reservada en la memoria RAM asociada a un identificador simbólico. Almacena un valor de un tipo de dato específico que determina las operaciones posibles y cuánta memoria ocupa. Los tipos primitivos más comunes son int (enteros), float (decimales), bool (verdadero/falso) y str (cadenas de texto).",
+        "representacion_adaptativa": [
+          {
+            "tipo": "esquema",
+            "encabezado": "Jerarquía de conceptos",
+            "cuerpo": [
+              "Variable: ubicación en memoria RAM con nombre",
+              "Tipo de dato: define operaciones y tamaño",
+              "int: números enteros",
+              "float: números con decimales",
+              "bool: True o False",
+              "str: secuencia de caracteres"
+            ]
+          },
+          {
+            "tipo": "tabla",
+            "encabezado": "Comparación de tipos de datos",
+            "cuerpo": [
+              [
+                "Tipo",
+                "Tamaño",
+                "Ejemplo",
+                "Uso recomendado"
+              ],
+              [
+                "int",
+                "4 a 8 bytes",
+                "42",
+                "Contadores, edades"
+              ],
+              [
+                "float",
+                "8 bytes",
+                "3.14159",
+                "Precios, notas"
+              ],
+              [
+                "bool",
+                "1 byte",
+                "True",
+                "Banderas de estado"
+              ],
+              [
+                "str",
+                "Variable",
+                "\"Hola\"",
+                "Nombres, mensajes"
+              ]
+            ]
+          }
+        ],
+        "ejemplo": {
+          "tipo": "ejemplo_resuelto",
+          "encabezado": "Declaración y conversión de tipos",
+          "cuerpo": "nombre_estudiante = \"Camila\" (str); edad = 21 (int); promedio_notas = 6.5 (float); esta_inscrito = True (bool). Luego, edad_futura = edad + 1; mensaje_resumen = \"Estudiante \" + nombre_estudiante + \" tendrá \" + str(edad_futura) + \" años.\""
+        },
+        "actividad": {
+          "tipo": "quiz_mc",
+          "pregunta": "¿Qué tipo de dato usarías para almacenar el precio de un producto?",
+          "alternativas": [
+            "int",
+            "float",
+            "bool",
+            "str"
+          ],
+          "indice_correcta": 1,
+          "retroalimentacion": "El tipo float se usa para números con parte decimal, como los precios. int es para enteros, bool para verdadero/falso y str para texto.",
+          "tarjetas": [],
+          "preguntas": []
+        },
+        "fuentes": [
+          {
+            "id_fragmento": 1,
+            "documento": "Variables y Tipos de Datos Primitivos",
+            "pagina": 1
+          },
+          {
+            "id_fragmento": 2,
+            "documento": "Variables y Tipos de Datos Primitivos",
+            "pagina": 1
+          },
+          {
+            "id_fragmento": 4,
+            "documento": "Variables y Tipos de Datos Primitivos",
+            "pagina": 2
+          }
+        ]
+      },
+      "llamadas": 1,
+      "tokens_entrada": 2839,
+      "tokens_entrada_cache": 2688,
+      "tokens_salida": 774,
+      "tokens_razonamiento": 0,
+      "segundos": 3.37,
+      "costo_usd": 0.000495114,
+      "costo_usd_sin_cache": 0.00089025,
+      "modelo_respondido": "deepseek-flash",
+      "fin": [
+        "stop"
+      ],
+      "codigo_objetivo": "PROG-U1-01",
+      "tarea": "cápsula",
+      "configuracion": "nueva",
+      "modelo_pedido": "deepseek-flash",
+      "thinking": "disabled"
+    },
+    {
+      "valida": true,
+      "reparaciones": 0,
+      "errores_por_intento": [
+        []
+      ],
+      "advertencias": [],
+      "tipo_de_diagrama": "mapa_conceptual",
+      "nodos": 6,
+      "spec": {
+        "version": 1,
+        "titulo": "Variables y Tipos de Datos",
+        "tipo_de_diagrama": "mapa_conceptual",
+        "nodos": [
+          {
+            "id": "n1",
+            "etiqueta": "Variable",
+            "detalle": "Ubicación en memoria RAM",
+            "rol": "principal"
+          },
+          {
+            "id": "n2",
+            "etiqueta": "int",
+            "detalle": "Números sin parte decimal",
+            "rol": "secundario"
+          },
+          {
+            "id": "n3",
+            "etiqueta": "float",
+            "detalle": "Números con parte decimal",
+            "rol": "secundario"
+          },
+          {
+            "id": "n4",
+            "etiqueta": "bool",
+            "detalle": "True o False",
+            "rol": "secundario"
+          },
+          {
+            "id": "n5",
+            "etiqueta": "str",
+            "detalle": "Secuencia inmutable de caracteres",
+            "rol": "secundario"
+          },
+          {
+            "id": "n6",
+            "etiqueta": "Conversión de tipos",
+            "detalle": "Casting explícito",
+            "rol": "resultado"
+          }
+        ],
+        "relaciones": [
+          {
+            "desde": "n1",
+            "hacia": "n2",
+            "verbo": "almacena"
+          },
+          {
+            "desde": "n1",
+            "hacia": "n3",
+            "verbo": "almacena"
+          },
+          {
+            "desde": "n1",
+            "hacia": "n4",
+            "verbo": "almacena"
+          },
+          {
+            "desde": "n1",
+            "hacia": "n5",
+            "verbo": "almacena"
+          },
+          {
+            "desde": "n6",
+            "hacia": "n1",
+            "verbo": "modifica"
+          }
+        ],
+        "paleta": "studify",
+        "estilo": "plano",
+        "texto_alternativo": "El esquema muestra que una variable es una ubicación en memoria RAM que almacena un tipo de dato específico: int, float, bool o str. Además, la conversión de tipos (casting) modifica el tipo de dato almacenado en la variable.",
+        "fuentes": [
+          1,
+          2,
+          3,
+          4
+        ]
+      },
+      "llamadas": 1,
+      "tokens_entrada": 2117,
+      "tokens_entrada_cache": 1920,
+      "tokens_salida": 566,
+      "tokens_razonamiento": 0,
+      "segundos": 2.18,
+      "costo_usd": 0.00037490999999999995,
+      "costo_usd_sin_cache": 0.00065715,
+      "modelo_respondido": "deepseek-flash",
+      "fin": [
+        "stop"
+      ],
+      "codigo_objetivo": "PROG-U1-01",
+      "tarea": "especificación",
+      "configuracion": "nueva",
+      "modelo_pedido": "deepseek-flash",
+      "thinking": "disabled"
+    },
+    {
+      "valida": true,
+      "reparaciones": 0,
+      "errores_por_intento": [],
+      "titulo": "Estructuras de control: condicionales y bucles",
+      "palabras": 266,
+      "bloques": [
+        "esquema",
+        "tabla"
+      ],
+      "capsula": {
+        "titulo": "Estructuras de control: condicionales y bucles",
+        "objetivo_aprendizaje": "Comprender el uso de estructuras de control condicionales y bucles para modificar el flujo secuencial de un programa.",
+        "activacion": "¿Qué crees que ocurre con el orden de ejecución de un programa si no se usan condicionales ni bucles?",
+        "concepto_central": "Por defecto, un programa se ejecuta de forma secuencial, línea por línea. Las estructuras de control de flujo rompen ese comportamiento lineal para tomar decisiones lógicas o repetir bloques según condiciones booleanas. Se dividen en dos familias: las estructuras selectivas (condicionales), como if, elif y else, que evalúan una expresión y ejecutan una sola rama según la primera condición verdadera; y las estructuras iterativas (bucles), como while, controlado por una condición que se repite mientras sea verdadera, y for, controlado por un contador o por la iteración sobre colecciones.",
+        "representacion_adaptativa": [
+          {
+            "tipo": "esquema",
+            "encabezado": "Jerarquía de las estructuras de control",
+            "cuerpo": [
+              "Estructuras de control de flujo",
+              "  Estructuras selectivas (condicionales): if, elif, else",
+              "  Estructuras iterativas (bucles): while, for"
+            ]
+          },
+          {
+            "tipo": "tabla",
+            "encabezado": "Comparación entre estructuras de control",
+            "cuerpo": [
+              [
+                "Estructura",
+                "Tipo de control",
+                "Condición de evaluación",
+                "Comportamiento del flujo"
+              ],
+              [
+                "if / elif / else",
+                "Selección",
+                "Expresión booleana (a > b)",
+                "Ejecuta una sola rama lógica según la primera condición verdadera"
+              ],
+              [
+                "for",
+                "Iteración determinada",
+                "Rango numérico o lista (in range(n))",
+                "Repite el bloque un número fijo de veces conocido de antemano"
+              ],
+              [
+                "while",
+                "Iteración indeterminada",
+                "Condición lógica abierta",
+                "Repite el bloque mientras la condición se mantenga True"
+              ]
+            ]
+          }
+        ],
+        "ejemplo": {
+          "tipo": "ejemplo_resuelto",
+          "encabezado": "Condicional y bucle en Python",
+          "cuerpo": "En un condicional, si nota = 5.8 y se evalúa if nota >= 4.0, se imprime 'Estado: Aprobado'; en caso contrario, se imprime 'Estado: Reprobado'. En un bucle for, suma_total = 0 y for numero in range(1, 6) recorre la secuencia 1, 2, 3, 4, 5, acumulando la suma parcial en cada paso y mostrando al final la suma acumulada."
+        },
+        "actividad": {
+          "tipo": "intentalo_tu",
+          "pregunta": "Escribe un bucle while que comience con contador = 5, imprima 'Cuenta regresiva: ' junto con el valor del contador, reste 1 a contador en cada iteración y se detenga cuando contador llegue a 0, imprimiendo '¡Despegue!'.",
+          "alternativas": [],
+          "indice_correcta": null,
+          "retroalimentacion": "El bucle while repite el bloque mientras la condición sea verdadera. Debes inicializar contador = 5, luego usar while contador > 0, imprimir el mensaje con el valor y restar 1 a contador. Cuando contador llegue a 0, la condición se vuelve falsa, sales del bucle e imprimes '¡Despegue!'.",
+          "tarjetas": [],
+          "preguntas": []
+        },
+        "fuentes": [
+          {
+            "id_fragmento": 6,
+            "documento": "Estructuras de Control Condicionales e Iterativas",
+            "pagina": 1
+          },
+          {
+            "id_fragmento": 7,
+            "documento": "Estructuras de Control Condicionales e Iterativas",
+            "pagina": 1
+          },
+          {
+            "id_fragmento": 10,
+            "documento": "Estructuras de Control Condicionales e Iterativas",
+            "pagina": 2
+          },
+          {
+            "id_fragmento": 11,
+            "documento": "Estructuras de Control Condicionales e Iterativas",
+            "pagina": 2
+          }
+        ]
+      },
+      "llamadas": 1,
+      "tokens_entrada": 2869,
+      "tokens_entrada_cache": 0,
+      "tokens_salida": 1005,
+      "tokens_razonamiento": 0,
+      "segundos": 4.67,
+      "costo_usd": 0.00103335,
+      "costo_usd_sin_cache": 0.00103335,
+      "modelo_respondido": "deepseek-flash",
+      "fin": [
+        "stop"
+      ],
+      "codigo_objetivo": "PROG-U1-02",
+      "tarea": "cápsula",
+      "configuracion": "nueva",
+      "modelo_pedido": "deepseek-flash",
+      "thinking": "disabled"
+    },
+    {
+      "valida": true,
+      "reparaciones": 1,
+      "errores_por_intento": [
+        [
+          "la etiqueta de n4 pasa de 4 palabras"
+        ],
+        []
+      ],
+      "advertencias": [],
+      "tipo_de_diagrama": "jerarquia",
+      "nodos": 6,
+      "spec": {
+        "version": 1,
+        "titulo": "Estructuras de control de flujo",
+        "tipo_de_diagrama": "jerarquia",
+        "nodos": [
+          {
+            "id": "n1",
+            "etiqueta": "Estructuras de control",
+            "detalle": "Rompen la ejecución secuencial",
+            "rol": "principal"
+          },
+          {
+            "id": "n2",
+            "etiqueta": "Selectivas",
+            "detalle": "Condicionales: if, elif, else",
+            "rol": "secundario"
+          },
+          {
+            "id": "n3",
+            "etiqueta": "Iterativas",
+            "detalle": "Bucles: while y for",
+            "rol": "secundario"
+          },
+          {
+            "id": "n4",
+            "etiqueta": "if, elif, else",
+            "detalle": "Ejecuta una sola rama lógica",
+            "rol": "secundario"
+          },
+          {
+            "id": "n5",
+            "etiqueta": "for",
+            "detalle": "Iteración determinada",
+            "rol": "secundario"
+          },
+          {
+            "id": "n6",
+            "etiqueta": "while",
+            "detalle": "Iteración indeterminada",
+            "rol": "secundario"
+          }
+        ],
+        "relaciones": [
+          {
+            "desde": "n1",
+            "hacia": "n2",
+            "verbo": "se divide en"
+          },
+          {
+            "desde": "n1",
+            "hacia": "n3",
+            "verbo": "se divide en"
+          },
+          {
+            "desde": "n2",
+            "hacia": "n4",
+            "verbo": "incluye"
+          },
+          {
+            "desde": "n3",
+            "hacia": "n5",
+            "verbo": "incluye"
+          },
+          {
+            "desde": "n3",
+            "hacia": "n6",
+            "verbo": "incluye"
+          }
+        ],
+        "paleta": "studify",
+        "estilo": "plano",
+        "texto_alternativo": "Diagrama jerárquico que muestra las estructuras de control de flujo divididas en selectivas e iterativas. Las selectivas incluyen if, elif, else; las iterativas incluyen for y while.",
+        "fuentes": [
+          6,
+          7
+        ]
+      },
+      "llamadas": 2,
+      "tokens_entrada": 4963,
+      "tokens_entrada_cache": 4480,
+      "tokens_salida": 1140,
+      "tokens_razonamiento": 0,
+      "segundos": 4.56,
+      "costo_usd": 0.00076989,
+      "costo_usd_sin_cache": 0.0014284499999999997,
+      "modelo_respondido": "deepseek-flash",
+      "fin": [
+        "stop",
+        "stop"
+      ],
+      "codigo_objetivo": "PROG-U1-02",
+      "tarea": "especificación",
+      "configuracion": "nueva",
+      "modelo_pedido": "deepseek-flash",
+      "thinking": "disabled"
+    },
+    {
+      "valida": true,
+      "reparaciones": 0,
+      "errores_por_intento": [],
+      "titulo": "Estructuras de control: condicionales y bucles",
+      "palabras": 224,
+      "bloques": [
+        "esquema",
+        "tabla"
+      ],
+      "capsula": {
+        "titulo": "Estructuras de control: condicionales y bucles",
+        "objetivo_aprendizaje": "Comprender el uso de las estructuras de control condicionales y los bucles para alterar el flujo secuencial de un programa.",
+        "activacion": "¿Qué harías si al llegar a una intersección el semáforo está en rojo?",
+        "concepto_central": "Por defecto, un programa se ejecuta de manera secuencial, línea por línea. Las estructuras de control de flujo rompen este comportamiento lineal para permitir tomar decisiones lógicas o repetir bloques de código basándose en condiciones booleanas. Se clasifican en dos familias: las estructuras selectivas (condicionales), que evalúan una expresión y ejecutan una sola rama según la primera condición verdadera, y las estructuras iterativas (bucles), que repiten un bloque mientras una condición se mantenga verdadera o durante un número fijo de veces.",
+        "representacion_adaptativa": [
+          {
+            "tipo": "esquema",
+            "encabezado": "Jerarquía de las estructuras de control",
+            "cuerpo": [
+              "Estructuras de control de flujo",
+              "  Estructuras selectivas (condicionales): if, elif, else",
+              "  Estructuras iterativas (bucles): while, for"
+            ]
+          },
+          {
+            "tipo": "tabla",
+            "encabezado": "Comparación de estructuras de control",
+            "cuerpo": [
+              [
+                "Estructura",
+                "Tipo de control",
+                "Condición de evaluación",
+                "Comportamiento del flujo"
+              ],
+              [
+                "if / elif / else",
+                "Selección",
+                "Expresión booleana (a > b)",
+                "Ejecuta una sola rama lógica según la primera condición verdadera"
+              ],
+              [
+                "for",
+                "Iteración determinada",
+                "Rango numérico o lista (in range(n))",
+                "Repite el bloque un número fijo de veces conocido de antemano"
+              ],
+              [
+                "while",
+                "Iteración indeterminada",
+                "Condición lógica abierta",
+                "Repite el bloque mientras la condición se mantenga True"
+              ]
+            ]
+          }
+        ],
+        "ejemplo": {
+          "tipo": "ejemplo_resuelto",
+          "encabezado": "Condicional de evaluación de calificación",
+          "cuerpo": "nota = 5.8; if nota >= 4.0: print(\"Estado: Aprobado\") else: print(\"Estado: Reprobado\"). Como la condición nota >= 4.0 es verdadera, se ejecuta únicamente la rama del if y se imprime \"Estado: Aprobado\"."
+        },
+        "actividad": {
+          "tipo": "intentalo_tu",
+          "pregunta": "Escribe un bucle while que comience con la variable contador = 5. En cada iteración, imprime \"Cuenta regresiva: \" junto con el valor del contador, y luego resta 1 a contador. El bucle debe detenerse cuando contador llegue a 0 e imprimir \"¡Despegue!\".",
+          "alternativas": [],
+          "indice_correcta": null,
+          "retroalimentacion": "El bucle while repite el bloque mientras la condición se mantenga verdadera. Debes inicializar contador = 5, usar una condición como contador > 0, imprimir el valor y restar 1 en cada iteración. Cuando contador llega a 0, la condición se vuelve falsa, sales del bucle e imprimes \"¡Despegue!\".",
+          "tarjetas": [],
+          "preguntas": []
+        },
+        "fuentes": [
+          {
+            "id_fragmento": 6,
+            "documento": "Estructuras de Control Condicionales e Iterativas",
+            "pagina": 1
+          },
+          {
+            "id_fragmento": 7,
+            "documento": "Estructuras de Control Condicionales e Iterativas",
+            "pagina": 1
+          },
+          {
+            "id_fragmento": 10,
+            "documento": "Estructuras de Control Condicionales e Iterativas",
+            "pagina": 2
+          },
+          {
+            "id_fragmento": 11,
+            "documento": "Estructuras de Control Condicionales e Iterativas",
+            "pagina": 2
+          }
+        ]
+      },
+      "llamadas": 1,
+      "tokens_entrada": 2869,
+      "tokens_entrada_cache": 2688,
+      "tokens_salida": 962,
+      "tokens_razonamiento": 0,
+      "segundos": 3.84,
+      "costo_usd": 0.000612414,
+      "costo_usd_sin_cache": 0.0010075499999999999,
+      "modelo_respondido": "deepseek-flash",
+      "fin": [
+        "stop"
+      ],
+      "codigo_objetivo": "PROG-U1-02",
+      "tarea": "cápsula",
+      "configuracion": "anterior",
+      "modelo_pedido": "deepseek-chat",
+      "thinking": ""
+    },
+    {
+      "valida": true,
+      "reparaciones": 0,
+      "errores_por_intento": [
+        []
+      ],
+      "advertencias": [],
+      "tipo_de_diagrama": "jerarquia",
+      "nodos": 6,
+      "spec": {
+        "version": 1,
+        "titulo": "Estructuras de Control de Flujo",
+        "tipo_de_diagrama": "jerarquia",
+        "nodos": [
+          {
+            "id": "n1",
+            "etiqueta": "Estructuras de Control",
+            "detalle": "Rompen la ejecución secuencial",
+            "rol": "principal"
+          },
+          {
+            "id": "n2",
+            "etiqueta": "Estructuras Selectivas",
+            "detalle": "if, elif, else",
+            "rol": "secundario"
+          },
+          {
+            "id": "n3",
+            "etiqueta": "Estructuras Iterativas",
+            "detalle": "while y for",
+            "rol": "secundario"
+          },
+          {
+            "id": "n4",
+            "etiqueta": "Condición booleana",
+            "detalle": "Evalúa True o False",
+            "rol": "secundario"
+          },
+          {
+            "id": "n5",
+            "etiqueta": "Bucle controlado por condición",
+            "detalle": "while",
+            "rol": "secundario"
+          },
+          {
+            "id": "n6",
+            "etiqueta": "Bucle controlado por contador",
+            "detalle": "for",
+            "rol": "secundario"
+          }
+        ],
+        "relaciones": [
+          {
+            "desde": "n1",
+            "hacia": "n2",
+            "verbo": "se divide en"
+          },
+          {
+            "desde": "n1",
+            "hacia": "n3",
+            "verbo": "se divide en"
+          },
+          {
+            "desde": "n2",
+            "hacia": "n4",
+            "verbo": "evalúa"
+          },
+          {
+            "desde": "n3",
+            "hacia": "n5",
+            "verbo": "incluye"
+          },
+          {
+            "desde": "n3",
+            "hacia": "n6",
+            "verbo": "incluye"
+          }
+        ],
+        "paleta": "studify",
+        "estilo": "plano",
+        "texto_alternativo": "Diagrama jerárquico que muestra las estructuras de control de flujo divididas en selectivas e iterativas. Las selectivas evalúan una condición booleana, mientras que las iterativas incluyen el bucle while controlado por condición y el bucle for controlado por contador.",
+        "fuentes": [
+          6,
+          7
+        ]
+      },
+      "llamadas": 1,
+      "tokens_entrada": 2150,
+      "tokens_entrada_cache": 1920,
+      "tokens_salida": 584,
+      "tokens_razonamiento": 0,
+      "segundos": 2.54,
+      "costo_usd": 0.00039066,
+      "costo_usd_sin_cache": 0.0006728999999999999,
+      "modelo_respondido": "deepseek-flash",
+      "fin": [
+        "stop"
+      ],
+      "codigo_objetivo": "PROG-U1-02",
+      "tarea": "especificación",
+      "configuracion": "anterior",
+      "modelo_pedido": "deepseek-chat",
+      "thinking": ""
+    }
+  ]
+}

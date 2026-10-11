@@ -1,0 +1,68 @@
+{
+  "modelo": "deepseek-flash",
+  "objetivo": "BD-U3-01",
+  "canal": "V",
+  "valida": false,
+  "errores_por_intento": [
+    [
+      "la respuesta del modelo no contiene ningún objeto JSON (no hay '{')"
+    ],
+    [
+      "la respuesta del modelo no contiene ningún objeto JSON (no hay '{')"
+    ],
+    [
+      "el objeto JSON quedó sin cerrar: probablemente la respuesta se truncó por límite de tokens"
+    ]
+  ],
+  "llamadas": [
+    {
+      "cuando_utc": "2026-10-11T02:43:57+00:00",
+      "etiqueta": "capsula:BD-U3-01:V",
+      "modelo_pedido": "deepseek-flash",
+      "modelo_respondido": "deepseek-flash",
+      "tokens_entrada": 2943,
+      "tokens_entrada_cache": 0,
+      "tokens_salida": 2000,
+      "tokens_razonamiento": 2000,
+      "fin": "length",
+      "segundos": 8.77,
+      "tarifa": "valle",
+      "costo_usd": 0.00164145,
+      "costo_usd_punta": 0.0032829,
+      "uso_sin_datos": false
+    },
+    {
+      "cuando_utc": "2026-10-11T02:44:06+00:00",
+      "etiqueta": "capsula:BD-U3-01:V",
+      "modelo_pedido": "deepseek-flash",
+      "modelo_respondido": "deepseek-flash",
+      "tokens_entrada": 3033,
+      "tokens_entrada_cache": 2816,
+      "tokens_salida": 2000,
+      "tokens_razonamiento": 2000,
+      "fin": "length",
+      "segundos": 8.73,
+      "tarifa": "valle",
+      "costo_usd": 0.001240998,
+      "costo_usd_punta": 0.002481996,
+      "uso_sin_datos": false
+    },
+    {
+      "cuando_utc": "2026-10-11T02:44:14+00:00",
+      "etiqueta": "capsula:BD-U3-01:V",
+      "modelo_pedido": "deepseek-flash",
+      "modelo_respondido": "deepseek-flash",
+      "tokens_entrada": 3045,
+      "tokens_entrada_cache": 2816,
+      "tokens_salida": 2000,
+      "tokens_razonamiento": 1202,
+      "fin": "length",
+      "segundos": 8.66,
+      "tarifa": "valle",
+      "costo_usd": 0.001242798,
+      "costo_usd_punta": 0.002485596,
+      "uso_sin_datos": false
+    }
+  ],
+  "costo_usd": 0.004125246
+}

@@ -1,0 +1,73 @@
+{
+  "version": 1,
+  "titulo": "Dependencias Funcionales y Cierre",
+  "tipo_de_diagrama": "mapa_conceptual",
+  "nodos": [
+    {
+      "id": "n1",
+      "etiqueta": "Dependencia Funcional",
+      "detalle": "Restricción entre conjuntos de atributos",
+      "rol": "principal"
+    },
+    {
+      "id": "n2",
+      "etiqueta": "Dependencia Funcional Plena",
+      "detalle": "Y depende de X, no de subconjunto propio",
+      "rol": "secundario"
+    },
+    {
+      "id": "n3",
+      "etiqueta": "Dependencia Transitiva",
+      "detalle": "Si X→Y y Y→Z, entonces X→Z",
+      "rol": "secundario"
+    },
+    {
+      "id": "n4",
+      "etiqueta": "Dependencia Trivial",
+      "detalle": "Y es subconjunto de X",
+      "rol": "secundario"
+    },
+    {
+      "id": "n5",
+      "etiqueta": "Cierre de Atributos",
+      "detalle": "Algoritmo iterativo de cálculo",
+      "rol": "resultado"
+    }
+  ],
+  "relaciones": [
+    {
+      "desde": "n1",
+      "hacia": "n2",
+      "verbo": "se clasifica en"
+    },
+    {
+      "desde": "n1",
+      "hacia": "n3",
+      "verbo": "se clasifica en"
+    },
+    {
+      "desde": "n1",
+      "hacia": "n4",
+      "verbo": "se clasifica en"
+    },
+    {
+      "desde": "n1",
+      "hacia": "n5",
+      "verbo": "permite calcular"
+    }
+  ],
+  "paleta": "studify",
+  "estilo": "plano",
+  "texto_alternativo": "El esquema muestra la Dependencia Funcional como concepto central, del cual se desprenden tres tipos: plena, transitiva y trivial. Además, la Dependencia Funcional permite calcular el Cierre de Atributos.",
+  "fuentes": [
+    18,
+    22
+  ],
+  "origen": {
+    "codigo_objetivo": "BD-U3-02",
+    "generado_por": "deepseek-flash",
+    "corrida": 2,
+    "intentos": 1,
+    "nota": "Generada por el LLM con el prompt del §3.2; sin editar a mano."
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "codigo_objetivo": "PROG-U1-02",
+  "asignatura": "Introducción a la Programación",
+  "unidad": "Unidad 1: Fundamentos",
+  "tema": "Estructuras de Control",
+  "origen": "base de datos: fragmentos validados (retriever.recuperar)",
+  "fragmentos": [
+    {
+      "id_fragmento": 6,
+      "documento": "Estructuras de Control Condicionales e Iterativas",
+      "cita": "Estructuras de Control Condicionales e Iterativas, p. 1",
+      "tipo": "texto",
+      "texto": "1. Definición y Reglas del Control de Flujo (Perfil Lectura / Escritura - R)\n\nPor defecto, la ejecución de un programa informático se realiza de manera secuencial, línea por línea. Las estructuras de control de flujo rompen este comportamiento lineal para permitir tomar decisiones lógicas o repetir bloques de código basándose en condiciones booleanas. Se clasifican en dos grandes familias: 1. Estructuras Selectivas (Condicionales): if, elif, else. Evalúan una expresión condicional. Si el resultado es True, se ejecuta el bloque indentado; si es False, se omite o se evalúa la siguiente rama. 2. Estructuras Iterativas (Bucles): while (bucle controlado por condición) y for (bucle controlado por contador o iteración sobre colecciones)."
+    },
+    {
+      "id_fragmento": 7,
+      "documento": "Estructuras de Control Condicionales e Iterativas",
+      "cita": "Estructuras de Control Condicionales e Iterativas, p. 1",
+      "tipo": "texto",
+      "texto": "2. Matriz Comparativa de Estructuras (Perfil Visual - V)\n\nEstructura Tipo de Control Condición de Evaluación Comportamiento del Flujo if / elif / else Selección Expresión booleana (a > b) Ejecuta 1 sola rama lógica según la primera condición verdadera. for Iteración determinada Rango numérico o lista (in range(n)) Repite el bloque un número fijo de veces conocido de antemano. while Iteración indeterminada Condición lógica abierta Repite el bloque mientras la condición se mantenga True."
+    },
+    {
+      "id_fragmento": 8,
+      "documento": "Estructuras de Control Condicionales e Iterativas",
+      "cita": "Estructuras de Control Condicionales e Iterativas, p. 1",
+      "tipo": "texto",
+      "texto": "Esquema Lógico de Decisión:\n\n[ Inicio ] I M (¿Condición evaluada?) IIIIIIIIIIIIIIIIIIIII SI NO I I [ Bloque A ] [ Bloque B ] I I IIIIIIIIIIIIIIIIIIIII M [ Continuar ]"
+    },
+    {
+      "id_fragmento": 9,
+      "documento": "Estructuras de Control Condicionales e Iterativas",
+      "cita": "Estructuras de Control Condicionales e Iterativas, pp. 1–2",
+      "tipo": "texto",
+      "texto": "3. Explicación Narrativa: El Algoritmo del Semáforo (Perfil Auditivo - A)\n\nImagina que eres un conductor aproximándote a un cruce regulado por un semáforo. Tu cerebro ejecuta constantemente una estructura de control condicional en tiempo real. Primero escuchas y observas el estado del semáforo. Tu regla lógica interna funciona así: si la luz está verde, avanzas sin detenerte; en cambio, si la luz cambia a amarillo, debes evaluar la distancia de frenado; y si finalmente la luz está roja, te detienes por completo. En un bucle de tráfico, mantienes tu pie en el freno mientras la luz siga en rojo. En el momento exacto en que cambia a verde, la condición del while se vuelve falsa, sales del bucle de espera y continúas tu camino."
+    },
+    {
+      "id_fragmento": 10,
+      "documento": "Estructuras de Control Condicionales e Iterativas",
+      "cita": "Estructuras de Control Condicionales e Iterativas, p. 2",
+      "tipo": "texto",
+      "texto": "Ejemplo de Código en Python:\n\n# Ejemplo 1: Condicional de Evaluación de Calificación nota = 5.8 if nota >= 4.0: print(\"Estado: Aprobado\") else: print(\"Estado: Reprobado\") # Ejemplo 2: Bucle for iterando con acumulador suma_total = 0 for numero in range(1, 6): # Genera la secuencia 1, 2, 3, 4, 5 suma_total += numero print(f\"Paso {numero}: suma parcial = {suma_total}\") print(f\"Suma final acumulada: {suma_total}\")"
+    },
+    {
+      "id_fragmento": 11,
+      "documento": "Estructuras de Control Condicionales e Iterativas",
+      "cita": "Estructuras de Control Condicionales e Iterativas, p. 2",
+      "tipo": "texto",
+      "texto": "Ejercicio Guiado:\n\n1. Escribe un bucle while que comience con la variable contador = 5. 2. En cada iteración del bucle, imprime \"Cuenta regresiva: \" junto con el valor del contador, y luego resta 1 a contador. 3. El bucle debe detenerse cuando contador llegue a 0 e imprimir \"¡Despegue!\"."
+    }
+  ]
+}

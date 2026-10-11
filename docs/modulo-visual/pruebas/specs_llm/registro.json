@@ -1,0 +1,483 @@
+[
+  {
+    "nombre": "PROG-U1-01_c1",
+    "codigo_objetivo": "PROG-U1-01",
+    "corrida": 1,
+    "modelo_pedido": "deepseek-flash",
+    "razonamiento": false,
+    "temperatura": 0.4,
+    "generado_utc": "2026-10-11T02:53:00+00:00",
+    "fragmentos_entregados": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "valida": true,
+    "intentos": 2,
+    "reparaciones": 1,
+    "detalle_intentos": [
+      {
+        "intento": 1,
+        "errores": [
+          "falta el campo obligatorio `version`"
+        ],
+        "crudo": "{\n  \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n  \"title\": \"EspecificacionVisual\",\n  \"type\": \"object\",\n  \"required\": [\"version\", \"titulo\", \"tipo_de_diagrama\", \"nodos\", \"relaciones\", \"paleta\", \"estilo\", \"texto_alternativo\"],\n  \"properties\": {\n    \"version\": { \"const\": 1 },\n    \"titulo\": { \"type\": \"string\", \"description\": \"Máximo 6 palabras\" },\n    \"tipo_de_diagrama\": {\n      \"enum\": [\"mapa_conceptual\", \"flujo\", \"comparacion\", \"linea_de_tiempo\", \"jerarquia\", \"ciclo\", \"causa_efecto\"]\n    },\n    \"nodos\": {\n      \"type\": \"array\", \"minItems\": 3, \"maxItems\": 7,\n      \"items\": {\n        \"type\": \"object\",\n        \"required\": [\"id\", \"etiqueta\"],\n        \"properties\": {\n          \"id\": { \"type\": \"string\", \"pattern\": \"^n[1-9]$\" },\n          \"etiqueta\": { \"type\": \"string\", \"description\": \"Máximo 4 palabras\" },\n          \"detalle\": { \"type\": \"string\", \"description\": \"Opcional, máximo 8 palabras. Solo lo usa el render determinístico\" },\n          \"rol\": { \"enum\": [\"principal\", \"secundario\", \"resultado\", \"decision\"], \"default\": \"secundario\" },\n          \"grupo\": { \"type\": \"string\", \"description\": \"Columna en `comparacion`; marca temporal en `linea_de_tiempo`\" }\n        }\n      }\n    },\n    \"relaciones\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"object\",\n        \"required\": [\"desde\", \"hacia\", \"verbo\"],\n        \"properties\": {\n          \"desde\": { \"type\": \"string\" },\n          \"hacia\": { \"type\": \"string\" },\n          \"verbo\": { \"type\": \"string\", \"description\": \"Máximo 3 palabras\" }\n        }\n      }\n    },\n    \"paleta\": { \"enum\": [\"studify\", \"azul\", \"violeta\"] },\n    \"estilo\": { \"enum\": [\"plano\"] },\n    \"texto_alternativo\": { \"type\": \"string\", \"description\": \"1 o 2 oraciones que describen el diagrama\" },\n    \"fuentes\": { \"type\": \"array\", \"items\": { \"type\": \"integer\" }, \"description\": \"id_fragmento usados\" }\n  },\n  \"titulo\": \"Variables y Tipos de Datos\",\n  \"tipo_de_diagrama\": \"mapa_conceptual\",\n  \"nodos\": [\n    {\n      \"id\": \"n1\",\n      \"etiqueta\": \"Variable\",\n      \"detalle\": \"Ubicación en memoria RAM\",\n      \"rol\": \"principal\"\n    },\n    {\n      \"id\": \"n2\",\n      \"etiqueta\": \"Identificador simbólico\",\n      \"detalle\": \"Nombre de la variable\",\n      \"rol\": \"secundario\"\n    },\n    {\n      \"id\": \"n3\",\n      \"etiqueta\": \"Tipo de dato\",\n      \"detalle\": \"Determina operaciones y memoria\",\n      \"rol\": \"secundario\"\n    },\n    {\n      \"id\": \"n4\",\n      \"etiqueta\": \"int\",\n      \"detalle\": \"Números sin parte decimal\",\n      \"rol\": \"secundario\"\n    },\n    {\n      \"id\": \"n5\",\n      \"etiqueta\": \"float\",\n      \"detalle\": \"Números con parte decimal\",\n      \"rol\": \"secundario\"\n    },\n    {\n      \"id\": \"n6\",\n      \"etiqueta\": \"bool\",\n      \"detalle\": \"True o False\",\n      \"rol\": \"secundario\"\n    },\n    {\n      \"id\": \"n7\",\n      \"etiqueta\": \"str\",\n      \"detalle\": \"Secuencia inmutable de caracteres\",\n      \"rol\": \"secundario\"\n    }\n  ],\n  \"relaciones\": [\n    { \"desde\": \"n1\", \"hacia\": \"n2\", \"verbo\": \"asociada a\" },\n    { \"desde\": \"n1\", \"hacia\": \"n3\", \"verbo\": \"almacena un\" },\n    { \"desde\": \"n3\", \"hacia\": \"n4\", \"verbo\": \"incluye\" },\n    { \"desde\": \"n3\", \"hacia\": \"n5\", \"verbo\": \"incluye\" },\n    { \"desde\": \"n3\", \"hacia\": \"n6\", \"verbo\": \"incluye\" },\n    { \"desde\": \"n3\", \"hacia\": \"n7\", \"verbo\": \"incluye\" }\n  ],\n  \"paleta\": \"studify\",\n  \"estilo\": \"plano\",\n  \"texto_alternativo\": \"El esquema muestra que una variable es una ubicación en memoria RAM asociada a un identificador simbólico y que almacena un valor de un tipo de dato específico. Los tipos de datos primitivos incluidos son int, float, bool y str.\",\n  \"fuentes\": [1, 2, 3, 4, 5]\n}"
+      },
+      {
+        "intento": 2,
+        "errores": [],
+        "crudo": "{\n  \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n  \"title\": \"EspecificacionVisual\",\n  \"type\": \"object\",\n  \"required\": [\"version\", \"titulo\", \"tipo_de_diagrama\", \"nodos\", \"relaciones\", \"paleta\", \"estilo\", \"texto_alternativo\"],\n  \"properties\": {\n    \"version\": { \"const\": 1 },\n    \"titulo\": { \"type\": \"string\", \"description\": \"Máximo 6 palabras\" },\n    \"tipo_de_diagrama\": {\n      \"enum\": [\"mapa_conceptual\", \"flujo\", \"comparacion\", \"linea_de_tiempo\", \"jerarquia\", \"ciclo\", \"causa_efecto\"]\n    },\n    \"nodos\": {\n      \"type\": \"array\", \"minItems\": 3, \"maxItems\": 7,\n      \"items\": {\n        \"type\": \"object\",\n        \"required\": [\"id\", \"etiqueta\"],\n        \"properties\": {\n          \"id\": { \"type\": \"string\", \"pattern\": \"^n[1-9]$\" },\n          \"etiqueta\": { \"type\": \"string\", \"description\": \"Máximo 4 palabras\" },\n          \"detalle\": { \"type\": \"string\", \"description\": \"Opcional, máximo 8 palabras. Solo lo usa el render determinístico\" },\n          \"rol\": { \"enum\": [\"principal\", \"secundario\", \"resultado\", \"decision\"], \"default\": \"secundario\" },\n          \"grupo\": { \"type\": \"string\", \"description\": \"Columna en `comparacion`; marca temporal en `linea_de_tiempo`\" }\n        }\n      }\n    },\n    \"relaciones\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"object\",\n        \"required\": [\"desde\", \"hacia\", \"verbo\"],\n        \"properties\": {\n          \"desde\": { \"type\": \"string\" },\n          \"hacia\": { \"type\": \"string\" },\n          \"verbo\": { \"type\": \"string\", \"description\": \"Máximo 3 palabras\" }\n        }\n      }\n    },\n    \"paleta\": { \"enum\": [\"studify\", \"azul\", \"violeta\"] },\n    \"estilo\": { \"enum\": [\"plano\"] },\n    \"texto_alternativo\": { \"type\": \"string\", \"description\": \"1 o 2 oraciones que describen el diagrama\" },\n    \"fuentes\": { \"type\": \"array\", \"items\": { \"type\": \"integer\" }, \"description\": \"id_fragmento usados\" }\n  },\n  \"version\": 1,\n  \"titulo\": \"Variables y Tipos de Datos\",\n  \"tipo_de_diagrama\": \"mapa_conceptual\",\n  \"nodos\": [\n    {\n      \"id\": \"n1\",\n      \"etiqueta\": \"Variable\",\n      \"detalle\": \"Ubicación en memoria RAM\",\n      \"rol\": \"principal\"\n    },\n    {\n      \"id\": \"n2\",\n      \"etiqueta\": \"Identificador simbólico\",\n      \"detalle\": \"Nombre de la variable\",\n      \"rol\": \"secundario\"\n    },\n    {\n      \"id\": \"n3\",\n      \"etiqueta\": \"Tipo de dato\",\n      \"detalle\": \"Determina operaciones y memoria\",\n      \"rol\": \"secundario\"\n    },\n    {\n      \"id\": \"n4\",\n      \"etiqueta\": \"int\",\n      \"detalle\": \"Números sin parte decimal\",\n      \"rol\": \"secundario\"\n    },\n    {\n      \"id\": \"n5\",\n      \"etiqueta\": \"float\",\n      \"detalle\": \"Números con parte decimal\",\n      \"rol\": \"secundario\"\n    },\n    {\n      \"id\": \"n6\",\n      \"etiqueta\": \"bool\",\n      \"detalle\": \"True o False\",\n      \"rol\": \"secundario\"\n    },\n    {\n      \"id\": \"n7\",\n      \"etiqueta\": \"str\",\n      \"detalle\": \"Secuencia inmutable de caracteres\",\n      \"rol\": \"secundario\"\n    }\n  ],\n  \"relaciones\": [\n    { \"desde\": \"n1\", \"hacia\": \"n2\", \"verbo\": \"asociada a\" },\n    { \"desde\": \"n1\", \"hacia\": \"n3\", \"verbo\": \"almacena un\" },\n    { \"desde\": \"n3\", \"hacia\": \"n4\", \"verbo\": \"incluye\" },\n    { \"desde\": \"n3\", \"hacia\": \"n5\", \"verbo\": \"incluye\" },\n    { \"desde\": \"n3\", \"hacia\": \"n6\", \"verbo\": \"incluye\" },\n    { \"desde\": \"n3\", \"hacia\": \"n7\", \"verbo\": \"incluye\" }\n  ],\n  \"paleta\": \"studify\",\n  \"estilo\": \"plano\",\n  \"texto_alternativo\": \"El esquema muestra que una variable es una ubicación en memoria RAM asociada a un identificador simbólico y que almacena un valor de un tipo de dato específico. Los tipos de datos primitivos incluidos son int, float, bool y str.\",\n  \"fuentes\": [1, 2, 3, 4, 5]\n}"
+      }
+    ],
+    "advertencias": [],
+    "segundos": 8.93,
+    "tokens_entrada": 5536,
+    "tokens_entrada_cache": 3200,
+    "tokens_salida": 2443,
+    "tokens_razonamiento": 0,
+    "costo_usd": 0.0018258,
+    "costo_usd_punta": 0.0036516,
+    "tarifa": "valle",
+    "modelo_respondido": "deepseek-flash"
+  },
+  {
+    "nombre": "PROG-U1-01_c2",
+    "codigo_objetivo": "PROG-U1-01",
+    "corrida": 2,
+    "modelo_pedido": "deepseek-flash",
+    "razonamiento": false,
+    "temperatura": 0.4,
+    "generado_utc": "2026-10-11T02:53:03+00:00",
+    "fragmentos_entregados": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "valida": true,
+    "intentos": 1,
+    "reparaciones": 0,
+    "detalle_intentos": [
+      {
+        "intento": 1,
+        "errores": [],
+        "crudo": "{\n  \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n  \"title\": \"EspecificacionVisual\",\n  \"version\": 1,\n  \"titulo\": \"Variables y Tipos de Datos\",\n  \"tipo_de_diagrama\": \"mapa_conceptual\",\n  \"nodos\": [\n    {\n      \"id\": \"n1\",\n      \"etiqueta\": \"Variable\",\n      \"detalle\": \"Ubicación en memoria RAM\",\n      \"rol\": \"principal\"\n    },\n    {\n      \"id\": \"n2\",\n      \"etiqueta\": \"Identificador simbólico\",\n      \"detalle\": \"Nombre de la variable\",\n      \"rol\": \"secundario\"\n    },\n    {\n      \"id\": \"n3\",\n      \"etiqueta\": \"Tipo de dato\",\n      \"detalle\": \"Determina operaciones y memoria\",\n      \"rol\": \"secundario\"\n    },\n    {\n      \"id\": \"n4\",\n      \"etiqueta\": \"int\",\n      \"detalle\": \"Números sin parte decimal\",\n      \"rol\": \"secundario\"\n    },\n    {\n      \"id\": \"n5\",\n      \"etiqueta\": \"float\",\n      \"detalle\": \"Números con parte decimal\",\n      \"rol\": \"secundario\"\n    },\n    {\n      \"id\": \"n6\",\n      \"etiqueta\": \"bool\",\n      \"detalle\": \"True o False\",\n      \"rol\": \"secundario\"\n    },\n    {\n      \"id\": \"n7\",\n      \"etiqueta\": \"str\",\n      \"detalle\": \"Secuencia inmutable de caracteres\",\n      \"rol\": \"secundario\"\n    }\n  ],\n  \"relaciones\": [\n    {\n      \"desde\": \"n1\",\n      \"hacia\": \"n2\",\n      \"verbo\": \"asociada a\"\n    },\n    {\n      \"desde\": \"n1\",\n      \"hacia\": \"n3\",\n      \"verbo\": \"almacena valor de\"\n    },\n    {\n      \"desde\": \"n3\",\n      \"hacia\": \"n4\",\n      \"verbo\": \"incluye\"\n    },\n    {\n      \"desde\": \"n3\",\n      \"hacia\": \"n5\",\n      \"verbo\": \"incluye\"\n    },\n    {\n      \"desde\": \"n3\",\n      \"hacia\": \"n6\",\n      \"verbo\": \"incluye\"\n    },\n    {\n      \"desde\": \"n3\",\n      \"hacia\": \"n7\",\n      \"verbo\": \"incluye\"\n    }\n  ],\n  \"paleta\": \"studify\",\n  \"estilo\": \"plano\",\n  \"texto_alternativo\": \"El esquema muestra que una variable es una ubicación en memoria RAM asociada a un identificador simbólico y que almacena un valor de un tipo de dato. El tipo de dato determina las operaciones y la memoria, e incluye los tipos primitivos int, float, bool y str.\",\n  \"fuentes\": [1, 2, 3]\n}"
+      }
+    ],
+    "advertencias": [],
+    "segundos": 2.58,
+    "tokens_entrada": 2117,
+    "tokens_entrada_cache": 1920,
+    "tokens_salida": 684,
+    "tokens_razonamiento": 0,
+    "costo_usd": 0.00044571,
+    "costo_usd_punta": 0.00089142,
+    "tarifa": "valle",
+    "modelo_respondido": "deepseek-flash"
+  },
+  {
+    "nombre": "PROG-U1-01_c3",
+    "codigo_objetivo": "PROG-U1-01",
+    "corrida": 3,
+    "modelo_pedido": "deepseek-flash",
+    "razonamiento": false,
+    "temperatura": 0.4,
+    "generado_utc": "2026-10-11T02:53:05+00:00",
+    "fragmentos_entregados": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "valida": true,
+    "intentos": 1,
+    "reparaciones": 0,
+    "detalle_intentos": [
+      {
+        "intento": 1,
+        "errores": [],
+        "crudo": "{\n  \"version\": 1,\n  \"titulo\": \"Variables y Tipos de Datos\",\n  \"tipo_de_diagrama\": \"mapa_conceptual\",\n  \"nodos\": [\n    {\n      \"id\": \"n1\",\n      \"etiqueta\": \"Variable\",\n      \"detalle\": \"Ubicación en memoria RAM\",\n      \"rol\": \"principal\"\n    },\n    {\n      \"id\": \"n2\",\n      \"etiqueta\": \"Tipos de datos primitivos\",\n      \"detalle\": \"Determinan operaciones y memoria\",\n      \"rol\": \"secundario\"\n    },\n    {\n      \"id\": \"n3\",\n      \"etiqueta\": \"int\",\n      \"detalle\": \"Números sin parte decimal\",\n      \"rol\": \"secundario\"\n    },\n    {\n      \"id\": \"n4\",\n      \"etiqueta\": \"float\",\n      \"detalle\": \"Números con parte decimal\",\n      \"rol\": \"secundario\"\n    },\n    {\n      \"id\": \"n5\",\n      \"etiqueta\": \"bool\",\n      \"detalle\": \"True o False\",\n      \"rol\": \"secundario\"\n    },\n    {\n      \"id\": \"n6\",\n      \"etiqueta\": \"str\",\n      \"detalle\": \"Secuencia inmutable de caracteres\",\n      \"rol\": \"secundario\"\n    }\n  ],\n  \"relaciones\": [\n    {\n      \"desde\": \"n1\",\n      \"hacia\": \"n2\",\n      \"verbo\": \"almacena\"\n    },\n    {\n      \"desde\": \"n2\",\n      \"hacia\": \"n3\",\n      \"verbo\": \"incluye\"\n    },\n    {\n      \"desde\": \"n2\",\n      \"hacia\": \"n4\",\n      \"verbo\": \"incluye\"\n    },\n    {\n      \"desde\": \"n2\",\n      \"hacia\": \"n5\",\n      \"verbo\": \"incluye\"\n    },\n    {\n      \"desde\": \"n2\",\n      \"hacia\": \"n6\",\n      \"verbo\": \"incluye\"\n    }\n  ],\n  \"paleta\": \"studify\",\n  \"estilo\": \"plano\",\n  \"texto_alternativo\": \"El esquema muestra que una variable es una ubicación en memoria RAM que almacena un tipo de dato específico. Los tipos de datos primitivos incluyen int, float, bool y str.\",\n  \"fuentes\": [1, 2, 3, 4, 5]\n}"
+      }
+    ],
+    "advertencias": [],
+    "segundos": 2.24,
+    "tokens_entrada": 2117,
+    "tokens_entrada_cache": 1920,
+    "tokens_salida": 557,
+    "tokens_razonamiento": 0,
+    "costo_usd": 0.00036951,
+    "costo_usd_punta": 0.00073902,
+    "tarifa": "valle",
+    "modelo_respondido": "deepseek-flash"
+  },
+  {
+    "nombre": "PROG-U1-02_c1",
+    "codigo_objetivo": "PROG-U1-02",
+    "corrida": 1,
+    "modelo_pedido": "deepseek-flash",
+    "razonamiento": false,
+    "temperatura": 0.4,
+    "generado_utc": "2026-10-11T02:53:10+00:00",
+    "fragmentos_entregados": [
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "valida": true,
+    "intentos": 2,
+    "reparaciones": 1,
+    "detalle_intentos": [
+      {
+        "intento": 1,
+        "errores": [
+          "la etiqueta de n4 pasa de 4 palabras"
+        ],
+        "crudo": "{\n  \"version\": 1,\n  \"titulo\": \"Estructuras de Control de Flujo\",\n  \"tipo_de_diagrama\": \"jerarquia\",\n  \"nodos\": [\n    {\n      \"id\": \"n1\",\n      \"etiqueta\": \"Estructuras de Control\",\n      \"detalle\": \"Rompen la ejecución secuencial\",\n      \"rol\": \"principal\"\n    },\n    {\n      \"id\": \"n2\",\n      \"etiqueta\": \"Estructuras Selectivas\",\n      \"detalle\": \"if, elif, else\",\n      \"rol\": \"secundario\"\n    },\n    {\n      \"id\": \"n3\",\n      \"etiqueta\": \"Estructuras Iterativas\",\n      \"detalle\": \"while y for\",\n      \"rol\": \"secundario\"\n    },\n    {\n      \"id\": \"n4\",\n      \"etiqueta\": \"if / elif / else\",\n      \"detalle\": \"Ejecuta una sola rama lógica\",\n      \"rol\": \"secundario\"\n    },\n    {\n      \"id\": \"n5\",\n      \"etiqueta\": \"for\",\n      \"detalle\": \"Iteración determinada\",\n      \"rol\": \"secundario\"\n    },\n    {\n      \"id\": \"n6\",\n      \"etiqueta\": \"while\",\n      \"detalle\": \"Iteración indeterminada\",\n      \"rol\": \"secundario\"\n    }\n  ],\n  \"relaciones\": [\n    {\n      \"desde\": \"n1\",\n      \"hacia\": \"n2\",\n      \"verbo\": \"se divide en\"\n    },\n    {\n      \"desde\": \"n1\",\n      \"hacia\": \"n3\",\n      \"verbo\": \"se divide en\"\n    },\n    {\n      \"desde\": \"n2\",\n      \"hacia\": \"n4\",\n      \"verbo\": \"incluye\"\n    },\n    {\n      \"desde\": \"n3\",\n      \"hacia\": \"n5\",\n      \"verbo\": \"incluye\"\n    },\n    {\n      \"desde\": \"n3\",\n      \"hacia\": \"n6\",\n      \"verbo\": \"incluye\"\n    }\n  ],\n  \"paleta\": \"studify\",\n  \"estilo\": \"plano\",\n  \"texto_alternativo\": \"Diagrama jerárquico que muestra las estructuras de control de flujo divididas en selectivas (if, elif, else) e iterativas (for y while). Las selectivas incluyen la estructura if/elif/else, mientras que las iterativas incluyen for y while.\",\n  \"fuentes\": [6, 7]\n}"
+      },
+      {
+        "intento": 2,
+        "errores": [],
+        "crudo": "{\n  \"version\": 1,\n  \"titulo\": \"Estructuras de Control de Flujo\",\n  \"tipo_de_diagrama\": \"jerarquia\",\n  \"nodos\": [\n    {\n      \"id\": \"n1\",\n      \"etiqueta\": \"Estructuras de Control\",\n      \"detalle\": \"Rompen la ejecución secuencial\",\n      \"rol\": \"principal\"\n    },\n    {\n      \"id\": \"n2\",\n      \"etiqueta\": \"Estructuras Selectivas\",\n      \"detalle\": \"if, elif, else\",\n      \"rol\": \"secundario\"\n    },\n    {\n      \"id\": \"n3\",\n      \"etiqueta\": \"Estructuras Iterativas\",\n      \"detalle\": \"while y for\",\n      \"rol\": \"secundario\"\n    },\n    {\n      \"id\": \"n4\",\n      \"etiqueta\": \"Condicionales\",\n      \"detalle\": \"if, elif, else\",\n      \"rol\": \"secundario\"\n    },\n    {\n      \"id\": \"n5\",\n      \"etiqueta\": \"for\",\n      \"detalle\": \"Iteración determinada\",\n      \"rol\": \"secundario\"\n    },\n    {\n      \"id\": \"n6\",\n      \"etiqueta\": \"while\",\n      \"detalle\": \"Iteración indeterminada\",\n      \"rol\": \"secundario\"\n    }\n  ],\n  \"relaciones\": [\n    {\n      \"desde\": \"n1\",\n      \"hacia\": \"n2\",\n      \"verbo\": \"se divide en\"\n    },\n    {\n      \"desde\": \"n1\",\n      \"hacia\": \"n3\",\n      \"verbo\": \"se divide en\"\n    },\n    {\n      \"desde\": \"n2\",\n      \"hacia\": \"n4\",\n      \"verbo\": \"incluye\"\n    },\n    {\n      \"desde\": \"n3\",\n      \"hacia\": \"n5\",\n      \"verbo\": \"incluye\"\n    },\n    {\n      \"desde\": \"n3\",\n      \"hacia\": \"n6\",\n      \"verbo\": \"incluye\"\n    }\n  ],\n  \"paleta\": \"studify\",\n  \"estilo\": \"plano\",\n  \"texto_alternativo\": \"Diagrama jerárquico que muestra las estructuras de control de flujo divididas en selectivas e iterativas. Las selectivas incluyen condicionales, mientras que las iterativas incluyen for y while.\",\n  \"fuentes\": [6, 7]\n}"
+      }
+    ],
+    "advertencias": [],
+    "segundos": 4.86,
+    "tokens_entrada": 4969,
+    "tokens_entrada_cache": 2560,
+    "tokens_salida": 1139,
+    "tokens_razonamiento": 0,
+    "costo_usd": 0.00105243,
+    "costo_usd_punta": 0.00210486,
+    "tarifa": "valle",
+    "modelo_respondido": "deepseek-flash"
+  },
+  {
+    "nombre": "PROG-U1-02_c2",
+    "codigo_objetivo": "PROG-U1-02",
+    "corrida": 2,
+    "modelo_pedido": "deepseek-flash",
+    "razonamiento": false,
+    "temperatura": 0.4,
+    "generado_utc": "2026-10-11T02:53:14+00:00",
+    "fragmentos_entregados": [
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "valida": true,
+    "intentos": 2,
+    "reparaciones": 1,
+    "detalle_intentos": [
+      {
+        "intento": 1,
+        "errores": [
+          "la etiqueta de n4 pasa de 4 palabras"
+        ],
+        "crudo": "{\"version\": 1, \"titulo\": \"Estructuras de Control de Flujo\", \"tipo_de_diagrama\": \"jerarquia\", \"nodos\": [{\"id\": \"n1\", \"etiqueta\": \"Estructuras de Control\", \"detalle\": \"Rompen la ejecución secuencial\", \"rol\": \"principal\"}, {\"id\": \"n2\", \"etiqueta\": \"Estructuras Selectivas\", \"detalle\": \"if, elif, else\", \"rol\": \"secundario\"}, {\"id\": \"n3\", \"etiqueta\": \"Estructuras Iterativas\", \"detalle\": \"while y for\", \"rol\": \"secundario\"}, {\"id\": \"n4\", \"etiqueta\": \"if / elif / else\", \"detalle\": \"Ejecuta una sola rama lógica\", \"rol\": \"secundario\"}, {\"id\": \"n5\", \"etiqueta\": \"for\", \"detalle\": \"Iteración determinada por rango\", \"rol\": \"secundario\"}, {\"id\": \"n6\", \"etiqueta\": \"while\", \"detalle\": \"Iteración indeterminada por condición\", \"rol\": \"secundario\"}], \"relaciones\": [{\"desde\": \"n1\", \"hacia\": \"n2\", \"verbo\": \"se divide en\"}, {\"desde\": \"n1\", \"hacia\": \"n3\", \"verbo\": \"se divide en\"}, {\"desde\": \"n2\", \"hacia\": \"n4\", \"verbo\": \"incluye\"}, {\"desde\": \"n3\", \"hacia\": \"n5\", \"verbo\": \"incluye\"}, {\"desde\": \"n3\", \"hacia\": \"n6\", \"verbo\": \"incluye\"}], \"paleta\": \"studify\", \"estilo\": \"plano\", \"texto_alternativo\": \"Esquema jerárquico que muestra las estructuras de control de flujo divididas en selectivas, con if, elif y else, e iterativas, con for y while. Cada subtipo indica su condición de evaluación y comportamiento.\", \"fuentes\": [6, 7]}"
+      },
+      {
+        "intento": 2,
+        "errores": [],
+        "crudo": "{\"version\": 1, \"titulo\": \"Estructuras de Control de Flujo\", \"tipo_de_diagrama\": \"jerarquia\", \"nodos\": [{\"id\": \"n1\", \"etiqueta\": \"Estructuras de Control\", \"detalle\": \"Rompen la ejecución secuencial\", \"rol\": \"principal\"}, {\"id\": \"n2\", \"etiqueta\": \"Estructuras Selectivas\", \"detalle\": \"Evalúan expresión condicional\", \"rol\": \"secundario\"}, {\"id\": \"n3\", \"etiqueta\": \"Estructuras Iterativas\", \"detalle\": \"Repiten bloques de código\", \"rol\": \"secundario\"}, {\"id\": \"n4\", \"etiqueta\": \"Condicionales\", \"detalle\": \"if, elif, else\", \"rol\": \"secundario\"}, {\"id\": \"n5\", \"etiqueta\": \"for\", \"detalle\": \"Iteración determinada por rango\", \"rol\": \"secundario\"}, {\"id\": \"n6\", \"etiqueta\": \"while\", \"detalle\": \"Iteración indeterminada por condición\", \"rol\": \"secundario\"}], \"relaciones\": [{\"desde\": \"n1\", \"hacia\": \"n2\", \"verbo\": \"se divide en\"}, {\"desde\": \"n1\", \"hacia\": \"n3\", \"verbo\": \"se divide en\"}, {\"desde\": \"n2\", \"hacia\": \"n4\", \"verbo\": \"incluye\"}, {\"desde\": \"n3\", \"hacia\": \"n5\", \"verbo\": \"incluye\"}, {\"desde\": \"n3\", \"hacia\": \"n6\", \"verbo\": \"incluye\"}], \"paleta\": \"studify\", \"estilo\": \"plano\", \"texto_alternativo\": \"Esquema jerárquico que muestra las estructuras de control de flujo divididas en selectivas, con condicionales if, elif y else, e iterativas, con for y while. Cada subtipo indica su condición de evaluación y comportamiento.\", \"fuentes\": [6, 7]}"
+      }
+    ],
+    "advertencias": [],
+    "segundos": 4.63,
+    "tokens_entrada": 4868,
+    "tokens_entrada_cache": 4480,
+    "tokens_salida": 960,
+    "tokens_razonamiento": 0,
+    "costo_usd": 0.0006476399999999999,
+    "costo_usd_punta": 0.0012952799999999998,
+    "tarifa": "valle",
+    "modelo_respondido": "deepseek-flash"
+  },
+  {
+    "nombre": "PROG-U1-02_c3",
+    "codigo_objetivo": "PROG-U1-02",
+    "corrida": 3,
+    "modelo_pedido": "deepseek-flash",
+    "razonamiento": false,
+    "temperatura": 0.4,
+    "generado_utc": "2026-10-11T02:53:19+00:00",
+    "fragmentos_entregados": [
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "valida": true,
+    "intentos": 2,
+    "reparaciones": 1,
+    "detalle_intentos": [
+      {
+        "intento": 1,
+        "errores": [
+          "en una jerarquía cada nodo tiene un solo padre: «Condición booleana» (n4) tiene 2"
+        ],
+        "crudo": "{\n  \"version\": 1,\n  \"titulo\": \"Estructuras de Control de Flujo\",\n  \"tipo_de_diagrama\": \"jerarquia\",\n  \"nodos\": [\n    {\n      \"id\": \"n1\",\n      \"etiqueta\": \"Control de flujo\",\n      \"detalle\": \"Rompe la ejecución secuencial\",\n      \"rol\": \"principal\"\n    },\n    {\n      \"id\": \"n2\",\n      \"etiqueta\": \"Estructuras selectivas\",\n      \"detalle\": \"if, elif, else\",\n      \"rol\": \"secundario\"\n    },\n    {\n      \"id\": \"n3\",\n      \"etiqueta\": \"Estructuras iterativas\",\n      \"detalle\": \"while y for\",\n      \"rol\": \"secundario\"\n    },\n    {\n      \"id\": \"n4\",\n      \"etiqueta\": \"Condición booleana\",\n      \"detalle\": \"True o False\",\n      \"rol\": \"decision\"\n    },\n    {\n      \"id\": \"n5\",\n      \"etiqueta\": \"Bloque de código\",\n      \"detalle\": \"Se ejecuta u omite\",\n      \"rol\": \"resultado\"\n    }\n  ],\n  \"relaciones\": [\n    {\n      \"desde\": \"n1\",\n      \"hacia\": \"n2\",\n      \"verbo\": \"se divide en\"\n    },\n    {\n      \"desde\": \"n1\",\n      \"hacia\": \"n3\",\n      \"verbo\": \"se divide en\"\n    },\n    {\n      \"desde\": \"n2\",\n      \"hacia\": \"n4\",\n      \"verbo\": \"evalúa\"\n    },\n    {\n      \"desde\": \"n3\",\n      \"hacia\": \"n4\",\n      \"verbo\": \"evalúa\"\n    },\n    {\n      \"desde\": \"n4\",\n      \"hacia\": \"n5\",\n      \"verbo\": \"determina\"\n    }\n  ],\n  \"paleta\": \"studify\",\n  \"estilo\": \"plano\",\n  \"texto_alternativo\": \"Esquema jerárquico que muestra las estructuras de control de flujo divididas en selectivas e iterativas, ambas evaluando una condición booleana que determina la ejecución de un bloque de código.\",\n  \"fuentes\": [6, 7, 8]\n}"
+      },
+      {
+        "intento": 2,
+        "errores": [],
+        "crudo": "{\n  \"version\": 1,\n  \"titulo\": \"Estructuras de Control de Flujo\",\n  \"tipo_de_diagrama\": \"jerarquia\",\n  \"nodos\": [\n    {\n      \"id\": \"n1\",\n      \"etiqueta\": \"Control de flujo\",\n      \"detalle\": \"Rompe la ejecución secuencial\",\n      \"rol\": \"principal\"\n    },\n    {\n      \"id\": \"n2\",\n      \"etiqueta\": \"Estructuras selectivas\",\n      \"detalle\": \"if, elif, else\",\n      \"rol\": \"secundario\"\n    },\n    {\n      \"id\": \"n3\",\n      \"etiqueta\": \"Estructuras iterativas\",\n      \"detalle\": \"while y for\",\n      \"rol\": \"secundario\"\n    },\n    {\n      \"id\": \"n4\",\n      \"etiqueta\": \"Condición booleana\",\n      \"detalle\": \"True o False\",\n      \"rol\": \"decision\"\n    },\n    {\n      \"id\": \"n5\",\n      \"etiqueta\": \"Bloque de código\",\n      \"detalle\": \"Se ejecuta u omite\",\n      \"rol\": \"resultado\"\n    }\n  ],\n  \"relaciones\": [\n    {\n      \"desde\": \"n1\",\n      \"hacia\": \"n2\",\n      \"verbo\": \"se divide en\"\n    },\n    {\n      \"desde\": \"n1\",\n      \"hacia\": \"n3\",\n      \"verbo\": \"se divide en\"\n    },\n    {\n      \"desde\": \"n2\",\n      \"hacia\": \"n4\",\n      \"verbo\": \"evalúa\"\n    },\n    {\n      \"desde\": \"n4\",\n      \"hacia\": \"n5\",\n      \"verbo\": \"determina\"\n    }\n  ],\n  \"paleta\": \"studify\",\n  \"estilo\": \"plano\",\n  \"texto_alternativo\": \"Esquema jerárquico que muestra las estructuras de control de flujo divididas en selectivas e iterativas; las selectivas evalúan una condición booleana que determina la ejecución de un bloque de código.\",\n  \"fuentes\": [6, 7, 8]\n}"
+      }
+    ],
+    "advertencias": [],
+    "segundos": 4.51,
+    "tokens_entrada": 4926,
+    "tokens_entrada_cache": 4480,
+    "tokens_salida": 1016,
+    "tokens_razonamiento": 0,
+    "costo_usd": 0.00068994,
+    "costo_usd_punta": 0.00137988,
+    "tarifa": "valle",
+    "modelo_respondido": "deepseek-flash"
+  },
+  {
+    "nombre": "BD-U3-01_c1",
+    "codigo_objetivo": "BD-U3-01",
+    "corrida": 1,
+    "modelo_pedido": "deepseek-flash",
+    "razonamiento": false,
+    "temperatura": 0.4,
+    "generado_utc": "2026-10-11T02:53:22+00:00",
+    "fragmentos_entregados": [
+      12,
+      13,
+      14,
+      15,
+      16,
+      17
+    ],
+    "valida": true,
+    "intentos": 1,
+    "reparaciones": 0,
+    "detalle_intentos": [
+      {
+        "intento": 1,
+        "errores": [],
+        "crudo": "{\n  \"version\": 1,\n  \"titulo\": \"Primera Forma Normal: Reglas y Corrección\",\n  \"tipo_de_diagrama\": \"flujo\",\n  \"nodos\": [\n    {\n      \"id\": \"n1\",\n      \"etiqueta\": \"Definición de 1FN\",\n      \"detalle\": \"Nivel básico de normalización relacional\",\n      \"rol\": \"principal\"\n    },\n    {\n      \"id\": \"n2\",\n      \"etiqueta\": \"Atomicidad de Atributos\",\n      \"detalle\": \"Valores indivisibles en cada celda\",\n      \"rol\": \"secundario\"\n    },\n    {\n      \"id\": \"n3\",\n      \"etiqueta\": \"Eliminación de Grupos Repetitivos\",\n      \"detalle\": \"Sin columnas repetidas del mismo tipo\",\n      \"rol\": \"secundario\"\n    },\n    {\n      \"id\": \"n4\",\n      \"etiqueta\": \"Clave Primaria Definida\",\n      \"detalle\": \"Identifica de forma unívoca cada fila\",\n      \"rol\": \"secundario\"\n    },\n    {\n      \"id\": \"n5\",\n      \"etiqueta\": \"Paso a Paso\",\n      \"detalle\": \"Identificar, descomponer y reasignar clave\",\n      \"rol\": \"secundario\"\n    },\n    {\n      \"id\": \"n6\",\n      \"etiqueta\": \"Tabla Normalizada\",\n      \"detalle\": \"Valores atómicos por fila\",\n      \"rol\": \"resultado\"\n    }\n  ],\n  \"relaciones\": [\n    {\n      \"desde\": \"n1\",\n      \"hacia\": \"n2\",\n      \"verbo\": \"requiere\"\n    },\n    {\n      \"desde\": \"n1\",\n      \"hacia\": \"n3\",\n      \"verbo\": \"requiere\"\n    },\n    {\n      \"desde\": \"n1\",\n      \"hacia\": \"n4\",\n      \"verbo\": \"requiere\"\n    },\n    {\n      \"desde\": \"n2\",\n      \"hacia\": \"n5\",\n      \"verbo\": \"se corrige con\"\n    },\n    {\n      \"desde\": \"n3\",\n      \"hacia\": \"n5\",\n      \"verbo\": \"se corrige con\"\n    },\n    {\n      \"desde\": \"n4\",\n      \"hacia\": \"n5\",\n      \"verbo\": \"se corrige con\"\n    },\n    {\n      \"desde\": \"n5\",\n      \"hacia\": \"n6\",\n      \"verbo\": \"produce\"\n    }\n  ],\n  \"paleta\": \"studify\",\n  \"estilo\": \"plano\",\n  \"texto_alternativo\": \"El diagrama muestra la definición de la Primera Forma Normal como nodo principal, que requiere tres reglas: atomicidad de atributos, eliminación de grupos repetitivos y clave primaria definida. Estas reglas se corrigen mediante un paso a paso que produce una tabla normalizada.\",\n  \"fuentes\": [12, 13, 14, 15, 16, 17]\n}"
+      }
+    ],
+    "advertencias": [
+      "relación n1 → n3 entre pasos no consecutivos: el render no la dibuja",
+      "relación n1 → n4 entre pasos no consecutivos: el render no la dibuja",
+      "relación n2 → n5 entre pasos no consecutivos: el render no la dibuja",
+      "relación n3 → n5 entre pasos no consecutivos: el render no la dibuja",
+      "falta la relación n3 → n4 entre pasos consecutivos",
+      "falta la relación n2 → n3 entre pasos consecutivos"
+    ],
+    "segundos": 2.89,
+    "tokens_entrada": 2196,
+    "tokens_entrada_cache": 0,
+    "tokens_salida": 702,
+    "tokens_razonamiento": 0,
+    "costo_usd": 0.0007505999999999999,
+    "costo_usd_punta": 0.0015011999999999998,
+    "tarifa": "valle",
+    "modelo_respondido": "deepseek-flash"
+  },
+  {
+    "nombre": "BD-U3-01_c2",
+    "codigo_objetivo": "BD-U3-01",
+    "corrida": 2,
+    "modelo_pedido": "deepseek-flash",
+    "razonamiento": false,
+    "temperatura": 0.4,
+    "generado_utc": "2026-10-11T02:53:24+00:00",
+    "fragmentos_entregados": [
+      12,
+      13,
+      14,
+      15,
+      16,
+      17
+    ],
+    "valida": true,
+    "intentos": 1,
+    "reparaciones": 0,
+    "detalle_intentos": [
+      {
+        "intento": 1,
+        "errores": [],
+        "crudo": "{\n  \"version\": 1,\n  \"titulo\": \"Primera Forma Normal: Reglas y Proceso\",\n  \"tipo_de_diagrama\": \"mapa_conceptual\",\n  \"nodos\": [\n    {\n      \"id\": \"n1\",\n      \"etiqueta\": \"Primera Forma Normal\",\n      \"detalle\": \"Nivel básico de normalización relacional\",\n      \"rol\": \"principal\"\n    },\n    {\n      \"id\": \"n2\",\n      \"etiqueta\": \"Atomicidad de Atributos\",\n      \"detalle\": \"Valores indivisibles en cada celda\",\n      \"rol\": \"secundario\"\n    },\n    {\n      \"id\": \"n3\",\n      \"etiqueta\": \"Eliminación de Grupos Repetitivos\",\n      \"detalle\": \"Sin columnas repetidas del mismo tipo\",\n      \"rol\": \"secundario\"\n    },\n    {\n      \"id\": \"n4\",\n      \"etiqueta\": \"Clave Primaria Definida\",\n      \"detalle\": \"Identifica de forma unívoca cada fila\",\n      \"rol\": \"secundario\"\n    },\n    {\n      \"id\": \"n5\",\n      \"etiqueta\": \"Paso a Paso\",\n      \"detalle\": \"Resolver violaciones de 1FN\",\n      \"rol\": \"secundario\"\n    }\n  ],\n  \"relaciones\": [\n    {\n      \"desde\": \"n1\",\n      \"hacia\": \"n2\",\n      \"verbo\": \"requiere\"\n    },\n    {\n      \"desde\": \"n1\",\n      \"hacia\": \"n3\",\n      \"verbo\": \"requiere\"\n    },\n    {\n      \"desde\": \"n1\",\n      \"hacia\": \"n4\",\n      \"verbo\": \"requiere\"\n    },\n    {\n      \"desde\": \"n1\",\n      \"hacia\": \"n5\",\n      \"verbo\": \"se aplica mediante\"\n    }\n  ],\n  \"paleta\": \"studify\",\n  \"estilo\": \"plano\",\n  \"texto_alternativo\": \"La Primera Forma Normal se define por tres reglas: atomicidad de atributos, eliminación de grupos repetitivos y clave primaria definida. Además, se resuelve mediante un proceso paso a paso.\",\n  \"fuentes\": [12, 16]\n}"
+      }
+    ],
+    "advertencias": [],
+    "segundos": 2.36,
+    "tokens_entrada": 2196,
+    "tokens_entrada_cache": 2048,
+    "tokens_salida": 522,
+    "tokens_razonamiento": 0,
+    "costo_usd": 0.000341544,
+    "costo_usd_punta": 0.000683088,
+    "tarifa": "valle",
+    "modelo_respondido": "deepseek-flash"
+  },
+  {
+    "nombre": "BD-U3-01_c3",
+    "codigo_objetivo": "BD-U3-01",
+    "corrida": 3,
+    "modelo_pedido": "deepseek-flash",
+    "razonamiento": false,
+    "temperatura": 0.4,
+    "generado_utc": "2026-10-11T02:53:27+00:00",
+    "fragmentos_entregados": [
+      12,
+      13,
+      14,
+      15,
+      16,
+      17
+    ],
+    "valida": true,
+    "intentos": 1,
+    "reparaciones": 0,
+    "detalle_intentos": [
+      {
+        "intento": 1,
+        "errores": [],
+        "crudo": "{\n  \"version\": 1,\n  \"titulo\": \"Primera Forma Normal\",\n  \"tipo_de_diagrama\": \"mapa_conceptual\",\n  \"nodos\": [\n    {\n      \"id\": \"n1\",\n      \"etiqueta\": \"Primera Forma Normal\",\n      \"detalle\": \"Nivel básico de normalización relacional\",\n      \"rol\": \"principal\"\n    },\n    {\n      \"id\": \"n2\",\n      \"etiqueta\": \"Atomicidad de Atributos\",\n      \"detalle\": \"Valores indivisibles en cada celda\",\n      \"rol\": \"secundario\"\n    },\n    {\n      \"id\": \"n3\",\n      \"etiqueta\": \"Eliminación de Grupos Repetitivos\",\n      \"detalle\": \"Sin columnas repetidas del mismo tipo\",\n      \"rol\": \"secundario\"\n    },\n    {\n      \"id\": \"n4\",\n      \"etiqueta\": \"Clave Primaria Definida\",\n      \"detalle\": \"Identifica de forma unívoca cada fila\",\n      \"rol\": \"secundario\"\n    },\n    {\n      \"id\": \"n5\",\n      \"etiqueta\": \"Descomponer en filas\",\n      \"detalle\": \"Duplicar fila por cada elemento\",\n      \"rol\": \"resultado\"\n    },\n    {\n      \"id\": \"n6\",\n      \"etiqueta\": \"Reasignar clave primaria\",\n      \"detalle\": \"Incorporar nueva columna descompuesta\",\n      \"rol\": \"resultado\"\n    }\n  ],\n  \"relaciones\": [\n    {\n      \"desde\": \"n1\",\n      \"hacia\": \"n2\",\n      \"verbo\": \"requiere\"\n    },\n    {\n      \"desde\": \"n1\",\n      \"hacia\": \"n3\",\n      \"verbo\": \"requiere\"\n    },\n    {\n      \"desde\": \"n1\",\n      \"hacia\": \"n4\",\n      \"verbo\": \"requiere\"\n    },\n    {\n      \"desde\": \"n5\",\n      \"hacia\": \"n6\",\n      \"verbo\": \"produce\"\n    }\n  ],\n  \"paleta\": \"studify\",\n  \"estilo\": \"plano\",\n  \"texto_alternativo\": \"Esquema que muestra la Primera Forma Normal como concepto central, del cual dependen tres reglas: atomicidad de atributos, eliminación de grupos repetitivos y clave primaria definida. Además, se relaciona la descomposición en filas con la reasignación de la clave primaria.\",\n  \"fuentes\": [12, 16]\n}"
+      }
+    ],
+    "advertencias": [],
+    "segundos": 2.64,
+    "tokens_entrada": 2196,
+    "tokens_entrada_cache": 2048,
+    "tokens_salida": 588,
+    "tokens_razonamiento": 0,
+    "costo_usd": 0.000381144,
+    "costo_usd_punta": 0.000762288,
+    "tarifa": "valle",
+    "modelo_respondido": "deepseek-flash"
+  },
+  {
+    "nombre": "BD-U3-02_c1",
+    "codigo_objetivo": "BD-U3-02",
+    "corrida": 1,
+    "modelo_pedido": "deepseek-flash",
+    "razonamiento": false,
+    "temperatura": 0.4,
+    "generado_utc": "2026-10-11T02:53:30+00:00",
+    "fragmentos_entregados": [
+      18,
+      19,
+      20,
+      21,
+      22,
+      23
+    ],
+    "valida": true,
+    "intentos": 1,
+    "reparaciones": 0,
+    "detalle_intentos": [
+      {
+        "intento": 1,
+        "errores": [],
+        "crudo": "{\n  \"version\": 1,\n  \"titulo\": \"Dependencias Funcionales y Cierre\",\n  \"tipo_de_diagrama\": \"mapa_conceptual\",\n  \"nodos\": [\n    {\n      \"id\": \"n1\",\n      \"etiqueta\": \"Dependencia Funcional\",\n      \"detalle\": \"X determina funcionalmente a Y\",\n      \"rol\": \"principal\"\n    },\n    {\n      \"id\": \"n2\",\n      \"etiqueta\": \"Dependencia Funcional Plena\",\n      \"detalle\": \"Y no depende de subconjunto propio\",\n      \"rol\": \"secundario\"\n    },\n    {\n      \"id\": \"n3\",\n      \"etiqueta\": \"Dependencia Transitiva\",\n      \"detalle\": \"X→Y y Y→Z implica X→Z\",\n      \"rol\": \"secundario\"\n    },\n    {\n      \"id\": \"n4\",\n      \"etiqueta\": \"Dependencia Trivial\",\n      \"detalle\": \"Y subconjunto de X\",\n      \"rol\": \"secundario\"\n    },\n    {\n      \"id\": \"n5\",\n      \"etiqueta\": \"Cierre de Atributos\",\n      \"detalle\": \"Algoritmo iterativo de cálculo\",\n      \"rol\": \"resultado\"\n    }\n  ],\n  \"relaciones\": [\n    {\n      \"desde\": \"n1\",\n      \"hacia\": \"n2\",\n      \"verbo\": \"se clasifica en\"\n    },\n    {\n      \"desde\": \"n1\",\n      \"hacia\": \"n3\",\n      \"verbo\": \"se clasifica en\"\n    },\n    {\n      \"desde\": \"n1\",\n      \"hacia\": \"n4\",\n      \"verbo\": \"se clasifica en\"\n    },\n    {\n      \"desde\": \"n1\",\n      \"hacia\": \"n5\",\n      \"verbo\": \"permite calcular\"\n    }\n  ],\n  \"paleta\": \"studify\",\n  \"estilo\": \"plano\",\n  \"texto_alternativo\": \"Esquema conceptual que muestra la Dependencia Funcional como concepto principal, del cual se derivan tres tipos: plena, transitiva y trivial. Además, la Dependencia Funcional permite calcular el Cierre de Atributos mediante un algoritmo iterativo.\",\n  \"fuentes\": [18, 22]\n}"
+      }
+    ],
+    "advertencias": [],
+    "segundos": 2.64,
+    "tokens_entrada": 2400,
+    "tokens_entrada_cache": 0,
+    "tokens_salida": 527,
+    "tokens_razonamiento": 0,
+    "costo_usd": 0.0006762000000000001,
+    "costo_usd_punta": 0.0013524000000000001,
+    "tarifa": "valle",
+    "modelo_respondido": "deepseek-flash"
+  },
+  {
+    "nombre": "BD-U3-02_c2",
+    "codigo_objetivo": "BD-U3-02",
+    "corrida": 2,
+    "modelo_pedido": "deepseek-flash",
+    "razonamiento": false,
+    "temperatura": 0.4,
+    "generado_utc": "2026-10-11T02:53:32+00:00",
+    "fragmentos_entregados": [
+      18,
+      19,
+      20,
+      21,
+      22,
+      23
+    ],
+    "valida": true,
+    "intentos": 1,
+    "reparaciones": 0,
+    "detalle_intentos": [
+      {
+        "intento": 1,
+        "errores": [],
+        "crudo": "{\n  \"version\": 1,\n  \"titulo\": \"Dependencias Funcionales y Cierre\",\n  \"tipo_de_diagrama\": \"mapa_conceptual\",\n  \"nodos\": [\n    {\n      \"id\": \"n1\",\n      \"etiqueta\": \"Dependencia Funcional\",\n      \"detalle\": \"Restricción entre conjuntos de atributos\",\n      \"rol\": \"principal\"\n    },\n    {\n      \"id\": \"n2\",\n      \"etiqueta\": \"Dependencia Funcional Plena\",\n      \"detalle\": \"Y depende de X, no de subconjunto propio\",\n      \"rol\": \"secundario\"\n    },\n    {\n      \"id\": \"n3\",\n      \"etiqueta\": \"Dependencia Transitiva\",\n      \"detalle\": \"Si X→Y y Y→Z, entonces X→Z\",\n      \"rol\": \"secundario\"\n    },\n    {\n      \"id\": \"n4\",\n      \"etiqueta\": \"Dependencia Trivial\",\n      \"detalle\": \"Y es subconjunto de X\",\n      \"rol\": \"secundario\"\n    },\n    {\n      \"id\": \"n5\",\n      \"etiqueta\": \"Cierre de Atributos\",\n      \"detalle\": \"Algoritmo iterativo de cálculo\",\n      \"rol\": \"resultado\"\n    }\n  ],\n  \"relaciones\": [\n    {\n      \"desde\": \"n1\",\n      \"hacia\": \"n2\",\n      \"verbo\": \"se clasifica en\"\n    },\n    {\n      \"desde\": \"n1\",\n      \"hacia\": \"n3\",\n      \"verbo\": \"se clasifica en\"\n    },\n    {\n      \"desde\": \"n1\",\n      \"hacia\": \"n4\",\n      \"verbo\": \"se clasifica en\"\n    },\n    {\n      \"desde\": \"n1\",\n      \"hacia\": \"n5\",\n      \"verbo\": \"permite calcular\"\n    }\n  ],\n  \"paleta\": \"studify\",\n  \"estilo\": \"plano\",\n  \"texto_alternativo\": \"El esquema muestra la Dependencia Funcional como concepto central, del cual se desprenden tres tipos: plena, transitiva y trivial. Además, la Dependencia Funcional permite calcular el Cierre de Atributos.\",\n  \"fuentes\": [18, 22]\n}"
+      }
+    ],
+    "advertencias": [],
+    "segundos": 2.42,
+    "tokens_entrada": 2400,
+    "tokens_entrada_cache": 2176,
+    "tokens_salida": 528,
+    "tokens_razonamiento": 0,
+    "costo_usd": 0.000356928,
+    "costo_usd_punta": 0.000713856,
+    "tarifa": "valle",
+    "modelo_respondido": "deepseek-flash"
+  },
+  {
+    "nombre": "BD-U3-02_c3",
+    "codigo_objetivo": "BD-U3-02",
+    "corrida": 3,
+    "modelo_pedido": "deepseek-flash",
+    "razonamiento": false,
+    "temperatura": 0.4,
+    "generado_utc": "2026-10-11T02:53:34+00:00",
+    "fragmentos_entregados": [
+      18,
+      19,
+      20,
+      21,
+      22,
+      23
+    ],
+    "valida": true,
+    "intentos": 1,
+    "reparaciones": 0,
+    "detalle_intentos": [
+      {
+        "intento": 1,
+        "errores": [],
+        "crudo": "{\n  \"version\": 1,\n  \"titulo\": \"Dependencias Funcionales y Cierre\",\n  \"tipo_de_diagrama\": \"flujo\",\n  \"nodos\": [\n    {\n      \"id\": \"n1\",\n      \"etiqueta\": \"Dependencia Funcional\",\n      \"detalle\": \"X determina funcionalmente a Y\",\n      \"rol\": \"principal\"\n    },\n    {\n      \"id\": \"n2\",\n      \"etiqueta\": \"Tipos de DF\",\n      \"detalle\": \"Plena, Transitiva, Trivial\",\n      \"rol\": \"secundario\"\n    },\n    {\n      \"id\": \"n3\",\n      \"etiqueta\": \"Cierre de atributos\",\n      \"detalle\": \"Algoritmo iterativo (X)+\",\n      \"rol\": \"resultado\"\n    },\n    {\n      \"id\": \"n4\",\n      \"etiqueta\": \"Ejemplo RUT\",\n      \"detalle\": \"RUT determina Nombre\",\n      \"rol\": \"secundario\"\n    }\n  ],\n  \"relaciones\": [\n    {\n      \"desde\": \"n1\",\n      \"hacia\": \"n2\",\n      \"verbo\": \"se clasifica en\"\n    },\n    {\n      \"desde\": \"n1\",\n      \"hacia\": \"n3\",\n      \"verbo\": \"permite calcular\"\n    },\n    {\n      \"desde\": \"n1\",\n      \"hacia\": \"n4\",\n      \"verbo\": \"se ejemplifica con\"\n    }\n  ],\n  \"paleta\": \"studify\",\n  \"estilo\": \"plano\",\n  \"texto_alternativo\": \"Esquema de flujo que muestra la Dependencia Funcional como concepto central, del cual se desprenden sus tipos, el cálculo del cierre de atributos y un ejemplo con RUT.\",\n  \"fuentes\": [18, 19, 20, 21, 22, 23]\n}"
+      }
+    ],
+    "advertencias": [
+      "relación n1 → n3 entre pasos no consecutivos: el render no la dibuja",
+      "relación n1 → n4 entre pasos no consecutivos: el render no la dibuja",
+      "falta la relación n3 → n4 entre pasos consecutivos",
+      "falta la relación n2 → n3 entre pasos consecutivos"
+    ],
+    "segundos": 2.37,
+    "tokens_entrada": 2400,
+    "tokens_entrada_cache": 2176,
+    "tokens_salida": 434,
+    "tokens_razonamiento": 0,
+    "costo_usd": 0.00030052799999999994,
+    "costo_usd_punta": 0.0006010559999999999,
+    "tarifa": "valle",
+    "modelo_respondido": "deepseek-flash"
+  }
+]

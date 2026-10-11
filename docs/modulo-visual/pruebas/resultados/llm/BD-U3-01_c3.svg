@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 505" width="800" height="505" role="img" aria-labelledby="esq-titulo esq-desc" font-family="Figtree, 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif">
+<title id="esq-titulo">Primera Forma Normal</title>
+<desc id="esq-desc">Esquema que muestra la Primera Forma Normal como concepto central, del cual dependen tres reglas: atomicidad de atributos, eliminación de grupos repetitivos y clave primaria definida. Además, se relaciona la descomposición en filas con la reasignación de la clave primaria.</desc>
+<rect width="800" height="505" rx="20" fill="#FBF8F3"/>
+<text x="400.0" y="58" text-anchor="middle" font-family="Fraunces, Georgia, 'Times New Roman', serif" font-size="30" font-weight="700" fill="#1F2933">Primera Forma Normal</text>
+<rect x="364.0" y="74" width="72" height="4" rx="2" fill="#F2795A"/>
+<line x1="249.8" y1="247.1" x2="196.3" y2="311.0" stroke="#56606B" stroke-width="2"/><polygon points="191.1,317.1 194.4,305.6 201.9,311.8" fill="#56606B"/><rect x="184.3" y="271.1" width="72.2" height="22" rx="11" fill="#FBF8F3"/><text x="220.4" y="286.6" text-anchor="middle" font-size="13" font-style="italic" fill="#56606B">requiere</text>
+<line x1="308.0" y1="247.1" x2="308.0" y2="309.1" stroke="#56606B" stroke-width="2"/><polygon points="308.0,317.1 303.1,306.1 312.9,306.1" fill="#56606B"/><rect x="271.9" y="271.1" width="72.2" height="22" rx="11" fill="#FBF8F3"/><text x="308.0" y="286.6" text-anchor="middle" font-size="13" font-style="italic" fill="#56606B">requiere</text>
+<line x1="366.2" y1="247.1" x2="419.7" y2="311.0" stroke="#56606B" stroke-width="2"/><polygon points="424.9,317.1 414.1,311.8 421.6,305.6" fill="#56606B"/><rect x="359.4" y="271.1" width="72.2" height="22" rx="11" fill="#FBF8F3"/><text x="395.6" y="286.6" text-anchor="middle" font-size="13" font-style="italic" fill="#56606B">requiere</text>
+<line x1="676.0" y1="247.1" x2="676.0" y2="309.1" stroke="#56606B" stroke-width="2"/><polygon points="676.0,317.1 671.1,306.1 680.9,306.1" fill="#56606B"/><rect x="643.5" y="271.1" width="65.0" height="22" rx="11" fill="#FBF8F3"/><text x="676.0" y="286.6" text-anchor="middle" font-size="13" font-style="italic" fill="#56606B">produce</text>
+<rect x="225.0" y="112.0" width="166.0" height="131.1" rx="14" fill="#0F766E" stroke="#0F766E" stroke-width="2"/>
+<text x="308.0" y="142.2" text-anchor="middle" font-size="17" font-weight="700" fill="#FFFFFF">Primera Forma</text>
+<text x="308.0" y="163.4" text-anchor="middle" font-size="17" font-weight="700" fill="#FFFFFF">Normal</text>
+<text x="308.0" y="187.8" text-anchor="middle" font-size="14" fill="#FFFFFF">Nivel básico de</text>
+<text x="308.0" y="206.0" text-anchor="middle" font-size="14" fill="#FFFFFF">normalización</text>
+<text x="308.0" y="224.2" text-anchor="middle" font-size="14" fill="#FFFFFF">relacional</text>
+<rect x="41.0" y="321.1" width="166.0" height="152.3" rx="14" fill="#FFFFFF" stroke="#D3C9B8" stroke-width="2"/>
+<text x="124.0" y="361.9" text-anchor="middle" font-size="17" font-weight="700" fill="#1F2933">Atomicidad de</text>
+<text x="124.0" y="383.1" text-anchor="middle" font-size="17" font-weight="700" fill="#1F2933">Atributos</text>
+<text x="124.0" y="407.5" text-anchor="middle" font-size="14" fill="#56606B">Valores</text>
+<text x="124.0" y="425.7" text-anchor="middle" font-size="14" fill="#56606B">indivisibles en</text>
+<text x="124.0" y="443.9" text-anchor="middle" font-size="14" fill="#56606B">cada celda</text>
+<rect x="225.0" y="321.1" width="166.0" height="152.3" rx="14" fill="#FFFFFF" stroke="#D3C9B8" stroke-width="2"/>
+<text x="308.0" y="351.2" text-anchor="middle" font-size="17" font-weight="700" fill="#1F2933">Eliminación</text>
+<text x="308.0" y="372.5" text-anchor="middle" font-size="17" font-weight="700" fill="#1F2933">de Grupos</text>
+<text x="308.0" y="393.8" text-anchor="middle" font-size="17" font-weight="700" fill="#1F2933">Repetitivos</text>
+<text x="308.0" y="418.1" text-anchor="middle" font-size="14" fill="#56606B">Sin columnas</text>
+<text x="308.0" y="436.3" text-anchor="middle" font-size="14" fill="#56606B">repetidas del</text>
+<text x="308.0" y="454.5" text-anchor="middle" font-size="14" fill="#56606B">mismo tipo</text>
+<rect x="409.0" y="321.1" width="166.0" height="152.3" rx="14" fill="#FFFFFF" stroke="#D3C9B8" stroke-width="2"/>
+<text x="492.0" y="351.2" text-anchor="middle" font-size="17" font-weight="700" fill="#1F2933">Clave</text>
+<text x="492.0" y="372.5" text-anchor="middle" font-size="17" font-weight="700" fill="#1F2933">Primaria</text>
+<text x="492.0" y="393.8" text-anchor="middle" font-size="17" font-weight="700" fill="#1F2933">Definida</text>
+<text x="492.0" y="418.1" text-anchor="middle" font-size="14" fill="#56606B">Identifica de</text>
+<text x="492.0" y="436.3" text-anchor="middle" font-size="14" fill="#56606B">forma unívoca cada</text>
+<text x="492.0" y="454.5" text-anchor="middle" font-size="14" fill="#56606B">fila</text>
+<rect x="593.0" y="112.0" width="166.0" height="131.1" rx="14" fill="#FDEBE5" stroke="#F2795A" stroke-width="2"/>
+<text x="676.0" y="151.3" text-anchor="middle" font-size="17" font-weight="700" fill="#1F2933">Descomponer</text>
+<text x="676.0" y="172.5" text-anchor="middle" font-size="17" font-weight="700" fill="#1F2933">en filas</text>
+<text x="676.0" y="196.9" text-anchor="middle" font-size="14" fill="#56606B">Duplicar fila por</text>
+<text x="676.0" y="215.1" text-anchor="middle" font-size="14" fill="#56606B">cada elemento</text>
+<rect x="593.0" y="321.1" width="166.0" height="152.3" rx="14" fill="#FDEBE5" stroke="#F2795A" stroke-width="2"/>
+<text x="676.0" y="351.2" text-anchor="middle" font-size="17" font-weight="700" fill="#1F2933">Reasignar</text>
+<text x="676.0" y="372.5" text-anchor="middle" font-size="17" font-weight="700" fill="#1F2933">clave</text>
+<text x="676.0" y="393.8" text-anchor="middle" font-size="17" font-weight="700" fill="#1F2933">primaria</text>
+<text x="676.0" y="418.1" text-anchor="middle" font-size="14" fill="#56606B">Incorporar nueva</text>
+<text x="676.0" y="436.3" text-anchor="middle" font-size="14" fill="#56606B">columna</text>
+<text x="676.0" y="454.5" text-anchor="middle" font-size="14" fill="#56606B">descompuesta</text>
+</svg>

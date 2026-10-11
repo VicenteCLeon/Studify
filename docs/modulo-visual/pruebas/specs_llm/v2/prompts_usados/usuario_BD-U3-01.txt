@@ -1,0 +1,122 @@
+## Objetivo de aprendizaje
+Asignatura: Bases de Datos
+Unidad: Unidad 3: Normalización
+Tema: Primera Forma Normal
+
+## Material curado
+### id_fragmento: 12
+Procedencia: Guía de Normalización: Primera Forma Normal (1FN), p. 1
+Tipo de material: texto
+
+1. Definición Formal de la 1FN (Perfil Lectura / Escritura - R)
+
+La Primera Forma Normal (1FN) es el nivel básico de la normalización relacional propuesto por Edgar F. Codd. Una tabla o relación se encuentra formalmente en 1FN si y solo si cumple con tres reglas estrictas: 1. Atomicidad de Atributos: Todos los valores almacenados en las celdas de la tabla deben ser atómicos (indivisibles). No se permiten listas, arreglos o conjuntos de valores dentro de una sola celda. 2. Eliminación de Grupos Repetitivos: No deben existir columnas repetidas para almacenar información del mismo tipo (ej. Telefono1, Telefono2, Telefono3). 3. Clave Primaria Definida: La relación debe poseer una clave primaria única que identifique de forma univoca cada fila o tupla.
+
+### id_fragmento: 13
+Procedencia: Guía de Normalización: Primera Forma Normal (1FN), p. 1
+Tipo de material: texto
+
+Tabla No Normalizada (Violación de 1FN por Atributo Multivaluado):
+
+ID_Estudiante Nombre Asignaturas_Inscritas 101 Ana Silva Bases de Datos, Programación, Redes 102 Pedro Gómez Programación, Álgebra
+
+### id_fragmento: 14
+Procedencia: Guía de Normalización: Primera Forma Normal (1FN), p. 1
+Tipo de material: texto
+
+Tabla Normalizada en 1FN (Valores Atómicos por Fila):
+
+ID_Estudiante Nombre Asignatura 101 Ana Silva Bases de Datos 101 Ana Silva Programación 101 Ana Silva Redes 102 Pedro Gómez Programación 102 Pedro Gómez Álgebra (Nota: La clave primaria de la tabla normalizada pasa a ser la clave compuesta (ID_Estudiante, Asignatura)).
+
+### id_fragmento: 15
+Procedencia: Guía de Normalización: Primera Forma Normal (1FN), pp. 1–2
+Tipo de material: texto
+
+3. Explicación Narrativa: ¿Por qué la 1FN es Indispensable? (Perfil Auditivo - A)
+
+Escuchen con atención este escenario de diseño de base de datos. Imaginen que guardan los teléfonos de un estudiante separados por comas en una sola celda de texto: "912345678, 987654321". Cuando el sistema necesite buscar a todos los alumnos cuyo teléfono comience con 987, el motor SQL no podrá hacer una búsqueda directa por índice. Tendrá que escanear todo el texto celda por celda usando comodines como LIKE '%987%', destruyendo el rendimiento de la base de datos. Al aplicar la Primera Forma Normal y separar cada teléfono en su propia fila atómica, permites que las consultas de búsqueda, ordenamiento y agregación se ejecuten de manera directa, limpia e instantánea.
+
+### id_fragmento: 16
+Procedencia: Guía de Normalización: Primera Forma Normal (1FN), p. 2
+Tipo de material: texto
+
+Paso a Paso para Resolver Violaciones de 1FN:
+
+1. Identificar la celda no atómica: Localizar las columnas que contienen listas de valores separados por comas o guiones. 2. Descomponer en filas: Duplicar la fila para cada uno de los elementos de la lista, manteniendo atómico el valor de la celda. 3. Definir la clave primaria: Reasignar la clave primaria incorporando la nueva columna descompuesta.
+
+### id_fragmento: 17
+Procedencia: Guía de Normalización: Primera Forma Normal (1FN), p. 2
+Tipo de material: texto
+
+Ejercicio Práctico SQL:
+
+-- Creación de la tabla normalizada en 1FN CREATE TABLE estudiante_asignatura ( id_estudiante INT NOT NULL, nombre_estudiante VARCHAR(100) NOT NULL, codigo_asignatura VARCHAR(20) NOT NULL, PRIMARY KEY (id_estudiante, codigo_asignatura) ); -- Inserción de datos atómicos INSERT INTO estudiante_asignatura (id_estudiante, nombre_estudiante, codigo_asignatura) VALUES (101, 'Ana Silva', 'BD-U3-01'), (101, 'Ana Silva', 'PROG-U1-01'), (102, 'Pedro Gómez', 'PROG-U1-01');
+
+
+## Tarea
+Diseña UN esquema que muestre la estructura del tema: qué conceptos hay y cómo se relacionan.
+
+Elige `tipo_de_diagrama` según la naturaleza del contenido:
+- flujo: pasos de un procedimiento, en orden.
+- ciclo: etapas que se repiten y vuelven al inicio.
+- jerarquia: una categoría que se divide en subtipos.
+- comparacion: dos a cuatro elementos contrastados por sus rasgos.
+- linea_de_tiempo: hitos ordenados en el tiempo.
+- causa_efecto: causas que producen consecuencias.
+- mapa_conceptual: cuando ninguno de los anteriores calza.
+
+Límites estrictos:
+- Cada nodo es un concepto del contenido. No uses como nodo el título de una sección
+  del apunte («Paso a paso», «Definición», «Ejemplo», «Resumen»).
+- `titulo`: 6 palabras o menos.
+- `nodos`: entre 3 y 7. Cada `etiqueta`, 4 palabras o menos, usando el término exacto del material.
+- `detalle` (opcional): 8 palabras o menos.
+- `relaciones`: cada `verbo` con 3 palabras o menos («produce», «se divide en»).
+- Exactamente un nodo con rol `principal`.
+- `texto_alternativo`: 1 o 2 oraciones que describan el esquema a quien no puede verlo.
+- `fuentes`: los id_fragmento de donde salió cada concepto.
+
+## Formato
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "EspecificacionVisual",
+  "type": "object",
+  "required": ["version", "titulo", "tipo_de_diagrama", "nodos", "relaciones", "paleta", "estilo", "texto_alternativo"],
+  "properties": {
+    "version": { "const": 1 },
+    "titulo": { "type": "string", "description": "Máximo 6 palabras" },
+    "tipo_de_diagrama": {
+      "enum": ["mapa_conceptual", "flujo", "comparacion", "linea_de_tiempo", "jerarquia", "ciclo", "causa_efecto"]
+    },
+    "nodos": {
+      "type": "array", "minItems": 3, "maxItems": 7,
+      "items": {
+        "type": "object",
+        "required": ["id", "etiqueta"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^n[1-9]$" },
+          "etiqueta": { "type": "string", "description": "Máximo 4 palabras" },
+          "detalle": { "type": "string", "description": "Opcional, máximo 8 palabras. Solo lo usa el render determinístico" },
+          "rol": { "enum": ["principal", "secundario", "resultado", "decision"], "default": "secundario" },
+          "grupo": { "type": "string", "description": "Columna en `comparacion`; marca temporal en `linea_de_tiempo`" }
+        }
+      }
+    },
+    "relaciones": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["desde", "hacia", "verbo"],
+        "properties": {
+          "desde": { "type": "string" },
+          "hacia": { "type": "string" },
+          "verbo": { "type": "string", "description": "Máximo 3 palabras" }
+        }
+      }
+    },
+    "paleta": { "enum": ["studify", "azul", "violeta"] },
+    "estilo": { "enum": ["plano"] },
+    "texto_alternativo": { "type": "string", "description": "1 o 2 oraciones que describen el diagrama" },
+    "fuentes": { "type": "array", "items": { "type": "integer" }, "description": "id_fragmento usados" }
+  }
+}

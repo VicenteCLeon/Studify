@@ -1,0 +1,112 @@
+## Objetivo de aprendizaje
+Asignatura: Introducción a la Programación
+Unidad: Unidad 1: Fundamentos
+Tema: Variables y Tipos de Datos
+
+## Material curado
+### id_fragmento: 1
+Procedencia: Variables y Tipos de Datos Primitivos, p. 1
+Tipo de material: texto
+
+1. Fundamentos Conceptuales (Perfil Lectura / Escritura - R)
+
+En programación, una variable es una ubicación reservada en la memoria RAM del computador asociada a un identificador simbólico (nombre). Esta ubicación almacena un valor de un tipo de dato específico que determina qué operaciones se pueden realizar sobre él y cuánta memoria ocupa. Los tipos de datos primitivos más comunes son: • int (Entero): Representa números sin parte decimal, tanto positivos como negativos (ej. -5, 0, 42). • float (Punto Flotante): Representa números reales con parte decimal o exponencial (ej. 3.14159, -0.5). • bool (Booleano): Representa un valor de verdad lógico, restringido a únicamente True (Verdadero) o False (Falso). • str (Cadena de Texto): Secuencia inmutable de caracteres delimitada por comillas simples o dobles (ej. "Studify", 'Python').
+
+### id_fragmento: 2
+Procedencia: Variables y Tipos de Datos Primitivos, p. 1
+Tipo de material: texto
+
+2. Cuadro Comparativo de Tipos de Datos (Perfil Visual - V)
+
+Tipo de Dato Tamaño en Memoria Rango / Formato de Ejemplo Caso de Uso Recomendado int 4 a 8 bytes -2,147,483,648 a 2,147,483,647 Contadores de bucles, edades, identificadores float 8 bytes (doble precisión) 1.79e308 (con 15 a 17 dígitos) Precios, notas de exámenes, mediciones físicas bool 1 byte True o False Banderas de estado, resultados de comparaciones str Variable (UTF-8) "Hola Mundo 2026" Nombres de usuario, direcciones, mensajes
+
+### id_fragmento: 3
+Procedencia: Variables y Tipos de Datos Primitivos, p. 1
+Tipo de material: texto
+
+3. Explicación Narrativa y Analogía (Perfil Auditivo - A)
+
+Imaginen que la memoria RAM de la computadora es como una gran estantería llena de cajas de almacenamiento en un centro logístico. Cuando declaras una variable en tu programa, es como tomar una caja vacía, pegarle una etiqueta con un nombre claro (como precio_producto) y guardar dentro un objeto determinado. Si guardas un entero, colocas un contador rígido. Si guardas un texto, pones una carta escrita. Lo crucial que debes recordar al escuchar esta explicación es que el tipo de dato actúa como el "molde" de la caja: no puedes intentar realizar operaciones aritméticas con una caja etiquetada como texto sin antes hacer una conversión explícita. Por ejemplo, al sumar la palabra "10" con el número 5, el lenguaje te advertirá que los tipos no son compatibles.
+
+### id_fragmento: 4
+Procedencia: Variables y Tipos de Datos Primitivos, p. 2
+Tipo de material: texto
+
+Ejemplo de Código Paso a Paso:
+
+# 1. Declaración e inicialización de variables nombre_estudiante = "Camila" edad = 21 promedio_notas = 6.5 esta_inscrito = True # 2. Operaciones y conversión de tipos (Casting) edad_futura = edad + 1 mensaje_resumen = ( "Estudiante " + nombre_estudiante + " tendrá " + str(edad_futura) + " años." ) print(mensaje_resumen)
+
+### id_fragmento: 5
+Procedencia: Variables y Tipos de Datos Primitivos, p. 2
+Tipo de material: texto
+
+Ejercicio Guiado para el Estudiante:
+
+1. Crea un script en Python que defina una variable precio_base con valor 19990 y un descuento de 0.15 (15%). 2. Calcula el precio_final restando el descuento al precio base. 3. Imprime por pantalla el resultado convirtiendo el precio final a un número entero con int(precio_final).
+
+
+## Tarea
+Diseña UN esquema que muestre la estructura del tema: qué conceptos hay y cómo se relacionan.
+
+Elige `tipo_de_diagrama` según la naturaleza del contenido:
+- flujo: pasos de un procedimiento, en orden.
+- ciclo: etapas que se repiten y vuelven al inicio.
+- jerarquia: una categoría que se divide en subtipos.
+- comparacion: dos a cuatro elementos contrastados por sus rasgos.
+- linea_de_tiempo: hitos ordenados en el tiempo.
+- causa_efecto: causas que producen consecuencias.
+- mapa_conceptual: cuando ninguno de los anteriores calza.
+
+Límites estrictos:
+- `titulo`: 6 palabras o menos.
+- `nodos`: entre 3 y 7. Cada `etiqueta`, 4 palabras o menos, usando el término exacto del material.
+- `detalle` (opcional): 8 palabras o menos.
+- `relaciones`: cada `verbo` con 3 palabras o menos («produce», «se divide en»).
+- Exactamente un nodo con rol `principal`.
+- `texto_alternativo`: 1 o 2 oraciones que describan el esquema a quien no puede verlo.
+- `fuentes`: los id_fragmento de donde salió cada concepto.
+
+## Formato
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "EspecificacionVisual",
+  "type": "object",
+  "required": ["version", "titulo", "tipo_de_diagrama", "nodos", "relaciones", "paleta", "estilo", "texto_alternativo"],
+  "properties": {
+    "version": { "const": 1 },
+    "titulo": { "type": "string", "description": "Máximo 6 palabras" },
+    "tipo_de_diagrama": {
+      "enum": ["mapa_conceptual", "flujo", "comparacion", "linea_de_tiempo", "jerarquia", "ciclo", "causa_efecto"]
+    },
+    "nodos": {
+      "type": "array", "minItems": 3, "maxItems": 7,
+      "items": {
+        "type": "object",
+        "required": ["id", "etiqueta"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^n[1-9]$" },
+          "etiqueta": { "type": "string", "description": "Máximo 4 palabras" },
+          "detalle": { "type": "string", "description": "Opcional, máximo 8 palabras. Solo lo usa el render determinístico" },
+          "rol": { "enum": ["principal", "secundario", "resultado", "decision"], "default": "secundario" },
+          "grupo": { "type": "string", "description": "Columna en `comparacion`; marca temporal en `linea_de_tiempo`" }
+        }
+      }
+    },
+    "relaciones": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["desde", "hacia", "verbo"],
+        "properties": {
+          "desde": { "type": "string" },
+          "hacia": { "type": "string" },
+          "verbo": { "type": "string", "description": "Máximo 3 palabras" }
+        }
+      }
+    },
+    "paleta": { "enum": ["studify", "azul", "violeta"] },
+    "estilo": { "enum": ["plano"] },
+    "texto_alternativo": { "type": "string", "description": "1 o 2 oraciones que describen el diagrama" },
+    "fuentes": { "type": "array", "items": { "type": "integer" }, "description": "id_fragmento usados" }
+  }
+}

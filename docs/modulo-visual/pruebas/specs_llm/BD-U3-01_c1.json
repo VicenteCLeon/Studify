@@ -1,0 +1,98 @@
+{
+  "version": 1,
+  "titulo": "Primera Forma Normal: Reglas y Corrección",
+  "tipo_de_diagrama": "flujo",
+  "nodos": [
+    {
+      "id": "n1",
+      "etiqueta": "Definición de 1FN",
+      "detalle": "Nivel básico de normalización relacional",
+      "rol": "principal"
+    },
+    {
+      "id": "n2",
+      "etiqueta": "Atomicidad de Atributos",
+      "detalle": "Valores indivisibles en cada celda",
+      "rol": "secundario"
+    },
+    {
+      "id": "n3",
+      "etiqueta": "Eliminación de Grupos Repetitivos",
+      "detalle": "Sin columnas repetidas del mismo tipo",
+      "rol": "secundario"
+    },
+    {
+      "id": "n4",
+      "etiqueta": "Clave Primaria Definida",
+      "detalle": "Identifica de forma unívoca cada fila",
+      "rol": "secundario"
+    },
+    {
+      "id": "n5",
+      "etiqueta": "Paso a Paso",
+      "detalle": "Identificar, descomponer y reasignar clave",
+      "rol": "secundario"
+    },
+    {
+      "id": "n6",
+      "etiqueta": "Tabla Normalizada",
+      "detalle": "Valores atómicos por fila",
+      "rol": "resultado"
+    }
+  ],
+  "relaciones": [
+    {
+      "desde": "n1",
+      "hacia": "n2",
+      "verbo": "requiere"
+    },
+    {
+      "desde": "n1",
+      "hacia": "n3",
+      "verbo": "requiere"
+    },
+    {
+      "desde": "n1",
+      "hacia": "n4",
+      "verbo": "requiere"
+    },
+    {
+      "desde": "n2",
+      "hacia": "n5",
+      "verbo": "se corrige con"
+    },
+    {
+      "desde": "n3",
+      "hacia": "n5",
+      "verbo": "se corrige con"
+    },
+    {
+      "desde": "n4",
+      "hacia": "n5",
+      "verbo": "se corrige con"
+    },
+    {
+      "desde": "n5",
+      "hacia": "n6",
+      "verbo": "produce"
+    }
+  ],
+  "paleta": "studify",
+  "estilo": "plano",
+  "texto_alternativo": "El diagrama muestra la definición de la Primera Forma Normal como nodo principal, que requiere tres reglas: atomicidad de atributos, eliminación de grupos repetitivos y clave primaria definida. Estas reglas se corrigen mediante un paso a paso que produce una tabla normalizada.",
+  "fuentes": [
+    12,
+    13,
+    14,
+    15,
+    16,
+    17
+  ],
+  "origen": {
+    "codigo_objetivo": "BD-U3-01",
+    "generado_por": "deepseek-flash",
+    "corrida": 1,
+    "intentos": 1,
+    "nota": "Generada por el LLM con el prompt del §3.2; sin editar a mano."
+  }
+}

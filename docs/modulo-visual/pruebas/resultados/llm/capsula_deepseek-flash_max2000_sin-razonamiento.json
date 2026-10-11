@@ -1,0 +1,120 @@
+{
+  "modelo": "deepseek-flash",
+  "objetivo": "BD-U3-01",
+  "canal": "V",
+  "max_tokens": 2000,
+  "razonamiento_apagado": true,
+  "valida": true,
+  "intentos": 1,
+  "reparaciones": 0,
+  "errores_por_intento": [],
+  "segundos": 4.71,
+  "capsula": {
+    "titulo": "Primera Forma Normal: atomicidad y grupos repetitivos",
+    "objetivo_aprendizaje": "Eliminar grupos repetitivos de tablas no normalizadas para alcanzar la Primera Forma Normal (1FN).",
+    "activacion": "¿Qué problemas trae guardar varios teléfonos separados por comas en una sola celda?",
+    "concepto_central": "La Primera Forma Normal (1FN), propuesta por Edgar F. Codd, exige tres reglas: atomicidad de atributos, eliminación de grupos repetitivos y clave primaria definida. Una tabla está en 1FN si cada celda es indivisible, no hay columnas repetidas del mismo tipo y existe una clave primaria única. Para corregir violaciones se identifica la celda no atómica, se descompone en filas y se reasigna la clave primaria incorporando la nueva columna.",
+    "representacion_adaptativa": [
+      {
+        "tipo": "esquema",
+        "encabezado": "Jerarquía de la 1FN",
+        "cuerpo": [
+          "Normalización relacional",
+          "Primera Forma Normal (1FN)",
+          "Atomicidad de atributos",
+          "Eliminación de grupos repetitivos",
+          "Clave primaria definida",
+          "Clave compuesta (ID_Estudiante, Asignatura)"
+        ]
+      },
+      {
+        "tipo": "tabla",
+        "encabezado": "Comparación: antes y después de 1FN",
+        "cuerpo": [
+          [
+            "ID_Estudiante",
+            "Nombre",
+            "Asignaturas_Inscritas"
+          ],
+          [
+            "101",
+            "Ana Silva",
+            "Bases de Datos, Programación, Redes"
+          ],
+          [
+            "102",
+            "Pedro Gómez",
+            "Programación, Álgebra"
+          ],
+          [
+            "101",
+            "Ana Silva",
+            "Bases de Datos (fila atómica)"
+          ]
+        ]
+      }
+    ],
+    "ejemplo": {
+      "tipo": "ejemplo_resuelto",
+      "encabezado": "De celda multivaluada a filas atómicas",
+      "cuerpo": "La tabla con Asignaturas_Inscritas viola 1FN. Se descompone en filas: (101, Ana Silva, Bases de Datos), (101, Ana Silva, Programación), (101, Ana Silva, Redes), (102, Pedro Gómez, Programación), (102, Pedro Gómez, Álgebra). La clave primaria pasa a ser la clave compuesta (ID_Estudiante, Asignatura)."
+    },
+    "actividad": {
+      "tipo": "quiz_mc",
+      "pregunta": "¿Cuál de las siguientes tablas cumple con la Primera Forma Normal?",
+      "alternativas": [
+        "Una tabla con una columna Teléfono1, Teléfono2 y Teléfono3.",
+        "Una tabla donde cada celda contiene un solo valor atómico y tiene clave primaria definida.",
+        "Una tabla con una celda que guarda '912345678, 987654321'.",
+        "Una tabla sin clave primaria pero con valores atómicos."
+      ],
+      "indice_correcta": 1,
+      "retroalimentacion": "La 1FN exige atomicidad, ausencia de grupos repetitivos y clave primaria definida. La opción correcta reúne esas condiciones; las demás violan al menos una regla.",
+      "tarjetas": [],
+      "preguntas": []
+    },
+    "fuentes": [
+      {
+        "id_fragmento": 12,
+        "documento": "Guía de Normalización: Primera Forma Normal (1FN)",
+        "pagina": 1
+      },
+      {
+        "id_fragmento": 13,
+        "documento": "Guía de Normalización: Primera Forma Normal (1FN)",
+        "pagina": 1
+      },
+      {
+        "id_fragmento": 14,
+        "documento": "Guía de Normalización: Primera Forma Normal (1FN)",
+        "pagina": 1
+      },
+      {
+        "id_fragmento": 16,
+        "documento": "Guía de Normalización: Primera Forma Normal (1FN)",
+        "pagina": 2
+      }
+    ]
+  },
+  "llamadas": [
+    {
+      "cuando_utc": "2026-10-11T02:45:48+00:00",
+      "etiqueta": "capsula:BD-U3-01:V",
+      "modelo_pedido": "deepseek-flash",
+      "modelo_respondido": "deepseek-flash",
+      "razonamiento": false,
+      "max_tokens": 2000,
+      "tokens_entrada": 2918,
+      "tokens_entrada_cache": 2688,
+      "tokens_salida": 956,
+      "tokens_razonamiento": 0,
+      "fin": "stop",
+      "segundos": 4.71,
+      "tarifa": "valle",
+      "costo_usd": 0.000616164,
+      "costo_usd_punta": 0.001232328,
+      "uso_sin_datos": false
+    }
+  ],
+  "costo_usd": 0.000616164
+}

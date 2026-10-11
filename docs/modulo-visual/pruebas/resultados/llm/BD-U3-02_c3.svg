@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 604" width="800" height="604" role="img" aria-labelledby="esq-titulo esq-desc" font-family="Figtree, 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif">
+<title id="esq-titulo">Dependencias Funcionales y Cierre</title>
+<desc id="esq-desc">Esquema de flujo que muestra la Dependencia Funcional como concepto central, del cual se desprenden sus tipos, el cálculo del cierre de atributos y un ejemplo con RUT.</desc>
+<rect width="800" height="604" rx="20" fill="#FBF8F3"/>
+<text x="400.0" y="58" text-anchor="middle" font-family="Fraunces, Georgia, 'Times New Roman', serif" font-size="30" font-weight="700" fill="#1F2933">Dependencias Funcionales y Cierre</text>
+<rect x="364.0" y="74" width="72" height="4" rx="2" fill="#F2795A"/>
+<circle cx="152.0" cy="150.0" r="17" fill="#E3F4F1" stroke="#0F766E" stroke-width="2"/><text x="152.0" y="155.5" text-anchor="middle" font-size="16" font-weight="700" fill="#0F766E">1</text>
+<rect x="190.0" y="112.0" width="460.0" height="76.0" rx="14" fill="#0F766E" stroke="#0F766E" stroke-width="2"/>
+<text x="420.0" y="144.1" text-anchor="middle" font-size="19" font-weight="700" fill="#FFFFFF">Dependencia Funcional</text>
+<text x="420.0" y="169.1" text-anchor="middle" font-size="14" fill="#FFFFFF">X determina funcionalmente a Y</text>
+<line x1="420.0" y1="191.9" x2="420.0" y2="228.0" stroke="#56606B" stroke-width="2"/><polygon points="420.0,236.0 415.1,225.0 424.9,225.0" fill="#56606B"/>
+<rect x="429.0" y="202.9" width="123.2" height="22" rx="11" fill="#FBF8F3"/><text x="436.0" y="218.4" text-anchor="start" font-size="13" font-style="italic" fill="#56606B">se clasifica en</text>
+<circle cx="152.0" cy="277.9" r="17" fill="#E3F4F1" stroke="#0F766E" stroke-width="2"/><text x="152.0" y="283.4" text-anchor="middle" font-size="16" font-weight="700" fill="#0F766E">2</text>
+<rect x="190.0" y="240.0" width="460.0" height="76.0" rx="14" fill="#FFFFFF" stroke="#D3C9B8" stroke-width="2"/>
+<text x="420.0" y="272.0" text-anchor="middle" font-size="19" font-weight="700" fill="#1F2933">Tipos de DF</text>
+<text x="420.0" y="297.0" text-anchor="middle" font-size="14" fill="#56606B">Plena, Transitiva, Trivial</text>
+<line x1="420.0" y1="319.9" x2="420.0" y2="355.9" stroke="#56606B" stroke-width="2"/><polygon points="420.0,363.9 415.1,352.9 424.9,352.9" fill="#56606B"/>
+
+<circle cx="152.0" cy="405.9" r="17" fill="#E3F4F1" stroke="#0F766E" stroke-width="2"/><text x="152.0" y="411.4" text-anchor="middle" font-size="16" font-weight="700" fill="#0F766E">3</text>
+<rect x="190.0" y="367.9" width="460.0" height="76.0" rx="14" fill="#FDEBE5" stroke="#F2795A" stroke-width="2"/>
+<text x="420.0" y="399.9" text-anchor="middle" font-size="19" font-weight="700" fill="#1F2933">Cierre de atributos</text>
+<text x="420.0" y="424.9" text-anchor="middle" font-size="14" fill="#56606B">Algoritmo iterativo (X)+</text>
+<line x1="420.0" y1="447.9" x2="420.0" y2="483.8" stroke="#56606B" stroke-width="2"/><polygon points="420.0,491.8 415.1,480.9 424.9,480.9" fill="#56606B"/>
+
+<circle cx="152.0" cy="533.8" r="17" fill="#E3F4F1" stroke="#0F766E" stroke-width="2"/><text x="152.0" y="539.3" text-anchor="middle" font-size="16" font-weight="700" fill="#0F766E">4</text>
+<rect x="190.0" y="495.8" width="460.0" height="76.0" rx="14" fill="#FFFFFF" stroke="#D3C9B8" stroke-width="2"/>
+<text x="420.0" y="527.9" text-anchor="middle" font-size="19" font-weight="700" fill="#1F2933">Ejemplo RUT</text>
+<text x="420.0" y="552.9" text-anchor="middle" font-size="14" fill="#56606B">RUT determina Nombre</text>
+</svg>

@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 594" width="800" height="594" role="img" aria-labelledby="esq-titulo esq-desc" font-family="Figtree, 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif">
+<title id="esq-titulo">Estructuras de Control de Flujo</title>
+<desc id="esq-desc">Diagrama jerárquico que muestra las estructuras de control de flujo divididas en selectivas e iterativas. Las selectivas incluyen condicionales, mientras que las iterativas incluyen for y while.</desc>
+<rect width="800" height="594" rx="20" fill="#FBF8F3"/>
+<text x="400.0" y="58" text-anchor="middle" font-family="Fraunces, Georgia, 'Times New Roman', serif" font-size="30" font-weight="700" fill="#1F2933">Estructuras de Control de Flujo</text>
+<rect x="364.0" y="74" width="72" height="4" rx="2" fill="#F2795A"/>
+<path d="M338.7,229.9 V259.9 H154.7 V295.9" fill="none" stroke="#56606B" stroke-width="2"/>
+<polygon points="154.7,303.9 149.8,292.9 159.6,292.9" fill="#56606B"/>
+<rect x="104.0" y="270.9" width="101.4" height="22" rx="11" fill="#FBF8F3"/><text x="154.7" y="286.4" text-anchor="middle" font-size="13" font-style="italic" fill="#56606B">se divide en</text>
+<path d="M338.7,229.9 V259.9 H522.7 V295.9" fill="none" stroke="#56606B" stroke-width="2"/>
+<polygon points="522.7,303.9 517.8,292.9 527.6,292.9" fill="#56606B"/>
+<rect x="472.0" y="270.9" width="101.4" height="22" rx="11" fill="#FBF8F3"/><text x="522.7" y="286.4" text-anchor="middle" font-size="13" font-style="italic" fill="#56606B">se divide en</text>
+<path d="M154.7,407.6 V437.6 H154.7 V473.6" fill="none" stroke="#56606B" stroke-width="2"/>
+<polygon points="154.7,481.6 149.8,470.6 159.6,470.6" fill="#56606B"/>
+<rect x="122.2" y="448.6" width="65.0" height="22" rx="11" fill="#FBF8F3"/><text x="154.7" y="464.1" text-anchor="middle" font-size="13" font-style="italic" fill="#56606B">incluye</text>
+<path d="M522.7,407.6 V437.6 H400.0 V473.6" fill="none" stroke="#56606B" stroke-width="2"/>
+<polygon points="400.0,481.6 395.1,470.6 404.9,470.6" fill="#56606B"/>
+<rect x="367.5" y="448.6" width="65.0" height="22" rx="11" fill="#FBF8F3"/><text x="400.0" y="464.1" text-anchor="middle" font-size="13" font-style="italic" fill="#56606B">incluye</text>
+<path d="M522.7,407.6 V437.6 H645.3 V473.6" fill="none" stroke="#56606B" stroke-width="2"/>
+<polygon points="645.3,481.6 640.4,470.6 650.2,470.6" fill="#56606B"/>
+<rect x="612.9" y="448.6" width="65.0" height="22" rx="11" fill="#FBF8F3"/><text x="645.3" y="464.1" text-anchor="middle" font-size="13" font-style="italic" fill="#56606B">incluye</text>
+<rect x="225.0" y="112.0" width="227.3" height="117.9" rx="14" fill="#0F766E" stroke="#0F766E" stroke-width="2"/>
+<text x="338.7" y="144.0" text-anchor="middle" font-size="19" font-weight="700" fill="#FFFFFF">Estructuras de</text>
+<text x="338.7" y="167.8" text-anchor="middle" font-size="19" font-weight="700" fill="#FFFFFF">Control</text>
+<text x="338.7" y="192.8" text-anchor="middle" font-size="14" fill="#FFFFFF">Rompen la ejecución</text>
+<text x="338.7" y="211.0" text-anchor="middle" font-size="14" fill="#FFFFFF">secuencial</text>
+<rect x="41.0" y="307.9" width="227.3" height="99.7" rx="14" fill="#FFFFFF" stroke="#D3C9B8" stroke-width="2"/>
+<text x="154.7" y="339.9" text-anchor="middle" font-size="19" font-weight="700" fill="#1F2933">Estructuras</text>
+<text x="154.7" y="363.7" text-anchor="middle" font-size="19" font-weight="700" fill="#1F2933">Selectivas</text>
+<text x="154.7" y="388.7" text-anchor="middle" font-size="14" fill="#56606B">if, elif, else</text>
+<rect x="409.0" y="307.9" width="227.3" height="99.7" rx="14" fill="#FFFFFF" stroke="#D3C9B8" stroke-width="2"/>
+<text x="522.7" y="339.9" text-anchor="middle" font-size="19" font-weight="700" fill="#1F2933">Estructuras</text>
+<text x="522.7" y="363.7" text-anchor="middle" font-size="19" font-weight="700" fill="#1F2933">Iterativas</text>
+<text x="522.7" y="388.7" text-anchor="middle" font-size="14" fill="#56606B">while y for</text>
+<rect x="41.0" y="485.6" width="227.3" height="76.0" rx="14" fill="#FFFFFF" stroke="#D3C9B8" stroke-width="2"/>
+<text x="154.7" y="517.6" text-anchor="middle" font-size="19" font-weight="700" fill="#1F2933">Condicionales</text>
+<text x="154.7" y="542.6" text-anchor="middle" font-size="14" fill="#56606B">if, elif, else</text>
+<rect x="286.3" y="485.6" width="227.3" height="76.0" rx="14" fill="#FFFFFF" stroke="#D3C9B8" stroke-width="2"/>
+<text x="400.0" y="517.6" text-anchor="middle" font-size="19" font-weight="700" fill="#1F2933">for</text>
+<text x="400.0" y="542.6" text-anchor="middle" font-size="14" fill="#56606B">Iteración determinada</text>
+<rect x="531.7" y="485.6" width="227.3" height="76.0" rx="14" fill="#FFFFFF" stroke="#D3C9B8" stroke-width="2"/>
+<text x="645.3" y="517.6" text-anchor="middle" font-size="19" font-weight="700" fill="#1F2933">while</text>
+<text x="645.3" y="542.6" text-anchor="middle" font-size="14" fill="#56606B">Iteración indeterminada</text>
+</svg>

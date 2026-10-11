@@ -1,0 +1,34 @@
+{
+  "modelo": "deepseek-v4-flash",
+  "objetivo": "BD-U3-01",
+  "canal": "V",
+  "max_tokens": 2000,
+  "razonamiento_apagado": false,
+  "valida": false,
+  "errores_por_intento": [
+    [
+      "el objeto JSON quedó sin cerrar: probablemente la respuesta se truncó por límite de tokens"
+    ]
+  ],
+  "llamadas": [
+    {
+      "cuando_utc": "2026-10-11T02:45:27+00:00",
+      "etiqueta": "capsula:BD-U3-01:V",
+      "modelo_pedido": "deepseek-v4-flash",
+      "modelo_respondido": "deepseek-flash",
+      "razonamiento": true,
+      "max_tokens": 2000,
+      "tokens_entrada": 2943,
+      "tokens_entrada_cache": 2688,
+      "tokens_salida": 2000,
+      "tokens_razonamiento": 1750,
+      "fin": "length",
+      "segundos": 9.21,
+      "tarifa": "valle",
+      "costo_usd": 0.001246314,
+      "costo_usd_punta": 0.002492628,
+      "uso_sin_datos": false
+    }
+  ],
+  "costo_usd": 0.001246314
+}

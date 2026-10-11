@@ -12,6 +12,7 @@ from decimal import Decimal
 
 import pytest
 
+from studify.config import get_settings
 from studify.generation.generator import (
     ClienteOpenAILike,
     ErrorGeneracion,
@@ -386,3 +387,31 @@ def test_sin_api_key_el_error_dice_que_falta_la_key():
     """Es el estado actual del proyecto: conviene que no falle con un 401 opaco."""
     with pytest.raises(ErrorGeneracion, match="LLM_API_KEY"):
         ClienteOpenAILike(api_key="")
+
+
+@pytest.mark.parametrize("modo", ["disabled", "enabled"])
+def test_llm_thinking_viaja_en_extra_body(monkeypatch, modo):
+    """`deepseek-flash` razona por defecto y gasta ahí los tokens de la cápsula.
+
+    `thinking` no es un parámetro de la API de OpenAI: si no va dentro de
+    `extra_body`, el SDK lo rechaza antes de enviar nada. Y no puede desplazar
+    al modo JSON, que viaja en el mismo diccionario.
+    """
+    monkeypatch.setattr(get_settings(), "llm_thinking", modo)
+    monkeypatch.setattr(get_settings(), "llm_json_mode", True)
+
+    cliente = ClienteOpenAILike(api_key="clave-de-prueba")
+
+    assert cliente._llm.additional_kwargs == {
+        "response_format": {"type": "json_object"},
+        "extra_body": {"thinking": {"type": modo}},
+    }
+
+
+def test_llm_thinking_vacio_no_envia_el_parametro(monkeypatch):
+    """Vacío es la salida para un proveedor que no conozca `thinking`."""
+    monkeypatch.setattr(get_settings(), "llm_thinking", "")
+
+    cliente = ClienteOpenAILike(api_key="clave-de-prueba")
+
+    assert "extra_body" not in cliente._llm.additional_kwargs

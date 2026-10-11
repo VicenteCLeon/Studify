@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 860" width="800" height="860" role="img" aria-labelledby="esq-titulo esq-desc" font-family="Figtree, 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif">
+<title id="esq-titulo">Primera Forma Normal: Reglas y Corrección</title>
+<desc id="esq-desc">El diagrama muestra la definición de la Primera Forma Normal como nodo principal, que requiere tres reglas: atomicidad de atributos, eliminación de grupos repetitivos y clave primaria definida. Estas reglas se corrigen mediante un paso a paso que produce una tabla normalizada.</desc>
+<rect width="800" height="860" rx="20" fill="#FBF8F3"/>
+<text x="400.0" y="58" text-anchor="middle" font-family="Fraunces, Georgia, 'Times New Roman', serif" font-size="25" font-weight="700" fill="#1F2933">Primera Forma Normal: Reglas y Corrección</text>
+<rect x="364.0" y="74" width="72" height="4" rx="2" fill="#F2795A"/>
+<circle cx="152.0" cy="150.0" r="17" fill="#E3F4F1" stroke="#0F766E" stroke-width="2"/><text x="152.0" y="155.5" text-anchor="middle" font-size="16" font-weight="700" fill="#0F766E">1</text>
+<rect x="190.0" y="112.0" width="460.0" height="76.0" rx="14" fill="#0F766E" stroke="#0F766E" stroke-width="2"/>
+<text x="420.0" y="144.1" text-anchor="middle" font-size="19" font-weight="700" fill="#FFFFFF">Definición de 1FN</text>
+<text x="420.0" y="169.1" text-anchor="middle" font-size="14" fill="#FFFFFF">Nivel básico de normalización relacional</text>
+<line x1="420.0" y1="191.9" x2="420.0" y2="228.0" stroke="#56606B" stroke-width="2"/><polygon points="420.0,236.0 415.1,225.0 424.9,225.0" fill="#56606B"/>
+<rect x="429.0" y="202.9" width="72.2" height="22" rx="11" fill="#FBF8F3"/><text x="436.0" y="218.4" text-anchor="start" font-size="13" font-style="italic" fill="#56606B">requiere</text>
+<circle cx="152.0" cy="277.9" r="17" fill="#E3F4F1" stroke="#0F766E" stroke-width="2"/><text x="152.0" y="283.4" text-anchor="middle" font-size="16" font-weight="700" fill="#0F766E">2</text>
+<rect x="190.0" y="240.0" width="460.0" height="76.0" rx="14" fill="#FFFFFF" stroke="#D3C9B8" stroke-width="2"/>
+<text x="420.0" y="272.0" text-anchor="middle" font-size="19" font-weight="700" fill="#1F2933">Atomicidad de Atributos</text>
+<text x="420.0" y="297.0" text-anchor="middle" font-size="14" fill="#56606B">Valores indivisibles en cada celda</text>
+<line x1="420.0" y1="319.9" x2="420.0" y2="355.9" stroke="#56606B" stroke-width="2"/><polygon points="420.0,363.9 415.1,352.9 424.9,352.9" fill="#56606B"/>
+
+<circle cx="152.0" cy="405.9" r="17" fill="#E3F4F1" stroke="#0F766E" stroke-width="2"/><text x="152.0" y="411.4" text-anchor="middle" font-size="16" font-weight="700" fill="#0F766E">3</text>
+<rect x="190.0" y="367.9" width="460.0" height="76.0" rx="14" fill="#FFFFFF" stroke="#D3C9B8" stroke-width="2"/>
+<text x="420.0" y="399.9" text-anchor="middle" font-size="19" font-weight="700" fill="#1F2933">Eliminación de Grupos Repetitivos</text>
+<text x="420.0" y="424.9" text-anchor="middle" font-size="14" fill="#56606B">Sin columnas repetidas del mismo tipo</text>
+<line x1="420.0" y1="447.9" x2="420.0" y2="483.8" stroke="#56606B" stroke-width="2"/><polygon points="420.0,491.8 415.1,480.9 424.9,480.9" fill="#56606B"/>
+
+<circle cx="152.0" cy="533.8" r="17" fill="#E3F4F1" stroke="#0F766E" stroke-width="2"/><text x="152.0" y="539.3" text-anchor="middle" font-size="16" font-weight="700" fill="#0F766E">4</text>
+<rect x="190.0" y="495.8" width="460.0" height="76.0" rx="14" fill="#FFFFFF" stroke="#D3C9B8" stroke-width="2"/>
+<text x="420.0" y="527.9" text-anchor="middle" font-size="19" font-weight="700" fill="#1F2933">Clave Primaria Definida</text>
+<text x="420.0" y="552.9" text-anchor="middle" font-size="14" fill="#56606B">Identifica de forma unívoca cada fila</text>
+<line x1="420.0" y1="575.8" x2="420.0" y2="611.8" stroke="#56606B" stroke-width="2"/><polygon points="420.0,619.8 415.1,608.8 424.9,608.8" fill="#56606B"/>
+<rect x="429.0" y="586.8" width="115.9" height="22" rx="11" fill="#FBF8F3"/><text x="436.0" y="602.3" text-anchor="start" font-size="13" font-style="italic" fill="#56606B">se corrige con</text>
+<circle cx="152.0" cy="661.8" r="17" fill="#E3F4F1" stroke="#0F766E" stroke-width="2"/><text x="152.0" y="667.3" text-anchor="middle" font-size="16" font-weight="700" fill="#0F766E">5</text>
+<rect x="190.0" y="623.8" width="460.0" height="76.0" rx="14" fill="#FFFFFF" stroke="#D3C9B8" stroke-width="2"/>
+<text x="420.0" y="655.8" text-anchor="middle" font-size="19" font-weight="700" fill="#1F2933">Paso a Paso</text>
+<text x="420.0" y="680.8" text-anchor="middle" font-size="14" fill="#56606B">Identificar, descomponer y reasignar clave</text>
+<line x1="420.0" y1="703.8" x2="420.0" y2="739.8" stroke="#56606B" stroke-width="2"/><polygon points="420.0,747.8 415.1,736.8 424.9,736.8" fill="#56606B"/>
+<rect x="429.0" y="714.8" width="65.0" height="22" rx="11" fill="#FBF8F3"/><text x="436.0" y="730.2" text-anchor="start" font-size="13" font-style="italic" fill="#56606B">produce</text>
+<circle cx="152.0" cy="789.7" r="17" fill="#E3F4F1" stroke="#0F766E" stroke-width="2"/><text x="152.0" y="795.2" text-anchor="middle" font-size="16" font-weight="700" fill="#0F766E">6</text>
+<rect x="190.0" y="751.8" width="460.0" height="76.0" rx="14" fill="#FDEBE5" stroke="#F2795A" stroke-width="2"/>
+<text x="420.0" y="783.8" text-anchor="middle" font-size="19" font-weight="700" fill="#1F2933">Tabla Normalizada</text>
+<text x="420.0" y="808.8" text-anchor="middle" font-size="14" fill="#56606B">Valores atómicos por fila</text>
+</svg>

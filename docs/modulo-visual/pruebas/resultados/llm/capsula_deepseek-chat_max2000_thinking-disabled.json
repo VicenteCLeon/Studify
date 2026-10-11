@@ -1,0 +1,120 @@
+{
+  "modelo": "deepseek-chat",
+  "objetivo": "BD-U3-01",
+  "canal": "V",
+  "max_tokens": 2000,
+  "thinking": "disabled",
+  "valida": true,
+  "intentos": 1,
+  "reparaciones": 0,
+  "errores_por_intento": [],
+  "segundos": 4.53,
+  "capsula": {
+    "titulo": "Primera Forma Normal: atomicidad y grupos repetitivos",
+    "objetivo_aprendizaje": "Eliminar grupos repetitivos y valores multivaluados de una tabla para llevarla a la Primera Forma Normal.",
+    "activacion": "¿Alguna vez has guardado varios datos en una sola celda separados por comas?",
+    "concepto_central": "La Primera Forma Normal es el nivel básico de la normalización relacional propuesto por Edgar F. Codd. Una tabla está en 1FN si cumple tres reglas: todos los valores de las celdas son atómicos, no existen columnas repetidas para el mismo tipo de información y la relación posee una clave primaria única que identifica cada fila. Cuando una celda contiene listas, la tabla viola la 1FN y debe descomponerse en filas atómicas, reasignando la clave primaria.",
+    "representacion_adaptativa": [
+      {
+        "tipo": "esquema",
+        "encabezado": "Jerarquía de la Primera Forma Normal",
+        "cuerpo": [
+          "Normalización relacional",
+          "Primera Forma Normal (1FN)",
+          "Atomicidad de atributos",
+          "Eliminación de grupos repetitivos",
+          "Clave primaria definida"
+        ]
+      },
+      {
+        "tipo": "tabla",
+        "encabezado": "Comparación de una tabla con y sin 1FN",
+        "cuerpo": [
+          [
+            "ID_Estudiante",
+            "Nombre",
+            "Asignaturas_Inscritas"
+          ],
+          [
+            "101",
+            "Ana Silva",
+            "Bases de Datos, Programación, Redes"
+          ],
+          [
+            "102",
+            "Pedro Gómez",
+            "Programación, Álgebra"
+          ]
+        ]
+      }
+    ],
+    "ejemplo": {
+      "tipo": "ejemplo_resuelto",
+      "encabezado": "Descomposición en filas atómicas",
+      "cuerpo": "La tabla anterior se normaliza separando cada asignatura en su propia fila: 101 Ana Silva Bases de Datos; 101 Ana Silva Programación; 101 Ana Silva Redes; 102 Pedro Gómez Programación; 102 Pedro Gómez Álgebra. La clave primaria pasa a ser la clave compuesta (ID_Estudiante, Asignatura)."
+    },
+    "actividad": {
+      "tipo": "quiz_mc",
+      "pregunta": "¿Cuál de las siguientes situaciones viola la Primera Forma Normal?",
+      "alternativas": [
+        "Una tabla con clave primaria compuesta.",
+        "Una celda que contiene una lista de valores separados por comas.",
+        "Una tabla con una columna llamada Nombre.",
+        "Una tabla con múltiples filas para un mismo estudiante."
+      ],
+      "indice_correcta": 1,
+      "retroalimentacion": "La 1FN exige atomicidad: cada celda debe contener un valor indivisible. Una celda con una lista de valores separados por comas no es atómica y debe descomponerse en filas, reasignando la clave primaria.",
+      "tarjetas": [],
+      "preguntas": []
+    },
+    "fuentes": [
+      {
+        "id_fragmento": 12,
+        "documento": "Guía de Normalización: Primera Forma Normal (1FN)",
+        "pagina": 1
+      },
+      {
+        "id_fragmento": 13,
+        "documento": "Guía de Normalización: Primera Forma Normal (1FN)",
+        "pagina": 1
+      },
+      {
+        "id_fragmento": 14,
+        "documento": "Guía de Normalización: Primera Forma Normal (1FN)",
+        "pagina": 1
+      },
+      {
+        "id_fragmento": 15,
+        "documento": "Guía de Normalización: Primera Forma Normal (1FN)",
+        "pagina": 1
+      },
+      {
+        "id_fragmento": 16,
+        "documento": "Guía de Normalización: Primera Forma Normal (1FN)",
+        "pagina": 2
+      }
+    ]
+  },
+  "llamadas": [
+    {
+      "cuando_utc": "2026-10-11T03:46:33+00:00",
+      "etiqueta": "capsula:BD-U3-01:V",
+      "modelo_pedido": "deepseek-chat",
+      "modelo_respondido": "deepseek-flash",
+      "tarea": "migracion",
+      "thinking": "disabled",
+      "max_tokens": 2000,
+      "tokens_entrada": 2918,
+      "tokens_entrada_cache": 2688,
+      "tokens_salida": 920,
+      "tokens_razonamiento": 0,
+      "fin": "stop",
+      "segundos": 4.53,
+      "tarifa": "valle",
+      "costo_usd": 0.000594564,
+      "costo_usd_punta": 0.001189128,
+      "uso_sin_datos": false
+    }
+  ],
+  "costo_usd": 0.000594564
+}

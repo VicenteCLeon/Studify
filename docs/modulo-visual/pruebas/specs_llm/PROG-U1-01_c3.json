@@ -1,0 +1,87 @@
+{
+  "version": 1,
+  "titulo": "Variables y Tipos de Datos",
+  "tipo_de_diagrama": "mapa_conceptual",
+  "nodos": [
+    {
+      "id": "n1",
+      "etiqueta": "Variable",
+      "detalle": "Ubicación en memoria RAM",
+      "rol": "principal"
+    },
+    {
+      "id": "n2",
+      "etiqueta": "Tipos de datos primitivos",
+      "detalle": "Determinan operaciones y memoria",
+      "rol": "secundario"
+    },
+    {
+      "id": "n3",
+      "etiqueta": "int",
+      "detalle": "Números sin parte decimal",
+      "rol": "secundario"
+    },
+    {
+      "id": "n4",
+      "etiqueta": "float",
+      "detalle": "Números con parte decimal",
+      "rol": "secundario"
+    },
+    {
+      "id": "n5",
+      "etiqueta": "bool",
+      "detalle": "True o False",
+      "rol": "secundario"
+    },
+    {
+      "id": "n6",
+      "etiqueta": "str",
+      "detalle": "Secuencia inmutable de caracteres",
+      "rol": "secundario"
+    }
+  ],
+  "relaciones": [
+    {
+      "desde": "n1",
+      "hacia": "n2",
+      "verbo": "almacena"
+    },
+    {
+      "desde": "n2",
+      "hacia": "n3",
+      "verbo": "incluye"
+    },
+    {
+      "desde": "n2",
+      "hacia": "n4",
+      "verbo": "incluye"
+    },
+    {
+      "desde": "n2",
+      "hacia": "n5",
+      "verbo": "incluye"
+    },
+    {
+      "desde": "n2",
+      "hacia": "n6",
+      "verbo": "incluye"
+    }
+  ],
+  "paleta": "studify",
+  "estilo": "plano",
+  "texto_alternativo": "El esquema muestra que una variable es una ubicación en memoria RAM que almacena un tipo de dato específico. Los tipos de datos primitivos incluyen int, float, bool y str.",
+  "fuentes": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "origen": {
+    "codigo_objetivo": "PROG-U1-01",
+    "generado_por": "deepseek-flash",
+    "corrida": 3,
+    "intentos": 1,
+    "nota": "Generada por el LLM con el prompt del §3.2; sin editar a mano."
+  }
+}

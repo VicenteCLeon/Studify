@@ -1,0 +1,216 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "EspecificacionVisual",
+  "type": "object",
+  "required": [
+    "version",
+    "titulo",
+    "tipo_de_diagrama",
+    "nodos",
+    "relaciones",
+    "paleta",
+    "estilo",
+    "texto_alternativo"
+  ],
+  "properties": {
+    "version": {
+      "const": 1
+    },
+    "titulo": {
+      "type": "string",
+      "description": "Máximo 6 palabras"
+    },
+    "tipo_de_diagrama": {
+      "enum": [
+        "mapa_conceptual",
+        "flujo",
+        "comparacion",
+        "linea_de_tiempo",
+        "jerarquia",
+        "ciclo",
+        "causa_efecto"
+      ]
+    },
+    "nodos": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 7,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "etiqueta"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^n[1-9]$"
+          },
+          "etiqueta": {
+            "type": "string",
+            "description": "Máximo 4 palabras"
+          },
+          "detalle": {
+            "type": "string",
+            "description": "Opcional, máximo 8 palabras. Solo lo usa el render determinístico"
+          },
+          "rol": {
+            "enum": [
+              "principal",
+              "secundario",
+              "resultado",
+              "decision"
+            ],
+            "default": "secundario"
+          },
+          "grupo": {
+            "type": "string",
+            "description": "Columna en `comparacion`; marca temporal en `linea_de_tiempo`"
+          }
+        }
+      }
+    },
+    "relaciones": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "desde",
+          "hacia",
+          "verbo"
+        ],
+        "properties": {
+          "desde": {
+            "type": "string"
+          },
+          "hacia": {
+            "type": "string"
+          },
+          "verbo": {
+            "type": "string",
+            "description": "Máximo 3 palabras"
+          }
+        }
+      }
+    },
+    "paleta": {
+      "enum": [
+        "studify",
+        "azul",
+        "violeta"
+      ]
+    },
+    "estilo": {
+      "enum": [
+        "plano"
+      ]
+    },
+    "texto_alternativo": {
+      "type": "string",
+      "description": "1 o 2 oraciones que describen el diagrama"
+    },
+    "fuentes": {
+      "type": "array",
+      "items": {
+        "type": "integer"
+      },
+      "description": "id_fragmento usados"
+    }
+  },
+  "version": 1,
+  "titulo": "Variables y Tipos de Datos",
+  "tipo_de_diagrama": "mapa_conceptual",
+  "nodos": [
+    {
+      "id": "n1",
+      "etiqueta": "Variable",
+      "detalle": "Ubicación en memoria RAM",
+      "rol": "principal"
+    },
+    {
+      "id": "n2",
+      "etiqueta": "Identificador simbólico",
+      "detalle": "Nombre de la variable",
+      "rol": "secundario"
+    },
+    {
+      "id": "n3",
+      "etiqueta": "Tipo de dato",
+      "detalle": "Determina operaciones y memoria",
+      "rol": "secundario"
+    },
+    {
+      "id": "n4",
+      "etiqueta": "int",
+      "detalle": "Números sin parte decimal",
+      "rol": "secundario"
+    },
+    {
+      "id": "n5",
+      "etiqueta": "float",
+      "detalle": "Números con parte decimal",
+      "rol": "secundario"
+    },
+    {
+      "id": "n6",
+      "etiqueta": "bool",
+      "detalle": "True o False",
+      "rol": "secundario"
+    },
+    {
+      "id": "n7",
+      "etiqueta": "str",
+      "detalle": "Secuencia inmutable de caracteres",
+      "rol": "secundario"
+    }
+  ],
+  "relaciones": [
+    {
+      "desde": "n1",
+      "hacia": "n2",
+      "verbo": "asociada a"
+    },
+    {
+      "desde": "n1",
+      "hacia": "n3",
+      "verbo": "almacena un"
+    },
+    {
+      "desde": "n3",
+      "hacia": "n4",
+      "verbo": "incluye"
+    },
+    {
+      "desde": "n3",
+      "hacia": "n5",
+      "verbo": "incluye"
+    },
+    {
+      "desde": "n3",
+      "hacia": "n6",
+      "verbo": "incluye"
+    },
+    {
+      "desde": "n3",
+      "hacia": "n7",
+      "verbo": "incluye"
+    }
+  ],
+  "paleta": "studify",
+  "estilo": "plano",
+  "texto_alternativo": "El esquema muestra que una variable es una ubicación en memoria RAM asociada a un identificador simbólico y que almacena un valor de un tipo de dato específico. Los tipos de datos primitivos incluidos son int, float, bool y str.",
+  "fuentes": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "origen": {
+    "codigo_objetivo": "PROG-U1-01",
+    "generado_por": "deepseek-flash",
+    "corrida": 1,
+    "intentos": 2,
+    "nota": "Generada por el LLM con el prompt del §3.2; sin editar a mano."
+  }
+}

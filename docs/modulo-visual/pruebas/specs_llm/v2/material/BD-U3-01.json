@@ -1,0 +1,51 @@
+{
+  "codigo_objetivo": "BD-U3-01",
+  "asignatura": "Bases de Datos",
+  "unidad": "Unidad 3: Normalización",
+  "tema": "Primera Forma Normal",
+  "origen": "base de datos: fragmentos validados (retriever.recuperar)",
+  "fragmentos": [
+    {
+      "id_fragmento": 12,
+      "documento": "Guía de Normalización: Primera Forma Normal (1FN)",
+      "cita": "Guía de Normalización: Primera Forma Normal (1FN), p. 1",
+      "tipo": "texto",
+      "texto": "1. Definición Formal de la 1FN (Perfil Lectura / Escritura - R)\n\nLa Primera Forma Normal (1FN) es el nivel básico de la normalización relacional propuesto por Edgar F. Codd. Una tabla o relación se encuentra formalmente en 1FN si y solo si cumple con tres reglas estrictas: 1. Atomicidad de Atributos: Todos los valores almacenados en las celdas de la tabla deben ser atómicos (indivisibles). No se permiten listas, arreglos o conjuntos de valores dentro de una sola celda. 2. Eliminación de Grupos Repetitivos: No deben existir columnas repetidas para almacenar información del mismo tipo (ej. Telefono1, Telefono2, Telefono3). 3. Clave Primaria Definida: La relación debe poseer una clave primaria única que identifique de forma univoca cada fila o tupla."
+    },
+    {
+      "id_fragmento": 13,
+      "documento": "Guía de Normalización: Primera Forma Normal (1FN)",
+      "cita": "Guía de Normalización: Primera Forma Normal (1FN), p. 1",
+      "tipo": "texto",
+      "texto": "Tabla No Normalizada (Violación de 1FN por Atributo Multivaluado):\n\nID_Estudiante Nombre Asignaturas_Inscritas 101 Ana Silva Bases de Datos, Programación, Redes 102 Pedro Gómez Programación, Álgebra"
+    },
+    {
+      "id_fragmento": 14,
+      "documento": "Guía de Normalización: Primera Forma Normal (1FN)",
+      "cita": "Guía de Normalización: Primera Forma Normal (1FN), p. 1",
+      "tipo": "texto",
+      "texto": "Tabla Normalizada en 1FN (Valores Atómicos por Fila):\n\nID_Estudiante Nombre Asignatura 101 Ana Silva Bases de Datos 101 Ana Silva Programación 101 Ana Silva Redes 102 Pedro Gómez Programación 102 Pedro Gómez Álgebra (Nota: La clave primaria de la tabla normalizada pasa a ser la clave compuesta (ID_Estudiante, Asignatura))."
+    },
+    {
+      "id_fragmento": 15,
+      "documento": "Guía de Normalización: Primera Forma Normal (1FN)",
+      "cita": "Guía de Normalización: Primera Forma Normal (1FN), pp. 1–2",
+      "tipo": "texto",
+      "texto": "3. Explicación Narrativa: ¿Por qué la 1FN es Indispensable? (Perfil Auditivo - A)\n\nEscuchen con atención este escenario de diseño de base de datos. Imaginen que guardan los teléfonos de un estudiante separados por comas en una sola celda de texto: \"912345678, 987654321\". Cuando el sistema necesite buscar a todos los alumnos cuyo teléfono comience con 987, el motor SQL no podrá hacer una búsqueda directa por índice. Tendrá que escanear todo el texto celda por celda usando comodines como LIKE '%987%', destruyendo el rendimiento de la base de datos. Al aplicar la Primera Forma Normal y separar cada teléfono en su propia fila atómica, permites que las consultas de búsqueda, ordenamiento y agregación se ejecuten de manera directa, limpia e instantánea."
+    },
+    {
+      "id_fragmento": 16,
+      "documento": "Guía de Normalización: Primera Forma Normal (1FN)",
+      "cita": "Guía de Normalización: Primera Forma Normal (1FN), p. 2",
+      "tipo": "texto",
+      "texto": "Paso a Paso para Resolver Violaciones de 1FN:\n\n1. Identificar la celda no atómica: Localizar las columnas que contienen listas de valores separados por comas o guiones. 2. Descomponer en filas: Duplicar la fila para cada uno de los elementos de la lista, manteniendo atómico el valor de la celda. 3. Definir la clave primaria: Reasignar la clave primaria incorporando la nueva columna descompuesta."
+    },
+    {
+      "id_fragmento": 17,
+      "documento": "Guía de Normalización: Primera Forma Normal (1FN)",
+      "cita": "Guía de Normalización: Primera Forma Normal (1FN), p. 2",
+      "tipo": "texto",
+      "texto": "Ejercicio Práctico SQL:\n\n-- Creación de la tabla normalizada en 1FN CREATE TABLE estudiante_asignatura ( id_estudiante INT NOT NULL, nombre_estudiante VARCHAR(100) NOT NULL, codigo_asignatura VARCHAR(20) NOT NULL, PRIMARY KEY (id_estudiante, codigo_asignatura) ); -- Inserción de datos atómicos INSERT INTO estudiante_asignatura (id_estudiante, nombre_estudiante, codigo_asignatura) VALUES (101, 'Ana Silva', 'BD-U3-01'), (101, 'Ana Silva', 'PROG-U1-01'), (102, 'Pedro Gómez', 'PROG-U1-01');"
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 654" width="800" height="654" role="img" aria-labelledby="esq-titulo esq-desc" font-family="Figtree, 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif">
+<title id="esq-titulo">Reglas de la Primera Forma Normal</title>
+<desc id="esq-desc">La Primera Forma Normal requiere atomicidad de atributos, eliminación de grupos repetitivos y una clave primaria definida. La atomicidad de atributos produce una clave compuesta.</desc>
+<rect width="800" height="654" rx="20" fill="#FBF8F3"/>
+<text x="400.0" y="58" text-anchor="middle" font-family="Fraunces, Georgia, 'Times New Roman', serif" font-size="30" font-weight="700" fill="#1F2933">Reglas de la Primera Forma Normal</text>
+<rect x="364.0" y="74" width="72" height="4" rx="2" fill="#F2795A"/>
+<line x1="325.7" y1="233.9" x2="249.1" y2="298.7" stroke="#56606B" stroke-width="2"/><polygon points="243.0,303.9 248.2,293.1 254.5,300.6" fill="#56606B"/><rect x="248.2" y="257.9" width="72.2" height="22" rx="11" fill="#FBF8F3"/><text x="284.3" y="273.4" text-anchor="middle" font-size="13" font-style="italic" fill="#56606B">requiere</text>
+<line x1="400.0" y1="233.9" x2="400.0" y2="295.9" stroke="#56606B" stroke-width="2"/><polygon points="400.0,303.9 395.1,292.9 404.9,292.9" fill="#56606B"/><rect x="363.9" y="257.9" width="72.2" height="22" rx="11" fill="#FBF8F3"/><text x="400.0" y="273.4" text-anchor="middle" font-size="13" font-style="italic" fill="#56606B">requiere</text>
+<line x1="474.3" y1="233.9" x2="550.9" y2="298.7" stroke="#56606B" stroke-width="2"/><polygon points="557.0,303.9 545.5,300.6 551.8,293.1" fill="#56606B"/><rect x="479.5" y="257.9" width="72.2" height="22" rx="11" fill="#FBF8F3"/><text x="515.7" y="273.4" text-anchor="middle" font-size="13" font-style="italic" fill="#56606B">requiere</text>
+<line x1="154.7" y1="453.5" x2="154.7" y2="515.5" stroke="#56606B" stroke-width="2"/><polygon points="154.7,523.5 149.8,512.6 159.6,512.6" fill="#56606B"/><rect x="122.2" y="477.5" width="65.0" height="22" rx="11" fill="#FBF8F3"/><text x="154.7" y="493.0" text-anchor="middle" font-size="13" font-style="italic" fill="#56606B">produce</text>
+<rect x="286.3" y="112.0" width="227.3" height="117.9" rx="14" fill="#0F766E" stroke="#0F766E" stroke-width="2"/>
+<text x="400.0" y="144.0" text-anchor="middle" font-size="19" font-weight="700" fill="#FFFFFF">Primera Forma</text>
+<text x="400.0" y="167.8" text-anchor="middle" font-size="19" font-weight="700" fill="#FFFFFF">Normal</text>
+<text x="400.0" y="192.8" text-anchor="middle" font-size="14" fill="#FFFFFF">Nivel básico de</text>
+<text x="400.0" y="211.0" text-anchor="middle" font-size="14" fill="#FFFFFF">normalización relacional</text>
+<rect x="41.0" y="307.9" width="227.3" height="141.7" rx="14" fill="#FFFFFF" stroke="#D3C9B8" stroke-width="2"/>
+<text x="154.7" y="351.8" text-anchor="middle" font-size="19" font-weight="700" fill="#1F2933">Atomicidad de</text>
+<text x="154.7" y="375.6" text-anchor="middle" font-size="19" font-weight="700" fill="#1F2933">Atributos</text>
+<text x="154.7" y="400.6" text-anchor="middle" font-size="14" fill="#56606B">Valores indivisibles en</text>
+<text x="154.7" y="418.8" text-anchor="middle" font-size="14" fill="#56606B">cada celda</text>
+<rect x="286.3" y="307.9" width="227.3" height="141.7" rx="14" fill="#FFFFFF" stroke="#D3C9B8" stroke-width="2"/>
+<text x="400.0" y="339.9" text-anchor="middle" font-size="19" font-weight="700" fill="#1F2933">Eliminación de</text>
+<text x="400.0" y="363.7" text-anchor="middle" font-size="19" font-weight="700" fill="#1F2933">Grupos</text>
+<text x="400.0" y="387.4" text-anchor="middle" font-size="19" font-weight="700" fill="#1F2933">Repetitivos</text>
+<text x="400.0" y="412.4" text-anchor="middle" font-size="14" fill="#56606B">Sin columnas repetidas del</text>
+<text x="400.0" y="430.6" text-anchor="middle" font-size="14" fill="#56606B">mismo tipo</text>
+<rect x="531.7" y="307.9" width="227.3" height="141.7" rx="14" fill="#FFFFFF" stroke="#D3C9B8" stroke-width="2"/>
+<text x="645.3" y="351.8" text-anchor="middle" font-size="19" font-weight="700" fill="#1F2933">Clave Primaria</text>
+<text x="645.3" y="375.6" text-anchor="middle" font-size="19" font-weight="700" fill="#1F2933">Definida</text>
+<text x="645.3" y="400.6" text-anchor="middle" font-size="14" fill="#56606B">Identifica de forma</text>
+<text x="645.3" y="418.8" text-anchor="middle" font-size="14" fill="#56606B">unívoca cada fila</text>
+<rect x="41.0" y="527.5" width="227.3" height="94.2" rx="14" fill="#FDEBE5" stroke="#F2795A" stroke-width="2"/>
+<text x="154.7" y="559.6" text-anchor="middle" font-size="19" font-weight="700" fill="#1F2933">Clave compuesta</text>
+<text x="154.7" y="584.6" text-anchor="middle" font-size="14" fill="#56606B">Clave primaria tras</text>
+<text x="154.7" y="602.8" text-anchor="middle" font-size="14" fill="#56606B">descomponer</text>
+</svg>

@@ -1,0 +1,120 @@
+## Objetivo de aprendizaje
+Asignatura: Introducción a la Programación
+Unidad: Unidad 1: Fundamentos
+Tema: Estructuras de Control
+
+## Material curado
+### id_fragmento: 6
+Procedencia: Estructuras de Control Condicionales e Iterativas, p. 1
+Tipo de material: texto
+
+1. Definición y Reglas del Control de Flujo (Perfil Lectura / Escritura - R)
+
+Por defecto, la ejecución de un programa informático se realiza de manera secuencial, línea por línea. Las estructuras de control de flujo rompen este comportamiento lineal para permitir tomar decisiones lógicas o repetir bloques de código basándose en condiciones booleanas. Se clasifican en dos grandes familias: 1. Estructuras Selectivas (Condicionales): if, elif, else. Evalúan una expresión condicional. Si el resultado es True, se ejecuta el bloque indentado; si es False, se omite o se evalúa la siguiente rama. 2. Estructuras Iterativas (Bucles): while (bucle controlado por condición) y for (bucle controlado por contador o iteración sobre colecciones).
+
+### id_fragmento: 7
+Procedencia: Estructuras de Control Condicionales e Iterativas, p. 1
+Tipo de material: texto
+
+2. Matriz Comparativa de Estructuras (Perfil Visual - V)
+
+Estructura Tipo de Control Condición de Evaluación Comportamiento del Flujo if / elif / else Selección Expresión booleana (a > b) Ejecuta 1 sola rama lógica según la primera condición verdadera. for Iteración determinada Rango numérico o lista (in range(n)) Repite el bloque un número fijo de veces conocido de antemano. while Iteración indeterminada Condición lógica abierta Repite el bloque mientras la condición se mantenga True.
+
+### id_fragmento: 8
+Procedencia: Estructuras de Control Condicionales e Iterativas, p. 1
+Tipo de material: texto
+
+Esquema Lógico de Decisión:
+
+[ Inicio ] I M (¿Condición evaluada?) IIIIIIIIIIIIIIIIIIIII SI NO I I [ Bloque A ] [ Bloque B ] I I IIIIIIIIIIIIIIIIIIIII M [ Continuar ]
+
+### id_fragmento: 9
+Procedencia: Estructuras de Control Condicionales e Iterativas, pp. 1–2
+Tipo de material: texto
+
+3. Explicación Narrativa: El Algoritmo del Semáforo (Perfil Auditivo - A)
+
+Imagina que eres un conductor aproximándote a un cruce regulado por un semáforo. Tu cerebro ejecuta constantemente una estructura de control condicional en tiempo real. Primero escuchas y observas el estado del semáforo. Tu regla lógica interna funciona así: si la luz está verde, avanzas sin detenerte; en cambio, si la luz cambia a amarillo, debes evaluar la distancia de frenado; y si finalmente la luz está roja, te detienes por completo. En un bucle de tráfico, mantienes tu pie en el freno mientras la luz siga en rojo. En el momento exacto en que cambia a verde, la condición del while se vuelve falsa, sales del bucle de espera y continúas tu camino.
+
+### id_fragmento: 10
+Procedencia: Estructuras de Control Condicionales e Iterativas, p. 2
+Tipo de material: texto
+
+Ejemplo de Código en Python:
+
+# Ejemplo 1: Condicional de Evaluación de Calificación nota = 5.8 if nota >= 4.0: print("Estado: Aprobado") else: print("Estado: Reprobado") # Ejemplo 2: Bucle for iterando con acumulador suma_total = 0 for numero in range(1, 6): # Genera la secuencia 1, 2, 3, 4, 5 suma_total += numero print(f"Paso {numero}: suma parcial = {suma_total}") print(f"Suma final acumulada: {suma_total}")
+
+### id_fragmento: 11
+Procedencia: Estructuras de Control Condicionales e Iterativas, p. 2
+Tipo de material: texto
+
+Ejercicio Guiado:
+
+1. Escribe un bucle while que comience con la variable contador = 5. 2. En cada iteración del bucle, imprime "Cuenta regresiva: " junto con el valor del contador, y luego resta 1 a contador. 3. El bucle debe detenerse cuando contador llegue a 0 e imprimir "¡Despegue!".
+
+
+## Tarea
+Diseña UN esquema que muestre la estructura del tema: qué conceptos hay y cómo se relacionan.
+
+Elige `tipo_de_diagrama` según la naturaleza del contenido:
+- flujo: pasos de un procedimiento, en orden.
+- ciclo: etapas que se repiten y vuelven al inicio.
+- jerarquia: una categoría que se divide en subtipos.
+- comparacion: dos a cuatro elementos contrastados por sus rasgos.
+- linea_de_tiempo: hitos ordenados en el tiempo.
+- causa_efecto: causas que producen consecuencias.
+- mapa_conceptual: cuando ninguno de los anteriores calza.
+
+Límites estrictos:
+- `titulo`: 6 palabras o menos.
+- `nodos`: entre 3 y 7. Cada `etiqueta`, 4 palabras o menos, usando el término exacto del material.
+- `detalle` (opcional): 8 palabras o menos.
+- `relaciones`: cada `verbo` con 3 palabras o menos («produce», «se divide en»).
+- Exactamente un nodo con rol `principal`.
+- `texto_alternativo`: 1 o 2 oraciones que describan el esquema a quien no puede verlo.
+- `fuentes`: los id_fragmento de donde salió cada concepto.
+
+## Formato
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "EspecificacionVisual",
+  "type": "object",
+  "required": ["version", "titulo", "tipo_de_diagrama", "nodos", "relaciones", "paleta", "estilo", "texto_alternativo"],
+  "properties": {
+    "version": { "const": 1 },
+    "titulo": { "type": "string", "description": "Máximo 6 palabras" },
+    "tipo_de_diagrama": {
+      "enum": ["mapa_conceptual", "flujo", "comparacion", "linea_de_tiempo", "jerarquia", "ciclo", "causa_efecto"]
+    },
+    "nodos": {
+      "type": "array", "minItems": 3, "maxItems": 7,
+      "items": {
+        "type": "object",
+        "required": ["id", "etiqueta"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^n[1-9]$" },
+          "etiqueta": { "type": "string", "description": "Máximo 4 palabras" },
+          "detalle": { "type": "string", "description": "Opcional, máximo 8 palabras. Solo lo usa el render determinístico" },
+          "rol": { "enum": ["principal", "secundario", "resultado", "decision"], "default": "secundario" },
+          "grupo": { "type": "string", "description": "Columna en `comparacion`; marca temporal en `linea_de_tiempo`" }
+        }
+      }
+    },
+    "relaciones": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["desde", "hacia", "verbo"],
+        "properties": {
+          "desde": { "type": "string" },
+          "hacia": { "type": "string" },
+          "verbo": { "type": "string", "description": "Máximo 3 palabras" }
+        }
+      }
+    },
+    "paleta": { "enum": ["studify", "azul", "violeta"] },
+    "estilo": { "enum": ["plano"] },
+    "texto_alternativo": { "type": "string", "description": "1 o 2 oraciones que describen el diagrama" },
+    "fuentes": { "type": "array", "items": { "type": "integer" }, "description": "id_fragmento usados" }
+  }
+}

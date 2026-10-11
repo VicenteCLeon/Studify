@@ -1,0 +1,85 @@
+{
+  "version": 1,
+  "titulo": "Primera Forma Normal",
+  "tipo_de_diagrama": "mapa_conceptual",
+  "nodos": [
+    {
+      "id": "n1",
+      "etiqueta": "Primera Forma Normal",
+      "detalle": "Nivel básico de normalización relacional",
+      "rol": "principal"
+    },
+    {
+      "id": "n2",
+      "etiqueta": "Atomicidad de Atributos",
+      "detalle": "Valores indivisibles en cada celda",
+      "rol": "secundario"
+    },
+    {
+      "id": "n3",
+      "etiqueta": "Eliminación de Grupos Repetitivos",
+      "detalle": "Sin columnas repetidas del mismo tipo",
+      "rol": "secundario"
+    },
+    {
+      "id": "n4",
+      "etiqueta": "Clave Primaria Definida",
+      "detalle": "Identifica de forma unívoca cada fila",
+      "rol": "secundario"
+    },
+    {
+      "id": "n5",
+      "etiqueta": "Descomponer en filas",
+      "detalle": "Duplicar fila por cada elemento",
+      "rol": "secundario"
+    },
+    {
+      "id": "n6",
+      "etiqueta": "Reasignar clave primaria",
+      "detalle": "Incorporar la nueva columna descompuesta",
+      "rol": "secundario"
+    }
+  ],
+  "relaciones": [
+    {
+      "desde": "n1",
+      "hacia": "n2",
+      "verbo": "requiere"
+    },
+    {
+      "desde": "n1",
+      "hacia": "n3",
+      "verbo": "requiere"
+    },
+    {
+      "desde": "n1",
+      "hacia": "n4",
+      "verbo": "requiere"
+    },
+    {
+      "desde": "n2",
+      "hacia": "n5",
+      "verbo": "se resuelve con"
+    },
+    {
+      "desde": "n5",
+      "hacia": "n6",
+      "verbo": "conlleva a"
+    }
+  ],
+  "paleta": "studify",
+  "estilo": "plano",
+  "texto_alternativo": "Esquema que muestra la Primera Forma Normal como concepto central, del cual dependen tres reglas: atomicidad de atributos, eliminación de grupos repetitivos y clave primaria definida. La atomicidad se resuelve descomponiendo en filas, lo que conlleva a reasignar la clave primaria.",
+  "fuentes": [
+    12,
+    16
+  ],
+  "origen": {
+    "codigo_objetivo": "BD-U3-01",
+    "generado_por": "deepseek-flash",
+    "corrida": 2,
+    "intentos": 1,
+    "prompt": "modulo",
+    "nota": "Generada por el LLM; sin editar a mano."
+  }
+}

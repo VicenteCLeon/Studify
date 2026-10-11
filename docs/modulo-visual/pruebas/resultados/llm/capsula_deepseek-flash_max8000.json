@@ -1,0 +1,34 @@
+{
+  "modelo": "deepseek-flash",
+  "objetivo": "BD-U3-01",
+  "canal": "V",
+  "max_tokens": 8000,
+  "razonamiento_apagado": false,
+  "valida": false,
+  "errores_por_intento": [
+    [
+      "la respuesta del modelo no contiene ningún objeto JSON (no hay '{')"
+    ]
+  ],
+  "llamadas": [
+    {
+      "cuando_utc": "2026-10-11T02:46:01+00:00",
+      "etiqueta": "capsula:BD-U3-01:V",
+      "modelo_pedido": "deepseek-flash",
+      "modelo_respondido": "deepseek-flash",
+      "razonamiento": true,
+      "max_tokens": 8000,
+      "tokens_entrada": 2943,
+      "tokens_entrada_cache": 2688,
+      "tokens_salida": 8000,
+      "tokens_razonamiento": 8000,
+      "fin": "length",
+      "segundos": 28.29,
+      "tarifa": "valle",
+      "costo_usd": 0.004846314,
+      "costo_usd_punta": 0.009692628,
+      "uso_sin_datos": false
+    }
+  ],
+  "costo_usd": 0.004846314
+}

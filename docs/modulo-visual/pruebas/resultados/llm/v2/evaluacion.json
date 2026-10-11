@@ -1,0 +1,744 @@
+{
+  "resumen": {
+    "corridas": 3,
+    "validas": 3,
+    "a_la_primera": 3,
+    "con_reparacion": 0,
+    "fallidas": 0,
+    "etiquetas": 16,
+    "etiquetas_literal": 15,
+    "etiquetas_casi": 1,
+    "etiquetas_ausentes": 0,
+    "etiquetas_ausentes_distintas": [],
+    "relaciones": 13,
+    "relaciones_oracion": 0,
+    "relaciones_fragmento": 10,
+    "relaciones_sin_respaldo": 3,
+    "relaciones_dibujadas": 13,
+    "no_conexas": [],
+    "con_relaciones_sin_dibujar": [],
+    "con_rotulos_superpuestos": [],
+    "elegidas": {
+      "BD-U3-01": {
+        "nombre": "BD-U3-01_c1",
+        "limpia": true,
+        "defectos_de_render": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    "para_mostrar": [
+      "BD-U3-01_c1"
+    ],
+    "con_problemas_de_ortografia": [
+      "BD-U3-01_c1",
+      "BD-U3-01_c2",
+      "BD-U3-01_c3"
+    ],
+    "tokens_entrada": 6726,
+    "tokens_salida": 1667,
+    "costo_usd": 0.001218828,
+    "costo_usd_punta": 0.002437656,
+    "segundos": 7.93
+  },
+  "por_objetivo": {
+    "BD-U3-01": {
+      "tipos": [
+        "mapa_conceptual",
+        "mapa_conceptual",
+        "mapa_conceptual"
+      ],
+      "coinciden": true
+    }
+  },
+  "corridas": [
+    {
+      "nombre": "BD-U3-01_c1",
+      "codigo_objetivo": "BD-U3-01",
+      "corrida": 1,
+      "modelo_pedido": "deepseek-flash",
+      "thinking": "disabled",
+      "temperatura": 0.4,
+      "generado_utc": "2026-10-11T03:59:20+00:00",
+      "fragmentos_entregados": [
+        12,
+        13,
+        14,
+        15,
+        16,
+        17
+      ],
+      "valida": true,
+      "intentos": 1,
+      "reparaciones": 0,
+      "advertencias": [],
+      "segundos": 3.09,
+      "tokens_entrada": 2242,
+      "tokens_entrada_cache": 1280,
+      "tokens_salida": 519,
+      "tokens_razonamiento": 0,
+      "costo_usd": 0.00045954,
+      "costo_usd_punta": 0.00091908,
+      "tarifa": "valle",
+      "modelo_respondido": "deepseek-flash",
+      "errores_primer_intento": [],
+      "tipo_de_diagrama": "mapa_conceptual",
+      "titulo": "Primera Forma Normal",
+      "nodos": 5,
+      "relaciones": 4,
+      "etiquetas": [
+        {
+          "id": "n1",
+          "etiqueta": "Primera Forma Normal",
+          "nivel": "literal",
+          "fragmentos": [
+            12,
+            15
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n2",
+          "etiqueta": "Atomicidad de Atributos",
+          "nivel": "literal",
+          "fragmentos": [
+            12
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n3",
+          "etiqueta": "Eliminación de Grupos Repetitivos",
+          "nivel": "literal",
+          "fragmentos": [
+            12
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n4",
+          "etiqueta": "Clave Primaria Definida",
+          "nivel": "literal",
+          "fragmentos": [
+            12
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n5",
+          "etiqueta": "Clave compuesta",
+          "nivel": "literal",
+          "fragmentos": [
+            14
+          ],
+          "faltan": []
+        }
+      ],
+      "etiquetas_literal": 5,
+      "etiquetas_casi": 0,
+      "etiquetas_ausentes": [],
+      "detalle_relaciones": [
+        {
+          "relacion": "Primera Forma Normal —requiere→ Atomicidad de Atributos",
+          "verbo_literal_en_material": false,
+          "nivel": "fragmento",
+          "fragmentos": [
+            12
+          ],
+          "evidencia": ""
+        },
+        {
+          "relacion": "Primera Forma Normal —requiere→ Eliminación de Grupos Repetitivos",
+          "verbo_literal_en_material": false,
+          "nivel": "fragmento",
+          "fragmentos": [
+            12
+          ],
+          "evidencia": ""
+        },
+        {
+          "relacion": "Primera Forma Normal —requiere→ Clave Primaria Definida",
+          "verbo_literal_en_material": false,
+          "nivel": "fragmento",
+          "fragmentos": [
+            12
+          ],
+          "evidencia": ""
+        },
+        {
+          "relacion": "Atomicidad de Atributos —produce→ Clave compuesta",
+          "verbo_literal_en_material": false,
+          "nivel": "sin respaldo",
+          "fragmentos": [],
+          "evidencia": ""
+        }
+      ],
+      "relaciones_oracion": 0,
+      "relaciones_fragmento": 3,
+      "relaciones_sin_respaldo": [
+        "Atomicidad de Atributos —produce→ Clave compuesta"
+      ],
+      "conexo": true,
+      "relaciones_dibujadas": 4,
+      "rotulos_superpuestos": 0,
+      "detalles_repetidos": 0,
+      "fuentes": [
+        12,
+        14
+      ],
+      "ortografia": {
+        "problemas": [
+          "«unívoca» difiere del material, que escribe ['univoca']"
+        ],
+        "palabras_con_tilde_o_enie": [
+          "básico",
+          "eliminación",
+          "normalización",
+          "unívoca"
+        ],
+        "palabras_fuera_del_material": [
+          "condiciones",
+          "identifica",
+          "produce",
+          "requiere",
+          "tras"
+        ]
+      },
+      "contra_a_mano": {
+        "mismo_tipo": false,
+        "tipo_llm": "mapa_conceptual",
+        "tipo_a_mano": "flujo",
+        "nodos_llm": 5,
+        "nodos_a_mano": 5,
+        "etiquetas_en_comun": [],
+        "solo_llm": [
+          "Atomicidad de Atributos",
+          "Clave Primaria Definida",
+          "Clave compuesta",
+          "Eliminación de Grupos Repetitivos",
+          "Primera Forma Normal"
+        ],
+        "solo_a_mano": [
+          "Definir clave primaria",
+          "Descomponer en filas",
+          "Identificar celda no atómica",
+          "Tabla en 1FN",
+          "Tabla no normalizada"
+        ]
+      }
+    },
+    {
+      "nombre": "BD-U3-01_c2",
+      "codigo_objetivo": "BD-U3-01",
+      "corrida": 2,
+      "modelo_pedido": "deepseek-flash",
+      "thinking": "disabled",
+      "temperatura": 0.4,
+      "generado_utc": "2026-10-11T03:59:22+00:00",
+      "fragmentos_entregados": [
+        12,
+        13,
+        14,
+        15,
+        16,
+        17
+      ],
+      "valida": true,
+      "intentos": 1,
+      "reparaciones": 0,
+      "advertencias": [],
+      "segundos": 2.63,
+      "tokens_entrada": 2242,
+      "tokens_entrada_cache": 2048,
+      "tokens_salida": 635,
+      "tokens_razonamiento": 0,
+      "costo_usd": 0.000416244,
+      "costo_usd_punta": 0.000832488,
+      "tarifa": "valle",
+      "modelo_respondido": "deepseek-flash",
+      "errores_primer_intento": [],
+      "tipo_de_diagrama": "mapa_conceptual",
+      "titulo": "Primera Forma Normal",
+      "nodos": 6,
+      "relaciones": 5,
+      "etiquetas": [
+        {
+          "id": "n1",
+          "etiqueta": "Primera Forma Normal",
+          "nivel": "literal",
+          "fragmentos": [
+            12,
+            15
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n2",
+          "etiqueta": "Atomicidad de Atributos",
+          "nivel": "literal",
+          "fragmentos": [
+            12
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n3",
+          "etiqueta": "Eliminación de Grupos Repetitivos",
+          "nivel": "literal",
+          "fragmentos": [
+            12
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n4",
+          "etiqueta": "Clave Primaria Definida",
+          "nivel": "literal",
+          "fragmentos": [
+            12
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n5",
+          "etiqueta": "Descomponer en filas",
+          "nivel": "literal",
+          "fragmentos": [
+            16
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n6",
+          "etiqueta": "Reasignar clave primaria",
+          "nivel": "casi",
+          "fragmentos": [
+            16
+          ],
+          "faltan": []
+        }
+      ],
+      "etiquetas_literal": 5,
+      "etiquetas_casi": 1,
+      "etiquetas_ausentes": [],
+      "detalle_relaciones": [
+        {
+          "relacion": "Primera Forma Normal —requiere→ Atomicidad de Atributos",
+          "verbo_literal_en_material": false,
+          "nivel": "fragmento",
+          "fragmentos": [
+            12
+          ],
+          "evidencia": ""
+        },
+        {
+          "relacion": "Primera Forma Normal —requiere→ Eliminación de Grupos Repetitivos",
+          "verbo_literal_en_material": false,
+          "nivel": "fragmento",
+          "fragmentos": [
+            12
+          ],
+          "evidencia": ""
+        },
+        {
+          "relacion": "Primera Forma Normal —requiere→ Clave Primaria Definida",
+          "verbo_literal_en_material": false,
+          "nivel": "fragmento",
+          "fragmentos": [
+            12
+          ],
+          "evidencia": ""
+        },
+        {
+          "relacion": "Atomicidad de Atributos —se resuelve con→ Descomponer en filas",
+          "verbo_literal_en_material": false,
+          "nivel": "sin respaldo",
+          "fragmentos": [],
+          "evidencia": ""
+        },
+        {
+          "relacion": "Descomponer en filas —conlleva a→ Reasignar clave primaria",
+          "verbo_literal_en_material": false,
+          "nivel": "fragmento",
+          "fragmentos": [
+            16
+          ],
+          "evidencia": ""
+        }
+      ],
+      "relaciones_oracion": 0,
+      "relaciones_fragmento": 4,
+      "relaciones_sin_respaldo": [
+        "Atomicidad de Atributos —se resuelve con→ Descomponer en filas"
+      ],
+      "conexo": true,
+      "relaciones_dibujadas": 5,
+      "rotulos_superpuestos": 0,
+      "detalles_repetidos": 0,
+      "fuentes": [
+        12,
+        16
+      ],
+      "ortografia": {
+        "problemas": [
+          "«unívoca» difiere del material, que escribe ['univoca']"
+        ],
+        "palabras_con_tilde_o_enie": [
+          "básico",
+          "eliminación",
+          "normalización",
+          "unívoca"
+        ],
+        "palabras_fuera_del_material": [
+          "central",
+          "concepto",
+          "conlleva",
+          "cual",
+          "dependen",
+          "descomponiendo",
+          "elemento",
+          "esquema",
+          "identifica",
+          "incorporar",
+          "muestra",
+          "requiere",
+          "resuelve"
+        ]
+      },
+      "contra_a_mano": {
+        "mismo_tipo": false,
+        "tipo_llm": "mapa_conceptual",
+        "tipo_a_mano": "flujo",
+        "nodos_llm": 6,
+        "nodos_a_mano": 5,
+        "etiquetas_en_comun": [
+          "Descomponer en filas"
+        ],
+        "solo_llm": [
+          "Atomicidad de Atributos",
+          "Clave Primaria Definida",
+          "Eliminación de Grupos Repetitivos",
+          "Primera Forma Normal",
+          "Reasignar clave primaria"
+        ],
+        "solo_a_mano": [
+          "Definir clave primaria",
+          "Identificar celda no atómica",
+          "Tabla en 1FN",
+          "Tabla no normalizada"
+        ]
+      }
+    },
+    {
+      "nombre": "BD-U3-01_c3",
+      "codigo_objetivo": "BD-U3-01",
+      "corrida": 3,
+      "modelo_pedido": "deepseek-flash",
+      "thinking": "disabled",
+      "temperatura": 0.4,
+      "generado_utc": "2026-10-11T03:59:24+00:00",
+      "fragmentos_entregados": [
+        12,
+        13,
+        14,
+        15,
+        16,
+        17
+      ],
+      "valida": true,
+      "intentos": 1,
+      "reparaciones": 0,
+      "advertencias": [],
+      "segundos": 2.21,
+      "tokens_entrada": 2242,
+      "tokens_entrada_cache": 2048,
+      "tokens_salida": 513,
+      "tokens_razonamiento": 0,
+      "costo_usd": 0.000343044,
+      "costo_usd_punta": 0.000686088,
+      "tarifa": "valle",
+      "modelo_respondido": "deepseek-flash",
+      "errores_primer_intento": [],
+      "tipo_de_diagrama": "mapa_conceptual",
+      "titulo": "Reglas de la Primera Forma Normal",
+      "nodos": 5,
+      "relaciones": 4,
+      "etiquetas": [
+        {
+          "id": "n1",
+          "etiqueta": "Primera Forma Normal",
+          "nivel": "literal",
+          "fragmentos": [
+            12,
+            15
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n2",
+          "etiqueta": "Atomicidad de Atributos",
+          "nivel": "literal",
+          "fragmentos": [
+            12
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n3",
+          "etiqueta": "Eliminación de Grupos Repetitivos",
+          "nivel": "literal",
+          "fragmentos": [
+            12
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n4",
+          "etiqueta": "Clave Primaria Definida",
+          "nivel": "literal",
+          "fragmentos": [
+            12
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n5",
+          "etiqueta": "Clave compuesta",
+          "nivel": "literal",
+          "fragmentos": [
+            14
+          ],
+          "faltan": []
+        }
+      ],
+      "etiquetas_literal": 5,
+      "etiquetas_casi": 0,
+      "etiquetas_ausentes": [],
+      "detalle_relaciones": [
+        {
+          "relacion": "Primera Forma Normal —requiere→ Atomicidad de Atributos",
+          "verbo_literal_en_material": false,
+          "nivel": "fragmento",
+          "fragmentos": [
+            12
+          ],
+          "evidencia": ""
+        },
+        {
+          "relacion": "Primera Forma Normal —requiere→ Eliminación de Grupos Repetitivos",
+          "verbo_literal_en_material": false,
+          "nivel": "fragmento",
+          "fragmentos": [
+            12
+          ],
+          "evidencia": ""
+        },
+        {
+          "relacion": "Primera Forma Normal —requiere→ Clave Primaria Definida",
+          "verbo_literal_en_material": false,
+          "nivel": "fragmento",
+          "fragmentos": [
+            12
+          ],
+          "evidencia": ""
+        },
+        {
+          "relacion": "Atomicidad de Atributos —produce→ Clave compuesta",
+          "verbo_literal_en_material": false,
+          "nivel": "sin respaldo",
+          "fragmentos": [],
+          "evidencia": ""
+        }
+      ],
+      "relaciones_oracion": 0,
+      "relaciones_fragmento": 3,
+      "relaciones_sin_respaldo": [
+        "Atomicidad de Atributos —produce→ Clave compuesta"
+      ],
+      "conexo": true,
+      "relaciones_dibujadas": 4,
+      "rotulos_superpuestos": 0,
+      "detalles_repetidos": 0,
+      "fuentes": [
+        12,
+        14
+      ],
+      "ortografia": {
+        "problemas": [
+          "«unívoca» difiere del material, que escribe ['univoca']"
+        ],
+        "palabras_con_tilde_o_enie": [
+          "básico",
+          "eliminación",
+          "normalización",
+          "unívoca"
+        ],
+        "palabras_fuera_del_material": [
+          "identifica",
+          "produce",
+          "requiere",
+          "tras"
+        ]
+      },
+      "contra_a_mano": {
+        "mismo_tipo": false,
+        "tipo_llm": "mapa_conceptual",
+        "tipo_a_mano": "flujo",
+        "nodos_llm": 5,
+        "nodos_a_mano": 5,
+        "etiquetas_en_comun": [],
+        "solo_llm": [
+          "Atomicidad de Atributos",
+          "Clave Primaria Definida",
+          "Clave compuesta",
+          "Eliminación de Grupos Repetitivos",
+          "Primera Forma Normal"
+        ],
+        "solo_a_mano": [
+          "Definir clave primaria",
+          "Descomponer en filas",
+          "Identificar celda no atómica",
+          "Tabla en 1FN",
+          "Tabla no normalizada"
+        ]
+      }
+    }
+  ],
+  "a_mano": {
+    "BD-U3-01": {
+      "tipo_de_diagrama": "flujo",
+      "titulo": "Cómo llevar una tabla a 1FN",
+      "nodos": 5,
+      "relaciones": 4,
+      "etiquetas": [
+        {
+          "id": "n1",
+          "etiqueta": "Tabla no normalizada",
+          "nivel": "literal",
+          "fragmentos": [
+            13
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n2",
+          "etiqueta": "Identificar celda no atómica",
+          "nivel": "casi",
+          "fragmentos": [
+            16
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n3",
+          "etiqueta": "Descomponer en filas",
+          "nivel": "literal",
+          "fragmentos": [
+            16
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n4",
+          "etiqueta": "Definir clave primaria",
+          "nivel": "casi",
+          "fragmentos": [
+            16
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n5",
+          "etiqueta": "Tabla en 1FN",
+          "nivel": "casi",
+          "fragmentos": [
+            12,
+            13,
+            14,
+            17
+          ],
+          "faltan": []
+        }
+      ],
+      "etiquetas_literal": 2,
+      "etiquetas_casi": 3,
+      "etiquetas_ausentes": [],
+      "detalle_relaciones": [
+        {
+          "relacion": "Tabla no normalizada —se revisa→ Identificar celda no atómica",
+          "verbo_literal_en_material": false,
+          "nivel": "sin respaldo",
+          "fragmentos": [],
+          "evidencia": ""
+        },
+        {
+          "relacion": "Identificar celda no atómica —se divide→ Descomponer en filas",
+          "verbo_literal_en_material": false,
+          "nivel": "fragmento",
+          "fragmentos": [
+            16
+          ],
+          "evidencia": ""
+        },
+        {
+          "relacion": "Descomponer en filas —se identifica→ Definir clave primaria",
+          "verbo_literal_en_material": false,
+          "nivel": "fragmento",
+          "fragmentos": [
+            16
+          ],
+          "evidencia": ""
+        },
+        {
+          "relacion": "Definir clave primaria —produce→ Tabla en 1FN",
+          "verbo_literal_en_material": false,
+          "nivel": "sin respaldo",
+          "fragmentos": [],
+          "evidencia": ""
+        }
+      ],
+      "relaciones_oracion": 0,
+      "relaciones_fragmento": 2,
+      "relaciones_sin_respaldo": [
+        "Tabla no normalizada —se revisa→ Identificar celda no atómica",
+        "Definir clave primaria —produce→ Tabla en 1FN"
+      ],
+      "conexo": true,
+      "relaciones_dibujadas": 4,
+      "rotulos_superpuestos": 0,
+      "detalles_repetidos": 0,
+      "fuentes": [],
+      "ortografia": {
+        "problemas": [
+          "«cómo» difiere del material, que escribe ['como']"
+        ],
+        "palabras_con_tilde_o_enie": [
+          "atómica",
+          "atómicos",
+          "cómo",
+          "única"
+        ],
+        "palabras_fuera_del_material": [
+          "cinco",
+          "define",
+          "descompone",
+          "diagrama",
+          "divide",
+          "flujo",
+          "guarda",
+          "identifica",
+          "incluye",
+          "llevar",
+          "pasos",
+          "produce",
+          "queda",
+          "revisa",
+          "separadas",
+          "varias"
+        ]
+      }
+    }
+  }
+}

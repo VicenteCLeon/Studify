@@ -1,0 +1,2823 @@
+{
+  "resumen": {
+    "corridas": 12,
+    "validas": 12,
+    "a_la_primera": 8,
+    "con_reparacion": 4,
+    "fallidas": 0,
+    "etiquetas": 68,
+    "etiquetas_literal": 59,
+    "etiquetas_casi": 9,
+    "etiquetas_ausentes": 0,
+    "etiquetas_ausentes_distintas": [],
+    "relaciones": 57,
+    "relaciones_oracion": 16,
+    "relaciones_fragmento": 35,
+    "relaciones_sin_respaldo": 6,
+    "relaciones_dibujadas": 51,
+    "no_conexas": [
+      "BD-U3-01_c3"
+    ],
+    "con_relaciones_sin_dibujar": [
+      "BD-U3-01_c1",
+      "BD-U3-02_c3"
+    ],
+    "con_rotulos_superpuestos": [
+      "BD-U3-01_c2",
+      "BD-U3-02_c1",
+      "BD-U3-02_c2"
+    ],
+    "elegidas": {
+      "PROG-U1-01": {
+        "nombre": "PROG-U1-01_c2",
+        "limpia": true,
+        "defectos_de_render": [
+          0,
+          0,
+          0
+        ]
+      },
+      "PROG-U1-02": {
+        "nombre": "PROG-U1-02_c2",
+        "limpia": true,
+        "defectos_de_render": [
+          0,
+          0,
+          0
+        ]
+      },
+      "BD-U3-01": {
+        "nombre": "BD-U3-01_c2",
+        "limpia": false,
+        "defectos_de_render": [
+          0,
+          0,
+          1
+        ]
+      },
+      "BD-U3-02": {
+        "nombre": "BD-U3-02_c1",
+        "limpia": false,
+        "defectos_de_render": [
+          0,
+          0,
+          3
+        ]
+      }
+    },
+    "para_mostrar": [
+      "PROG-U1-01_c2",
+      "PROG-U1-02_c2",
+      "BD-U3-01_c2"
+    ],
+    "con_problemas_de_ortografia": [
+      "BD-U3-01_c1",
+      "BD-U3-01_c2",
+      "BD-U3-01_c3"
+    ],
+    "tokens_entrada": 38321,
+    "tokens_salida": 10100,
+    "costo_usd": 0.007837974,
+    "costo_usd_punta": 0.015675948,
+    "segundos": 43.07
+  },
+  "por_objetivo": {
+    "PROG-U1-01": {
+      "tipos": [
+        "mapa_conceptual",
+        "mapa_conceptual",
+        "mapa_conceptual"
+      ],
+      "coinciden": true
+    },
+    "PROG-U1-02": {
+      "tipos": [
+        "jerarquia",
+        "jerarquia",
+        "jerarquia"
+      ],
+      "coinciden": true
+    },
+    "BD-U3-01": {
+      "tipos": [
+        "flujo",
+        "mapa_conceptual",
+        "mapa_conceptual"
+      ],
+      "coinciden": false
+    },
+    "BD-U3-02": {
+      "tipos": [
+        "mapa_conceptual",
+        "mapa_conceptual",
+        "flujo"
+      ],
+      "coinciden": false
+    }
+  },
+  "corridas": [
+    {
+      "nombre": "PROG-U1-01_c1",
+      "codigo_objetivo": "PROG-U1-01",
+      "corrida": 1,
+      "modelo_pedido": "deepseek-flash",
+      "razonamiento": false,
+      "temperatura": 0.4,
+      "generado_utc": "2026-10-11T02:53:00+00:00",
+      "fragmentos_entregados": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "valida": true,
+      "intentos": 2,
+      "reparaciones": 1,
+      "advertencias": [],
+      "segundos": 8.93,
+      "tokens_entrada": 5536,
+      "tokens_entrada_cache": 3200,
+      "tokens_salida": 2443,
+      "tokens_razonamiento": 0,
+      "costo_usd": 0.0018258,
+      "costo_usd_punta": 0.0036516,
+      "tarifa": "valle",
+      "modelo_respondido": "deepseek-flash",
+      "errores_primer_intento": [
+        "falta el campo obligatorio `version`"
+      ],
+      "tipo_de_diagrama": "mapa_conceptual",
+      "titulo": "Variables y Tipos de Datos",
+      "nodos": 7,
+      "relaciones": 6,
+      "etiquetas": [
+        {
+          "id": "n1",
+          "etiqueta": "Variable",
+          "nivel": "literal",
+          "fragmentos": [
+            1,
+            2,
+            3,
+            5
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n2",
+          "etiqueta": "Identificador simbólico",
+          "nivel": "literal",
+          "fragmentos": [
+            1
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n3",
+          "etiqueta": "Tipo de dato",
+          "nivel": "literal",
+          "fragmentos": [
+            1,
+            2,
+            3
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n4",
+          "etiqueta": "int",
+          "nivel": "literal",
+          "fragmentos": [
+            1,
+            2,
+            5
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n5",
+          "etiqueta": "float",
+          "nivel": "literal",
+          "fragmentos": [
+            1,
+            2
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n6",
+          "etiqueta": "bool",
+          "nivel": "literal",
+          "fragmentos": [
+            1,
+            2
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n7",
+          "etiqueta": "str",
+          "nivel": "literal",
+          "fragmentos": [
+            1,
+            2,
+            4
+          ],
+          "faltan": []
+        }
+      ],
+      "etiquetas_literal": 7,
+      "etiquetas_casi": 0,
+      "etiquetas_ausentes": [],
+      "detalle_relaciones": [
+        {
+          "relacion": "Variable —asociada a→ Identificador simbólico",
+          "verbo_literal_en_material": true,
+          "nivel": "oración",
+          "fragmentos": [
+            1
+          ],
+          "evidencia": "En programación, una variable es una ubicación reservada en la memoria RAM del computador asociada a un identificador simbólico (nombre)."
+        },
+        {
+          "relacion": "Variable —almacena un→ Tipo de dato",
+          "verbo_literal_en_material": true,
+          "nivel": "oración",
+          "fragmentos": [
+            2
+          ],
+          "evidencia": "Tipo de Dato Tamaño en Memoria Rango / Formato de Ejemplo Caso de Uso Recomendado int 4 a 8 bytes -2,147,483,648 a 2,147,483,647 Contadores de bucles, edades, identificadores float 8 bytes (doble precisión) 1.79e308 (con 15 a 17 dígitos) Precios, notas de exámenes, mediciones físicas bool 1 byte Tru"
+        },
+        {
+          "relacion": "Tipo de dato —incluye→ int",
+          "verbo_literal_en_material": false,
+          "nivel": "oración",
+          "fragmentos": [
+            2
+          ],
+          "evidencia": "Tipo de Dato Tamaño en Memoria Rango / Formato de Ejemplo Caso de Uso Recomendado int 4 a 8 bytes -2,147,483,648 a 2,147,483,647 Contadores de bucles, edades, identificadores float 8 bytes (doble precisión) 1.79e308 (con 15 a 17 dígitos) Precios, notas de exámenes, mediciones físicas bool 1 byte Tru"
+        },
+        {
+          "relacion": "Tipo de dato —incluye→ float",
+          "verbo_literal_en_material": false,
+          "nivel": "oración",
+          "fragmentos": [
+            2
+          ],
+          "evidencia": "Tipo de Dato Tamaño en Memoria Rango / Formato de Ejemplo Caso de Uso Recomendado int 4 a 8 bytes -2,147,483,648 a 2,147,483,647 Contadores de bucles, edades, identificadores float 8 bytes (doble precisión) 1.79e308 (con 15 a 17 dígitos) Precios, notas de exámenes, mediciones físicas bool 1 byte Tru"
+        },
+        {
+          "relacion": "Tipo de dato —incluye→ bool",
+          "verbo_literal_en_material": false,
+          "nivel": "oración",
+          "fragmentos": [
+            2
+          ],
+          "evidencia": "Tipo de Dato Tamaño en Memoria Rango / Formato de Ejemplo Caso de Uso Recomendado int 4 a 8 bytes -2,147,483,648 a 2,147,483,647 Contadores de bucles, edades, identificadores float 8 bytes (doble precisión) 1.79e308 (con 15 a 17 dígitos) Precios, notas de exámenes, mediciones físicas bool 1 byte Tru"
+        },
+        {
+          "relacion": "Tipo de dato —incluye→ str",
+          "verbo_literal_en_material": false,
+          "nivel": "oración",
+          "fragmentos": [
+            2
+          ],
+          "evidencia": "Tipo de Dato Tamaño en Memoria Rango / Formato de Ejemplo Caso de Uso Recomendado int 4 a 8 bytes -2,147,483,648 a 2,147,483,647 Contadores de bucles, edades, identificadores float 8 bytes (doble precisión) 1.79e308 (con 15 a 17 dígitos) Precios, notas de exámenes, mediciones físicas bool 1 byte Tru"
+        }
+      ],
+      "relaciones_oracion": 6,
+      "relaciones_fragmento": 0,
+      "relaciones_sin_respaldo": [],
+      "conexo": true,
+      "relaciones_dibujadas": 6,
+      "rotulos_superpuestos": 0,
+      "detalles_repetidos": 0,
+      "fuentes": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "ortografia": {
+        "problemas": [],
+        "palabras_con_tilde_o_enie": [
+          "específico",
+          "números",
+          "simbólico",
+          "ubicación"
+        ],
+        "palabras_fuera_del_material": [
+          "esquema",
+          "incluidos",
+          "incluye",
+          "muestra"
+        ]
+      }
+    },
+    {
+      "nombre": "PROG-U1-01_c2",
+      "codigo_objetivo": "PROG-U1-01",
+      "corrida": 2,
+      "modelo_pedido": "deepseek-flash",
+      "razonamiento": false,
+      "temperatura": 0.4,
+      "generado_utc": "2026-10-11T02:53:03+00:00",
+      "fragmentos_entregados": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "valida": true,
+      "intentos": 1,
+      "reparaciones": 0,
+      "advertencias": [],
+      "segundos": 2.58,
+      "tokens_entrada": 2117,
+      "tokens_entrada_cache": 1920,
+      "tokens_salida": 684,
+      "tokens_razonamiento": 0,
+      "costo_usd": 0.00044571,
+      "costo_usd_punta": 0.00089142,
+      "tarifa": "valle",
+      "modelo_respondido": "deepseek-flash",
+      "errores_primer_intento": [],
+      "tipo_de_diagrama": "mapa_conceptual",
+      "titulo": "Variables y Tipos de Datos",
+      "nodos": 7,
+      "relaciones": 6,
+      "etiquetas": [
+        {
+          "id": "n1",
+          "etiqueta": "Variable",
+          "nivel": "literal",
+          "fragmentos": [
+            1,
+            2,
+            3,
+            5
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n2",
+          "etiqueta": "Identificador simbólico",
+          "nivel": "literal",
+          "fragmentos": [
+            1
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n3",
+          "etiqueta": "Tipo de dato",
+          "nivel": "literal",
+          "fragmentos": [
+            1,
+            2,
+            3
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n4",
+          "etiqueta": "int",
+          "nivel": "literal",
+          "fragmentos": [
+            1,
+            2,
+            5
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n5",
+          "etiqueta": "float",
+          "nivel": "literal",
+          "fragmentos": [
+            1,
+            2
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n6",
+          "etiqueta": "bool",
+          "nivel": "literal",
+          "fragmentos": [
+            1,
+            2
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n7",
+          "etiqueta": "str",
+          "nivel": "literal",
+          "fragmentos": [
+            1,
+            2,
+            4
+          ],
+          "faltan": []
+        }
+      ],
+      "etiquetas_literal": 7,
+      "etiquetas_casi": 0,
+      "etiquetas_ausentes": [],
+      "detalle_relaciones": [
+        {
+          "relacion": "Variable —asociada a→ Identificador simbólico",
+          "verbo_literal_en_material": true,
+          "nivel": "oración",
+          "fragmentos": [
+            1
+          ],
+          "evidencia": "En programación, una variable es una ubicación reservada en la memoria RAM del computador asociada a un identificador simbólico (nombre)."
+        },
+        {
+          "relacion": "Variable —almacena valor de→ Tipo de dato",
+          "verbo_literal_en_material": false,
+          "nivel": "oración",
+          "fragmentos": [
+            2
+          ],
+          "evidencia": "Tipo de Dato Tamaño en Memoria Rango / Formato de Ejemplo Caso de Uso Recomendado int 4 a 8 bytes -2,147,483,648 a 2,147,483,647 Contadores de bucles, edades, identificadores float 8 bytes (doble precisión) 1.79e308 (con 15 a 17 dígitos) Precios, notas de exámenes, mediciones físicas bool 1 byte Tru"
+        },
+        {
+          "relacion": "Tipo de dato —incluye→ int",
+          "verbo_literal_en_material": false,
+          "nivel": "oración",
+          "fragmentos": [
+            2
+          ],
+          "evidencia": "Tipo de Dato Tamaño en Memoria Rango / Formato de Ejemplo Caso de Uso Recomendado int 4 a 8 bytes -2,147,483,648 a 2,147,483,647 Contadores de bucles, edades, identificadores float 8 bytes (doble precisión) 1.79e308 (con 15 a 17 dígitos) Precios, notas de exámenes, mediciones físicas bool 1 byte Tru"
+        },
+        {
+          "relacion": "Tipo de dato —incluye→ float",
+          "verbo_literal_en_material": false,
+          "nivel": "oración",
+          "fragmentos": [
+            2
+          ],
+          "evidencia": "Tipo de Dato Tamaño en Memoria Rango / Formato de Ejemplo Caso de Uso Recomendado int 4 a 8 bytes -2,147,483,648 a 2,147,483,647 Contadores de bucles, edades, identificadores float 8 bytes (doble precisión) 1.79e308 (con 15 a 17 dígitos) Precios, notas de exámenes, mediciones físicas bool 1 byte Tru"
+        },
+        {
+          "relacion": "Tipo de dato —incluye→ bool",
+          "verbo_literal_en_material": false,
+          "nivel": "oración",
+          "fragmentos": [
+            2
+          ],
+          "evidencia": "Tipo de Dato Tamaño en Memoria Rango / Formato de Ejemplo Caso de Uso Recomendado int 4 a 8 bytes -2,147,483,648 a 2,147,483,647 Contadores de bucles, edades, identificadores float 8 bytes (doble precisión) 1.79e308 (con 15 a 17 dígitos) Precios, notas de exámenes, mediciones físicas bool 1 byte Tru"
+        },
+        {
+          "relacion": "Tipo de dato —incluye→ str",
+          "verbo_literal_en_material": false,
+          "nivel": "oración",
+          "fragmentos": [
+            2
+          ],
+          "evidencia": "Tipo de Dato Tamaño en Memoria Rango / Formato de Ejemplo Caso de Uso Recomendado int 4 a 8 bytes -2,147,483,648 a 2,147,483,647 Contadores de bucles, edades, identificadores float 8 bytes (doble precisión) 1.79e308 (con 15 a 17 dígitos) Precios, notas de exámenes, mediciones físicas bool 1 byte Tru"
+        }
+      ],
+      "relaciones_oracion": 6,
+      "relaciones_fragmento": 0,
+      "relaciones_sin_respaldo": [],
+      "conexo": true,
+      "relaciones_dibujadas": 6,
+      "rotulos_superpuestos": 0,
+      "detalles_repetidos": 0,
+      "fuentes": [
+        1,
+        2,
+        3
+      ],
+      "ortografia": {
+        "problemas": [],
+        "palabras_con_tilde_o_enie": [
+          "números",
+          "simbólico",
+          "ubicación"
+        ],
+        "palabras_fuera_del_material": [
+          "esquema",
+          "incluye",
+          "muestra"
+        ]
+      }
+    },
+    {
+      "nombre": "PROG-U1-01_c3",
+      "codigo_objetivo": "PROG-U1-01",
+      "corrida": 3,
+      "modelo_pedido": "deepseek-flash",
+      "razonamiento": false,
+      "temperatura": 0.4,
+      "generado_utc": "2026-10-11T02:53:05+00:00",
+      "fragmentos_entregados": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "valida": true,
+      "intentos": 1,
+      "reparaciones": 0,
+      "advertencias": [],
+      "segundos": 2.24,
+      "tokens_entrada": 2117,
+      "tokens_entrada_cache": 1920,
+      "tokens_salida": 557,
+      "tokens_razonamiento": 0,
+      "costo_usd": 0.00036951,
+      "costo_usd_punta": 0.00073902,
+      "tarifa": "valle",
+      "modelo_respondido": "deepseek-flash",
+      "errores_primer_intento": [],
+      "tipo_de_diagrama": "mapa_conceptual",
+      "titulo": "Variables y Tipos de Datos",
+      "nodos": 6,
+      "relaciones": 5,
+      "etiquetas": [
+        {
+          "id": "n1",
+          "etiqueta": "Variable",
+          "nivel": "literal",
+          "fragmentos": [
+            1,
+            2,
+            3,
+            5
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n2",
+          "etiqueta": "Tipos de datos primitivos",
+          "nivel": "literal",
+          "fragmentos": [
+            1
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n3",
+          "etiqueta": "int",
+          "nivel": "literal",
+          "fragmentos": [
+            1,
+            2,
+            5
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n4",
+          "etiqueta": "float",
+          "nivel": "literal",
+          "fragmentos": [
+            1,
+            2
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n5",
+          "etiqueta": "bool",
+          "nivel": "literal",
+          "fragmentos": [
+            1,
+            2
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n6",
+          "etiqueta": "str",
+          "nivel": "literal",
+          "fragmentos": [
+            1,
+            2,
+            4
+          ],
+          "faltan": []
+        }
+      ],
+      "etiquetas_literal": 6,
+      "etiquetas_casi": 0,
+      "etiquetas_ausentes": [],
+      "detalle_relaciones": [
+        {
+          "relacion": "Variable —almacena→ Tipos de datos primitivos",
+          "verbo_literal_en_material": true,
+          "nivel": "fragmento",
+          "fragmentos": [
+            1
+          ],
+          "evidencia": ""
+        },
+        {
+          "relacion": "Tipos de datos primitivos —incluye→ int",
+          "verbo_literal_en_material": false,
+          "nivel": "fragmento",
+          "fragmentos": [
+            1
+          ],
+          "evidencia": ""
+        },
+        {
+          "relacion": "Tipos de datos primitivos —incluye→ float",
+          "verbo_literal_en_material": false,
+          "nivel": "fragmento",
+          "fragmentos": [
+            1
+          ],
+          "evidencia": ""
+        },
+        {
+          "relacion": "Tipos de datos primitivos —incluye→ bool",
+          "verbo_literal_en_material": false,
+          "nivel": "fragmento",
+          "fragmentos": [
+            1
+          ],
+          "evidencia": ""
+        },
+        {
+          "relacion": "Tipos de datos primitivos —incluye→ str",
+          "verbo_literal_en_material": false,
+          "nivel": "fragmento",
+          "fragmentos": [
+            1
+          ],
+          "evidencia": ""
+        }
+      ],
+      "relaciones_oracion": 0,
+      "relaciones_fragmento": 5,
+      "relaciones_sin_respaldo": [],
+      "conexo": true,
+      "relaciones_dibujadas": 5,
+      "rotulos_superpuestos": 0,
+      "detalles_repetidos": 0,
+      "fuentes": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "ortografia": {
+        "problemas": [],
+        "palabras_con_tilde_o_enie": [
+          "específico",
+          "números",
+          "ubicación"
+        ],
+        "palabras_fuera_del_material": [
+          "determinan",
+          "esquema",
+          "incluye",
+          "incluyen",
+          "muestra"
+        ]
+      }
+    },
+    {
+      "nombre": "PROG-U1-02_c1",
+      "codigo_objetivo": "PROG-U1-02",
+      "corrida": 1,
+      "modelo_pedido": "deepseek-flash",
+      "razonamiento": false,
+      "temperatura": 0.4,
+      "generado_utc": "2026-10-11T02:53:10+00:00",
+      "fragmentos_entregados": [
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ],
+      "valida": true,
+      "intentos": 2,
+      "reparaciones": 1,
+      "advertencias": [],
+      "segundos": 4.86,
+      "tokens_entrada": 4969,
+      "tokens_entrada_cache": 2560,
+      "tokens_salida": 1139,
+      "tokens_razonamiento": 0,
+      "costo_usd": 0.00105243,
+      "costo_usd_punta": 0.00210486,
+      "tarifa": "valle",
+      "modelo_respondido": "deepseek-flash",
+      "errores_primer_intento": [
+        "la etiqueta de n4 pasa de 4 palabras"
+      ],
+      "tipo_de_diagrama": "jerarquia",
+      "titulo": "Estructuras de Control de Flujo",
+      "nodos": 6,
+      "relaciones": 5,
+      "etiquetas": [
+        {
+          "id": "n1",
+          "etiqueta": "Estructuras de Control",
+          "nivel": "literal",
+          "fragmentos": [
+            6
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n2",
+          "etiqueta": "Estructuras Selectivas",
+          "nivel": "literal",
+          "fragmentos": [
+            6
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n3",
+          "etiqueta": "Estructuras Iterativas",
+          "nivel": "literal",
+          "fragmentos": [
+            6
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n4",
+          "etiqueta": "Condicionales",
+          "nivel": "literal",
+          "fragmentos": [
+            6
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n5",
+          "etiqueta": "for",
+          "nivel": "literal",
+          "fragmentos": [
+            6,
+            7,
+            10
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n6",
+          "etiqueta": "while",
+          "nivel": "literal",
+          "fragmentos": [
+            6,
+            7,
+            9,
+            11
+          ],
+          "faltan": []
+        }
+      ],
+      "etiquetas_literal": 6,
+      "etiquetas_casi": 0,
+      "etiquetas_ausentes": [],
+      "detalle_relaciones": [
+        {
+          "relacion": "Estructuras de Control —se divide en→ Estructuras Selectivas",
+          "verbo_literal_en_material": false,
+          "nivel": "fragmento",
+          "fragmentos": [
+            6
+          ],
+          "evidencia": ""
+        },
+        {
+          "relacion": "Estructuras de Control —se divide en→ Estructuras Iterativas",
+          "verbo_literal_en_material": false,
+          "nivel": "fragmento",
+          "fragmentos": [
+            6
+          ],
+          "evidencia": ""
+        },
+        {
+          "relacion": "Estructuras Selectivas —incluye→ Condicionales",
+          "verbo_literal_en_material": false,
+          "nivel": "oración",
+          "fragmentos": [
+            6
+          ],
+          "evidencia": "Estructuras Selectivas (Condicionales):"
+        },
+        {
+          "relacion": "Estructuras Iterativas —incluye→ for",
+          "verbo_literal_en_material": false,
+          "nivel": "fragmento",
+          "fragmentos": [
+            6
+          ],
+          "evidencia": ""
+        },
+        {
+          "relacion": "Estructuras Iterativas —incluye→ while",
+          "verbo_literal_en_material": false,
+          "nivel": "fragmento",
+          "fragmentos": [
+            6
+          ],
+          "evidencia": ""
+        }
+      ],
+      "relaciones_oracion": 1,
+      "relaciones_fragmento": 4,
+      "relaciones_sin_respaldo": [],
+      "conexo": true,
+      "relaciones_dibujadas": 5,
+      "rotulos_superpuestos": 0,
+      "detalles_repetidos": 1,
+      "fuentes": [
+        6,
+        7
+      ],
+      "ortografia": {
+        "problemas": [],
+        "palabras_con_tilde_o_enie": [
+          "ejecución",
+          "iteración",
+          "jerárquico"
+        ],
+        "palabras_fuera_del_material": [
+          "diagrama",
+          "divide",
+          "divididas",
+          "incluye",
+          "incluyen",
+          "jerárquico",
+          "muestra"
+        ]
+      },
+      "contra_a_mano": {
+        "mismo_tipo": true,
+        "tipo_llm": "jerarquia",
+        "tipo_a_mano": "jerarquia",
+        "nodos_llm": 6,
+        "nodos_a_mano": 6,
+        "etiquetas_en_comun": [
+          "Estructuras de Control",
+          "for",
+          "while"
+        ],
+        "solo_llm": [
+          "Condicionales",
+          "Estructuras Iterativas",
+          "Estructuras Selectivas"
+        ],
+        "solo_a_mano": [
+          "Iterativas",
+          "Selectivas",
+          "if, elif, else"
+        ]
+      }
+    },
+    {
+      "nombre": "PROG-U1-02_c2",
+      "codigo_objetivo": "PROG-U1-02",
+      "corrida": 2,
+      "modelo_pedido": "deepseek-flash",
+      "razonamiento": false,
+      "temperatura": 0.4,
+      "generado_utc": "2026-10-11T02:53:14+00:00",
+      "fragmentos_entregados": [
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ],
+      "valida": true,
+      "intentos": 2,
+      "reparaciones": 1,
+      "advertencias": [],
+      "segundos": 4.63,
+      "tokens_entrada": 4868,
+      "tokens_entrada_cache": 4480,
+      "tokens_salida": 960,
+      "tokens_razonamiento": 0,
+      "costo_usd": 0.0006476399999999999,
+      "costo_usd_punta": 0.0012952799999999998,
+      "tarifa": "valle",
+      "modelo_respondido": "deepseek-flash",
+      "errores_primer_intento": [
+        "la etiqueta de n4 pasa de 4 palabras"
+      ],
+      "tipo_de_diagrama": "jerarquia",
+      "titulo": "Estructuras de Control de Flujo",
+      "nodos": 6,
+      "relaciones": 5,
+      "etiquetas": [
+        {
+          "id": "n1",
+          "etiqueta": "Estructuras de Control",
+          "nivel": "literal",
+          "fragmentos": [
+            6
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n2",
+          "etiqueta": "Estructuras Selectivas",
+          "nivel": "literal",
+          "fragmentos": [
+            6
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n3",
+          "etiqueta": "Estructuras Iterativas",
+          "nivel": "literal",
+          "fragmentos": [
+            6
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n4",
+          "etiqueta": "Condicionales",
+          "nivel": "literal",
+          "fragmentos": [
+            6
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n5",
+          "etiqueta": "for",
+          "nivel": "literal",
+          "fragmentos": [
+            6,
+            7,
+            10
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n6",
+          "etiqueta": "while",
+          "nivel": "literal",
+          "fragmentos": [
+            6,
+            7,
+            9,
+            11
+          ],
+          "faltan": []
+        }
+      ],
+      "etiquetas_literal": 6,
+      "etiquetas_casi": 0,
+      "etiquetas_ausentes": [],
+      "detalle_relaciones": [
+        {
+          "relacion": "Estructuras de Control —se divide en→ Estructuras Selectivas",
+          "verbo_literal_en_material": false,
+          "nivel": "fragmento",
+          "fragmentos": [
+            6
+          ],
+          "evidencia": ""
+        },
+        {
+          "relacion": "Estructuras de Control —se divide en→ Estructuras Iterativas",
+          "verbo_literal_en_material": false,
+          "nivel": "fragmento",
+          "fragmentos": [
+            6
+          ],
+          "evidencia": ""
+        },
+        {
+          "relacion": "Estructuras Selectivas —incluye→ Condicionales",
+          "verbo_literal_en_material": false,
+          "nivel": "oración",
+          "fragmentos": [
+            6
+          ],
+          "evidencia": "Estructuras Selectivas (Condicionales):"
+        },
+        {
+          "relacion": "Estructuras Iterativas —incluye→ for",
+          "verbo_literal_en_material": false,
+          "nivel": "fragmento",
+          "fragmentos": [
+            6
+          ],
+          "evidencia": ""
+        },
+        {
+          "relacion": "Estructuras Iterativas —incluye→ while",
+          "verbo_literal_en_material": false,
+          "nivel": "fragmento",
+          "fragmentos": [
+            6
+          ],
+          "evidencia": ""
+        }
+      ],
+      "relaciones_oracion": 1,
+      "relaciones_fragmento": 4,
+      "relaciones_sin_respaldo": [],
+      "conexo": true,
+      "relaciones_dibujadas": 5,
+      "rotulos_superpuestos": 0,
+      "detalles_repetidos": 0,
+      "fuentes": [
+        6,
+        7
+      ],
+      "ortografia": {
+        "problemas": [],
+        "palabras_con_tilde_o_enie": [
+          "condición",
+          "código",
+          "ejecución",
+          "evaluación",
+          "evalúan",
+          "expresión",
+          "iteración",
+          "jerárquico"
+        ],
+        "palabras_fuera_del_material": [
+          "divide",
+          "divididas",
+          "incluye",
+          "indica",
+          "jerárquico",
+          "muestra",
+          "repiten",
+          "subtipo"
+        ]
+      },
+      "contra_a_mano": {
+        "mismo_tipo": true,
+        "tipo_llm": "jerarquia",
+        "tipo_a_mano": "jerarquia",
+        "nodos_llm": 6,
+        "nodos_a_mano": 6,
+        "etiquetas_en_comun": [
+          "Estructuras de Control",
+          "for",
+          "while"
+        ],
+        "solo_llm": [
+          "Condicionales",
+          "Estructuras Iterativas",
+          "Estructuras Selectivas"
+        ],
+        "solo_a_mano": [
+          "Iterativas",
+          "Selectivas",
+          "if, elif, else"
+        ]
+      }
+    },
+    {
+      "nombre": "PROG-U1-02_c3",
+      "codigo_objetivo": "PROG-U1-02",
+      "corrida": 3,
+      "modelo_pedido": "deepseek-flash",
+      "razonamiento": false,
+      "temperatura": 0.4,
+      "generado_utc": "2026-10-11T02:53:19+00:00",
+      "fragmentos_entregados": [
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ],
+      "valida": true,
+      "intentos": 2,
+      "reparaciones": 1,
+      "advertencias": [],
+      "segundos": 4.51,
+      "tokens_entrada": 4926,
+      "tokens_entrada_cache": 4480,
+      "tokens_salida": 1016,
+      "tokens_razonamiento": 0,
+      "costo_usd": 0.00068994,
+      "costo_usd_punta": 0.00137988,
+      "tarifa": "valle",
+      "modelo_respondido": "deepseek-flash",
+      "errores_primer_intento": [
+        "en una jerarquía cada nodo tiene un solo padre: «Condición booleana» (n4) tiene 2"
+      ],
+      "tipo_de_diagrama": "jerarquia",
+      "titulo": "Estructuras de Control de Flujo",
+      "nodos": 5,
+      "relaciones": 4,
+      "etiquetas": [
+        {
+          "id": "n1",
+          "etiqueta": "Control de flujo",
+          "nivel": "literal",
+          "fragmentos": [
+            6
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n2",
+          "etiqueta": "Estructuras selectivas",
+          "nivel": "literal",
+          "fragmentos": [
+            6
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n3",
+          "etiqueta": "Estructuras iterativas",
+          "nivel": "literal",
+          "fragmentos": [
+            6
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n4",
+          "etiqueta": "Condición booleana",
+          "nivel": "casi",
+          "fragmentos": [
+            6,
+            7
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n5",
+          "etiqueta": "Bloque de código",
+          "nivel": "casi",
+          "fragmentos": [
+            6
+          ],
+          "faltan": []
+        }
+      ],
+      "etiquetas_literal": 3,
+      "etiquetas_casi": 2,
+      "etiquetas_ausentes": [],
+      "detalle_relaciones": [
+        {
+          "relacion": "Control de flujo —se divide en→ Estructuras selectivas",
+          "verbo_literal_en_material": false,
+          "nivel": "fragmento",
+          "fragmentos": [
+            6
+          ],
+          "evidencia": ""
+        },
+        {
+          "relacion": "Control de flujo —se divide en→ Estructuras iterativas",
+          "verbo_literal_en_material": false,
+          "nivel": "fragmento",
+          "fragmentos": [
+            6
+          ],
+          "evidencia": ""
+        },
+        {
+          "relacion": "Estructuras selectivas —evalúa→ Condición booleana",
+          "verbo_literal_en_material": true,
+          "nivel": "fragmento",
+          "fragmentos": [
+            6
+          ],
+          "evidencia": ""
+        },
+        {
+          "relacion": "Condición booleana —determina→ Bloque de código",
+          "verbo_literal_en_material": false,
+          "nivel": "fragmento",
+          "fragmentos": [
+            6
+          ],
+          "evidencia": ""
+        }
+      ],
+      "relaciones_oracion": 0,
+      "relaciones_fragmento": 4,
+      "relaciones_sin_respaldo": [],
+      "conexo": true,
+      "relaciones_dibujadas": 4,
+      "rotulos_superpuestos": 0,
+      "detalles_repetidos": 0,
+      "fuentes": [
+        6,
+        7,
+        8
+      ],
+      "ortografia": {
+        "problemas": [],
+        "palabras_con_tilde_o_enie": [
+          "condición",
+          "código",
+          "ejecución",
+          "evalúa",
+          "evalúan",
+          "jerárquico"
+        ],
+        "palabras_fuera_del_material": [
+          "determina",
+          "divide",
+          "divididas",
+          "jerárquico",
+          "muestra",
+          "rompe"
+        ]
+      },
+      "contra_a_mano": {
+        "mismo_tipo": true,
+        "tipo_llm": "jerarquia",
+        "tipo_a_mano": "jerarquia",
+        "nodos_llm": 5,
+        "nodos_a_mano": 6,
+        "etiquetas_en_comun": [],
+        "solo_llm": [
+          "Bloque de código",
+          "Condición booleana",
+          "Control de flujo",
+          "Estructuras iterativas",
+          "Estructuras selectivas"
+        ],
+        "solo_a_mano": [
+          "Estructuras de control",
+          "Iterativas",
+          "Selectivas",
+          "for",
+          "if, elif, else",
+          "while"
+        ]
+      }
+    },
+    {
+      "nombre": "BD-U3-01_c1",
+      "codigo_objetivo": "BD-U3-01",
+      "corrida": 1,
+      "modelo_pedido": "deepseek-flash",
+      "razonamiento": false,
+      "temperatura": 0.4,
+      "generado_utc": "2026-10-11T02:53:22+00:00",
+      "fragmentos_entregados": [
+        12,
+        13,
+        14,
+        15,
+        16,
+        17
+      ],
+      "valida": true,
+      "intentos": 1,
+      "reparaciones": 0,
+      "advertencias": [
+        "relación n1 → n3 entre pasos no consecutivos: el render no la dibuja",
+        "relación n1 → n4 entre pasos no consecutivos: el render no la dibuja",
+        "relación n2 → n5 entre pasos no consecutivos: el render no la dibuja",
+        "relación n3 → n5 entre pasos no consecutivos: el render no la dibuja",
+        "falta la relación n3 → n4 entre pasos consecutivos",
+        "falta la relación n2 → n3 entre pasos consecutivos"
+      ],
+      "segundos": 2.89,
+      "tokens_entrada": 2196,
+      "tokens_entrada_cache": 0,
+      "tokens_salida": 702,
+      "tokens_razonamiento": 0,
+      "costo_usd": 0.0007505999999999999,
+      "costo_usd_punta": 0.0015011999999999998,
+      "tarifa": "valle",
+      "modelo_respondido": "deepseek-flash",
+      "errores_primer_intento": [],
+      "tipo_de_diagrama": "flujo",
+      "titulo": "Primera Forma Normal: Reglas y Corrección",
+      "nodos": 6,
+      "relaciones": 7,
+      "etiquetas": [
+        {
+          "id": "n1",
+          "etiqueta": "Definición de 1FN",
+          "nivel": "casi",
+          "fragmentos": [
+            12
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n2",
+          "etiqueta": "Atomicidad de Atributos",
+          "nivel": "literal",
+          "fragmentos": [
+            12
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n3",
+          "etiqueta": "Eliminación de Grupos Repetitivos",
+          "nivel": "literal",
+          "fragmentos": [
+            12
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n4",
+          "etiqueta": "Clave Primaria Definida",
+          "nivel": "literal",
+          "fragmentos": [
+            12
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n5",
+          "etiqueta": "Paso a Paso",
+          "nivel": "literal",
+          "fragmentos": [
+            16
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n6",
+          "etiqueta": "Tabla Normalizada",
+          "nivel": "literal",
+          "fragmentos": [
+            14,
+            17
+          ],
+          "faltan": []
+        }
+      ],
+      "etiquetas_literal": 5,
+      "etiquetas_casi": 1,
+      "etiquetas_ausentes": [],
+      "detalle_relaciones": [
+        {
+          "relacion": "Definición de 1FN —requiere→ Atomicidad de Atributos",
+          "verbo_literal_en_material": false,
+          "nivel": "fragmento",
+          "fragmentos": [
+            12
+          ],
+          "evidencia": ""
+        },
+        {
+          "relacion": "Definición de 1FN —requiere→ Eliminación de Grupos Repetitivos",
+          "verbo_literal_en_material": false,
+          "nivel": "fragmento",
+          "fragmentos": [
+            12
+          ],
+          "evidencia": ""
+        },
+        {
+          "relacion": "Definición de 1FN —requiere→ Clave Primaria Definida",
+          "verbo_literal_en_material": false,
+          "nivel": "fragmento",
+          "fragmentos": [
+            12
+          ],
+          "evidencia": ""
+        },
+        {
+          "relacion": "Atomicidad de Atributos —se corrige con→ Paso a Paso",
+          "verbo_literal_en_material": false,
+          "nivel": "sin respaldo",
+          "fragmentos": [],
+          "evidencia": ""
+        },
+        {
+          "relacion": "Eliminación de Grupos Repetitivos —se corrige con→ Paso a Paso",
+          "verbo_literal_en_material": false,
+          "nivel": "sin respaldo",
+          "fragmentos": [],
+          "evidencia": ""
+        },
+        {
+          "relacion": "Clave Primaria Definida —se corrige con→ Paso a Paso",
+          "verbo_literal_en_material": false,
+          "nivel": "sin respaldo",
+          "fragmentos": [],
+          "evidencia": ""
+        },
+        {
+          "relacion": "Paso a Paso —produce→ Tabla Normalizada",
+          "verbo_literal_en_material": false,
+          "nivel": "sin respaldo",
+          "fragmentos": [],
+          "evidencia": ""
+        }
+      ],
+      "relaciones_oracion": 0,
+      "relaciones_fragmento": 3,
+      "relaciones_sin_respaldo": [
+        "Atomicidad de Atributos —se corrige con→ Paso a Paso",
+        "Eliminación de Grupos Repetitivos —se corrige con→ Paso a Paso",
+        "Clave Primaria Definida —se corrige con→ Paso a Paso",
+        "Paso a Paso —produce→ Tabla Normalizada"
+      ],
+      "conexo": true,
+      "relaciones_dibujadas": 3,
+      "rotulos_superpuestos": 0,
+      "detalles_repetidos": 0,
+      "fuentes": [
+        12,
+        13,
+        14,
+        15,
+        16,
+        17
+      ],
+      "ortografia": {
+        "problemas": [
+          "«unívoca» difiere del material, que escribe ['univoca']"
+        ],
+        "palabras_con_tilde_o_enie": [
+          "atómicos",
+          "básico",
+          "corrección",
+          "definición",
+          "eliminación",
+          "normalización",
+          "unívoca"
+        ],
+        "palabras_fuera_del_material": [
+          "corrección",
+          "corrige",
+          "corrigen",
+          "diagrama",
+          "estas",
+          "identifica",
+          "mediante",
+          "muestra",
+          "nodo",
+          "principal",
+          "produce",
+          "requiere"
+        ]
+      },
+      "contra_a_mano": {
+        "mismo_tipo": true,
+        "tipo_llm": "flujo",
+        "tipo_a_mano": "flujo",
+        "nodos_llm": 6,
+        "nodos_a_mano": 5,
+        "etiquetas_en_comun": [],
+        "solo_llm": [
+          "Atomicidad de Atributos",
+          "Clave Primaria Definida",
+          "Definición de 1FN",
+          "Eliminación de Grupos Repetitivos",
+          "Paso a Paso",
+          "Tabla Normalizada"
+        ],
+        "solo_a_mano": [
+          "Definir clave primaria",
+          "Descomponer en filas",
+          "Identificar celda no atómica",
+          "Tabla en 1FN",
+          "Tabla no normalizada"
+        ]
+      }
+    },
+    {
+      "nombre": "BD-U3-01_c2",
+      "codigo_objetivo": "BD-U3-01",
+      "corrida": 2,
+      "modelo_pedido": "deepseek-flash",
+      "razonamiento": false,
+      "temperatura": 0.4,
+      "generado_utc": "2026-10-11T02:53:24+00:00",
+      "fragmentos_entregados": [
+        12,
+        13,
+        14,
+        15,
+        16,
+        17
+      ],
+      "valida": true,
+      "intentos": 1,
+      "reparaciones": 0,
+      "advertencias": [],
+      "segundos": 2.36,
+      "tokens_entrada": 2196,
+      "tokens_entrada_cache": 2048,
+      "tokens_salida": 522,
+      "tokens_razonamiento": 0,
+      "costo_usd": 0.000341544,
+      "costo_usd_punta": 0.000683088,
+      "tarifa": "valle",
+      "modelo_respondido": "deepseek-flash",
+      "errores_primer_intento": [],
+      "tipo_de_diagrama": "mapa_conceptual",
+      "titulo": "Primera Forma Normal: Reglas y Proceso",
+      "nodos": 5,
+      "relaciones": 4,
+      "etiquetas": [
+        {
+          "id": "n1",
+          "etiqueta": "Primera Forma Normal",
+          "nivel": "literal",
+          "fragmentos": [
+            12,
+            15
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n2",
+          "etiqueta": "Atomicidad de Atributos",
+          "nivel": "literal",
+          "fragmentos": [
+            12
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n3",
+          "etiqueta": "Eliminación de Grupos Repetitivos",
+          "nivel": "literal",
+          "fragmentos": [
+            12
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n4",
+          "etiqueta": "Clave Primaria Definida",
+          "nivel": "literal",
+          "fragmentos": [
+            12
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n5",
+          "etiqueta": "Paso a Paso",
+          "nivel": "literal",
+          "fragmentos": [
+            16
+          ],
+          "faltan": []
+        }
+      ],
+      "etiquetas_literal": 5,
+      "etiquetas_casi": 0,
+      "etiquetas_ausentes": [],
+      "detalle_relaciones": [
+        {
+          "relacion": "Primera Forma Normal —requiere→ Atomicidad de Atributos",
+          "verbo_literal_en_material": false,
+          "nivel": "fragmento",
+          "fragmentos": [
+            12
+          ],
+          "evidencia": ""
+        },
+        {
+          "relacion": "Primera Forma Normal —requiere→ Eliminación de Grupos Repetitivos",
+          "verbo_literal_en_material": false,
+          "nivel": "fragmento",
+          "fragmentos": [
+            12
+          ],
+          "evidencia": ""
+        },
+        {
+          "relacion": "Primera Forma Normal —requiere→ Clave Primaria Definida",
+          "verbo_literal_en_material": false,
+          "nivel": "fragmento",
+          "fragmentos": [
+            12
+          ],
+          "evidencia": ""
+        },
+        {
+          "relacion": "Primera Forma Normal —se aplica mediante→ Paso a Paso",
+          "verbo_literal_en_material": false,
+          "nivel": "sin respaldo",
+          "fragmentos": [],
+          "evidencia": ""
+        }
+      ],
+      "relaciones_oracion": 0,
+      "relaciones_fragmento": 3,
+      "relaciones_sin_respaldo": [
+        "Primera Forma Normal —se aplica mediante→ Paso a Paso"
+      ],
+      "conexo": true,
+      "relaciones_dibujadas": 4,
+      "rotulos_superpuestos": 1,
+      "detalles_repetidos": 0,
+      "fuentes": [
+        12,
+        16
+      ],
+      "ortografia": {
+        "problemas": [
+          "«unívoca» difiere del material, que escribe ['univoca']"
+        ],
+        "palabras_con_tilde_o_enie": [
+          "además",
+          "básico",
+          "eliminación",
+          "normalización",
+          "unívoca"
+        ],
+        "palabras_fuera_del_material": [
+          "además",
+          "aplica",
+          "define",
+          "identifica",
+          "mediante",
+          "proceso",
+          "requiere",
+          "resuelve"
+        ]
+      },
+      "contra_a_mano": {
+        "mismo_tipo": false,
+        "tipo_llm": "mapa_conceptual",
+        "tipo_a_mano": "flujo",
+        "nodos_llm": 5,
+        "nodos_a_mano": 5,
+        "etiquetas_en_comun": [],
+        "solo_llm": [
+          "Atomicidad de Atributos",
+          "Clave Primaria Definida",
+          "Eliminación de Grupos Repetitivos",
+          "Paso a Paso",
+          "Primera Forma Normal"
+        ],
+        "solo_a_mano": [
+          "Definir clave primaria",
+          "Descomponer en filas",
+          "Identificar celda no atómica",
+          "Tabla en 1FN",
+          "Tabla no normalizada"
+        ]
+      }
+    },
+    {
+      "nombre": "BD-U3-01_c3",
+      "codigo_objetivo": "BD-U3-01",
+      "corrida": 3,
+      "modelo_pedido": "deepseek-flash",
+      "razonamiento": false,
+      "temperatura": 0.4,
+      "generado_utc": "2026-10-11T02:53:27+00:00",
+      "fragmentos_entregados": [
+        12,
+        13,
+        14,
+        15,
+        16,
+        17
+      ],
+      "valida": true,
+      "intentos": 1,
+      "reparaciones": 0,
+      "advertencias": [],
+      "segundos": 2.64,
+      "tokens_entrada": 2196,
+      "tokens_entrada_cache": 2048,
+      "tokens_salida": 588,
+      "tokens_razonamiento": 0,
+      "costo_usd": 0.000381144,
+      "costo_usd_punta": 0.000762288,
+      "tarifa": "valle",
+      "modelo_respondido": "deepseek-flash",
+      "errores_primer_intento": [],
+      "tipo_de_diagrama": "mapa_conceptual",
+      "titulo": "Primera Forma Normal",
+      "nodos": 6,
+      "relaciones": 4,
+      "etiquetas": [
+        {
+          "id": "n1",
+          "etiqueta": "Primera Forma Normal",
+          "nivel": "literal",
+          "fragmentos": [
+            12,
+            15
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n2",
+          "etiqueta": "Atomicidad de Atributos",
+          "nivel": "literal",
+          "fragmentos": [
+            12
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n3",
+          "etiqueta": "Eliminación de Grupos Repetitivos",
+          "nivel": "literal",
+          "fragmentos": [
+            12
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n4",
+          "etiqueta": "Clave Primaria Definida",
+          "nivel": "literal",
+          "fragmentos": [
+            12
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n5",
+          "etiqueta": "Descomponer en filas",
+          "nivel": "literal",
+          "fragmentos": [
+            16
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n6",
+          "etiqueta": "Reasignar clave primaria",
+          "nivel": "casi",
+          "fragmentos": [
+            16
+          ],
+          "faltan": []
+        }
+      ],
+      "etiquetas_literal": 5,
+      "etiquetas_casi": 1,
+      "etiquetas_ausentes": [],
+      "detalle_relaciones": [
+        {
+          "relacion": "Primera Forma Normal —requiere→ Atomicidad de Atributos",
+          "verbo_literal_en_material": false,
+          "nivel": "fragmento",
+          "fragmentos": [
+            12
+          ],
+          "evidencia": ""
+        },
+        {
+          "relacion": "Primera Forma Normal —requiere→ Eliminación de Grupos Repetitivos",
+          "verbo_literal_en_material": false,
+          "nivel": "fragmento",
+          "fragmentos": [
+            12
+          ],
+          "evidencia": ""
+        },
+        {
+          "relacion": "Primera Forma Normal —requiere→ Clave Primaria Definida",
+          "verbo_literal_en_material": false,
+          "nivel": "fragmento",
+          "fragmentos": [
+            12
+          ],
+          "evidencia": ""
+        },
+        {
+          "relacion": "Descomponer en filas —produce→ Reasignar clave primaria",
+          "verbo_literal_en_material": false,
+          "nivel": "fragmento",
+          "fragmentos": [
+            16
+          ],
+          "evidencia": ""
+        }
+      ],
+      "relaciones_oracion": 0,
+      "relaciones_fragmento": 4,
+      "relaciones_sin_respaldo": [],
+      "conexo": false,
+      "relaciones_dibujadas": 4,
+      "rotulos_superpuestos": 0,
+      "detalles_repetidos": 0,
+      "fuentes": [
+        12,
+        16
+      ],
+      "ortografia": {
+        "problemas": [
+          "«unívoca» difiere del material, que escribe ['univoca']"
+        ],
+        "palabras_con_tilde_o_enie": [
+          "además",
+          "básico",
+          "descomposición",
+          "eliminación",
+          "normalización",
+          "reasignación",
+          "unívoca"
+        ],
+        "palabras_fuera_del_material": [
+          "además",
+          "central",
+          "concepto",
+          "cual",
+          "dependen",
+          "descomposición",
+          "elemento",
+          "esquema",
+          "identifica",
+          "incorporar",
+          "muestra",
+          "produce",
+          "reasignación",
+          "relaciona",
+          "requiere"
+        ]
+      },
+      "contra_a_mano": {
+        "mismo_tipo": false,
+        "tipo_llm": "mapa_conceptual",
+        "tipo_a_mano": "flujo",
+        "nodos_llm": 6,
+        "nodos_a_mano": 5,
+        "etiquetas_en_comun": [
+          "Descomponer en filas"
+        ],
+        "solo_llm": [
+          "Atomicidad de Atributos",
+          "Clave Primaria Definida",
+          "Eliminación de Grupos Repetitivos",
+          "Primera Forma Normal",
+          "Reasignar clave primaria"
+        ],
+        "solo_a_mano": [
+          "Definir clave primaria",
+          "Identificar celda no atómica",
+          "Tabla en 1FN",
+          "Tabla no normalizada"
+        ]
+      }
+    },
+    {
+      "nombre": "BD-U3-02_c1",
+      "codigo_objetivo": "BD-U3-02",
+      "corrida": 1,
+      "modelo_pedido": "deepseek-flash",
+      "razonamiento": false,
+      "temperatura": 0.4,
+      "generado_utc": "2026-10-11T02:53:30+00:00",
+      "fragmentos_entregados": [
+        18,
+        19,
+        20,
+        21,
+        22,
+        23
+      ],
+      "valida": true,
+      "intentos": 1,
+      "reparaciones": 0,
+      "advertencias": [],
+      "segundos": 2.64,
+      "tokens_entrada": 2400,
+      "tokens_entrada_cache": 0,
+      "tokens_salida": 527,
+      "tokens_razonamiento": 0,
+      "costo_usd": 0.0006762000000000001,
+      "costo_usd_punta": 0.0013524000000000001,
+      "tarifa": "valle",
+      "modelo_respondido": "deepseek-flash",
+      "errores_primer_intento": [],
+      "tipo_de_diagrama": "mapa_conceptual",
+      "titulo": "Dependencias Funcionales y Cierre",
+      "nodos": 5,
+      "relaciones": 4,
+      "etiquetas": [
+        {
+          "id": "n1",
+          "etiqueta": "Dependencia Funcional",
+          "nivel": "literal",
+          "fragmentos": [
+            18,
+            21
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n2",
+          "etiqueta": "Dependencia Funcional Plena",
+          "nivel": "literal",
+          "fragmentos": [
+            18
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n3",
+          "etiqueta": "Dependencia Transitiva",
+          "nivel": "literal",
+          "fragmentos": [
+            18
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n4",
+          "etiqueta": "Dependencia Trivial",
+          "nivel": "literal",
+          "fragmentos": [
+            18
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n5",
+          "etiqueta": "Cierre de Atributos",
+          "nivel": "casi",
+          "fragmentos": [
+            22,
+            23
+          ],
+          "faltan": []
+        }
+      ],
+      "etiquetas_literal": 4,
+      "etiquetas_casi": 1,
+      "etiquetas_ausentes": [],
+      "detalle_relaciones": [
+        {
+          "relacion": "Dependencia Funcional —se clasifica en→ Dependencia Funcional Plena",
+          "verbo_literal_en_material": false,
+          "nivel": "oración",
+          "fragmentos": [
+            18
+          ],
+          "evidencia": "Dependencia Funcional Plena:"
+        },
+        {
+          "relacion": "Dependencia Funcional —se clasifica en→ Dependencia Transitiva",
+          "verbo_literal_en_material": false,
+          "nivel": "fragmento",
+          "fragmentos": [
+            18
+          ],
+          "evidencia": ""
+        },
+        {
+          "relacion": "Dependencia Funcional —se clasifica en→ Dependencia Trivial",
+          "verbo_literal_en_material": false,
+          "nivel": "fragmento",
+          "fragmentos": [
+            18
+          ],
+          "evidencia": ""
+        },
+        {
+          "relacion": "Dependencia Funcional —permite calcular→ Cierre de Atributos",
+          "verbo_literal_en_material": false,
+          "nivel": "fragmento",
+          "fragmentos": [
+            22,
+            23
+          ],
+          "evidencia": ""
+        }
+      ],
+      "relaciones_oracion": 1,
+      "relaciones_fragmento": 3,
+      "relaciones_sin_respaldo": [],
+      "conexo": true,
+      "relaciones_dibujadas": 4,
+      "rotulos_superpuestos": 3,
+      "detalles_repetidos": 0,
+      "fuentes": [
+        18,
+        22
+      ],
+      "ortografia": {
+        "problemas": [],
+        "palabras_con_tilde_o_enie": [
+          "además",
+          "cálculo"
+        ],
+        "palabras_fuera_del_material": [
+          "además",
+          "clasifica",
+          "concepto",
+          "conceptual",
+          "cual",
+          "derivan",
+          "iterativo",
+          "mediante",
+          "muestra",
+          "permite",
+          "principal",
+          "tres"
+        ]
+      },
+      "contra_a_mano": {
+        "mismo_tipo": true,
+        "tipo_llm": "mapa_conceptual",
+        "tipo_a_mano": "mapa_conceptual",
+        "nodos_llm": 5,
+        "nodos_a_mano": 6,
+        "etiquetas_en_comun": [
+          "Dependencia Funcional"
+        ],
+        "solo_llm": [
+          "Cierre de Atributos",
+          "Dependencia Funcional Plena",
+          "Dependencia Transitiva",
+          "Dependencia Trivial"
+        ],
+        "solo_a_mano": [
+          "DF plena",
+          "DF transitiva",
+          "DF trivial",
+          "RUT → Nombre",
+          "X → Y"
+        ]
+      }
+    },
+    {
+      "nombre": "BD-U3-02_c2",
+      "codigo_objetivo": "BD-U3-02",
+      "corrida": 2,
+      "modelo_pedido": "deepseek-flash",
+      "razonamiento": false,
+      "temperatura": 0.4,
+      "generado_utc": "2026-10-11T02:53:32+00:00",
+      "fragmentos_entregados": [
+        18,
+        19,
+        20,
+        21,
+        22,
+        23
+      ],
+      "valida": true,
+      "intentos": 1,
+      "reparaciones": 0,
+      "advertencias": [],
+      "segundos": 2.42,
+      "tokens_entrada": 2400,
+      "tokens_entrada_cache": 2176,
+      "tokens_salida": 528,
+      "tokens_razonamiento": 0,
+      "costo_usd": 0.000356928,
+      "costo_usd_punta": 0.000713856,
+      "tarifa": "valle",
+      "modelo_respondido": "deepseek-flash",
+      "errores_primer_intento": [],
+      "tipo_de_diagrama": "mapa_conceptual",
+      "titulo": "Dependencias Funcionales y Cierre",
+      "nodos": 5,
+      "relaciones": 4,
+      "etiquetas": [
+        {
+          "id": "n1",
+          "etiqueta": "Dependencia Funcional",
+          "nivel": "literal",
+          "fragmentos": [
+            18,
+            21
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n2",
+          "etiqueta": "Dependencia Funcional Plena",
+          "nivel": "literal",
+          "fragmentos": [
+            18
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n3",
+          "etiqueta": "Dependencia Transitiva",
+          "nivel": "literal",
+          "fragmentos": [
+            18
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n4",
+          "etiqueta": "Dependencia Trivial",
+          "nivel": "literal",
+          "fragmentos": [
+            18
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n5",
+          "etiqueta": "Cierre de Atributos",
+          "nivel": "casi",
+          "fragmentos": [
+            22,
+            23
+          ],
+          "faltan": []
+        }
+      ],
+      "etiquetas_literal": 4,
+      "etiquetas_casi": 1,
+      "etiquetas_ausentes": [],
+      "detalle_relaciones": [
+        {
+          "relacion": "Dependencia Funcional —se clasifica en→ Dependencia Funcional Plena",
+          "verbo_literal_en_material": false,
+          "nivel": "oración",
+          "fragmentos": [
+            18
+          ],
+          "evidencia": "Dependencia Funcional Plena:"
+        },
+        {
+          "relacion": "Dependencia Funcional —se clasifica en→ Dependencia Transitiva",
+          "verbo_literal_en_material": false,
+          "nivel": "fragmento",
+          "fragmentos": [
+            18
+          ],
+          "evidencia": ""
+        },
+        {
+          "relacion": "Dependencia Funcional —se clasifica en→ Dependencia Trivial",
+          "verbo_literal_en_material": false,
+          "nivel": "fragmento",
+          "fragmentos": [
+            18
+          ],
+          "evidencia": ""
+        },
+        {
+          "relacion": "Dependencia Funcional —permite calcular→ Cierre de Atributos",
+          "verbo_literal_en_material": false,
+          "nivel": "fragmento",
+          "fragmentos": [
+            22,
+            23
+          ],
+          "evidencia": ""
+        }
+      ],
+      "relaciones_oracion": 1,
+      "relaciones_fragmento": 3,
+      "relaciones_sin_respaldo": [],
+      "conexo": true,
+      "relaciones_dibujadas": 4,
+      "rotulos_superpuestos": 3,
+      "detalles_repetidos": 0,
+      "fuentes": [
+        18,
+        22
+      ],
+      "ortografia": {
+        "problemas": [],
+        "palabras_con_tilde_o_enie": [
+          "además",
+          "cálculo",
+          "restricción"
+        ],
+        "palabras_fuera_del_material": [
+          "además",
+          "central",
+          "clasifica",
+          "concepto",
+          "cual",
+          "desprenden",
+          "iterativo",
+          "muestra",
+          "permite",
+          "tres"
+        ]
+      },
+      "contra_a_mano": {
+        "mismo_tipo": true,
+        "tipo_llm": "mapa_conceptual",
+        "tipo_a_mano": "mapa_conceptual",
+        "nodos_llm": 5,
+        "nodos_a_mano": 6,
+        "etiquetas_en_comun": [
+          "Dependencia Funcional"
+        ],
+        "solo_llm": [
+          "Cierre de Atributos",
+          "Dependencia Funcional Plena",
+          "Dependencia Transitiva",
+          "Dependencia Trivial"
+        ],
+        "solo_a_mano": [
+          "DF plena",
+          "DF transitiva",
+          "DF trivial",
+          "RUT → Nombre",
+          "X → Y"
+        ]
+      }
+    },
+    {
+      "nombre": "BD-U3-02_c3",
+      "codigo_objetivo": "BD-U3-02",
+      "corrida": 3,
+      "modelo_pedido": "deepseek-flash",
+      "razonamiento": false,
+      "temperatura": 0.4,
+      "generado_utc": "2026-10-11T02:53:34+00:00",
+      "fragmentos_entregados": [
+        18,
+        19,
+        20,
+        21,
+        22,
+        23
+      ],
+      "valida": true,
+      "intentos": 1,
+      "reparaciones": 0,
+      "advertencias": [
+        "relación n1 → n3 entre pasos no consecutivos: el render no la dibuja",
+        "relación n1 → n4 entre pasos no consecutivos: el render no la dibuja",
+        "falta la relación n3 → n4 entre pasos consecutivos",
+        "falta la relación n2 → n3 entre pasos consecutivos"
+      ],
+      "segundos": 2.37,
+      "tokens_entrada": 2400,
+      "tokens_entrada_cache": 2176,
+      "tokens_salida": 434,
+      "tokens_razonamiento": 0,
+      "costo_usd": 0.00030052799999999994,
+      "costo_usd_punta": 0.0006010559999999999,
+      "tarifa": "valle",
+      "modelo_respondido": "deepseek-flash",
+      "errores_primer_intento": [],
+      "tipo_de_diagrama": "flujo",
+      "titulo": "Dependencias Funcionales y Cierre",
+      "nodos": 4,
+      "relaciones": 3,
+      "etiquetas": [
+        {
+          "id": "n1",
+          "etiqueta": "Dependencia Funcional",
+          "nivel": "literal",
+          "fragmentos": [
+            18,
+            21
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n2",
+          "etiqueta": "Tipos de DF",
+          "nivel": "casi",
+          "fragmentos": [
+            18
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n3",
+          "etiqueta": "Cierre de atributos",
+          "nivel": "casi",
+          "fragmentos": [
+            22,
+            23
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n4",
+          "etiqueta": "Ejemplo RUT",
+          "nivel": "casi",
+          "fragmentos": [
+            20
+          ],
+          "faltan": []
+        }
+      ],
+      "etiquetas_literal": 1,
+      "etiquetas_casi": 3,
+      "etiquetas_ausentes": [],
+      "detalle_relaciones": [
+        {
+          "relacion": "Dependencia Funcional —se clasifica en→ Tipos de DF",
+          "verbo_literal_en_material": false,
+          "nivel": "fragmento",
+          "fragmentos": [
+            18
+          ],
+          "evidencia": ""
+        },
+        {
+          "relacion": "Dependencia Funcional —permite calcular→ Cierre de atributos",
+          "verbo_literal_en_material": false,
+          "nivel": "fragmento",
+          "fragmentos": [
+            22,
+            23
+          ],
+          "evidencia": ""
+        },
+        {
+          "relacion": "Dependencia Funcional —se ejemplifica con→ Ejemplo RUT",
+          "verbo_literal_en_material": false,
+          "nivel": "sin respaldo",
+          "fragmentos": [],
+          "evidencia": ""
+        }
+      ],
+      "relaciones_oracion": 0,
+      "relaciones_fragmento": 2,
+      "relaciones_sin_respaldo": [
+        "Dependencia Funcional —se ejemplifica con→ Ejemplo RUT"
+      ],
+      "conexo": true,
+      "relaciones_dibujadas": 1,
+      "rotulos_superpuestos": 0,
+      "detalles_repetidos": 0,
+      "fuentes": [
+        18,
+        19,
+        20,
+        21,
+        22,
+        23
+      ],
+      "ortografia": {
+        "problemas": [],
+        "palabras_con_tilde_o_enie": [
+          "cálculo"
+        ],
+        "palabras_fuera_del_material": [
+          "central",
+          "clasifica",
+          "concepto",
+          "cual",
+          "desprenden",
+          "ejemplifica",
+          "flujo",
+          "iterativo",
+          "muestra",
+          "permite"
+        ]
+      },
+      "contra_a_mano": {
+        "mismo_tipo": false,
+        "tipo_llm": "flujo",
+        "tipo_a_mano": "mapa_conceptual",
+        "nodos_llm": 4,
+        "nodos_a_mano": 6,
+        "etiquetas_en_comun": [
+          "Dependencia Funcional"
+        ],
+        "solo_llm": [
+          "Cierre de atributos",
+          "Ejemplo RUT",
+          "Tipos de DF"
+        ],
+        "solo_a_mano": [
+          "DF plena",
+          "DF transitiva",
+          "DF trivial",
+          "RUT → Nombre",
+          "X → Y"
+        ]
+      }
+    }
+  ],
+  "a_mano": {
+    "BD-U3-01": {
+      "tipo_de_diagrama": "flujo",
+      "titulo": "Cómo llevar una tabla a 1FN",
+      "nodos": 5,
+      "relaciones": 4,
+      "etiquetas": [
+        {
+          "id": "n1",
+          "etiqueta": "Tabla no normalizada",
+          "nivel": "literal",
+          "fragmentos": [
+            13
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n2",
+          "etiqueta": "Identificar celda no atómica",
+          "nivel": "casi",
+          "fragmentos": [
+            16
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n3",
+          "etiqueta": "Descomponer en filas",
+          "nivel": "literal",
+          "fragmentos": [
+            16
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n4",
+          "etiqueta": "Definir clave primaria",
+          "nivel": "casi",
+          "fragmentos": [
+            16
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n5",
+          "etiqueta": "Tabla en 1FN",
+          "nivel": "casi",
+          "fragmentos": [
+            12,
+            13,
+            14,
+            17
+          ],
+          "faltan": []
+        }
+      ],
+      "etiquetas_literal": 2,
+      "etiquetas_casi": 3,
+      "etiquetas_ausentes": [],
+      "detalle_relaciones": [
+        {
+          "relacion": "Tabla no normalizada —se revisa→ Identificar celda no atómica",
+          "verbo_literal_en_material": false,
+          "nivel": "sin respaldo",
+          "fragmentos": [],
+          "evidencia": ""
+        },
+        {
+          "relacion": "Identificar celda no atómica —se divide→ Descomponer en filas",
+          "verbo_literal_en_material": false,
+          "nivel": "fragmento",
+          "fragmentos": [
+            16
+          ],
+          "evidencia": ""
+        },
+        {
+          "relacion": "Descomponer en filas —se identifica→ Definir clave primaria",
+          "verbo_literal_en_material": false,
+          "nivel": "fragmento",
+          "fragmentos": [
+            16
+          ],
+          "evidencia": ""
+        },
+        {
+          "relacion": "Definir clave primaria —produce→ Tabla en 1FN",
+          "verbo_literal_en_material": false,
+          "nivel": "sin respaldo",
+          "fragmentos": [],
+          "evidencia": ""
+        }
+      ],
+      "relaciones_oracion": 0,
+      "relaciones_fragmento": 2,
+      "relaciones_sin_respaldo": [
+        "Tabla no normalizada —se revisa→ Identificar celda no atómica",
+        "Definir clave primaria —produce→ Tabla en 1FN"
+      ],
+      "conexo": true,
+      "relaciones_dibujadas": 4,
+      "rotulos_superpuestos": 0,
+      "detalles_repetidos": 0,
+      "fuentes": [],
+      "ortografia": {
+        "problemas": [
+          "«cómo» difiere del material, que escribe ['como']"
+        ],
+        "palabras_con_tilde_o_enie": [
+          "atómica",
+          "atómicos",
+          "cómo",
+          "única"
+        ],
+        "palabras_fuera_del_material": [
+          "cinco",
+          "define",
+          "descompone",
+          "diagrama",
+          "divide",
+          "flujo",
+          "guarda",
+          "identifica",
+          "incluye",
+          "llevar",
+          "pasos",
+          "produce",
+          "queda",
+          "revisa",
+          "separadas",
+          "varias"
+        ]
+      }
+    },
+    "BD-U3-02": {
+      "tipo_de_diagrama": "mapa_conceptual",
+      "titulo": "Dependencias funcionales",
+      "nodos": 6,
+      "relaciones": 5,
+      "etiquetas": [
+        {
+          "id": "n1",
+          "etiqueta": "Dependencia funcional",
+          "nivel": "literal",
+          "fragmentos": [
+            18,
+            21
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n2",
+          "etiqueta": "X → Y",
+          "nivel": "literal",
+          "fragmentos": [
+            18
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n3",
+          "etiqueta": "DF plena",
+          "nivel": "casi",
+          "fragmentos": [
+            18
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n4",
+          "etiqueta": "DF transitiva",
+          "nivel": "casi",
+          "fragmentos": [
+            18
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n5",
+          "etiqueta": "DF trivial",
+          "nivel": "casi",
+          "fragmentos": [
+            18
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n6",
+          "etiqueta": "RUT → Nombre",
+          "nivel": "literal",
+          "fragmentos": [
+            20,
+            21
+          ],
+          "faltan": []
+        }
+      ],
+      "etiquetas_literal": 3,
+      "etiquetas_casi": 3,
+      "etiquetas_ausentes": [],
+      "detalle_relaciones": [
+        {
+          "relacion": "Dependencia funcional —se denota→ X → Y",
+          "verbo_literal_en_material": true,
+          "nivel": "fragmento",
+          "fragmentos": [
+            18,
+            22
+          ],
+          "evidencia": ""
+        },
+        {
+          "relacion": "Dependencia funcional —puede ser→ DF plena",
+          "verbo_literal_en_material": false,
+          "nivel": "fragmento",
+          "fragmentos": [
+            18
+          ],
+          "evidencia": ""
+        },
+        {
+          "relacion": "Dependencia funcional —puede ser→ DF transitiva",
+          "verbo_literal_en_material": false,
+          "nivel": "fragmento",
+          "fragmentos": [
+            18
+          ],
+          "evidencia": ""
+        },
+        {
+          "relacion": "Dependencia funcional —puede ser→ DF trivial",
+          "verbo_literal_en_material": false,
+          "nivel": "fragmento",
+          "fragmentos": [
+            18
+          ],
+          "evidencia": ""
+        },
+        {
+          "relacion": "X → Y —por ejemplo→ RUT → Nombre",
+          "verbo_literal_en_material": false,
+          "nivel": "oración",
+          "fragmentos": [
+            20
+          ],
+          "evidencia": "RUT (X) Nombre (Y) Carrera ¿Cumple DF $RUT \\rightarrow Nombre$?"
+        }
+      ],
+      "relaciones_oracion": 1,
+      "relaciones_fragmento": 4,
+      "relaciones_sin_respaldo": [],
+      "conexo": true,
+      "relaciones_dibujadas": 5,
+      "rotulos_superpuestos": 0,
+      "detalles_repetidos": 0,
+      "fuentes": [],
+      "ortografia": {
+        "problemas": [],
+        "palabras_con_tilde_o_enie": [
+          "restricción",
+          "través"
+        ],
+        "palabras_fuera_del_material": [
+          "completo",
+          "conceptual",
+          "mapa",
+          "través"
+        ]
+      }
+    },
+    "PROG-U1-02": {
+      "tipo_de_diagrama": "jerarquia",
+      "titulo": "Estructuras de control de flujo",
+      "nodos": 6,
+      "relaciones": 5,
+      "etiquetas": [
+        {
+          "id": "n1",
+          "etiqueta": "Estructuras de control",
+          "nivel": "literal",
+          "fragmentos": [
+            6
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n2",
+          "etiqueta": "Selectivas",
+          "nivel": "literal",
+          "fragmentos": [
+            6
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n3",
+          "etiqueta": "Iterativas",
+          "nivel": "literal",
+          "fragmentos": [
+            6
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n4",
+          "etiqueta": "if, elif, else",
+          "nivel": "literal",
+          "fragmentos": [
+            6
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n5",
+          "etiqueta": "for",
+          "nivel": "literal",
+          "fragmentos": [
+            6,
+            7,
+            10
+          ],
+          "faltan": []
+        },
+        {
+          "id": "n6",
+          "etiqueta": "while",
+          "nivel": "literal",
+          "fragmentos": [
+            6,
+            7,
+            9,
+            11
+          ],
+          "faltan": []
+        }
+      ],
+      "etiquetas_literal": 6,
+      "etiquetas_casi": 0,
+      "etiquetas_ausentes": [],
+      "detalle_relaciones": [
+        {
+          "relacion": "Estructuras de control —se dividen en→ Selectivas",
+          "verbo_literal_en_material": false,
+          "nivel": "fragmento",
+          "fragmentos": [
+            6
+          ],
+          "evidencia": ""
+        },
+        {
+          "relacion": "Estructuras de control —se dividen en→ Iterativas",
+          "verbo_literal_en_material": false,
+          "nivel": "fragmento",
+          "fragmentos": [
+            6
+          ],
+          "evidencia": ""
+        },
+        {
+          "relacion": "Selectivas —usan→ if, elif, else",
+          "verbo_literal_en_material": false,
+          "nivel": "fragmento",
+          "fragmentos": [
+            6
+          ],
+          "evidencia": ""
+        },
+        {
+          "relacion": "Iterativas —usan→ for",
+          "verbo_literal_en_material": false,
+          "nivel": "fragmento",
+          "fragmentos": [
+            6
+          ],
+          "evidencia": ""
+        },
+        {
+          "relacion": "Iterativas —usan→ while",
+          "verbo_literal_en_material": false,
+          "nivel": "fragmento",
+          "fragmentos": [
+            6
+          ],
+          "evidencia": ""
+        }
+      ],
+      "relaciones_oracion": 0,
+      "relaciones_fragmento": 5,
+      "relaciones_sin_respaldo": [],
+      "conexo": true,
+      "relaciones_dibujadas": 5,
+      "rotulos_superpuestos": 0,
+      "detalles_repetidos": 0,
+      "fuentes": [],
+      "ortografia": {
+        "problemas": [],
+        "palabras_con_tilde_o_enie": [
+          "condición",
+          "ejecución",
+          "evalúan",
+          "jerarquía",
+          "número"
+        ],
+        "palabras_fuera_del_material": [
+          "dividen",
+          "jerarquía",
+          "repeticiones",
+          "repiten",
+          "usan"
+        ]
+      }
+    }
+  }
+}

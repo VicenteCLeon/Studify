@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 469" width="800" height="469" role="img" aria-labelledby="esq-titulo esq-desc" font-family="Figtree, 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif">
+<title id="esq-titulo">Dependencias Funcionales y Cierre</title>
+<desc id="esq-desc">Esquema conceptual que muestra la Dependencia Funcional como concepto principal, del cual se derivan tres tipos: plena, transitiva y trivial. Además, la Dependencia Funcional permite calcular el Cierre de Atributos mediante un algoritmo iterativo.</desc>
+<rect width="800" height="469" rx="20" fill="#FBF8F3"/>
+<text x="400.0" y="58" text-anchor="middle" font-family="Fraunces, Georgia, 'Times New Roman', serif" font-size="30" font-weight="700" fill="#1F2933">Dependencias Funcionales y Cierre</text>
+<rect x="364.0" y="74" width="72" height="4" rx="2" fill="#F2795A"/>
+<line x1="317.2" y1="228.9" x2="217.5" y2="301.7" stroke="#56606B" stroke-width="2"/><polygon points="211.0,306.5 217.0,296.0 222.7,303.9" fill="#56606B"/><rect x="202.5" y="256.7" width="123.2" height="22" rx="11" fill="#FBF8F3"/><text x="264.1" y="272.2" text-anchor="middle" font-size="13" font-style="italic" fill="#56606B">se clasifica en</text>
+<line x1="372.4" y1="228.9" x2="343.8" y2="291.6" stroke="#56606B" stroke-width="2"/><polygon points="340.4,298.9 340.5,286.9 349.4,291.0" fill="#56606B"/><rect x="294.8" y="252.9" width="123.2" height="22" rx="11" fill="#FBF8F3"/><text x="356.4" y="268.4" text-anchor="middle" font-size="13" font-style="italic" fill="#56606B">se clasifica en</text>
+<line x1="427.6" y1="228.9" x2="456.2" y2="291.6" stroke="#56606B" stroke-width="2"/><polygon points="459.6,298.9 450.6,291.0 459.5,286.9" fill="#56606B"/><rect x="382.0" y="252.9" width="123.2" height="22" rx="11" fill="#FBF8F3"/><text x="443.6" y="268.4" text-anchor="middle" font-size="13" font-style="italic" fill="#56606B">se clasifica en</text>
+<line x1="482.8" y1="228.9" x2="582.5" y2="301.7" stroke="#56606B" stroke-width="2"/><polygon points="589.0,306.5 577.3,303.9 583.0,296.0" fill="#56606B"/><rect x="470.7" y="256.7" width="130.5" height="22" rx="11" fill="#FBF8F3"/><text x="535.9" y="272.2" text-anchor="middle" font-size="13" font-style="italic" fill="#56606B">permite calcular</text>
+<rect x="317.0" y="112.0" width="166.0" height="112.9" rx="14" fill="#0F766E" stroke="#0F766E" stroke-width="2"/>
+<text x="400.0" y="142.1" text-anchor="middle" font-size="17" font-weight="700" fill="#FFFFFF">Dependencia</text>
+<text x="400.0" y="163.4" text-anchor="middle" font-size="17" font-weight="700" fill="#FFFFFF">Funcional</text>
+<text x="400.0" y="187.8" text-anchor="middle" font-size="14" fill="#FFFFFF">X determina</text>
+<text x="400.0" y="206.0" text-anchor="middle" font-size="14" fill="#FFFFFF">funcionalmente a Y</text>
+<rect x="41.0" y="302.9" width="166.0" height="134.2" rx="14" fill="#FFFFFF" stroke="#D3C9B8" stroke-width="2"/>
+<text x="124.0" y="333.0" text-anchor="middle" font-size="17" font-weight="700" fill="#1F2933">Dependencia</text>
+<text x="124.0" y="354.3" text-anchor="middle" font-size="17" font-weight="700" fill="#1F2933">Funcional</text>
+<text x="124.0" y="375.5" text-anchor="middle" font-size="17" font-weight="700" fill="#1F2933">Plena</text>
+<text x="124.0" y="399.9" text-anchor="middle" font-size="14" fill="#56606B">Y no depende de</text>
+<text x="124.0" y="418.1" text-anchor="middle" font-size="14" fill="#56606B">subconjunto propio</text>
+<rect x="225.0" y="302.9" width="166.0" height="134.2" rx="14" fill="#FFFFFF" stroke="#D3C9B8" stroke-width="2"/>
+<text x="308.0" y="343.7" text-anchor="middle" font-size="17" font-weight="700" fill="#1F2933">Dependencia</text>
+<text x="308.0" y="364.9" text-anchor="middle" font-size="17" font-weight="700" fill="#1F2933">Transitiva</text>
+<text x="308.0" y="389.3" text-anchor="middle" font-size="14" fill="#56606B">X→Y y Y→Z implica</text>
+<text x="308.0" y="407.5" text-anchor="middle" font-size="14" fill="#56606B">X→Z</text>
+<rect x="409.0" y="302.9" width="166.0" height="134.2" rx="14" fill="#FFFFFF" stroke="#D3C9B8" stroke-width="2"/>
+<text x="492.0" y="352.8" text-anchor="middle" font-size="17" font-weight="700" fill="#1F2933">Dependencia</text>
+<text x="492.0" y="374.0" text-anchor="middle" font-size="17" font-weight="700" fill="#1F2933">Trivial</text>
+<text x="492.0" y="398.4" text-anchor="middle" font-size="14" fill="#56606B">Y subconjunto de X</text>
+<rect x="593.0" y="302.9" width="166.0" height="134.2" rx="14" fill="#FDEBE5" stroke="#F2795A" stroke-width="2"/>
+<text x="676.0" y="334.6" text-anchor="middle" font-size="17" font-weight="700" fill="#1F2933">Cierre de</text>
+<text x="676.0" y="355.8" text-anchor="middle" font-size="17" font-weight="700" fill="#1F2933">Atributos</text>
+<text x="676.0" y="380.2" text-anchor="middle" font-size="14" fill="#56606B">Algoritmo</text>
+<text x="676.0" y="398.4" text-anchor="middle" font-size="14" fill="#56606B">iterativo de</text>
+<text x="676.0" y="416.6" text-anchor="middle" font-size="14" fill="#56606B">cálculo</text>
+</svg>

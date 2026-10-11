@@ -50,7 +50,14 @@ class Settings(BaseSettings):
     # Proveedor LLM con API compatible con OpenAI (DeepSeek / Qwen / GLM).
     # El modelo se decide con datos en el bake-off de la Fase 3.
     llm_base_url: str = "https://api.deepseek.com/v1"
-    llm_model: str = "deepseek-chat"
+    llm_model: str = "deepseek-flash"
+    # Modo de razonamiento del modelo. `deepseek-flash` razona por defecto y esos
+    # tokens se descuentan de `llm_max_tokens`: con 2.000 no queda espacio para
+    # la cápsula y la respuesta llega truncada (medido el 10-oct-2026, ver
+    # docs/modulo-visual/analisis-modulo-visual.md §10.1). `disabled` lo apaga
+    # y `enabled` lo fuerza. Vacío no envía el parámetro: es lo que corresponde
+    # con un proveedor que no lo conozca.
+    llm_thinking: Literal["", "enabled", "disabled"] = "disabled"
     llm_api_key: str = ""
     llm_temperature: float = 0.4
     llm_timeout: int = 90

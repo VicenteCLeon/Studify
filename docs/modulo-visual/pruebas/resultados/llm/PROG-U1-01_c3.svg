@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 654" width="800" height="654" role="img" aria-labelledby="esq-titulo esq-desc" font-family="Figtree, 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif">
+<title id="esq-titulo">Variables y Tipos de Datos</title>
+<desc id="esq-desc">El esquema muestra que una variable es una ubicación en memoria RAM que almacena un tipo de dato específico. Los tipos de datos primitivos incluyen int, float, bool y str.</desc>
+<rect width="800" height="654" rx="20" fill="#FBF8F3"/>
+<text x="400.0" y="58" text-anchor="middle" font-family="Fraunces, Georgia, 'Times New Roman', serif" font-size="30" font-weight="700" fill="#1F2933">Variables y Tipos de Datos</text>
+<rect x="364.0" y="74" width="72" height="4" rx="2" fill="#F2795A"/>
+<line x1="400.0" y1="207.6" x2="400.0" y2="269.6" stroke="#56606B" stroke-width="2"/><polygon points="400.0,277.6 395.1,266.7 404.9,266.7" fill="#56606B"/><rect x="363.9" y="231.6" width="72.2" height="22" rx="11" fill="#FBF8F3"/><text x="400.0" y="247.1" text-anchor="middle" font-size="13" font-style="italic" fill="#56606B">almacena</text>
+<line x1="313.0" y1="423.7" x2="208.2" y2="503.2" stroke="#56606B" stroke-width="2"/><polygon points="201.8,508.0 207.6,497.5 213.5,505.3" fill="#56606B"/><rect x="224.9" y="454.9" width="65.0" height="22" rx="11" fill="#FBF8F3"/><text x="257.4" y="470.4" text-anchor="middle" font-size="13" font-style="italic" fill="#56606B">incluye</text>
+<line x1="364.7" y1="438.0" x2="337.1" y2="500.7" stroke="#56606B" stroke-width="2"/><polygon points="333.9,508.0 333.9,496.0 342.8,499.9" fill="#56606B"/><rect x="316.8" y="462.0" width="65.0" height="22" rx="11" fill="#FBF8F3"/><text x="349.3" y="477.5" text-anchor="middle" font-size="13" font-style="italic" fill="#56606B">incluye</text>
+<line x1="435.3" y1="438.0" x2="462.9" y2="500.7" stroke="#56606B" stroke-width="2"/><polygon points="466.1,508.0 457.2,499.9 466.1,496.0" fill="#56606B"/><rect x="418.2" y="462.0" width="65.0" height="22" rx="11" fill="#FBF8F3"/><text x="450.7" y="477.5" text-anchor="middle" font-size="13" font-style="italic" fill="#56606B">incluye</text>
+<line x1="487.0" y1="423.7" x2="591.8" y2="503.2" stroke="#56606B" stroke-width="2"/><polygon points="598.2,508.0 586.5,505.3 592.4,497.5" fill="#56606B"/><rect x="510.1" y="454.9" width="65.0" height="22" rx="11" fill="#FBF8F3"/><text x="542.6" y="470.4" text-anchor="middle" font-size="13" font-style="italic" fill="#56606B">incluye</text>
+<rect x="317.0" y="112.0" width="166.0" height="91.7" rx="14" fill="#0F766E" stroke="#0F766E" stroke-width="2"/>
+<text x="400.0" y="142.1" text-anchor="middle" font-size="17" font-weight="700" fill="#FFFFFF">Variable</text>
+<text x="400.0" y="166.5" text-anchor="middle" font-size="14" fill="#FFFFFF">Ubicación en</text>
+<text x="400.0" y="184.7" text-anchor="middle" font-size="14" fill="#FFFFFF">memoria RAM</text>
+<rect x="317.0" y="281.6" width="166.0" height="152.3" rx="14" fill="#FFFFFF" stroke="#D3C9B8" stroke-width="2"/>
+<text x="400.0" y="311.8" text-anchor="middle" font-size="17" font-weight="700" fill="#1F2933">Tipos de</text>
+<text x="400.0" y="333.0" text-anchor="middle" font-size="17" font-weight="700" fill="#1F2933">datos</text>
+<text x="400.0" y="354.3" text-anchor="middle" font-size="17" font-weight="700" fill="#1F2933">primitivos</text>
+<text x="400.0" y="378.7" text-anchor="middle" font-size="14" fill="#56606B">Determinan</text>
+<text x="400.0" y="396.9" text-anchor="middle" font-size="14" fill="#56606B">operaciones y</text>
+<text x="400.0" y="415.1" text-anchor="middle" font-size="14" fill="#56606B">memoria</text>
+<rect x="41.0" y="512.0" width="166.0" height="109.8" rx="14" fill="#FFFFFF" stroke="#D3C9B8" stroke-width="2"/>
+<text x="124.0" y="551.2" text-anchor="middle" font-size="17" font-weight="700" fill="#1F2933">int</text>
+<text x="124.0" y="575.6" text-anchor="middle" font-size="14" fill="#56606B">Números sin parte</text>
+<text x="124.0" y="593.8" text-anchor="middle" font-size="14" fill="#56606B">decimal</text>
+<rect x="225.0" y="512.0" width="166.0" height="109.8" rx="14" fill="#FFFFFF" stroke="#D3C9B8" stroke-width="2"/>
+<text x="308.0" y="551.2" text-anchor="middle" font-size="17" font-weight="700" fill="#1F2933">float</text>
+<text x="308.0" y="575.6" text-anchor="middle" font-size="14" fill="#56606B">Números con parte</text>
+<text x="308.0" y="593.8" text-anchor="middle" font-size="14" fill="#56606B">decimal</text>
+<rect x="409.0" y="512.0" width="166.0" height="109.8" rx="14" fill="#FFFFFF" stroke="#D3C9B8" stroke-width="2"/>
+<text x="492.0" y="560.3" text-anchor="middle" font-size="17" font-weight="700" fill="#1F2933">bool</text>
+<text x="492.0" y="584.7" text-anchor="middle" font-size="14" fill="#56606B">True o False</text>
+<rect x="593.0" y="512.0" width="166.0" height="109.8" rx="14" fill="#FFFFFF" stroke="#D3C9B8" stroke-width="2"/>
+<text x="676.0" y="542.1" text-anchor="middle" font-size="17" font-weight="700" fill="#1F2933">str</text>
+<text x="676.0" y="566.5" text-anchor="middle" font-size="14" fill="#56606B">Secuencia</text>
+<text x="676.0" y="584.8" text-anchor="middle" font-size="14" fill="#56606B">inmutable de</text>
+<text x="676.0" y="603.0" text-anchor="middle" font-size="14" fill="#56606B">caracteres</text>
+</svg>

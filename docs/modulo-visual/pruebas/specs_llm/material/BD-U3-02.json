@@ -1,0 +1,51 @@
+{
+  "codigo_objetivo": "BD-U3-02",
+  "asignatura": "Bases de Datos",
+  "unidad": "Unidad 3: Normalización",
+  "tema": "Dependencias Funcionales",
+  "origen": "base de datos: fragmentos validados (retriever.recuperar)",
+  "fragmentos": [
+    {
+      "id_fragmento": 18,
+      "documento": "Teoría de Dependencias Funcionales y Cierre de Atributos",
+      "cita": "Teoría de Dependencias Funcionales y Cierre de Atributos, p. 1",
+      "tipo": "texto",
+      "texto": "1. Definición Formal (Perfil Lectura / Escritura - R)\n\nUna Dependencia Funcional (DF) es una restricción entre dos conjuntos de atributos en una relación de base de datos. Se denota formalmente como $X \\rightarrow Y$ (se lee \"X determina funcionalmente a Y\" o \"Y depende funcionalmente de X\"). Significa formalmente que si dos tuplas $t_1$ y $t_2$ coinciden en los valores de los atributos del conjunto $X$ ($t_1[X] = t_2[X]$), entonces obligatoriamente deben coincidir en los valores de los atributos del conjunto $Y$ ($t_1[Y] = t_2[Y]$). Tipos de Dependencias Funcionales: • Dependencia Funcional Plena: $Y$ depende de $X$, pero no de ningún subconjunto propio de $X$. • Dependencia Transitiva: Si $X \\rightarrow Y$ y $Y \\rightarrow Z$, entonces por propiedad transitiva $X \\rightarrow Z$. • Dependencia Trivial: Una DF $X \\rightarrow Y$ es trivial si $Y$ es un subconjunto de $X$ ($Y \\subseteq X$)."
+    },
+    {
+      "id_fragmento": 19,
+      "documento": "Teoría de Dependencias Funcionales y Cierre de Atributos",
+      "cita": "Teoría de Dependencias Funcionales y Cierre de Atributos, p. 1",
+      "tipo": "texto",
+      "texto": "Diagrama de Atributos:\n\nIIIIIIIIIIIIIIII IIIIIIIIIIIIIIIIIIIIIIII I RUT_Alumno I IIIII I Nombre, Email, CarreraI IIIIIIIIIIIIIIII IIIIIIIIIIIIIIIIIIIIIIII I M IIIIIIIIIIIIIIII IIIIIIIIIIIIIIIIIIIIIIII I Cod_Carrera I IIIII I Nombre_Carrera, Dpto I IIIIIIIIIIIIIIII IIIIIIIIIIIIIIIIIIIIIIII"
+    },
+    {
+      "id_fragmento": 20,
+      "documento": "Teoría de Dependencias Funcionales y Cierre de Atributos",
+      "cita": "Teoría de Dependencias Funcionales y Cierre de Atributos, p. 1",
+      "tipo": "texto",
+      "texto": "Tabla Ejemplo de Validación de DF ($RUT \\rightarrow Nombre$):\n\nRUT (X) Nombre (Y) Carrera ¿Cumple DF $RUT \\rightarrow Nombre$? 19.876.543-2 Carlos Vera Informática Válido 19.876.543-2 Carlos Vera Industrial Válido (mismo RUT implica mismo Nombre) 19.876.543-2 Juan Perez Informática I Invalido (un mismo RUT tiene nombres distintos)"
+    },
+    {
+      "id_fragmento": 21,
+      "documento": "Teoría de Dependencias Funcionales y Cierre de Atributos",
+      "cita": "Teoría de Dependencias Funcionales y Cierre de Atributos, pp. 1–2",
+      "tipo": "texto",
+      "texto": "3. Explicación Narrativa: La Analogía del RUT (Perfil Auditivo - A)\n\nPiensen en el número de RUT o Cédula de Identidad en Chile como el determinante funcional definitivo de una persona. Si dos personas se presentan a realizar un trámite y ambas tienen exactamente el mismo número de RUT, por ley y por lógica matemática deben ser la misma persona y compartir el mismo nombre, apellido y fecha de nacimiento. Decimos que el RUT determina al nombre. En cambio, si conocemos el nombre \"Juan Pérez\", ese nombre no puede determinar de vuelta el RUT de manera única, porque pueden existir cientos de personas que compartan ese mismo nombre (homónimos). Por eso la flecha de la dependencia funcional va en una sola dirección: $RUT \\rightarrow Nombre$."
+    },
+    {
+      "id_fragmento": 22,
+      "documento": "Teoría de Dependencias Funcionales y Cierre de Atributos",
+      "cita": "Teoría de Dependencias Funcionales y Cierre de Atributos, p. 2",
+      "tipo": "texto",
+      "texto": "Algoritmo de Cálculo del Cierre $(X)^+$:\n\nDado un conjunto de atributos $X$ y un conjunto de dependencias funcionales $F$: 1. Inicializar el conjunto cierre con $X$: $(X)^+ = X$. 2. Buscar de forma iterativa cualquier DF $A \\rightarrow B$ en $F$ tal que $A \\subseteq (X)^+$. 3. Si la DF cumple la condición, agregar $B$ al cierre: $(X)^+ = (X)^+ \\cup B$. 4. Repetir los pasos 2 y 3 hasta que no se puedan agregar más atributos al cierre."
+    },
+    {
+      "id_fragmento": 23,
+      "documento": "Teoría de Dependencias Funcionales y Cierre de Atributos",
+      "cita": "Teoría de Dependencias Funcionales y Cierre de Atributos, p. 2",
+      "tipo": "texto",
+      "texto": "Ejercicio Guiado Resuelto:\n\nDado el esquema de relación $R(A, B, C, D)$ y las dependencias funcionales $F = \\{ A \\rightarrow B, B \\rightarrow C \\}$: • Paso 1: Calcular el cierre del atributo $A$, denotado como $(A)^+$. • Paso 2: Inicio: $(A)^+ = \\{A\\}$. • Paso 3: Aplicar $A \\rightarrow B$: como $A \\in \\{A\\}$, agregamos $B$. Ahora $(A)^+ = \\{A, B\\}$. • Paso 4: Aplicar $B \\rightarrow C$: como $B \\in \\{A, B\\}$, agregamos $C$. Ahora $(A)^+ = \\{A, B, C\\}$. • Resultado: $(A)^+ = \\{A, B, C\\}$."
+    }
+  ]
+}

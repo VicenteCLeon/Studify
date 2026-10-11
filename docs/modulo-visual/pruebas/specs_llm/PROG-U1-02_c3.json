@@ -1,0 +1,74 @@
+{
+  "version": 1,
+  "titulo": "Estructuras de Control de Flujo",
+  "tipo_de_diagrama": "jerarquia",
+  "nodos": [
+    {
+      "id": "n1",
+      "etiqueta": "Control de flujo",
+      "detalle": "Rompe la ejecución secuencial",
+      "rol": "principal"
+    },
+    {
+      "id": "n2",
+      "etiqueta": "Estructuras selectivas",
+      "detalle": "if, elif, else",
+      "rol": "secundario"
+    },
+    {
+      "id": "n3",
+      "etiqueta": "Estructuras iterativas",
+      "detalle": "while y for",
+      "rol": "secundario"
+    },
+    {
+      "id": "n4",
+      "etiqueta": "Condición booleana",
+      "detalle": "True o False",
+      "rol": "decision"
+    },
+    {
+      "id": "n5",
+      "etiqueta": "Bloque de código",
+      "detalle": "Se ejecuta u omite",
+      "rol": "resultado"
+    }
+  ],
+  "relaciones": [
+    {
+      "desde": "n1",
+      "hacia": "n2",
+      "verbo": "se divide en"
+    },
+    {
+      "desde": "n1",
+      "hacia": "n3",
+      "verbo": "se divide en"
+    },
+    {
+      "desde": "n2",
+      "hacia": "n4",
+      "verbo": "evalúa"
+    },
+    {
+      "desde": "n4",
+      "hacia": "n5",
+      "verbo": "determina"
+    }
+  ],
+  "paleta": "studify",
+  "estilo": "plano",
+  "texto_alternativo": "Esquema jerárquico que muestra las estructuras de control de flujo divididas en selectivas e iterativas; las selectivas evalúan una condición booleana que determina la ejecución de un bloque de código.",
+  "fuentes": [
+    6,
+    7,
+    8
+  ],
+  "origen": {
+    "codigo_objetivo": "PROG-U1-02",
+    "generado_por": "deepseek-flash",
+    "corrida": 3,
+    "intentos": 2,
+    "nota": "Generada por el LLM con el prompt del §3.2; sin editar a mano."
+  }
+}

@@ -1,0 +1,66 @@
+{
+  "version": 1,
+  "titulo": "Dependencias Funcionales y Cierre",
+  "tipo_de_diagrama": "flujo",
+  "nodos": [
+    {
+      "id": "n1",
+      "etiqueta": "Dependencia Funcional",
+      "detalle": "X determina funcionalmente a Y",
+      "rol": "principal"
+    },
+    {
+      "id": "n2",
+      "etiqueta": "Tipos de DF",
+      "detalle": "Plena, Transitiva, Trivial",
+      "rol": "secundario"
+    },
+    {
+      "id": "n3",
+      "etiqueta": "Cierre de atributos",
+      "detalle": "Algoritmo iterativo (X)+",
+      "rol": "resultado"
+    },
+    {
+      "id": "n4",
+      "etiqueta": "Ejemplo RUT",
+      "detalle": "RUT determina Nombre",
+      "rol": "secundario"
+    }
+  ],
+  "relaciones": [
+    {
+      "desde": "n1",
+      "hacia": "n2",
+      "verbo": "se clasifica en"
+    },
+    {
+      "desde": "n1",
+      "hacia": "n3",
+      "verbo": "permite calcular"
+    },
+    {
+      "desde": "n1",
+      "hacia": "n4",
+      "verbo": "se ejemplifica con"
+    }
+  ],
+  "paleta": "studify",
+  "estilo": "plano",
+  "texto_alternativo": "Esquema de flujo que muestra la Dependencia Funcional como concepto central, del cual se desprenden sus tipos, el cálculo del cierre de atributos y un ejemplo con RUT.",
+  "fuentes": [
+    18,
+    19,
+    20,
+    21,
+    22,
+    23
+  ],
+  "origen": {
+    "codigo_objetivo": "BD-U3-02",
+    "generado_por": "deepseek-flash",
+    "corrida": 3,
+    "intentos": 1,
+    "nota": "Generada por el LLM con el prompt del §3.2; sin editar a mano."
+  }
+}

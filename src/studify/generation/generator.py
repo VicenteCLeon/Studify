@@ -99,6 +99,11 @@ class ClienteOpenAILike:
         extra: dict = {}
         if ajustes.llm_json_mode:
             extra["response_format"] = {"type": "json_object"}
+        if ajustes.llm_thinking:
+            # `thinking` no es un parámetro de la API de OpenAI, así que el SDK
+            # solo lo deja pasar dentro de `extra_body`, que copia tal cual al
+            # cuerpo de la petición.
+            extra["extra_body"] = {"thinking": {"type": ajustes.llm_thinking}}
 
         self._llm = OpenAILike(
             model=self.modelo,

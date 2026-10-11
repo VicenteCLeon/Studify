@@ -1,0 +1,113 @@
+[
+  {
+    "nombre": "BD-U3-01_c1",
+    "codigo_objetivo": "BD-U3-01",
+    "corrida": 1,
+    "modelo_pedido": "deepseek-flash",
+    "thinking": "disabled",
+    "temperatura": 0.4,
+    "generado_utc": "2026-10-11T03:59:20+00:00",
+    "fragmentos_entregados": [
+      12,
+      13,
+      14,
+      15,
+      16,
+      17
+    ],
+    "valida": true,
+    "intentos": 1,
+    "reparaciones": 0,
+    "detalle_intentos": [
+      {
+        "intento": 1,
+        "errores": [],
+        "crudo": "{\n  \"version\": 1,\n  \"titulo\": \"Primera Forma Normal\",\n  \"tipo_de_diagrama\": \"mapa_conceptual\",\n  \"nodos\": [\n    {\n      \"id\": \"n1\",\n      \"etiqueta\": \"Primera Forma Normal\",\n      \"detalle\": \"Nivel básico de normalización relacional\",\n      \"rol\": \"principal\"\n    },\n    {\n      \"id\": \"n2\",\n      \"etiqueta\": \"Atomicidad de Atributos\",\n      \"detalle\": \"Valores indivisibles en cada celda\",\n      \"rol\": \"secundario\"\n    },\n    {\n      \"id\": \"n3\",\n      \"etiqueta\": \"Eliminación de Grupos Repetitivos\",\n      \"detalle\": \"Sin columnas repetidas del mismo tipo\",\n      \"rol\": \"secundario\"\n    },\n    {\n      \"id\": \"n4\",\n      \"etiqueta\": \"Clave Primaria Definida\",\n      \"detalle\": \"Identifica de forma unívoca cada fila\",\n      \"rol\": \"secundario\"\n    },\n    {\n      \"id\": \"n5\",\n      \"etiqueta\": \"Clave compuesta\",\n      \"detalle\": \"Clave primaria tras descomponer\",\n      \"rol\": \"resultado\"\n    }\n  ],\n  \"relaciones\": [\n    {\n      \"desde\": \"n1\",\n      \"hacia\": \"n2\",\n      \"verbo\": \"requiere\"\n    },\n    {\n      \"desde\": \"n1\",\n      \"hacia\": \"n3\",\n      \"verbo\": \"requiere\"\n    },\n    {\n      \"desde\": \"n1\",\n      \"hacia\": \"n4\",\n      \"verbo\": \"requiere\"\n    },\n    {\n      \"desde\": \"n2\",\n      \"hacia\": \"n5\",\n      \"verbo\": \"produce\"\n    }\n  ],\n  \"paleta\": \"studify\",\n  \"estilo\": \"plano\",\n  \"texto_alternativo\": \"La Primera Forma Normal requiere tres condiciones: atomicidad de atributos, eliminación de grupos repetitivos y una clave primaria definida. La atomicidad de atributos produce una clave compuesta al descomponer los valores.\",\n  \"fuentes\": [12, 14]\n}"
+      }
+    ],
+    "advertencias": [],
+    "segundos": 3.09,
+    "tokens_entrada": 2242,
+    "tokens_entrada_cache": 1280,
+    "tokens_salida": 519,
+    "tokens_razonamiento": 0,
+    "costo_usd": 0.00045954,
+    "costo_usd_punta": 0.00091908,
+    "tarifa": "valle",
+    "modelo_respondido": "deepseek-flash"
+  },
+  {
+    "nombre": "BD-U3-01_c2",
+    "codigo_objetivo": "BD-U3-01",
+    "corrida": 2,
+    "modelo_pedido": "deepseek-flash",
+    "thinking": "disabled",
+    "temperatura": 0.4,
+    "generado_utc": "2026-10-11T03:59:22+00:00",
+    "fragmentos_entregados": [
+      12,
+      13,
+      14,
+      15,
+      16,
+      17
+    ],
+    "valida": true,
+    "intentos": 1,
+    "reparaciones": 0,
+    "detalle_intentos": [
+      {
+        "intento": 1,
+        "errores": [],
+        "crudo": "{\n  \"version\": 1,\n  \"titulo\": \"Primera Forma Normal\",\n  \"tipo_de_diagrama\": \"mapa_conceptual\",\n  \"nodos\": [\n    {\n      \"id\": \"n1\",\n      \"etiqueta\": \"Primera Forma Normal\",\n      \"detalle\": \"Nivel básico de normalización relacional\",\n      \"rol\": \"principal\"\n    },\n    {\n      \"id\": \"n2\",\n      \"etiqueta\": \"Atomicidad de Atributos\",\n      \"detalle\": \"Valores indivisibles en cada celda\",\n      \"rol\": \"secundario\"\n    },\n    {\n      \"id\": \"n3\",\n      \"etiqueta\": \"Eliminación de Grupos Repetitivos\",\n      \"detalle\": \"Sin columnas repetidas del mismo tipo\",\n      \"rol\": \"secundario\"\n    },\n    {\n      \"id\": \"n4\",\n      \"etiqueta\": \"Clave Primaria Definida\",\n      \"detalle\": \"Identifica de forma unívoca cada fila\",\n      \"rol\": \"secundario\"\n    },\n    {\n      \"id\": \"n5\",\n      \"etiqueta\": \"Descomponer en filas\",\n      \"detalle\": \"Duplicar fila por cada elemento\",\n      \"rol\": \"secundario\"\n    },\n    {\n      \"id\": \"n6\",\n      \"etiqueta\": \"Reasignar clave primaria\",\n      \"detalle\": \"Incorporar la nueva columna descompuesta\",\n      \"rol\": \"secundario\"\n    }\n  ],\n  \"relaciones\": [\n    {\n      \"desde\": \"n1\",\n      \"hacia\": \"n2\",\n      \"verbo\": \"requiere\"\n    },\n    {\n      \"desde\": \"n1\",\n      \"hacia\": \"n3\",\n      \"verbo\": \"requiere\"\n    },\n    {\n      \"desde\": \"n1\",\n      \"hacia\": \"n4\",\n      \"verbo\": \"requiere\"\n    },\n    {\n      \"desde\": \"n2\",\n      \"hacia\": \"n5\",\n      \"verbo\": \"se resuelve con\"\n    },\n    {\n      \"desde\": \"n5\",\n      \"hacia\": \"n6\",\n      \"verbo\": \"conlleva a\"\n    }\n  ],\n  \"paleta\": \"studify\",\n  \"estilo\": \"plano\",\n  \"texto_alternativo\": \"Esquema que muestra la Primera Forma Normal como concepto central, del cual dependen tres reglas: atomicidad de atributos, eliminación de grupos repetitivos y clave primaria definida. La atomicidad se resuelve descomponiendo en filas, lo que conlleva a reasignar la clave primaria.\",\n  \"fuentes\": [12, 16]\n}"
+      }
+    ],
+    "advertencias": [],
+    "segundos": 2.63,
+    "tokens_entrada": 2242,
+    "tokens_entrada_cache": 2048,
+    "tokens_salida": 635,
+    "tokens_razonamiento": 0,
+    "costo_usd": 0.000416244,
+    "costo_usd_punta": 0.000832488,
+    "tarifa": "valle",
+    "modelo_respondido": "deepseek-flash"
+  },
+  {
+    "nombre": "BD-U3-01_c3",
+    "codigo_objetivo": "BD-U3-01",
+    "corrida": 3,
+    "modelo_pedido": "deepseek-flash",
+    "thinking": "disabled",
+    "temperatura": 0.4,
+    "generado_utc": "2026-10-11T03:59:24+00:00",
+    "fragmentos_entregados": [
+      12,
+      13,
+      14,
+      15,
+      16,
+      17
+    ],
+    "valida": true,
+    "intentos": 1,
+    "reparaciones": 0,
+    "detalle_intentos": [
+      {
+        "intento": 1,
+        "errores": [],
+        "crudo": "{\n  \"version\": 1,\n  \"titulo\": \"Reglas de la Primera Forma Normal\",\n  \"tipo_de_diagrama\": \"mapa_conceptual\",\n  \"nodos\": [\n    {\n      \"id\": \"n1\",\n      \"etiqueta\": \"Primera Forma Normal\",\n      \"detalle\": \"Nivel básico de normalización relacional\",\n      \"rol\": \"principal\"\n    },\n    {\n      \"id\": \"n2\",\n      \"etiqueta\": \"Atomicidad de Atributos\",\n      \"detalle\": \"Valores indivisibles en cada celda\",\n      \"rol\": \"secundario\"\n    },\n    {\n      \"id\": \"n3\",\n      \"etiqueta\": \"Eliminación de Grupos Repetitivos\",\n      \"detalle\": \"Sin columnas repetidas del mismo tipo\",\n      \"rol\": \"secundario\"\n    },\n    {\n      \"id\": \"n4\",\n      \"etiqueta\": \"Clave Primaria Definida\",\n      \"detalle\": \"Identifica de forma unívoca cada fila\",\n      \"rol\": \"secundario\"\n    },\n    {\n      \"id\": \"n5\",\n      \"etiqueta\": \"Clave compuesta\",\n      \"detalle\": \"Clave primaria tras descomponer\",\n      \"rol\": \"resultado\"\n    }\n  ],\n  \"relaciones\": [\n    {\n      \"desde\": \"n1\",\n      \"hacia\": \"n2\",\n      \"verbo\": \"requiere\"\n    },\n    {\n      \"desde\": \"n1\",\n      \"hacia\": \"n3\",\n      \"verbo\": \"requiere\"\n    },\n    {\n      \"desde\": \"n1\",\n      \"hacia\": \"n4\",\n      \"verbo\": \"requiere\"\n    },\n    {\n      \"desde\": \"n2\",\n      \"hacia\": \"n5\",\n      \"verbo\": \"produce\"\n    }\n  ],\n  \"paleta\": \"studify\",\n  \"estilo\": \"plano\",\n  \"texto_alternativo\": \"La Primera Forma Normal requiere atomicidad de atributos, eliminación de grupos repetitivos y una clave primaria definida. La atomicidad de atributos produce una clave compuesta.\",\n  \"fuentes\": [12, 14]\n}"
+      }
+    ],
+    "advertencias": [],
+    "segundos": 2.21,
+    "tokens_entrada": 2242,
+    "tokens_entrada_cache": 2048,
+    "tokens_salida": 513,
+    "tokens_razonamiento": 0,
+    "costo_usd": 0.000343044,
+    "costo_usd_punta": 0.000686088,
+    "tarifa": "valle",
+    "modelo_respondido": "deepseek-flash"
+  }
+]

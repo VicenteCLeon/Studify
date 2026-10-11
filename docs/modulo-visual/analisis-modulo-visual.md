@@ -2,7 +2,8 @@
 
 **Fecha del análisis y de verificación de todos los datos de mercado:** 10-oct-2026.
 **Alcance:** solo lectura del repositorio. Todo lo creado está en `docs/modulo-visual/`.
-**No se gastó dinero:** no se llamó a ninguna API de imágenes ni al LLM.
+**Gasto:** ninguna API de imágenes. El paso LLM y la migración de modelo se probaron después contra DeepSeek (§10), con un gasto total de US$0,03.
+**Actualizado el 11-oct-2026:** validación del paso LLM (§10), estimación de esfuerzo (§11) y las correcciones que se indican en cada sección.
 
 Convención de este informe: **✅ oficial** es un dato leído hoy en la página del proveedor; **🟡 secundario** viene de un tercero; **❓ no verificado** no se pudo confirmar.
 
@@ -13,11 +14,13 @@ Convención de este informe: **✅ oficial** es un dato leído hoy en la página
 1. **Recomendación principal: no usar un modelo de imagen para el esquema.** El LLM de texto que ya usamos (DeepSeek) entrega una especificación JSON y nosotros la dibujamos como SVG con plantillas propias.
 2. **Por qué:** el texto sale exacto, con tildes y ñ, porque lo escribe un motor tipográfico y no un modelo de difusión. Es lo mismo que el equipo ya concluyó en `docs/decicionesIAlocal.md` §10 tras probar FLUX.2 klein en local.
 3. **Ya funciona como prototipo:** los 3 ejemplos con contenido real del repo se dibujaron en menos de 1 ms cada uno (`pruebas/resultados/deterministico/`).
-4. **Costo de la opción principal:** ~US$0,002 por lección (una llamada extra a DeepSeek). El proyecto completo, incluido el desarrollo, queda bajo US$1 (≈ CLP 1.000).
+4. **Costo de la opción principal:** ~US$0,002 por lección (una llamada extra a DeepSeek; medido: US$0,0007 en horario valle, §10.3). El proyecto completo, incluido el desarrollo, queda bajo US$1 (≈ CLP 1.000).
 5. **Plan B:** Nano Banana 2.1 de Google (`gemini-nano-banana-2.1`), US$0,0336 por imagen a 1K ✅, detrás de un adaptador `ImageProvider`. Tope sugerido: US$10 prepagados (≈ CLP 9.800).
-6. **El caché es por lección, no por estudiante:** una infografía por objetivo y versión del material, reutilizada por todos los estudiantes Visual. Sin ese caché, el plan B costaría 43 veces más en la cohorte actual.
+6. **El caché es por lección, no por estudiante:** una infografía por objetivo y versión del material, reutilizada por todos los estudiantes Visual. Sin ese caché, un curso de 50 lecciones con el plan B costaría unas 14 veces más para la cohorte actual: US$76,54 contra US$5,34 (§7.2).
 7. **Lo que no se pudo probar:** los candidatos de IA. El `.env` solo tiene la key del LLM. El script quedó listo; correrlo cuesta ~US$0,76, más la recarga mínima de cada proveedor.
-8. **Decisión que necesito de ustedes:** aprobar la opción principal, y decir si quieren pagar la comparación con IA antes de implementar.
+8. **El paso LLM ya está probado (§10):** DeepSeek generó 12 especificaciones (4 objetivos × 3 corridas) y las 12 pasaron la validación, 8 a la primera y 4 con una reparación. Ninguna etiqueta quedó fuera del material. Pero 6 de las 12 tienen algún defecto al dibujarse con el render actual, y el tipo de diagrama cambió entre corridas en 2 de los 4 objetivos.
+9. **Hay un problema previo que afecta a todo Studify (§10.1):** `deepseek-chat` es un alias en retirada, y el ID vigente (`deepseek-flash`) no genera cápsulas con el código actual, porque razona por defecto y agota `max_tokens`. Ya está resuelto: el ajuste `LLM_THINKING` apaga el razonamiento y Studify usa `deepseek-flash` (§10.8).
+10. **Decisión que necesito de ustedes:** aprobar la opción principal y el arreglo del modelo, y decir si quieren pagar la comparación con IA antes de implementar. El MVP se estima en 40 a 60 horas entre los dos (§11).
 
 ---
 
@@ -30,7 +33,7 @@ Convención de este informe: **✅ oficial** es un dato leído hoy en la página
 | Backend | FastAPI + Uvicorn, Python ≥ 3.11, handlers síncronos | `src/studify/main.py` |
 | Frontend | Jinja2 renderizado en servidor + HTMX 1.9.10 propio, CSS propio, fuentes autoalojadas (Figtree, Fraunces). Sin CDN ni framework JS | `src/studify/web/` |
 | Base de datos | PostgreSQL 16 (Docker Compose), SQLAlchemy 2 + Alembic, JSONB para la cápsula | `src/studify/db/models.py` |
-| LLM | DeepSeek por API compatible con OpenAI: `LLM_BASE_URL=https://api.deepseek.com/v1`, `LLM_MODEL=deepseek-chat`, vía `llama-index-llms-openai-like`, modo JSON, hasta 2 reparaciones | `src/studify/generation/generator.py` |
+| LLM | DeepSeek por API compatible con OpenAI: `LLM_BASE_URL=https://api.deepseek.com/v1`, `LLM_MODEL=deepseek-chat` (alias en retirada, ver §10.1), vía `llama-index-llms-openai-like`, modo JSON, hasta 2 reparaciones | `src/studify/generation/generator.py` |
 | Audio (perfil A) | Kokoro / Piper en local, bajo demanda desde el visor, caché por huella del guion | `src/studify/media/audio.py` |
 | Imagen (perfil V) | Código local con SDXL sobre DirectML, **desconectado** | `src/studify/media/image.py` |
 
@@ -258,6 +261,8 @@ Límites estrictos:
 {esquema_json}
 ```
 
+**Actualización del 11-oct-2026:** el prompt vigente vive en `src/studify/rag/prompts/visual.py` y tiene un límite más, sobre los títulos de sección (§10.9). El texto de arriba se conserva tal cual porque es el que se usó en las mediciones de los §10.2 a §10.8.
+
 Va en una llamada aparte y no dentro del prompt maestro de la cápsula: ese prompt ya está al límite de su presupuesto de palabras (rondas H1 y H3 de `PRUEBAS_VARK.md`). Además, la cápsula es por perfil y el esquema es por lección.
 
 ### 3.3 Paso 2: plantilla del prompt de imagen
@@ -305,7 +310,9 @@ Variantes por modelo:
 
 Fuente: `data/documentos_prueba_md/`, los apuntes de prueba de los objetivos de `data/objetivos.csv`.
 
-> **Importante:** las tres especificaciones las redacté a mano siguiendo el contrato. **No las generó DeepSeek**, porque esa llamada es de pago y no la hice sin permiso. Sirven para validar el contrato y el render; no dicen todavía qué tan bien cumple el LLM el paso 1.
+> **Importante:** las tres especificaciones de esta sección las redacté a mano siguiendo el contrato; **no las generó DeepSeek**. Sirven para validar el contrato y el render.
+>
+> **Actualización del 11-oct-2026:** ya existen especificaciones generadas por DeepSeek con el prompt del §3.2, tres por cada uno de los 4 objetivos. Están en [`pruebas/specs_llm/`](pruebas/specs_llm/), sus esquemas en [`pruebas/resultados/llm/`](pruebas/resultados/llm/) y la evaluación en el §10. Para los mismos objetivos de la tabla de abajo, las mejor evaluadas son [`BD-U3-01_c2`](pruebas/specs_llm/BD-U3-01_c2.json), [`BD-U3-02_c1`](pruebas/specs_llm/BD-U3-02_c1.json) y [`PROG-U1-02_c2`](pruebas/specs_llm/PROG-U1-02_c2.json).
 
 | # | Objetivo | Tipo elegido | Por qué ese tipo | Especificación | Prompt de imagen |
 |---|---|---|---|---|---|
@@ -382,6 +389,7 @@ Todo verificado el 10-oct-2026. Precios en USD por imagen a ~1 megapíxel salvo 
 
 - **Imagen 4 (Fast, Standard, Ultra) ya no existe en la API de Gemini:** se apagó el 17-ago-2026 ✅. Reemplazo oficial: `gemini-nano-banana-2.1`.
 - **Hay un modelo nuevo de Google, Nano Banana 2.1**, publicado el 06-oct-2026 ✅, a la mitad del precio de Nano Banana 2.
+- **`gemini-3.1-flash-image` (Nano Banana 2) quedó deprecado el 08-oct-2026** ✅, sin fecha de apagado anunciada [24]. Revisé el 11-oct-2026 si se apaga el 29-oct-2026: esa fecha **no aparece** ni en el changelog ni en la página de deprecaciones, que dicen «no shutdown date announced» ❓.
 - **`gemini-2.5-flash-image` (el Nano Banana original) está en retirada.** Las dos páginas oficiales se contradicen en la fecha: la de precios dice 02-oct-2026 y la de deprecaciones dice 15-mar-2027. No usarlo.
 - **OpenAI ya va en `gpt-image-2.5`** (variantes Flare y Sunburst) ✅. DALL·E 3 no aparece en la página de precios ✅.
 - **Existen Ideogram 4.5, Qwen-Image 3.0 y FLUX 3**, que no estaban en la lista. Los vi en las páginas de precios y en el ranking, pero no los investigué a fondo.
@@ -392,7 +400,7 @@ Todo verificado el 10-oct-2026. Precios en USD por imagen a ~1 megapíxel salvo 
 |---|---|---|---|---|---|---|---|
 | **Nano Banana 2.1** (`gemini-nano-banana-2.1`) | **0,0336** (1K) · 0,0504 (2K) ✅ | Tokens (US$30 / 1M de salida) | «Texto legible para infografías y diagramas» según Google ✅. Español ❓ | Sí, ráster. Sin SVG | No en la API ✅ | Estable, desde 06-oct-2026 | [1] [2] [3] |
 | Nano Banana 2 Lite (`gemini-3.1-flash-lite-image`) | 0,0336 (solo 1K) ✅ | Tokens | Inferior a 2.1 en el ranking 🟡 | Ráster | No ✅ | Estable | [1] [3] |
-| Nano Banana 2 (`gemini-3.1-flash-image`) | 0,067 (1K) ✅ | Tokens | Bueno 🟡 | Ráster | No ✅ | Estable; Google sugiere migrar a 2.1 | [1] [2] |
+| Nano Banana 2 (`gemini-3.1-flash-image`) | 0,067 (1K) ✅ | Tokens | Bueno 🟡 | Ráster | No ✅ | **Deprecado desde el 08-oct-2026** ✅, sin fecha de apagado; migrar a 2.1 | [1] [2] [24] |
 | Nano Banana Pro (`gemini-3-pro-image`) | 0,134 (1K y 2K) ✅ | Tokens | El que Google recomienda cuando el texto es crítico ✅ | Ráster | No ✅ | Estable | [1] [3] |
 | Imagen 4 (Fast, Standard, Ultra) | — | — | — | — | — | **Apagado el 17-ago-2026** ✅ | [2] |
 | **GPT Image 2.5 Flare / Sunburst** | ~0,006 (low) · ~0,013 (medium) · ~0,053 (high) a 1024² 🟡 | Tokens (US$30 / 1M de salida ✅) | Primero en el ranking general 🟡. OpenAI admite que «aún puede fallar en la ubicación y claridad del texto» ✅ | Ráster | No | Vigente ✅. Puede exigir verificar la organización ✅ | [4] [5] [6] |
@@ -474,6 +482,8 @@ Respuesta a la pregunta sobre Higgsfield: sí tiene API pública con pago por us
 21. Google Cloud: https://cloud.google.com/free · https://cloud.google.com/edu/students
 22. DeepSeek, precios: https://api-docs.deepseek.com/quick_start/pricing
 23. Dólar observado: https://mindicador.cl/api/dolar
+24. Google, changelog de la Gemini API (revisado el 11-oct-2026): https://ai.google.dev/gemini-api/docs/changelog
+25. DeepSeek, changelog (revisado el 10-oct-2026): https://api-docs.deepseek.com/updates · modo de razonamiento: https://api-docs.deepseek.com/guides/thinking_mode
 
 ---
 
@@ -568,7 +578,7 @@ El script elige cuatro: Nano Banana 2.1, GPT Image 2.5 Flare, Recraft V4.1 vecto
 
 | Concepto | Cálculo | USD |
 |---|---|---|
-| Especificación JSON (DeepSeek) | 2.500 tokens de entrada × US$0,30/1M + 500 de salida × US$1,20/1M = 0,00135; con 30 % de reparaciones, 0,0018 | **0,002** |
+| Especificación JSON (DeepSeek) | **Medido** en 12 generaciones (§10.3): 3.193 tokens de entrada y 842 de salida en promedio, incluidas las reparaciones de 4 de las 12. A tarifa punta y sin caché: 3.193 × US$0,30/1M + 842 × US$1,20/1M = 0,0020. Lo que se cobró de verdad, en horario valle y con caché de entrada: 0,00065 | **0,002** |
 | Determinístico | especificación + dibujo local | **0,002** |
 | Híbrido | 0,002 + un ícono Recraft V4.1 Flash (0,007) | **0,009** |
 | Nano Banana 2.1 | 0,002 + 0,0336 | **0,0356** |
@@ -576,7 +586,9 @@ El script elige cuatro: Nano Banana 2.1, GPT Image 2.5 Flare, Recraft V4.1 vecto
 | Recraft V4.1 vector | 0,002 + 0,08 | **0,082** |
 | Nano Banana Pro | 0,002 + 0,134 | **0,136** |
 
-El precio de DeepSeek es el de `deepseek-flash` en horario punta ✅. **`deepseek-chat`, el modelo que tenemos configurado, ya no figura en la página de precios** [22]. Supongo que es un alias de `deepseek-flash` ❓; hay que confirmarlo (ver §8).
+El precio de DeepSeek es el de `deepseek-flash` en horario punta ✅ [22]. La estimación original (0,0018) y la medición a tarifa punta (0,0020) redondean a la misma cifra, así que la tabla de escenarios no cambia. En horario valle el costo real es un tercio.
+
+`deepseek-flash` es el ID vigente: es el único modelo Flash que devuelve `GET /models` con nuestra key ✅. `deepseek-chat` (el que tenemos configurado) y `deepseek-v4-flash` son nombres antiguos que la API todavía acepta y responde con `deepseek-flash` ✅. El detalle está en el §10.1.
 
 ### 7.2 Escenarios
 
@@ -600,14 +612,14 @@ Generaciones = lecciones × (1 + regeneraciones).
 
 | Riesgo | Evidencia | Mitigación |
 |---|---|---|
-| **Deprecaciones** | Imagen 4 duró 14 meses. Nano Banana 2.1 tiene 4 días de vida. `gemini-2.5-flash-image` está en retirada con dos fechas oficiales distintas | El modelo es una variable de entorno. El determinístico no depende de ningún modelo de imagen |
-| **`deepseek-chat` no figura en la página de precios** | Hoy solo aparecen `deepseek-flash` y `DeepSeek-V4-Pro` [22] | Confirmar si es un alias y hasta cuándo. Afecta a todo Studify, no solo a este módulo. `LLM_MODEL` ya se cambia sin tocar código |
+| **Deprecaciones** | Imagen 4 duró 14 meses. Nano Banana 2.1 tiene 4 días de vida. `gemini-2.5-flash-image` está en retirada con dos fechas oficiales distintas. **Nano Banana 2 (`gemini-3.1-flash-image`) quedó deprecado el 08-oct-2026, a poco más de 4 meses de su lanzamiento y 2 días después de salir su reemplazo** ✅ [24]. Su apagado el 29-oct-2026 no está confirmado ❓ | El modelo es una variable de entorno. El determinístico no depende de ningún modelo de imagen |
+| **`deepseek-chat` es un alias en retirada** | DeepSeek anunció el 24-abr-2026 que lo descontinuaría el 24-jul-2026 [25]; al 10-oct-2026 todavía responde. `deepseek-v4-flash` también fue retirado (10-sep-2026) y está «temporalmente» redirigido. El ID vigente, `deepseek-flash`, **no genera cápsulas con el código actual** (§10.1) | Apagar el razonamiento en `ClienteOpenAILike` y recién entonces cambiar `LLM_MODEL`. Afecta a todo Studify, no solo a este módulo |
 | **Cambios de precio** | Nano Banana pasó de 0,067 a 0,0336 en una versión; también puede subir | `costo_usd` por fila en `recurso_visual` y un tope mensual configurable |
 | **Rate limits** | Los de Gemini solo se ven dentro de AI Studio ❓ | Caché por lección, pregeneración al curar, un reintento con espera |
 | **Contenido inexacto** | El LLM puede elegir mal el tipo de diagrama o una relación. En el plan B, además, el modelo de imagen puede alterar rótulos | Validación por código del JSON, `fuentes` contra los fragmentos inyectados, y aprobación del docente antes de mostrarlo. En el plan B, revisión humana obligatoria |
 | **Dependencia de un proveedor** | — | `ImageProvider` (abajo). El fallback siempre existe: el bloque `esquema` actual |
 | **Edad de los usuarios** | Los términos de Gemini exigen 18 años y excluyen servicios usados por menores [20]. Un estudiante de primer año puede tener 17 | Solo afecta al plan B. Como la imagen se genera por lección y la pide el docente, el estudiante no usa la API; aun así, revisarlo antes de adoptarlo |
-| **El LLM no cumple el contrato** | El paso 1 no se ejecutó | Probar con los 4 objetivos reales antes de implementar. Cuesta menos de US$0,01 |
+| **El LLM cumple el contrato, pero no siempre elige bien la estructura** | Medido en el §10: 12 de 12 válidas, pero 2 `flujo` que no son secuencias, 1 grafo partido y tipo distinto entre corridas en 2 de 4 objetivos | Dos reglas nuevas en el validador (§10.6), aprobación del docente y generar una sola vez por lección |
 
 ### Adaptador `ImageProvider`
 
@@ -647,3 +659,380 @@ class ErrorProveedorVisual(Exception):
 ## 9. Párrafo para la profesora guía
 
 > Estimada profesora: junto con saludarla, le escribimos para proponer cómo resolver el recurso visual del perfil Visual de Studify. Tras revisar los modelos de generación de imágenes disponibles por API a octubre de 2026, concluimos que ninguno garantiza texto exacto en español dentro de la imagen, y que en material de estudio un rótulo mal escrito constituye un error de contenido. Por ello proponemos que el modelo de lenguaje que ya utilizamos genere una especificación estructurada del esquema (conceptos y relaciones), y que la plataforma la dibuje con plantillas propias en formato vectorial. Así el texto resulta exacto y accesible, el esquema se genera una sola vez por lección y se reutiliza para todos los estudiantes, y puede ser validado por el docente antes de mostrarse. El costo estimado es inferior a US$1 (aproximadamente CLP 1.000) para todo el proyecto. Como alternativa, dejaríamos preparada la integración con el modelo Nano Banana 2.1 de Google, con un tope de US$10 (aproximadamente CLP 9.800), en caso de que se estime conveniente incorporar infografías ilustradas. Quedamos atentos a sus observaciones.
+
+---
+
+## 10. Validación del paso LLM
+
+**Fecha:** noche del 10-oct-2026 (11-oct en UTC, horario valle de DeepSeek).
+**Gasto de la validación (§10.1 a §10.7):** US$0,0198 en 26 llamadas a DeepSeek, de un tope autorizado de US$0,10.
+**Gasto de la migración y de la regla del prompt (§10.8 y §10.9):** US$0,0121 en 23 llamadas, de un tope de US$0,05.
+El saldo de la cuenta pasó de US$3,18 a US$3,15. Ninguna otra API de pago.
+
+| En qué se gastó | Llamadas | US$ |
+|---|--:|--:|
+| Probar qué nombres de modelo acepta la API | 3 | 0,0001 |
+| Cápsulas de prueba (§10.1) | 7 | 0,0119 |
+| Especificaciones (§10.2 a §10.5) | 16 | 0,0078 |
+
+El libro completo, llamada por llamada, está en [`pruebas/resultados/llm/gasto_deepseek.json`](pruebas/resultados/llm/gasto_deepseek.json).
+
+### 10.1 El nombre del modelo: el cambio no funciona tal cual
+
+La tarea pedía cambiar `LLM_MODEL` de `deepseek-chat` a `deepseek-v4-flash`. Lo que encontré, en tres fuentes oficiales:
+
+- **`deepseek-v4-flash` tampoco es el ID vigente.** El changelog de DeepSeek dice que V4 Flash fue retirado el 10-sep-2026 y que ese nombre queda «temporalmente» redirigido a V4.1 Flash ✅ [25]. La página de precios dice «Use `deepseek-flash` as the model name» ✅ [22]. Y `GET /models` con nuestra key devuelve solo `deepseek-flash` y `deepseek-v4-pro` ✅.
+- **`deepseek-chat` debía descontinuarse el 24-jul-2026** ✅ [25], pero al 10-oct-2026 sigue respondiendo.
+- **Los tres nombres los atiende el mismo modelo:** la respuesta siempre trae `model: deepseek-flash` ✅ (medido).
+
+Por eso probé con `deepseek-flash`. El resultado, generando una cápsula real (objetivo BD-U3-01, perfil V, 6 fragmentos validados, prompt maestro, modo JSON, validador y reparaciones de `generator.py`):
+
+| `LLM_MODEL` | `max_tokens` | Razonamiento | Resultado | Tokens de salida (de razonamiento) | Segundos | US$ |
+|---|--:|---|---|--:|--:|--:|
+| `deepseek-flash` | 2.000 | por defecto | **Falló los 3 intentos**: respuesta vacía o JSON truncado | 2.000 (2.000) · 2.000 (2.000) · 2.000 (1.202) | 26,2 | 0,0041 |
+| `deepseek-v4-flash` | 2.000 | por defecto | **Falló** (1 intento): JSON truncado | 2.000 (1.750) | 9,2 | 0,0012 |
+| `deepseek-flash` | 8.000 | por defecto | **Falló** (1 intento): gastó los 8.000 en razonar y no respondió | 8.000 (8.000) | 28,3 | 0,0048 |
+| `deepseek-chat` (actual) | 2.000 | no razona | Válida a la primera, 210 palabras, bloques `esquema` y `tabla` | 1.034 (0) | 5,2 | 0,0010 |
+| `deepseek-flash` | 2.000 | **apagado** | Válida a la primera, 186 palabras, mismos bloques | 956 (0) | 4,7 | 0,0006 |
+
+- **Causa:** `deepseek-flash` y `deepseek-v4-flash` razonan por defecto (esfuerzo `high`) ✅ [25], y esos tokens se descuentan de `max_tokens`. `deepseek-chat` no razona.
+- **Subir `LLM_MAX_TOKENS` no lo arregla:** con 8.000 tampoco alcanzó, y esa sola llamada costó casi 5 veces lo que cuesta hoy una cápsula y tardó 28 s.
+- **Lo que sí funciona:** enviar `thinking: {"type": "disabled"}`. Eso exige tocar `generator.py`, que es código de producción y no estaba autorizado.
+
+**Estado en que quedó el repo ese día:** `LLM_MODEL=deepseek-chat`, igual que antes. Hice el cambio en `.env`, `.env.example` y `config.py`, comprobé que rompía la generación y lo deshice. Dejarlo aplicado habría dejado a Studify sin poder generar cápsulas.
+
+**Actualización del 11-oct-2026:** el arreglo ya está aplicado en el código, con el ajuste `LLM_THINKING`; el `.env` espera aprobación. Ver §10.8.
+
+**Cambio propuesto ese día** (con ese mismo parámetro, enviado desde el cliente de pruebas, se generaron la última cápsula de la tabla y las 12 especificaciones):
+
+```diff
+ # src/studify/config.py
+-    llm_model: str = "deepseek-chat"
++    llm_model: str = "deepseek-flash"
++    # deepseek-flash razona por defecto y esos tokens se descuentan de max_tokens.
++    llm_razonamiento: bool = False
+
+ # src/studify/generation/generator.py, en ClienteOpenAILike.__init__
+         if ajustes.llm_json_mode:
+             extra["response_format"] = {"type": "json_object"}
++        if not ajustes.llm_razonamiento:
++            extra["extra_body"] = {"thinking": {"type": "disabled"}}
+
+ # .env y .env.example
+-LLM_MODEL=deepseek-chat
++LLM_MODEL=deepseek-flash
+```
+
+Va como ajuste y no fijo porque no verifiqué si Qwen o GLM aceptan ese parámetro ❓.
+
+**Dónde más aparece `deepseek-chat`** (no lo toqué):
+
+| Lugar | Qué es |
+|---|---|
+| `.env:24,28` · `.env.example:36,40` · `src/studify/config.py:53` | La configuración y su valor por defecto. Es lo que cambia el diff de arriba |
+| `src/studify/web/templates/legal/privacidad.html:199` | **El texto legal le dice al estudiante que las cápsulas las redacta `deepseek-chat`.** Hay que actualizarlo junto con el modelo |
+| `scripts/eval_runner.py:48` · `scripts/probar_generacion_capsulas.py:50` · `scripts/probar_perfiles_vark.py:95` · `scripts/h1h3/fidelidad.py:54` | Scripts de prueba. `fidelidad.py` lo pasa fijo al prompt, así que entra en la huella |
+| `tests/test_prompt_maestro.py:35,288` | Un argumento de prueba; no depende del modelo real |
+| `README.md:158` · `docs/PLAN_DESARROLLO.md:30,153` · `docs/AVANCE.md:277` · `docs/PRUEBAS_VARK.md:104` | Documentación histórica del bake-off |
+
+**`pytest`:** 527 pasan y 2 se saltan, tanto con el cambio aplicado como después de deshacerlo. Hubo que ignorar también `tests/test_voz.py`: igual que `test_visual.py`, ejecuta la síntesis al importarse (carga XTTS) y falla al abrir `referencia.wav`. `AVANCE.md` ya lo registra junto al hallazgo H8.
+
+### 10.2 Cómo se generaron las especificaciones
+
+- **Script:** [`pruebas/generar_specs_llm.py`](pruebas/generar_specs_llm.py). Usa el cliente del proyecto (`ClienteOpenAILike`, heredado por `ClienteMedido` para contar tokens), con `LLM_TEMPERATURE=0.4`, modo JSON y `max_tokens=2000`.
+- **Modelo:** `deepseek-flash` con el razonamiento apagado. Es lo que hoy responde detrás de `deepseek-chat`.
+- **Prompts:** los del §3.2, leídos de este mismo informe. El marcador `{esquema_json}` se rellenó con el JSON Schema del §3.1. Lo enviado está en [`pruebas/specs_llm/prompts_usados/`](pruebas/specs_llm/prompts_usados/).
+- **Material: la base de datos, pero recién cargada.** Docker no estaba corriendo y, al levantarlo, el volumen de Postgres se creó vacío. La cargué con los scripts del proyecto: migraciones, `cargar_objetivos.py`, `ingestar_documentos_prueba.py` y `validar_fragmentos_prueba.py`. Quedaron 23 fragmentos validados (5, 6, 6 y 6), que salen de los PDF de `data/documentos_prueba_pdf/`, la versión PDF de `data/documentos_prueba_md/`. El texto es el que extrae el pipeline real: trae LaTeX (`$X \rightarrow Y$`) y un diagrama ASCII ilegible. Lo entregado al modelo está en [`pruebas/specs_llm/material/`](pruebas/specs_llm/material/).
+- **Validación:** el JSON Schema del §3.1 y luego las reglas por código (ids únicos, relaciones hacia nodos existentes, `jerarquia` sin ciclos y con un solo padre, `ciclo` cerrado, `comparacion` con `grupo`, límites de palabras, exactamente un nodo `principal`, `fuentes` entre los fragmentos entregados). Si falla, hasta 2 reparaciones con el mismo mensaje que usa `generator.py`.
+- **Corridas:** 4 objetivos × 3. Nada se descartó ni se repitió.
+
+### 10.3 Resultados medibles
+
+Script: [`pruebas/evaluar_specs_llm.py`](pruebas/evaluar_specs_llm.py). Detalle completo, con la oración de respaldo de cada relación, en [`pruebas/resultados/llm/evaluacion.json`](pruebas/resultados/llm/evaluacion.json).
+
+Cómo leer las columnas:
+
+- **Etiquetas.** `literal`: aparece tal cual en un fragmento, ignorando mayúsculas. `casi`: no aparece seguida, pero todas sus palabras están en un mismo fragmento, ignorando tildes y plurales. Lo que no cumple ninguna de las dos es un posible término inventado.
+- **Relaciones.** Es coocurrencia, no una comprobación de sentido: `oración` si las dos etiquetas están en una misma oración de un fragmento, `fragmento` si están en el mismo fragmento. Dice que el texto habla de las dos cosas juntas; **no** que el verbo sea correcto.
+- **Costo.** Lo cobrado, en horario valle y con caché de entrada.
+
+| Corrida | Validación | Tipo | Etiquetas en el material | Posibles inventadas | Relaciones con respaldo | Sin respaldo | Tokens (entrada + salida) | US$ | s |
+|---|---|---|---|:-:|---|:-:|--:|--:|--:|
+| `PROG-U1-01_c1` | 1 reparación | `mapa_conceptual` | 7 literal, de 7 | 0 | 6 oración, de 6 | 0 | 5.536 + 2.443 | 0,00183 | 8,9 |
+| `PROG-U1-01_c2` | a la primera | `mapa_conceptual` | 7 literal, de 7 | 0 | 6 oración, de 6 | 0 | 2.117 + 684 | 0,00045 | 2,6 |
+| `PROG-U1-01_c3` | a la primera | `mapa_conceptual` | 6 literal, de 6 | 0 | 5 fragmento, de 5 | 0 | 2.117 + 557 | 0,00037 | 2,2 |
+| `PROG-U1-02_c1` | 1 reparación | `jerarquia` | 6 literal, de 6 | 0 | 1 oración + 4 fragmento, de 5 | 0 | 4.969 + 1.139 | 0,00105 | 4,9 |
+| `PROG-U1-02_c2` | 1 reparación | `jerarquia` | 6 literal, de 6 | 0 | 1 oración + 4 fragmento, de 5 | 0 | 4.868 + 960 | 0,00065 | 4,6 |
+| `PROG-U1-02_c3` | 1 reparación | `jerarquia` | 3 literal + 2 casi, de 5 | 0 | 4 fragmento, de 4 | 0 | 4.926 + 1.016 | 0,00069 | 4,5 |
+| `BD-U3-01_c1` | a la primera | `flujo` | 5 literal + 1 casi, de 6 | 0 | 3 fragmento, de 7 | **4** | 2.196 + 702 | 0,00075 | 2,9 |
+| `BD-U3-01_c2` | a la primera | `mapa_conceptual` | 5 literal, de 5 | 0 | 3 fragmento, de 4 | **1** | 2.196 + 522 | 0,00034 | 2,4 |
+| `BD-U3-01_c3` | a la primera | `mapa_conceptual` | 5 literal + 1 casi, de 6 | 0 | 4 fragmento, de 4 | 0 | 2.196 + 588 | 0,00038 | 2,6 |
+| `BD-U3-02_c1` | a la primera | `mapa_conceptual` | 4 literal + 1 casi, de 5 | 0 | 1 oración + 3 fragmento, de 4 | 0 | 2.400 + 527 | 0,00068 | 2,6 |
+| `BD-U3-02_c2` | a la primera | `mapa_conceptual` | 4 literal + 1 casi, de 5 | 0 | 1 oración + 3 fragmento, de 4 | 0 | 2.400 + 528 | 0,00036 | 2,4 |
+| `BD-U3-02_c3` | a la primera | `flujo` | 1 literal + 3 casi, de 4 | 0 | 2 fragmento, de 3 | **1** | 2.400 + 434 | 0,00030 | 2,4 |
+| **Total** | **12 de 12 válidas** | | **59 literal + 9 casi, de 68** | **0** | **16 oración + 35 fragmento, de 57** | **6** | 38.321 + 10.100 | 0,0078 | 43,1 |
+
+**Validación.** 8 a la primera, 4 con una reparación, ninguna fallida. Los motivos del primer rechazo:
+
+- `PROG-U1-01_c1`: el modelo **devolvió el JSON Schema** en vez de una especificación.
+- `PROG-U1-02_c1` y `_c2`: la etiqueta «if / elif / else» se contó como 5 palabras, por las barras. Al reparar, el modelo la cambió por «Condicionales».
+- `PROG-U1-02_c3`: un nodo con dos padres en una `jerarquia`.
+
+**Tipo de diagrama.** Coincidió en las 3 corridas en 2 de los 4 objetivos:
+
+| Objetivo | Corridas 1, 2 y 3 | ¿Coincide? |
+|---|---|:-:|
+| PROG-U1-01 | `mapa_conceptual` × 3 | sí |
+| PROG-U1-02 | `jerarquia` × 3 | sí |
+| BD-U3-01 | `flujo`, `mapa_conceptual`, `mapa_conceptual` | no |
+| BD-U3-02 | `mapa_conceptual`, `mapa_conceptual`, `flujo` | no |
+
+**Posibles términos inventados: ninguno.** Las 68 etiquetas están en el material. Las 9 que solo calzan como «casi» son las que conviene mirar a mano, porque el modelo compuso el término con palabras del fragmento:
+
+- «Cierre de Atributos» (3 veces, BD-U3-02; el material escribe «Cierre $(X)^+$» y «cierre de atributos» por separado).
+- «Tipos de DF» y «Ejemplo RUT» (`BD-U3-02_c3`).
+- «Definición de 1FN» (`BD-U3-01_c1`) y «Reasignar clave primaria» (`BD-U3-01_c3`).
+- «Condición booleana» y «Bloque de código» (`PROG-U1-02_c3`).
+
+**Relaciones sin respaldo: 6 de 57**, en 3 especificaciones. En todas, las dos etiquetas existen pero están en fragmentos distintos:
+
+- `BD-U3-01_c1`: «Atomicidad de Atributos», «Eliminación de Grupos Repetitivos» y «Clave Primaria Definida» —se corrige con→ «Paso a Paso»; y «Paso a Paso» —produce→ «Tabla Normalizada».
+- `BD-U3-01_c2`: «Primera Forma Normal» —se aplica mediante→ «Paso a Paso». El fragmento del paso a paso dice «1FN», no el nombre completo.
+- `BD-U3-02_c3`: «Dependencia Funcional» —se ejemplifica con→ «Ejemplo RUT».
+
+Límites de esta medida: cuando una etiqueta contiene a la otra («Dependencia Funcional» y «Dependencia Funcional Plena»), la coocurrencia es trivial; y en los fragmentos que vienen de una tabla del PDF, la «oración» es la tabla entera. Solo 5 de los 57 verbos aparecen literalmente en el material: el resto los redactó el modelo.
+
+**Tildes, ñ y signos.**
+
+- Ningún error encontrado. Las 25 palabras con tilde que usó el modelo están bien escritas («jerárquico», «unívoca», «descomposición», «evalúan»…).
+- El único aviso automático es «unívoca» en las 3 corridas de BD-U3-01: el material dice «univoca», sin tilde. **El modelo corrigió una falta del apunte.**
+- El script no puede verificar las 48 palabras que el modelo usó y que no están en el material («además», «clasifica», «muestra»…). Las leí una por una y no encontré faltas; la lista está en `evaluacion.json`.
+- **No quedaron probados:** ninguna especificación usó ñ, ¿ ni ¡. Para eso sigue valiendo solo el caso sintético `specs/90_estres_ortografia.json`, que no pasa por el LLM.
+- Las etiquetas copian las mayúsculas de los títulos del apunte («Atomicidad de Atributos», «Clave Primaria Definida»).
+
+**Tokens, costo y tiempo por especificación.**
+
+| | Tokens de entrada | Tokens de salida | Segundos | US$ cobrado (valle) | US$ a tarifa punta, sin caché |
+|---|--:|--:|--:|--:|--:|
+| A la primera (8) | 2.253 | 568 | 2,5 | 0,00045 | 0,0014 |
+| Con una reparación (4) | 5.075 | 1.390 | 5,7 | 0,00106 | 0,0032 |
+| Promedio de las 12 | 3.193 | 842 | 3,6 | 0,00065 | 0,0020 |
+
+### 10.4 Lo que la validación no detecta: cómo se dibujan
+
+Las 12 pasan el contrato, pero 6 tienen algún defecto al dibujarse con el render actual. Las 6 son de Bases de Datos; las 6 de Programación salen limpias.
+
+| Corrida | Nodos | Grafo conexo | Relaciones que dibuja el render | Rótulos de flecha superpuestos | `fuentes` declaradas |
+|---|--:|:-:|:-:|--:|---|
+| `PROG-U1-01_c1` | 7 | sí | 6 de 6 | 0 | 1, 2, 3, 4, 5 |
+| `PROG-U1-01_c2` ✔ | 7 | sí | 6 de 6 | 0 | 1, 2, 3 |
+| `PROG-U1-01_c3` | 6 | sí | 5 de 5 | 0 | 1, 2, 3, 4, 5 |
+| `PROG-U1-02_c1` | 6 | sí | 5 de 5 | 0 | 6, 7 |
+| `PROG-U1-02_c2` ✔ | 6 | sí | 5 de 5 | 0 | 6, 7 |
+| `PROG-U1-02_c3` | 5 | sí | 4 de 4 | 0 | 6, 7, 8 |
+| `BD-U3-01_c1` | 6 | sí | **3 de 7** | 0 | 12 a 17 |
+| `BD-U3-01_c2` ✔ | 5 | sí | 4 de 4 | **1** | 12, 16 |
+| `BD-U3-01_c3` | 6 | **no** | 4 de 4 | 0 | 12, 16 |
+| `BD-U3-02_c1` | 5 | sí | 4 de 4 | **3** | 18, 22 |
+| `BD-U3-02_c2` | 5 | sí | 4 de 4 | **3** | 18, 22 |
+| `BD-U3-02_c3` | 4 | sí | **1 de 3** | 0 | 18 a 23 |
+
+- **`flujo` que no es una secuencia (2 de 12).** `BD-U3-01_c1` y `BD-U3-02_c3` declaran `flujo`, pero sus relaciones forman una estrella. El render de `flujo` dibuja una columna y une cada caja con la siguiente, así que muestra flechas que la especificación no tiene y omite las que sí tiene. **El esquema dibujado dice algo distinto de lo que el modelo escribió.**
+- **Grafo partido (1 de 12).** En `BD-U3-01_c3`, «Descomponer en filas» → «Reasignar clave primaria» queda suelto, sin unión con «Primera Forma Normal».
+- **Rótulos superpuestos (3 de 12).** Cuando un nodo tiene 4 hijos y los verbos son largos («se clasifica en»), el fondo de un rótulo tapa el final del vecino. Es un defecto del render, no del modelo; mis ejemplos a mano no lo mostraban porque usaban verbos más cortos.
+- **`fuentes`:** las 12 las declaran y todas existen entre los fragmentos entregados.
+- **En un teléfono el texto queda demasiado chico.** A 375 px de ancho el esquema se encoge a 341 px útiles: las etiquetas quedan en 6,4 a 8,1 px, y los detalles y verbos en 5,5 a 6 px. Pasa con los tres tipos, no solo con `flujo`.
+
+### 10.5 Comparación con las especificaciones escritas a mano
+
+Con la misma vara, las mías (`specs/01` a `03`) dan: 11 etiquetas literales y 6 «casi» de 17, y 2 relaciones sin respaldo de 14. No declaran `fuentes`.
+
+| Objetivo | A mano | DeepSeek | Qué hizo distinto |
+|---|---|---|---|
+| PROG-U1-02 | `jerarquia`, 6 nodos | `jerarquia` × 3 | `_c1` y `_c2` tienen la misma estructura que la mía. Difieren en una hoja: yo puse «if, elif, else» y el modelo terminó en «Condicionales» por la regla de palabras (§10.3). `_c3` dejó fuera `for` y `while` |
+| BD-U3-01 | `flujo` de 5 pasos, el procedimiento para llevar una tabla a 1FN | 1 `flujo` y 2 `mapa_conceptual` | **El modelo dibujó las tres reglas de la 1FN, no el procedimiento.** Solo comparte una etiqueta con la mía («Descomponer en filas», en `_c3`). Sus etiquetas son más literales (5 de 5 contra 2 de 5) |
+| BD-U3-02 | `mapa_conceptual`, 6 nodos: notación, tres tipos y un ejemplo | 2 `mapa_conceptual` y 1 `flujo` | Coincide en el concepto central y los tres tipos. Usa los nombres completos donde yo abrevié («DF plena»). **Agrega «Cierre de Atributos»**, la segunda mitad del apunte, que yo dejé fuera. Omite la notación «X → Y» como nodo, y el ejemplo del RUT solo aparece en `_c3` |
+
+Lo que se puede afirmar con números:
+
+- **Mejor:** más etiquetas literales (87 % contra 65 %), `fuentes` siempre declaradas, y cubre partes del material que yo omití.
+- **Peor:** el tipo no es estable entre corridas, 2 de 12 eligen `flujo` para algo que no es una secuencia y 1 de 12 deja el grafo partido. Mis tres se dibujan sin defectos.
+- **No evaluado aquí:** cuál se entiende mejor. Eso lo deciden ustedes mirando los esquemas.
+
+### 10.6 Qué cambiaría antes de implementar
+
+1. **Regla nueva: en `flujo` y `linea_de_tiempo`, solo relaciones entre nodos consecutivos.** Habría mandado a reparación las 2 especificaciones que hoy se dibujan mal.
+2. **Regla nueva: el grafo debe ser conexo.** Habría detectado `BD-U3-01_c3`.
+3. **En el prompt, mostrar un ejemplo de la respuesta en vez del JSON Schema.** El modelo devolvió el esquema una vez de 12. Es lo que ya hace `ESQUEMA_JSON` en el prompt maestro.
+4. **Contar palabras sin los signos.** Hoy «if / elif / else» se rechaza y la reparación pierde información.
+5. **Arreglar los rótulos superpuestos** en el render (acercarlos al nodo hijo o escalonarlos).
+6. **Un diseño propio para pantallas angostas.** Encoger el SVG no alcanza.
+7. **Generar una sola vez por lección y que el docente apruebe.** Es lo que ya proponía el §2.5, y la variación entre corridas lo confirma.
+8. **Probar agregando la `descripcion` del objetivo al prompt.** Hoy solo viajan asignatura, unidad y tema. La de BD-U3-01 es «Eliminar grupos repetitivos de tablas no normalizadas» y el modelo dibujó la definición. Es una hipótesis: no la probé.
+
+Los puntos 1 a 4 son cambios al contrato del §3. No los apliqué: las cifras de esta sección corresponden al contrato tal como está escrito.
+
+### 10.7 Imágenes para mostrar
+
+En [`pruebas/resultados/para_correo/`](pruebas/resultados/para_correo/), generadas con [`pruebas/exportar_png.py`](pruebas/exportar_png.py).
+
+- **Fuentes:** Figtree y Fraunces, las del sitio, cargadas desde `src/studify/web/static/fonts/` en Chrome headless. No hizo falta ninguna fuente de reemplazo.
+- **Cómo se eligieron:** con una regla contable (`elegir` en `evaluar_specs_llm.py`), no a ojo. Primero, la que tenga menos defectos de render; después, más etiquetas literales, menos relaciones sin respaldo, menos detalles repetidos y menos reparaciones.
+- **Solo dos objetivos tienen una corrida sin defectos.** La tercera imagen, `BD-U3-01_c2`, es la menos afectada de Bases de Datos: **tiene un rótulo cortado** (el tercer «requiere» pierde la última letra). BD-U3-02 quedó fuera porque sus tres corridas salen peor.
+
+| Especificación | Para adjuntar (1.600 px de ancho) | Teléfono, 375 px a tamaño real | Teléfono, con la nitidez de una pantalla 2× |
+|---|---|---|---|
+| `PROG-U1-01_c2` | `PROG-U1-01_c2_1600.png` | `PROG-U1-01_c2_movil_375.png` | `PROG-U1-01_c2_movil_375@2x.png` |
+| `PROG-U1-02_c2` | `PROG-U1-02_c2_1600.png` | `PROG-U1-02_c2_movil_375.png` | `PROG-U1-02_c2_movil_375@2x.png` |
+| `BD-U3-01_c2` | `BD-U3-01_c2_1600.png` | `BD-U3-01_c2_movil_375.png` | `BD-U3-01_c2_movil_375@2x.png` |
+
+La vista de teléfono reproduce el visor: fondo y margen lateral de `app.css`. Para juzgar el tamaño del texto hay que mirar el archivo de 375 px al 100 %.
+
+### 10.8 Migración a `deepseek-flash` (11-oct-2026)
+
+**Gasto de esta prueba:** US$0,0103 en 19 llamadas, de un tope de US$0,05.
+
+**Lo que dice la documentación** (https://api-docs.deepseek.com/guides/thinking_mode, leída el 11-oct-2026):
+
+- «Thinking mode is enabled by default, with the default effort being `high`» ✅.
+- Se apaga con `{"thinking": {"type": "disabled"}}`, que en el SDK de OpenAI va dentro de `extra_body` ✅.
+- «Thinking mode does not support the `temperature` […] parameters» ✅: con el razonamiento encendido, además, se ignoraría nuestro `LLM_TEMPERATURE=0.4`.
+- No dice si los tokens de razonamiento cuentan dentro de `max_tokens` ❓. Lo medido en el §10.1 dice que sí: 2.000 de salida, los 2.000 de razonamiento, `finish_reason: length`.
+
+**Cómo llega el parámetro con nuestro cliente.** `OpenAILike` mezcla `additional_kwargs` con los argumentos de `chat.completions.create` (`llama_index/llms/openai/base.py`, `_get_model_kwargs`), y el SDK copia `extra_body` al cuerpo de la petición. Verificado con `llama-index-llms-openai-like` 0.8.0 y `openai` 2.54.0.
+
+**Cambio hecho en el código:** un ajuste nuevo, `LLM_THINKING` (`disabled`, `enabled` o vacío para no enviarlo), con `disabled` por defecto. Toca `config.py`, `generator.py` y `.env.example`.
+
+**Comparación** ([`pruebas/comparar_modelos.py`](pruebas/comparar_modelos.py), detalle en [`pruebas/resultados/migracion/`](pruebas/resultados/migracion/)). «Anterior» es `deepseek-chat` sin enviar `thinking`; «nueva» es `deepseek-flash` con `LLM_THINKING=disabled`, construida sin argumentos como en producción. Una cápsula (perfil V) y una especificación por objetivo y configuración. El costo es a tarifa valle y sin caché, para que sea comparable.
+
+| Objetivo | Tarea | Configuración | Éxito | Resultado | Tokens (entrada + salida) | US$ | Segundos |
+|---|---|---|---|---|--:|--:|--:|
+| BD-U3-01 | cápsula | anterior | a la primera | 216 palabras | 2.918 + 1.035 | 0,00106 | 5,0 |
+| BD-U3-01 | cápsula | nueva | a la primera | 185 palabras | 2.918 + 984 | 0,00103 | 3,8 |
+| BD-U3-01 | especificación | anterior | a la primera | `mapa_conceptual`, 6 nodos | 2.196 + 609 | 0,00069 | 2,6 |
+| BD-U3-01 | especificación | nueva | a la primera | `flujo`, 7 nodos | 2.196 + 689 | 0,00074 | 2,7 |
+| BD-U3-02 | cápsula | anterior | a la primera | 206 palabras | 3.119 + 838 | 0,00097 | 3,5 |
+| BD-U3-02 | cápsula | nueva | a la primera | 218 palabras | 3.119 + 954 | 0,00104 | 4,9 |
+| BD-U3-02 | especificación | anterior | a la primera | `mapa_conceptual`, 5 nodos | 2.400 + 522 | 0,00067 | 2,6 |
+| BD-U3-02 | especificación | nueva | **1 reparación** | `mapa_conceptual`, 5 nodos | 5.581 + 1.055 | 0,00147 | 4,6 |
+| PROG-U1-01 | cápsula | anterior | a la primera | 174 palabras | 2.839 + 738 | 0,00087 | 3,6 |
+| PROG-U1-01 | cápsula | nueva | a la primera | 173 palabras | 2.839 + 774 | 0,00089 | 3,4 |
+| PROG-U1-01 | especificación | anterior | a la primera | `mapa_conceptual`, 7 nodos | 2.117 + 644 | 0,00070 | 2,7 |
+| PROG-U1-01 | especificación | nueva | a la primera | `mapa_conceptual`, 6 nodos | 2.117 + 566 | 0,00066 | 2,2 |
+| PROG-U1-02 | cápsula | anterior | a la primera | 224 palabras | 2.869 + 962 | 0,00101 | 3,8 |
+| PROG-U1-02 | cápsula | nueva | a la primera | 266 palabras | 2.869 + 1.005 | 0,00103 | 4,7 |
+| PROG-U1-02 | especificación | anterior | a la primera | `jerarquia`, 6 nodos | 2.150 + 584 | 0,00067 | 2,5 |
+| PROG-U1-02 | especificación | nueva | **1 reparación** | `jerarquia`, 6 nodos | 4.963 + 1.140 | 0,00143 | 4,6 |
+
+| Promedio de 4 | Válidas | A la primera | Tokens de salida | US$ | Segundos |
+|---|:-:|:-:|--:|--:|--:|
+| Cápsula, anterior | 4 de 4 | 4 | 893 | 0,00098 | 4,0 |
+| Cápsula, nueva | 4 de 4 | 4 | 929 | 0,00100 | 4,2 |
+| Especificación, anterior | 4 de 4 | 4 | 590 | 0,00069 | 2,6 |
+| Especificación, nueva | 4 de 4 | 2 | 863 | 0,00107 | 3,5 |
+
+Lectura:
+
+- **Cápsulas: igual.** Las 8 salieron válidas a la primera, sin tokens de razonamiento, con la misma cantidad de tokens de entrada y diferencias de costo y tiempo que no pasan del 6 %.
+- **Especificaciones: las 8 válidas, pero la configuración nueva necesitó una reparación en 2 de 4.** Los dos motivos ya se habían visto en el §10.3: el modelo devolvió el JSON Schema (BD-U3-02) y escribió «if / elif / else» (PROG-U1-02). Con la configuración anterior no aparecieron en estas 4 corridas.
+- **Con estos números no se puede decir que una sea peor.** Sumando el §10.3, la configuración nueva lleva 6 reparaciones en 16 especificaciones y la anterior 0 en 4; una diferencia así sale por azar una de cada cinco veces. Las dos configuraciones las atiende el mismo modelo (`model: deepseek-flash` en todas las respuestas) y consumen los mismos tokens de entrada. Para zanjarlo harían falta unas 10 corridas más por lado (≈ US$0,01).
+- Los dos motivos de reparación se corrigen en el prompt y en la regla de palabras (puntos 3 y 4 del §10.6), no en el modelo.
+
+**Estado: migración aprobada y completa.**
+
+- **Código:** `config.py`, `generator.py` y `.env.example`, con el ajuste `LLM_THINKING`.
+- **`.env` local:** `LLM_MODEL=deepseek-flash`. No define `LLM_THINKING`, así que rige el valor por defecto, `disabled`. Con esa configuración, una cápsula real (BD-U3-01, perfil V) salió válida a la primera: 179 palabras, 974 tokens de salida, ninguno de razonamiento, 4,7 s.
+- **Vuelta atrás probada:** con `LLM_MODEL=deepseek-chat` y el código nuevo también se genera la cápsula a la primera (4,5 s).
+- **Texto legal:** `legal/privacidad.html` ahora nombra `deepseek-flash`. No subí la versión de la Política de Privacidad en `web/legal.py`: el proveedor, los datos que se le envían y el país son los mismos. Si prefieren que los estudiantes vuelvan a aceptarla, hay que subirla a mano.
+- **Tests:** tres casos nuevos en `tests/test_generador.py` (`disabled` y `enabled` viajan en `extra_body.thinking` sin desplazar el modo JSON; vacío no envía el parámetro). `pytest`: 530 pasan y 2 se saltan.
+
+### 10.9 Regla nueva en el prompt: los títulos de sección no son nodos
+
+**Por qué.** De las 6 relaciones sin respaldo del §10.3, 5 apuntaban a «Paso a Paso» y la otra a «Ejemplo RUT». No son conceptos del tema: son rótulos del apunte que el modelo convirtió en nodos.
+
+**Qué se cambió.** El prompt pasó a vivir en `src/studify/rag/prompts/visual.py`, que no existía: hasta ahora estaba solo en el §3.2 de este informe. Es el mismo texto (comprobado carácter por carácter) con un límite más:
+
+```text
+- Cada nodo es un concepto del contenido. No uses como nodo el título de una sección
+  del apunte («Paso a paso», «Definición», «Ejemplo», «Resumen»).
+```
+
+La aplicación todavía no usa ese módulo; lo ejercita `generar_specs_llm.py`. La primera tanda quedó intacta en `specs_llm/`, y la nueva está en [`pruebas/specs_llm/v2/`](pruebas/specs_llm/v2/), con sus esquemas en [`pruebas/resultados/llm/v2/`](pruebas/resultados/llm/v2/).
+
+**Resultado en BD-U3-01**, 3 corridas con `deepseek-flash` y la misma configuración (US$0,0012):
+
+| | Antes (§10.3) | Con la regla |
+|---|---|---|
+| Relaciones sin respaldo | **5 de 15** (4, 1 y 0) | **3 de 13** (1, 1 y 1) |
+| Corridas con un título de sección como nodo | 2 de 3 («Paso a Paso») | 0 de 3 |
+| Tipo de diagrama | `flujo`, `mapa_conceptual`, `mapa_conceptual` | `mapa_conceptual` × 3 |
+| Validación | 3 a la primera | 3 a la primera |
+| Etiquetas | 15 literales + 2 compuestas, de 17 | 15 literales + 1 compuesta, de 16 |
+| Posibles términos inventados | 0 | 0 |
+| Defectos al dibujar | 3 de 3 (relaciones sin dibujar, rótulo cortado, grafo partido) | 0 de 3 |
+
+Las 3 relaciones que quedan sin respaldo unen conceptos de fragmentos distintos:
+
+- «Atomicidad de Atributos» —produce→ «Clave compuesta», en `_c1` y `_c3`. **Conviene leerla:** el apunte dice que la clave compuesta aparece en la tabla ya normalizada, no que la atomicidad la produzca.
+- «Atomicidad de Atributos» —se resuelve con→ «Descomponer en filas», en `_c2`. La regla está en el fragmento de la definición y el paso en el del procedimiento.
+
+Límites de esta prueba: son 3 corridas de un solo objetivo. No se regeneraron los otros tres, así que no se sabe si la regla les cambia algo.
+
+| `PROG-U1-01_c2` | `PROG-U1-02_c2` | `BD-U3-01_c2` |
+|---|---|---|
+| ![Mapa conceptual: variables y tipos de datos](pruebas/resultados/llm/PROG-U1-01_c2.svg) | ![Jerarquía: estructuras de control de flujo](pruebas/resultados/llm/PROG-U1-02_c2.svg) | ![Mapa conceptual: primera forma normal](pruebas/resultados/llm/BD-U3-01_c2.svg) |
+
+---
+
+## 11. Estimación de esfuerzo
+
+Horas de trabajo sumadas entre los dos, para la opción principal. Parte de lo que ya existe: el prototipo del render, el contrato, el prompt y los validadores de `pruebas/`. Supone que cada cambio lleva sus tests, como en el resto del repo.
+
+### 11.1 MVP
+
+Alcance: 3 tipos de diagrama, tabla `recurso_visual`, generación en el primer acceso con caché, y el bloque `esquema` actual como respaldo. Sin vista de aprobación del docente.
+
+Los 3 tipos, según lo que eligió el modelo en las 12 corridas: `mapa_conceptual` (7), `jerarquia` (3) y `flujo` (2). Las dos veces que eligió `flujo` lo usó mal, así que su lugar en el MVP depende de la regla 1 del §10.6.
+
+| Tarea | Horas |
+|---|--:|
+| Arreglo del modelo | hecho (§10.8) |
+| `media/visual.py`: contrato Pydantic y reglas por código, con las dos reglas nuevas | 5 a 7 |
+| `rag/prompts/visual.py` y generación con reparaciones, probada con un cliente falso | 5 a 7 |
+| Render de los 3 tipos: portar el prototipo, arreglar los rótulos, usar los tokens CSS | 6 a 9 |
+| Salida mínima para el teléfono: abrir el esquema a tamaño completo o con desplazamiento | 2 a 3 |
+| Tabla `recurso_visual`, migración de Alembic, huella y estados | 4 a 6 |
+| `obtener_o_generar()`: caché, estado `pendiente`, timeout y respaldo | 4 a 6 |
+| Ruta del visor, hueco HTMX con reintento, parcial y estilos | 5 a 7 |
+| Tests del flujo web y de la API | 5 a 7 |
+| Configuración (`VISUAL_PROVEEDOR`), `.env.example` y documentación | 2 a 3 |
+| Corrida real sobre los 4 objetivos, revisión en teléfono y escritorio, ajustes | 3 a 5 |
+| **Total del MVP** | **41 a 60** |
+
+En redondo, **40 a 60 horas**: unas 25 por persona.
+
+### 11.2 Completo
+
+Todo lo del §2.7. Se suma al MVP:
+
+| Tarea | Horas |
+|---|--:|
+| Los otros 4 tipos (`comparacion`, `linea_de_tiempo`, `ciclo`, `causa_efecto`) con sus reglas y tests | 8 a 12 |
+| Diseño propio para pantallas angostas en los 7 tipos, y tema oscuro | 12 a 17 |
+| `ImageProvider`, proveedor determinista y adaptador de Gemini; guardar y servir los PNG con sesión | 10 a 14 |
+| Camino A: pregenerar al curar el material, con `BackgroundTasks` | 5 a 8 |
+| Vista del docente: vista previa, «Regenerar» y aprobación, en el panel y el simulador | 10 a 14 |
+| Retirar el SDXL local (`image.py`, `generator.py`, `test_visual.py`, extra `media`) y cerrar H8 | 2 a 3 |
+| Costo por fila y tope mensual configurable | 3 a 4 |
+| Tests y documentación de todo lo anterior | 8 a 12 |
+| **Adicional** | **58 a 84** |
+| **Total completo (MVP + adicional)** | **100 a 146** |
+
+### 11.3 Dónde es más probable pasarse
+
+1. **El render frente a especificaciones reales.** Con 12 especificaciones del modelo aparecieron tres defectos que mis ejemplos a mano no mostraban. Cada tipo nuevo y cada lección nueva puede traer otro. Es la tarea más abierta.
+2. **El teléfono.** A 375 px el texto queda en 5,5 a 8 px. No se resuelve escalando: hay que rediseñar la disposición por tipo, y cuánto cuesta no se sabe hasta intentarlo.
+3. **La calidad del paso LLM.** Que el modelo elija bien el tipo y no parta el grafo se arregla iterando el prompt y las reglas. Cada vuelta pide corridas de pago y que alguien lea los esquemas.
+4. **La concurrencia del estado `pendiente`.** 43 estudiantes abriendo la misma lección a la vez, con handlers síncronos. Es poco código y difícil de probar bien.
+5. **El adaptador de Gemini** (solo en el alcance completo). Nunca se ejecutó, no hay key, y Google deprecó un modelo de imagen esta misma semana.
+6. **La aprobación del docente** (solo en el alcance completo). Toca los estados de curación y lo que el visor muestra; antes de programar hay que decidir qué ve el estudiante mientras el esquema no está aprobado.

@@ -1,0 +1,84 @@
+{
+  "version": 1,
+  "titulo": "Estructuras de Control de Flujo",
+  "tipo_de_diagrama": "jerarquia",
+  "nodos": [
+    {
+      "id": "n1",
+      "etiqueta": "Estructuras de Control",
+      "detalle": "Rompen la ejecución secuencial",
+      "rol": "principal"
+    },
+    {
+      "id": "n2",
+      "etiqueta": "Estructuras Selectivas",
+      "detalle": "if, elif, else",
+      "rol": "secundario"
+    },
+    {
+      "id": "n3",
+      "etiqueta": "Estructuras Iterativas",
+      "detalle": "while y for",
+      "rol": "secundario"
+    },
+    {
+      "id": "n4",
+      "etiqueta": "Condicionales",
+      "detalle": "if, elif, else",
+      "rol": "secundario"
+    },
+    {
+      "id": "n5",
+      "etiqueta": "for",
+      "detalle": "Iteración determinada",
+      "rol": "secundario"
+    },
+    {
+      "id": "n6",
+      "etiqueta": "while",
+      "detalle": "Iteración indeterminada",
+      "rol": "secundario"
+    }
+  ],
+  "relaciones": [
+    {
+      "desde": "n1",
+      "hacia": "n2",
+      "verbo": "se divide en"
+    },
+    {
+      "desde": "n1",
+      "hacia": "n3",
+      "verbo": "se divide en"
+    },
+    {
+      "desde": "n2",
+      "hacia": "n4",
+      "verbo": "incluye"
+    },
+    {
+      "desde": "n3",
+      "hacia": "n5",
+      "verbo": "incluye"
+    },
+    {
+      "desde": "n3",
+      "hacia": "n6",
+      "verbo": "incluye"
+    }
+  ],
+  "paleta": "studify",
+  "estilo": "plano",
+  "texto_alternativo": "Diagrama jerárquico que muestra las estructuras de control de flujo divididas en selectivas e iterativas. Las selectivas incluyen condicionales, mientras que las iterativas incluyen for y while.",
+  "fuentes": [
+    6,
+    7
+  ],
+  "origen": {
+    "codigo_objetivo": "PROG-U1-02",
+    "generado_por": "deepseek-flash",
+    "corrida": 1,
+    "intentos": 2,
+    "nota": "Generada por el LLM con el prompt del §3.2; sin editar a mano."
+  }
+}

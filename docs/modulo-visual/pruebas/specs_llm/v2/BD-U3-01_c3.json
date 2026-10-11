@@ -1,0 +1,74 @@
+{
+  "version": 1,
+  "titulo": "Reglas de la Primera Forma Normal",
+  "tipo_de_diagrama": "mapa_conceptual",
+  "nodos": [
+    {
+      "id": "n1",
+      "etiqueta": "Primera Forma Normal",
+      "detalle": "Nivel básico de normalización relacional",
+      "rol": "principal"
+    },
+    {
+      "id": "n2",
+      "etiqueta": "Atomicidad de Atributos",
+      "detalle": "Valores indivisibles en cada celda",
+      "rol": "secundario"
+    },
+    {
+      "id": "n3",
+      "etiqueta": "Eliminación de Grupos Repetitivos",
+      "detalle": "Sin columnas repetidas del mismo tipo",
+      "rol": "secundario"
+    },
+    {
+      "id": "n4",
+      "etiqueta": "Clave Primaria Definida",
+      "detalle": "Identifica de forma unívoca cada fila",
+      "rol": "secundario"
+    },
+    {
+      "id": "n5",
+      "etiqueta": "Clave compuesta",
+      "detalle": "Clave primaria tras descomponer",
+      "rol": "resultado"
+    }
+  ],
+  "relaciones": [
+    {
+      "desde": "n1",
+      "hacia": "n2",
+      "verbo": "requiere"
+    },
+    {
+      "desde": "n1",
+      "hacia": "n3",
+      "verbo": "requiere"
+    },
+    {
+      "desde": "n1",
+      "hacia": "n4",
+      "verbo": "requiere"
+    },
+    {
+      "desde": "n2",
+      "hacia": "n5",
+      "verbo": "produce"
+    }
+  ],
+  "paleta": "studify",
+  "estilo": "plano",
+  "texto_alternativo": "La Primera Forma Normal requiere atomicidad de atributos, eliminación de grupos repetitivos y una clave primaria definida. La atomicidad de atributos produce una clave compuesta.",
+  "fuentes": [
+    12,
+    14
+  ],
+  "origen": {
+    "codigo_objetivo": "BD-U3-01",
+    "generado_por": "deepseek-flash",
+    "corrida": 3,
+    "intentos": 1,
+    "prompt": "modulo",
+    "nota": "Generada por el LLM; sin editar a mano."
+  }
+}

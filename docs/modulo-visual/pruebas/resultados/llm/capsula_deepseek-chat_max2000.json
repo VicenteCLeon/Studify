@@ -1,0 +1,119 @@
+{
+  "modelo": "deepseek-chat",
+  "objetivo": "BD-U3-01",
+  "canal": "V",
+  "max_tokens": 2000,
+  "razonamiento_apagado": false,
+  "valida": true,
+  "intentos": 1,
+  "reparaciones": 0,
+  "errores_por_intento": [],
+  "segundos": 5.19,
+  "capsula": {
+    "titulo": "Primera Forma Normal: atomicidad y grupos repetitivos",
+    "objetivo_aprendizaje": "Eliminar grupos repetitivos y valores multivaluados de una tabla para llevarla a la Primera Forma Normal.",
+    "activacion": "¿Qué problema tendría guardar varios teléfonos separados por comas dentro de una sola celda?",
+    "concepto_central": "La Primera Forma Normal, propuesta por Edgar F. Codd, exige tres reglas: atomicidad de atributos, eliminación de grupos repetitivos y una clave primaria definida. Un valor atómico es indivisible: no se permiten listas ni conjuntos dentro de una celda. Tampoco deben existir columnas repetidas del mismo tipo, como Telefono1, Telefono2 y Telefono3. Además, la relación debe tener una clave primaria única que identifique cada fila. Cuando una celda contiene varios valores, se viola la 1FN y las búsquedas por índice se vuelven lentas.",
+    "representacion_adaptativa": [
+      {
+        "tipo": "esquema",
+        "encabezado": "Jerarquía de la Primera Forma Normal",
+        "cuerpo": [
+          "Normalización relacional",
+          "Primera Forma Normal (1FN)",
+          "Atomicidad de atributos",
+          "Eliminación de grupos repetitivos",
+          "Clave primaria definida"
+        ]
+      },
+      {
+        "tipo": "tabla",
+        "encabezado": "Comparación entre tabla no normalizada y normalizada",
+        "cuerpo": [
+          [
+            "ID_Estudiante",
+            "Nombre",
+            "Asignaturas_Inscritas"
+          ],
+          [
+            "101",
+            "Ana Silva",
+            "Bases de Datos, Programación, Redes"
+          ],
+          [
+            "102",
+            "Pedro Gómez",
+            "Programación, Álgebra"
+          ]
+        ]
+      }
+    ],
+    "ejemplo": {
+      "tipo": "ejemplo_resuelto",
+      "encabezado": "Descomposición de una fila en valores atómicos",
+      "cuerpo": "La tabla no normalizada muestra a Ana Silva con tres asignaturas en una sola celda. Al aplicar 1FN, esa fila se descompone en tres filas, una por asignatura: Ana Silva con Bases de Datos, Ana Silva con Programación y Ana Silva con Redes. La clave primaria pasa a ser la clave compuesta (ID_Estudiante, Asignatura), que identifica de forma unívoca cada fila."
+    },
+    "actividad": {
+      "tipo": "quiz_mc",
+      "pregunta": "¿Cuál de las siguientes situaciones viola directamente la Primera Forma Normal?",
+      "alternativas": [
+        "Una celda que contiene la lista 'Bases de Datos, Programación, Redes'",
+        "Una tabla con una clave primaria compuesta por dos columnas",
+        "Una tabla con una columna llamada Nombre",
+        "Una fila que repite el mismo ID_Estudiante en varias filas"
+      ],
+      "indice_correcta": 0,
+      "retroalimentacion": "La 1FN exige atomicidad: cada celda debe contener un valor indivisible. Una lista de asignaturas separadas por comas dentro de una celda es un atributo multivaluado y, por lo tanto, una violación de la 1FN. Las otras opciones no contradicen las reglas: la clave compuesta es válida, una columna Nombre es atómica y repetir el ID en varias filas es precisamente el resultado de normalizar.",
+      "tarjetas": [],
+      "preguntas": []
+    },
+    "fuentes": [
+      {
+        "id_fragmento": 12,
+        "documento": "Guía de Normalización: Primera Forma Normal (1FN)",
+        "pagina": 1
+      },
+      {
+        "id_fragmento": 13,
+        "documento": "Guía de Normalización: Primera Forma Normal (1FN)",
+        "pagina": 1
+      },
+      {
+        "id_fragmento": 14,
+        "documento": "Guía de Normalización: Primera Forma Normal (1FN)",
+        "pagina": 1
+      },
+      {
+        "id_fragmento": 15,
+        "documento": "Guía de Normalización: Primera Forma Normal (1FN)",
+        "pagina": 1
+      },
+      {
+        "id_fragmento": 16,
+        "documento": "Guía de Normalización: Primera Forma Normal (1FN)",
+        "pagina": 2
+      }
+    ]
+  },
+  "llamadas": [
+    {
+      "cuando_utc": "2026-10-11T02:45:40+00:00",
+      "etiqueta": "capsula:BD-U3-01:V",
+      "modelo_pedido": "deepseek-chat",
+      "modelo_respondido": "deepseek-flash",
+      "razonamiento": true,
+      "max_tokens": 2000,
+      "tokens_entrada": 2918,
+      "tokens_entrada_cache": 128,
+      "tokens_salida": 1034,
+      "tokens_razonamiento": 0,
+      "fin": "stop",
+      "segundos": 5.18,
+      "tarifa": "valle",
+      "costo_usd": 0.0010392840000000001,
+      "costo_usd_punta": 0.0020785680000000003,
+      "uso_sin_datos": false
+    }
+  ],
+  "costo_usd": 0.0010392840000000001
+}

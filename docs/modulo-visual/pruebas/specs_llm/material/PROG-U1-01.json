@@ -1,0 +1,44 @@
+{
+  "codigo_objetivo": "PROG-U1-01",
+  "asignatura": "Introducción a la Programación",
+  "unidad": "Unidad 1: Fundamentos",
+  "tema": "Variables y Tipos de Datos",
+  "origen": "base de datos: fragmentos validados (retriever.recuperar)",
+  "fragmentos": [
+    {
+      "id_fragmento": 1,
+      "documento": "Variables y Tipos de Datos Primitivos",
+      "cita": "Variables y Tipos de Datos Primitivos, p. 1",
+      "tipo": "texto",
+      "texto": "1. Fundamentos Conceptuales (Perfil Lectura / Escritura - R)\n\nEn programación, una variable es una ubicación reservada en la memoria RAM del computador asociada a un identificador simbólico (nombre). Esta ubicación almacena un valor de un tipo de dato específico que determina qué operaciones se pueden realizar sobre él y cuánta memoria ocupa. Los tipos de datos primitivos más comunes son: • int (Entero): Representa números sin parte decimal, tanto positivos como negativos (ej. -5, 0, 42). • float (Punto Flotante): Representa números reales con parte decimal o exponencial (ej. 3.14159, -0.5). • bool (Booleano): Representa un valor de verdad lógico, restringido a únicamente True (Verdadero) o False (Falso). • str (Cadena de Texto): Secuencia inmutable de caracteres delimitada por comillas simples o dobles (ej. \"Studify\", 'Python')."
+    },
+    {
+      "id_fragmento": 2,
+      "documento": "Variables y Tipos de Datos Primitivos",
+      "cita": "Variables y Tipos de Datos Primitivos, p. 1",
+      "tipo": "texto",
+      "texto": "2. Cuadro Comparativo de Tipos de Datos (Perfil Visual - V)\n\nTipo de Dato Tamaño en Memoria Rango / Formato de Ejemplo Caso de Uso Recomendado int 4 a 8 bytes -2,147,483,648 a 2,147,483,647 Contadores de bucles, edades, identificadores float 8 bytes (doble precisión) 1.79e308 (con 15 a 17 dígitos) Precios, notas de exámenes, mediciones físicas bool 1 byte True o False Banderas de estado, resultados de comparaciones str Variable (UTF-8) \"Hola Mundo 2026\" Nombres de usuario, direcciones, mensajes"
+    },
+    {
+      "id_fragmento": 3,
+      "documento": "Variables y Tipos de Datos Primitivos",
+      "cita": "Variables y Tipos de Datos Primitivos, p. 1",
+      "tipo": "texto",
+      "texto": "3. Explicación Narrativa y Analogía (Perfil Auditivo - A)\n\nImaginen que la memoria RAM de la computadora es como una gran estantería llena de cajas de almacenamiento en un centro logístico. Cuando declaras una variable en tu programa, es como tomar una caja vacía, pegarle una etiqueta con un nombre claro (como precio_producto) y guardar dentro un objeto determinado. Si guardas un entero, colocas un contador rígido. Si guardas un texto, pones una carta escrita. Lo crucial que debes recordar al escuchar esta explicación es que el tipo de dato actúa como el \"molde\" de la caja: no puedes intentar realizar operaciones aritméticas con una caja etiquetada como texto sin antes hacer una conversión explícita. Por ejemplo, al sumar la palabra \"10\" con el número 5, el lenguaje te advertirá que los tipos no son compatibles."
+    },
+    {
+      "id_fragmento": 4,
+      "documento": "Variables y Tipos de Datos Primitivos",
+      "cita": "Variables y Tipos de Datos Primitivos, p. 2",
+      "tipo": "texto",
+      "texto": "Ejemplo de Código Paso a Paso:\n\n# 1. Declaración e inicialización de variables nombre_estudiante = \"Camila\" edad = 21 promedio_notas = 6.5 esta_inscrito = True # 2. Operaciones y conversión de tipos (Casting) edad_futura = edad + 1 mensaje_resumen = ( \"Estudiante \" + nombre_estudiante + \" tendrá \" + str(edad_futura) + \" años.\" ) print(mensaje_resumen)"
+    },
+    {
+      "id_fragmento": 5,
+      "documento": "Variables y Tipos de Datos Primitivos",
+      "cita": "Variables y Tipos de Datos Primitivos, p. 2",
+      "tipo": "texto",
+      "texto": "Ejercicio Guiado para el Estudiante:\n\n1. Crea un script en Python que defina una variable precio_base con valor 19990 y un descuento de 0.15 (15%). 2. Calcula el precio_final restando el descuento al precio base. 3. Imprime por pantalla el resultado convirtiendo el precio final a un número entero con int(precio_final)."
+    }
+  ]
+}
