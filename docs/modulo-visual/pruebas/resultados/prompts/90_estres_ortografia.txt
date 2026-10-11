@@ -1,0 +1,17 @@
+Flat vector infographic diagram for a university study app.
+Diagram type: cycle diagram: the stages placed around a circle, connected clockwise by arrows.
+Title at the top, exactly: "¿Cómo mejora un diseño?".
+The diagram has exactly 4 boxes. Each box contains ONLY the text in quotes:
+1. "Análisis" — the most prominent box, filled with the main color
+2. "Diseño" — a regular box with a light fill
+3. "Construcción" — a regular box with a light fill
+4. "Evaluación" — highlighted with the accent color
+Draw exactly these 4 arrows, each with its small label in quotes:
+- from "Análisis" to "Diseño", labeled "guía"
+- from "Diseño" to "Construcción", labeled "se construye"
+- from "Construcción" to "Evaluación", labeled "se evalúa"
+- from "Evaluación" to "Análisis", labeled "retroalimenta"
+Text rules: every visible word is Spanish. Copy each quoted string character by character, keeping accents (á é í ó ú), ñ and the opening marks ¿ ¡. Do not translate, abbreviate or reword. Do not add any other text, numbers, captions, legends, logos or watermarks. Bold sans-serif lettering, large and dark.
+Style: clean flat design, simple geometric shapes, rounded rectangles, thin arrows, generous spacing, light background #FBF8F3, main color #1E52B8, accent color #C27D0E, text color #1F2933, high contrast.
+No photographs, no realistic people, no faces, no 3D, no gradients, no shadows, no decorative clutter.
+Landscape 4:3 layout with even margins; nothing cropped or overlapping.

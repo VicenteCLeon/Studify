@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "titulo": "¿Cómo mejora un diseño?",
+  "tipo_de_diagrama": "ciclo",
+  "nodos": [
+    {
+      "id": "n1",
+      "etiqueta": "Análisis",
+      "detalle": "¿Qué necesita el usuario?",
+      "rol": "principal"
+    },
+    {
+      "id": "n2",
+      "etiqueta": "Diseño",
+      "detalle": "Bosquejo pequeño y rápido",
+      "rol": "secundario"
+    },
+    {
+      "id": "n3",
+      "etiqueta": "Construcción",
+      "detalle": "Versión mínima que funciona",
+      "rol": "secundario"
+    },
+    {
+      "id": "n4",
+      "etiqueta": "Evaluación",
+      "detalle": "¡Medir antes de opinar!",
+      "rol": "resultado"
+    }
+  ],
+  "relaciones": [
+    { "desde": "n1", "hacia": "n2", "verbo": "guía" },
+    { "desde": "n2", "hacia": "n3", "verbo": "se construye" },
+    { "desde": "n3", "hacia": "n4", "verbo": "se evalúa" },
+    { "desde": "n4", "hacia": "n1", "verbo": "retroalimenta" }
+  ],
+  "paleta": "azul",
+  "estilo": "plano",
+  "texto_alternativo": "Ciclo de cuatro etapas: el análisis guía el diseño, el diseño se construye, la construcción se evalúa y la evaluación retroalimenta el análisis.",
+  "origen": {
+    "codigo_objetivo": null,
+    "documento": null,
+    "nota": "Caso sintético, NO sale del material del curso: existe solo para forzar tildes, ñ y signos de apertura (¿ ¡) en un mismo diagrama, y para ejercitar el tipo «ciclo»."
+  }
+}

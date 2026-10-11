@@ -1,0 +1,58 @@
+{
+  "version": 1,
+  "titulo": "Estructuras de control de flujo",
+  "tipo_de_diagrama": "jerarquia",
+  "nodos": [
+    {
+      "id": "n1",
+      "etiqueta": "Estructuras de control",
+      "detalle": "Rompen la ejecución secuencial",
+      "rol": "principal"
+    },
+    {
+      "id": "n2",
+      "etiqueta": "Selectivas",
+      "detalle": "Evalúan una condición",
+      "rol": "secundario"
+    },
+    {
+      "id": "n3",
+      "etiqueta": "Iterativas",
+      "detalle": "Repiten un bloque",
+      "rol": "secundario"
+    },
+    {
+      "id": "n4",
+      "etiqueta": "if, elif, else",
+      "detalle": "Ejecuta una sola rama",
+      "rol": "resultado"
+    },
+    {
+      "id": "n5",
+      "etiqueta": "for",
+      "detalle": "Número fijo de repeticiones",
+      "rol": "resultado"
+    },
+    {
+      "id": "n6",
+      "etiqueta": "while",
+      "detalle": "Mientras la condición sea True",
+      "rol": "resultado"
+    }
+  ],
+  "relaciones": [
+    { "desde": "n1", "hacia": "n2", "verbo": "se dividen en" },
+    { "desde": "n1", "hacia": "n3", "verbo": "se dividen en" },
+    { "desde": "n2", "hacia": "n4", "verbo": "usan" },
+    { "desde": "n3", "hacia": "n5", "verbo": "usan" },
+    { "desde": "n3", "hacia": "n6", "verbo": "usan" }
+  ],
+  "paleta": "studify",
+  "estilo": "plano",
+  "texto_alternativo": "Jerarquía: las estructuras de control se dividen en selectivas, que usan if, elif y else, e iterativas, que usan for y while.",
+  "origen": {
+    "codigo_objetivo": "PROG-U1-02",
+    "documento": "data/documentos_prueba_md/PROG_U1_02_Estructuras_de_Control.md",
+    "nota": "Especificación redactada a mano siguiendo el esquema de la Fase 2; no la generó el LLM."
+  }
+}

@@ -1,0 +1,20 @@
+Flat vector infographic diagram for a university study app.
+Diagram type: concept map: the main concept at the top, related concepts below it, connected by labeled arrows.
+Title at the top, exactly: "Dependencias funcionales".
+The diagram has exactly 6 boxes. Each box contains ONLY the text in quotes:
+1. "Dependencia funcional" — the most prominent box, filled with the main color
+2. "X → Y" — a regular box with a light fill
+3. "DF plena" — a regular box with a light fill
+4. "DF transitiva" — a regular box with a light fill
+5. "DF trivial" — a regular box with a light fill
+6. "RUT → Nombre" — highlighted with the accent color
+Draw exactly these 5 arrows, each with its small label in quotes:
+- from "Dependencia funcional" to "X → Y", labeled "se denota"
+- from "Dependencia funcional" to "DF plena", labeled "puede ser"
+- from "Dependencia funcional" to "DF transitiva", labeled "puede ser"
+- from "Dependencia funcional" to "DF trivial", labeled "puede ser"
+- from "X → Y" to "RUT → Nombre", labeled "por ejemplo"
+Text rules: every visible word is Spanish. Copy each quoted string character by character, keeping accents (á é í ó ú), ñ and the opening marks ¿ ¡. Do not translate, abbreviate or reword. Do not add any other text, numbers, captions, legends, logos or watermarks. Bold sans-serif lettering, large and dark.
+Style: clean flat design, simple geometric shapes, rounded rectangles, thin arrows, generous spacing, light background #FBF8F3, main color #0F766E, accent color #F2795A, text color #1F2933, high contrast.
+No photographs, no realistic people, no faces, no 3D, no gradients, no shadows, no decorative clutter.
+Landscape 4:3 layout with even margins; nothing cropped or overlapping.

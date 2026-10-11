@@ -1,0 +1,51 @@
+{
+  "version": 1,
+  "titulo": "Cómo llevar una tabla a 1FN",
+  "tipo_de_diagrama": "flujo",
+  "nodos": [
+    {
+      "id": "n1",
+      "etiqueta": "Tabla no normalizada",
+      "detalle": "Una celda guarda varias asignaturas",
+      "rol": "principal"
+    },
+    {
+      "id": "n2",
+      "etiqueta": "Identificar celda no atómica",
+      "detalle": "Listas separadas por comas o guiones",
+      "rol": "secundario"
+    },
+    {
+      "id": "n3",
+      "etiqueta": "Descomponer en filas",
+      "detalle": "Una fila por cada valor",
+      "rol": "secundario"
+    },
+    {
+      "id": "n4",
+      "etiqueta": "Definir clave primaria",
+      "detalle": "Incluye la columna descompuesta",
+      "rol": "secundario"
+    },
+    {
+      "id": "n5",
+      "etiqueta": "Tabla en 1FN",
+      "detalle": "Valores atómicos y clave única",
+      "rol": "resultado"
+    }
+  ],
+  "relaciones": [
+    { "desde": "n1", "hacia": "n2", "verbo": "se revisa" },
+    { "desde": "n2", "hacia": "n3", "verbo": "se divide" },
+    { "desde": "n3", "hacia": "n4", "verbo": "se identifica" },
+    { "desde": "n4", "hacia": "n5", "verbo": "produce" }
+  ],
+  "paleta": "studify",
+  "estilo": "plano",
+  "texto_alternativo": "Diagrama de flujo de cinco pasos: una tabla no normalizada se revisa para identificar la celda no atómica, se descompone en filas, se define la clave primaria y queda una tabla en primera forma normal.",
+  "origen": {
+    "codigo_objetivo": "BD-U3-01",
+    "documento": "data/documentos_prueba_md/BD_U3_01_Primera_Forma_Normal.md",
+    "nota": "Especificación redactada a mano siguiendo el esquema de la Fase 2; no la generó el LLM."
+  }
+}

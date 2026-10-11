@@ -1,0 +1,58 @@
+{
+  "version": 1,
+  "titulo": "Dependencias funcionales",
+  "tipo_de_diagrama": "mapa_conceptual",
+  "nodos": [
+    {
+      "id": "n1",
+      "etiqueta": "Dependencia funcional",
+      "detalle": "Restricción entre conjuntos de atributos",
+      "rol": "principal"
+    },
+    {
+      "id": "n2",
+      "etiqueta": "X → Y",
+      "detalle": "X determina funcionalmente a Y",
+      "rol": "secundario"
+    },
+    {
+      "id": "n3",
+      "etiqueta": "DF plena",
+      "detalle": "Depende de X completo",
+      "rol": "secundario"
+    },
+    {
+      "id": "n4",
+      "etiqueta": "DF transitiva",
+      "detalle": "X → Z a través de Y",
+      "rol": "secundario"
+    },
+    {
+      "id": "n5",
+      "etiqueta": "DF trivial",
+      "detalle": "Y es subconjunto de X",
+      "rol": "secundario"
+    },
+    {
+      "id": "n6",
+      "etiqueta": "RUT → Nombre",
+      "detalle": "Mismo RUT, mismo nombre",
+      "rol": "resultado"
+    }
+  ],
+  "relaciones": [
+    { "desde": "n1", "hacia": "n2", "verbo": "se denota" },
+    { "desde": "n1", "hacia": "n3", "verbo": "puede ser" },
+    { "desde": "n1", "hacia": "n4", "verbo": "puede ser" },
+    { "desde": "n1", "hacia": "n5", "verbo": "puede ser" },
+    { "desde": "n2", "hacia": "n6", "verbo": "por ejemplo" }
+  ],
+  "paleta": "studify",
+  "estilo": "plano",
+  "texto_alternativo": "Mapa conceptual: una dependencia funcional se denota X → Y, por ejemplo RUT → Nombre, y puede ser plena, transitiva o trivial.",
+  "origen": {
+    "codigo_objetivo": "BD-U3-02",
+    "documento": "data/documentos_prueba_md/BD_U3_02_Dependencias_Funcionales.md",
+    "nota": "Especificación redactada a mano siguiendo el esquema de la Fase 2; no la generó el LLM."
+  }
+}

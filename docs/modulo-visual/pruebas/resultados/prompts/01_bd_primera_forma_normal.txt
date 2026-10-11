@@ -1,0 +1,18 @@
+Flat vector infographic diagram for a university study app.
+Diagram type: process flowchart: the steps in order from left to right, connected by arrows.
+Title at the top, exactly: "Cómo llevar una tabla a 1FN".
+The diagram has exactly 5 boxes. Each box contains ONLY the text in quotes:
+1. "Tabla no normalizada" — the most prominent box, filled with the main color
+2. "Identificar celda no atómica" — a regular box with a light fill
+3. "Descomponer en filas" — a regular box with a light fill
+4. "Definir clave primaria" — a regular box with a light fill
+5. "Tabla en 1FN" — highlighted with the accent color
+Draw exactly these 4 arrows, each with its small label in quotes:
+- from "Tabla no normalizada" to "Identificar celda no atómica", labeled "se revisa"
+- from "Identificar celda no atómica" to "Descomponer en filas", labeled "se divide"
+- from "Descomponer en filas" to "Definir clave primaria", labeled "se identifica"
+- from "Definir clave primaria" to "Tabla en 1FN", labeled "produce"
+Text rules: every visible word is Spanish. Copy each quoted string character by character, keeping accents (á é í ó ú), ñ and the opening marks ¿ ¡. Do not translate, abbreviate or reword. Do not add any other text, numbers, captions, legends, logos or watermarks. Bold sans-serif lettering, large and dark.
+Style: clean flat design, simple geometric shapes, rounded rectangles, thin arrows, generous spacing, light background #FBF8F3, main color #0F766E, accent color #F2795A, text color #1F2933, high contrast.
+No photographs, no realistic people, no faces, no 3D, no gradients, no shadows, no decorative clutter.
+Landscape 4:3 layout with even margins; nothing cropped or overlapping.
