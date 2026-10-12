@@ -19,7 +19,7 @@ Convención de este informe: **✅ oficial** es un dato leído hoy en la página
 6. **El caché es por lección, no por estudiante:** una infografía por objetivo y versión del material, reutilizada por todos los estudiantes Visual. Sin ese caché, un curso de 50 lecciones con el plan B costaría unas 14 veces más para la cohorte actual: US$76,54 contra US$5,34 (§7.2).
 7. **Lo que no se pudo probar:** los candidatos de IA. El `.env` solo tiene la key del LLM. El script quedó listo; correrlo cuesta ~US$0,76, más la recarga mínima de cada proveedor.
 8. **El paso LLM ya está probado (§10):** DeepSeek generó 12 especificaciones (4 objetivos × 3 corridas) y las 12 pasaron la validación, 8 a la primera y 4 con una reparación. Ninguna etiqueta quedó fuera del material. Pero 6 de las 12 tienen algún defecto al dibujarse con el render actual, y el tipo de diagrama cambió entre corridas en 2 de los 4 objetivos.
-9. **Hay un problema previo que afecta a todo Studify (§10.1):** `deepseek-chat` es un alias en retirada, y el ID vigente (`deepseek-flash`) no genera cápsulas con el código actual, porque razona por defecto y agota `max_tokens`. Ya está resuelto: el ajuste `LLM_THINKING` apaga el razonamiento y Studify usa `deepseek-flash` (§10.8).
+9. **Hay un problema previo que afecta a todo Studify (§10.1):** `deepseek-chat` es un alias en retirada, y el ID vigente (`deepseek-flash`) no generaba cápsulas con el código de ese momento, porque razona por defecto y agota `max_tokens`. Ya está resuelto: el ajuste `LLM_THINKING` apaga el razonamiento y Studify usa `deepseek-flash` (§10.8).
 10. **Decisión que necesito de ustedes:** aprobar la opción principal y el arreglo del modelo, y decir si quieren pagar la comparación con IA antes de implementar. El MVP se estima en 40 a 60 horas entre los dos (§11).
 
 ---
@@ -33,7 +33,7 @@ Convención de este informe: **✅ oficial** es un dato leído hoy en la página
 | Backend | FastAPI + Uvicorn, Python ≥ 3.11, handlers síncronos | `src/studify/main.py` |
 | Frontend | Jinja2 renderizado en servidor + HTMX 1.9.10 propio, CSS propio, fuentes autoalojadas (Figtree, Fraunces). Sin CDN ni framework JS | `src/studify/web/` |
 | Base de datos | PostgreSQL 16 (Docker Compose), SQLAlchemy 2 + Alembic, JSONB para la cápsula | `src/studify/db/models.py` |
-| LLM | DeepSeek por API compatible con OpenAI: `LLM_BASE_URL=https://api.deepseek.com/v1`, `LLM_MODEL=deepseek-chat` (alias en retirada, ver §10.1), vía `llama-index-llms-openai-like`, modo JSON, hasta 2 reparaciones | `src/studify/generation/generator.py` |
+| LLM | DeepSeek por API compatible con OpenAI: `LLM_BASE_URL=https://api.deepseek.com/v1`, `LLM_MODEL=deepseek-flash` con `LLM_THINKING=disabled` (hasta el 10-oct-2026 era `deepseek-chat`, un alias en retirada; ver §10.1 y §10.8), vía `llama-index-llms-openai-like`, modo JSON, hasta 2 reparaciones | `src/studify/generation/generator.py` |
 | Audio (perfil A) | Kokoro / Piper en local, bajo demanda desde el visor, caché por huella del guion | `src/studify/media/audio.py` |
 | Imagen (perfil V) | Código local con SDXL sobre DirectML, **desconectado** | `src/studify/media/image.py` |
 
@@ -588,7 +588,7 @@ El script elige cuatro: Nano Banana 2.1, GPT Image 2.5 Flare, Recraft V4.1 vecto
 
 El precio de DeepSeek es el de `deepseek-flash` en horario punta ✅ [22]. La estimación original (0,0018) y la medición a tarifa punta (0,0020) redondean a la misma cifra, así que la tabla de escenarios no cambia. En horario valle el costo real es un tercio.
 
-`deepseek-flash` es el ID vigente: es el único modelo Flash que devuelve `GET /models` con nuestra key ✅. `deepseek-chat` (el que tenemos configurado) y `deepseek-v4-flash` son nombres antiguos que la API todavía acepta y responde con `deepseek-flash` ✅. El detalle está en el §10.1.
+`deepseek-flash` es el ID vigente: es el único modelo Flash que devuelve `GET /models` con nuestra key ✅. `deepseek-chat` (el que teníamos configurado hasta la migración del §10.8) y `deepseek-v4-flash` son nombres antiguos que la API todavía acepta y responde con `deepseek-flash` ✅. El detalle está en el §10.1.
 
 ### 7.2 Escenarios
 
@@ -613,7 +613,7 @@ Generaciones = lecciones × (1 + regeneraciones).
 | Riesgo | Evidencia | Mitigación |
 |---|---|---|
 | **Deprecaciones** | Imagen 4 duró 14 meses. Nano Banana 2.1 tiene 4 días de vida. `gemini-2.5-flash-image` está en retirada con dos fechas oficiales distintas. **Nano Banana 2 (`gemini-3.1-flash-image`) quedó deprecado el 08-oct-2026, a poco más de 4 meses de su lanzamiento y 2 días después de salir su reemplazo** ✅ [24]. Su apagado el 29-oct-2026 no está confirmado ❓ | El modelo es una variable de entorno. El determinístico no depende de ningún modelo de imagen |
-| **`deepseek-chat` es un alias en retirada** | DeepSeek anunció el 24-abr-2026 que lo descontinuaría el 24-jul-2026 [25]; al 10-oct-2026 todavía responde. `deepseek-v4-flash` también fue retirado (10-sep-2026) y está «temporalmente» redirigido. El ID vigente, `deepseek-flash`, **no genera cápsulas con el código actual** (§10.1) | Apagar el razonamiento en `ClienteOpenAILike` y recién entonces cambiar `LLM_MODEL`. Afecta a todo Studify, no solo a este módulo |
+| **`deepseek-chat` es un alias en retirada** | DeepSeek anunció el 24-abr-2026 que lo descontinuaría el 24-jul-2026 [25]; al 10-oct-2026 todavía responde. `deepseek-v4-flash` también fue retirado (10-sep-2026) y está «temporalmente» redirigido. El ID vigente, `deepseek-flash`, **no generaba cápsulas mientras razonara por defecto** (§10.1) | **Resuelto el 11-oct-2026** (§10.8): `ClienteOpenAILike` apaga el razonamiento con `LLM_THINKING=disabled` y `LLM_MODEL` pasó a `deepseek-flash`. Afectaba a todo Studify, no solo a este módulo |
 | **Cambios de precio** | Nano Banana pasó de 0,067 a 0,0336 en una versión; también puede subir | `costo_usd` por fila en `recurso_visual` y un tope mensual configurable |
 | **Rate limits** | Los de Gemini solo se ven dentro de AI Studio ❓ | Caché por lección, pregeneración al curar, un reintento con espera |
 | **Contenido inexacto** | El LLM puede elegir mal el tipo de diagrama o una relación. En el plan B, además, el modelo de imagen puede alterar rótulos | Validación por código del JSON, `fuentes` contra los fragmentos inyectados, y aprobación del docente antes de mostrarlo. En el plan B, revisión humana obligatoria |
@@ -1026,7 +1026,7 @@ Todo lo del §2.7. Se suma al MVP:
 | Costo por fila y tope mensual configurable | 3 a 4 |
 | Tests y documentación de todo lo anterior | 8 a 12 |
 | **Adicional** | **58 a 84** |
-| **Total completo (MVP + adicional)** | **100 a 146** |
+| **Total completo (MVP + adicional)** | **99 a 144** |
 
 ### 11.3 Dónde es más probable pasarse
 

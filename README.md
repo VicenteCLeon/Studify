@@ -155,7 +155,9 @@ código simple.
 
 Cualquier endpoint compatible con OpenAI. Se cambia de modelo editando `.env`, sin tocar
 código. Candidatos evaluados en el bake-off de la Fase 3: **DeepSeek**, Qwen y GLM —
-`deepseek-chat` quedó seleccionado para producción.
+quedó seleccionado DeepSeek. El bake-off se corrió con `deepseek-chat`, un alias que el
+proveedor anunció retirar; producción usa `deepseek-flash` con el razonamiento apagado
+(`LLM_THINKING=disabled`).
 
 </details>
 
