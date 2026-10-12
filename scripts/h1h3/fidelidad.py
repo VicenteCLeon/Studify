@@ -25,6 +25,7 @@ print("studify desde:", Path(studify.__file__).parent, flush=True)
 
 from sqlalchemy import select  # noqa: E402
 
+from studify.config import get_settings  # noqa: E402
 from studify.db.models import ObjetivoAprendizaje  # noqa: E402
 from studify.db.session import SessionLocal, engine  # noqa: E402
 from studify.rag import orchestrator  # noqa: E402
@@ -50,8 +51,12 @@ with SessionLocal() as db:
             canal = config.jerarquia.canal_primario
             if canal not in cache:
                 cache[canal] = recuperar(db, id_objetivo=obj.id_objetivo, canal_primario=canal)
+            # El modelo solo entra en la huella, que acá no se compara.
             m = orchestrator.construir(
-                objetivo=obj, fragmentos=cache[canal], config=config, modelo="deepseek-chat"
+                objetivo=obj,
+                fragmentos=cache[canal],
+                config=config,
+                modelo=get_settings().llm_model,
             )
             mio = f"### SISTEMA\n{m.sistema}\n\n### USUARIO\n{m.usuario}\n"
             guardado = p.read_text("utf-8").replace("\r\n", "\n")

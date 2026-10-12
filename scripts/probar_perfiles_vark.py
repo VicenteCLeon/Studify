@@ -92,10 +92,11 @@ EXTENSION_LARGA = 240
 ACTIVIDADES_PRACTICAS = frozenset({"flashcards", "flashcards_y_quiz", "intentalo_tu"})
 
 # --- Estimación de costo (solo para el plan previo) ---------------------------
-# Tarifa supuesta de deepseek-chat en USD por millón de tokens. Verificarla en
-# la página del proveedor antes de citar el costo: se puede pasar por CLI.
-PRECIO_ENTRADA_USD_M = 0.28
-PRECIO_SALIDA_USD_M = 0.42
+# Tarifa punta de deepseek-flash en USD por millón de tokens, sin caché de
+# entrada, leída el 10-oct-2026 (en valle es la mitad). Verificarla en la página
+# del proveedor antes de citar el costo: se puede pasar por CLI.
+PRECIO_ENTRADA_USD_M = 0.30
+PRECIO_SALIDA_USD_M = 1.20
 TOKENS_SALIDA_ESTIMADOS = 1500
 CARACTERES_POR_TOKEN = 3.5
 # Mensaje de reparación que se agrega en cada reintento, en tokens.

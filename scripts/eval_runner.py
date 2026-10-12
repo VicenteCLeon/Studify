@@ -45,7 +45,7 @@ PERFILES = {
 # y si no, caerá en la global LLM_API_KEY.
 MODELOS = [
     {
-        "nombre": "deepseek-chat",
+        "nombre": "deepseek-flash",
         "base_url": "https://api.deepseek.com/v1",
         "env_key": "DEEPSEEK_API_KEY",
     },

@@ -47,7 +47,7 @@ def main():
                 else:
                     capsula = resultado["capsula"]
                     print(f"    [EXITO] Titulo: '{capsula.titulo}'")
-                    print(f"      - Modelo LLM: {resultado.get('modelo', 'deepseek-chat')}")
+                    print(f"      - Modelo LLM: {resultado.get('modelo', cliente.modelo)}")
                     print(
                         f"      - Fragmentos RAG utilizados: {resultado.get('cant_fragmentos', 'N/A')}"
                     )
