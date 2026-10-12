@@ -13,6 +13,7 @@ hace que el modelo termine recurriendo a fuentes genéricas y alucinando. La
 ingesta produce material *candidato*; la curación es la que lo habilita.
 """
 
+import logging
 import shutil
 from dataclasses import dataclass
 from pathlib import Path
@@ -24,6 +25,8 @@ from studify.config import get_settings
 from studify.db.models import DocumentoFuente, Fragmento
 from studify.knowledge.chunker import fragmentar
 from studify.knowledge.extract import extraer, hash_archivo
+
+logger = logging.getLogger(__name__)
 
 # `formato` es VARCHAR(20) y `tipo_documento` VARCHAR(40) en la tabla 17.6.
 TIPOS_DOCUMENTO = ("apunte", "guia", "presentacion", "actividad", "bibliografia")
@@ -86,6 +89,30 @@ def _almacenar(ruta: Path, huella: str) -> Path:
     if not destino.exists():
         shutil.copy2(ruta, destino)
     return destino
+
+
+def retirar_del_almacen(ruta_archivo: str | None) -> None:
+    """Borra del almacén la copia de un documento que ya no está en la base.
+
+    Solo toca lo que está dentro de `documentos_dir`. `ruta_archivo` sale de la
+    base, y una fila cargada por otra vía podría apuntar al original del docente
+    en vez de a la copia: ese archivo no es nuestro y no se borra.
+
+    Si el archivo no se deja borrar —en Windows basta con que un visor de PDF lo
+    tenga abierto— se avisa en el log y se sigue. No queda nada inconsistente:
+    el almacén nombra por hash, así que `_almacenar` reutiliza ese mismo archivo
+    cuando el documento se vuelva a subir.
+    """
+    if not ruta_archivo:
+        return
+    almacen = Path(get_settings().documentos_dir).resolve()
+    ruta = Path(ruta_archivo).resolve()
+    if almacen not in ruta.parents:
+        return
+    try:
+        ruta.unlink(missing_ok=True)
+    except OSError as exc:
+        logger.warning("no se pudo borrar '%s' del almacén: %s", ruta, exc)
 
 
 def ingerir(

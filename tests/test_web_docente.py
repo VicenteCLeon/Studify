@@ -18,7 +18,13 @@ from fastapi.testclient import TestClient
 from sqlalchemy import func, select
 
 from studify.api.routers.capsules import get_cliente_llm
-from studify.db.models import DocumentoFuente, Fragmento, ObjetivoAprendizaje
+from studify.db.models import (
+    DocumentoFuente,
+    Estudiante,
+    Fragmento,
+    MicrocapsulaGenerada,
+    ObjetivoAprendizaje,
+)
 from studify.main import app
 from tests.conftest import necesita_bd
 from tests.test_tagger import ClienteEtiquetadorFalso, ClienteQueDevuelveBasura
@@ -125,8 +131,12 @@ def test_la_ingesta_deja_todo_pendiente_de_curacion(
 
     assert "quedó ingerido" in respuesta.text
     assert "pendientes de revisión" in respuesta.text
-    # La bandeja se recarga sola en vez de pedir un refresco manual.
-    assert respuesta.headers.get("HX-Trigger") == "fragmentos-actualizados"
+    # La bandeja y la lista de documentos se recargan solas en vez de pedir un
+    # refresco manual.
+    assert (
+        respuesta.headers.get("HX-Trigger")
+        == "fragmentos-actualizados, documentos-actualizados"
+    )
 
     assert documento.asignatura == ASIGNATURA_PRUEBA
     assert documento.estado_curacion == "pendiente"
@@ -152,6 +162,9 @@ def test_el_mismo_archivo_con_otro_nombre_se_rechaza(
     assert respuesta.status_code == 200
     assert "alerta-error" in respuesta.text
     assert "no lo duplica" in respuesta.text
+    # Y dice cómo salir: sin esto el docente queda con un archivo que no puede
+    # volver a subir ni sabe cómo quitar.
+    assert "elimínalo antes" in respuesta.text
 
 
 def test_un_formato_no_soportado_se_explica(http):
@@ -249,6 +262,142 @@ def test_la_bandeja_muestra_los_fragmentos_reales(
         f"/teacher/curation/fragmentos?id_documento={documento.id_documento}"
     ).text
     assert f'id="fragment-{fragmentos[0].id_fragmento}"' not in bandeja
+
+
+# --- Eliminar un documento ----------------------------------------------------
+#
+# El caso que lo motivó: se sube un PDF de prueba, se descartan todos sus
+# fragmentos y el documento queda en la lista sin forma de quitarlo ni de volver
+# a subirlo, porque la deduplicación lo reconoce por su contenido.
+
+
+def _eliminar(http, id_documento: int, **kwargs):
+    return http.post(f"/teacher/curation/documentos/{id_documento}/delete", **kwargs)
+
+
+def test_eliminar_un_documento_borra_sus_fragmentos_y_su_archivo(
+    http, db, pdf_de_prueba, almacen_temporal, limpiar_documentos
+):
+    _, documento, fragmentos = _subir(http, db, pdf_de_prueba, limpiar_documentos)
+    id_documento = documento.id_documento
+    archivo = Path(documento.ruta_archivo)
+    assert fragmentos and archivo.exists()
+
+    respuesta = _eliminar(http, id_documento)
+
+    assert respuesta.status_code == 200
+    assert "alerta-ok" in respuesta.text
+    assert "apunte_docente" in respuesta.text
+    # Sus fragmentos pendientes tienen que salir también de la bandeja.
+    assert respuesta.headers.get("HX-Trigger") == "fragmentos-actualizados"
+
+    db.expire_all()
+    assert db.get(DocumentoFuente, id_documento) is None
+    assert (
+        db.scalar(
+            select(func.count())
+            .select_from(Fragmento)
+            .where(Fragmento.id_documento == id_documento)
+        )
+        == 0
+    )
+    assert not archivo.exists(), "la copia del almacén quedó huérfana"
+
+
+def test_tras_eliminarlo_el_mismo_archivo_se_puede_volver_a_subir(
+    http, db, pdf_de_prueba, almacen_temporal, limpiar_documentos
+):
+    _, documento, _ = _subir(http, db, pdf_de_prueba, limpiar_documentos)
+    id_anterior = documento.id_documento
+    _eliminar(http, id_anterior)
+
+    respuesta, nuevo, fragmentos = _subir(http, db, pdf_de_prueba, limpiar_documentos)
+
+    assert "quedó ingerido" in respuesta.text
+    assert nuevo.id_documento != id_anterior
+    assert {f.estado_validacion for f in fragmentos} == {"pendiente"}
+
+
+@pytest.mark.parametrize("cita", ["principal", "secundaria"])
+def test_un_documento_citado_por_una_capsula_no_se_elimina(
+    http, db, objetivo, pdf_de_prueba, almacen_temporal, limpiar_documentos, cita
+):
+    """Borrarlo dejaría la cápsula sin fuente (cap. 13).
+
+    Una cápsula cita varios fragmentos y solo el primero queda en la FK; los
+    demás viven en `contenido_json["fuentes"]`. La regla tiene que mirar ambos.
+    """
+    _, documento, fragmentos = _subir(http, db, pdf_de_prueba, limpiar_documentos)
+    citado = fragmentos[-1].id_fragmento
+    estudiante = Estudiante()
+    db.add(estudiante)
+    db.flush()
+    capsula = MicrocapsulaGenerada(
+        id_estudiante=estudiante.id_estudiante,
+        id_objetivo=objetivo.id_objetivo,
+        id_fragmento_fuente=citado if cita == "principal" else None,
+        titulo="Segunda forma normal",
+        contenido_json=(
+            {"fuentes": [{"id_fragmento": citado, "documento": "apunte", "pagina": 1}]}
+            if cita == "secundaria"
+            else {}
+        ),
+    )
+    db.add(capsula)
+    db.commit()
+
+    try:
+        respuesta = _eliminar(http, documento.id_documento)
+
+        assert respuesta.status_code == 200
+        assert "alerta-error" in respuesta.text
+        assert "no se puede eliminar" in respuesta.text
+        db.expire_all()
+        assert db.get(DocumentoFuente, documento.id_documento) is not None
+        assert Path(documento.ruta_archivo).exists()
+    finally:
+        db.delete(capsula)
+        db.delete(estudiante)
+        db.commit()
+
+
+def test_eliminar_un_documento_que_no_existe_se_explica(http):
+    respuesta = _eliminar(http, 999_999_999)
+
+    assert respuesta.status_code == 200
+    assert "alerta-error" in respuesta.text
+    assert "ya no existe" in respuesta.text
+
+
+def test_eliminar_el_documento_que_filtra_la_pagina_vuelve_al_panel(
+    http, db, pdf_de_prueba, almacen_temporal, limpiar_documentos
+):
+    """Si no, la bandeja seguiría filtrada por un documento que ya no está."""
+    _, documento, _ = _subir(http, db, pdf_de_prueba, limpiar_documentos)
+    id_documento = documento.id_documento
+
+    respuesta = _eliminar(
+        http,
+        id_documento,
+        headers={
+            "HX-Current-URL": f"http://testserver/teacher/curation?id_documento={id_documento}"
+        },
+    )
+
+    assert respuesta.headers.get("HX-Redirect") == "/teacher/curation"
+
+
+def test_cada_documento_cargado_trae_su_boton_de_eliminar(
+    http, db, pdf_de_prueba, almacen_temporal, limpiar_documentos
+):
+    _, documento, _ = _subir(http, db, pdf_de_prueba, limpiar_documentos)
+    boton = f'hx-post="/teacher/curation/documentos/{documento.id_documento}/delete"'
+
+    assert boton in http.get("/teacher/curation").text
+    # Es lo que HTMX vuelve a pedir tras una ingesta.
+    lista = http.get("/teacher/curation/documentos").text
+    assert boton in lista
+    assert "hx-confirm" in lista
 
 
 # --- Alta de objetivos desde el panel ----------------------------------------

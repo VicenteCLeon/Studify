@@ -10,7 +10,7 @@ import tempfile
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from studify.api.schemas_knowledge import (
@@ -42,6 +42,7 @@ from studify.knowledge.ingest import (
     DocumentoDuplicado,
     DocumentoSinTexto,
     ingerir,
+    retirar_del_almacen,
 )
 from studify.rag.retriever import contar_disponibles, recuperar
 from studify.web.routers import auth
@@ -264,6 +265,10 @@ def eliminar_documento(id_documento: int, db: Session = Depends(get_db)) -> None
     con la fuente en blanco, rompiendo en silencio la auditabilidad que exige el
     cap. 13. Para retirar material ya usado está `estado_curacion = 'rechazado'`,
     que lo saca del retriever conservando la trazabilidad histórica.
+
+    Se van la fila, sus fragmentos (por cascada) y la copia del archivo en el
+    almacén. Con eso el hash queda libre y el mismo archivo se puede volver a
+    subir.
     """
     documento = db.get(DocumentoFuente, id_documento)
     if documento is None:
@@ -272,15 +277,7 @@ def eliminar_documento(id_documento: int, db: Session = Depends(get_db)) -> None
             detail=f"no existe el documento {id_documento}",
         )
 
-    capsulas = db.scalar(
-        select(func.count())
-        .select_from(MicrocapsulaGenerada)
-        .join(
-            Fragmento,
-            MicrocapsulaGenerada.id_fragmento_fuente == Fragmento.id_fragmento,
-        )
-        .where(Fragmento.id_documento == id_documento)
-    )
+    capsulas = _capsulas_que_citan(db, id_documento)
     if capsulas:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -291,8 +288,39 @@ def eliminar_documento(id_documento: int, db: Session = Depends(get_db)) -> None
             ),
         )
 
+    ruta_archivo = documento.ruta_archivo
     db.delete(documento)
     db.commit()
+    # Después del commit: si el borrado de la fila fallara, el archivo tiene que
+    # seguir ahí.
+    retirar_del_almacen(ruta_archivo)
+
+
+def _capsulas_que_citan(db: Session, id_documento: int) -> int:
+    """Cuántas cápsulas ya generadas citan algún fragmento del documento.
+
+    Mira los dos lugares donde una cápsula guarda sus fuentes: la FK al
+    fragmento principal y la lista completa de `contenido_json["fuentes"]`. La
+    FK sola no alcanza, porque una cápsula cita varios fragmentos y solo el
+    primero queda en la columna.
+    """
+    ids = db.scalars(
+        select(Fragmento.id_fragmento).where(Fragmento.id_documento == id_documento)
+    ).all()
+    if not ids:
+        return 0
+
+    fuentes = MicrocapsulaGenerada.contenido_json["fuentes"]
+    return db.scalar(
+        select(func.count())
+        .select_from(MicrocapsulaGenerada)
+        .where(
+            or_(
+                MicrocapsulaGenerada.id_fragmento_fuente.in_(ids),
+                *(fuentes.contains([{"id_fragmento": i}]) for i in ids),
+            )
+        )
+    )
 
 
 @router_docente.get(

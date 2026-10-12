@@ -25,6 +25,7 @@ from studify.knowledge.extract import (
     hash_archivo,
     normalizar,
 )
+from studify.knowledge.ingest import retirar_del_almacen
 
 # --- Normalización ------------------------------------------------------------
 
@@ -334,3 +335,31 @@ def test_pipeline_completo_pdf_a_fragmentos(tmp_path):
         assert f.pagina_inicio >= 1
         assert f.pagina_fin >= f.pagina_inicio
         assert f.texto.strip()
+
+
+# --- Almacén ------------------------------------------------------------------
+
+
+def test_retirar_del_almacen_borra_la_copia(tmp_path, almacen_temporal):
+    copia = Path(almacen_temporal) / "abc123.pdf"
+    copia.parent.mkdir(parents=True)
+    copia.write_bytes(b"%PDF-1.4")
+
+    retirar_del_almacen(str(copia))
+
+    assert not copia.exists()
+
+
+def test_retirar_del_almacen_no_toca_archivos_de_fuera(tmp_path, almacen_temporal):
+    """`ruta_archivo` sale de la base: podría apuntar al original del docente."""
+    original = tmp_path / "apunte_del_docente.pdf"
+    original.write_bytes(b"%PDF-1.4")
+
+    retirar_del_almacen(str(original))
+
+    assert original.exists()
+
+
+def test_retirar_del_almacen_tolera_que_el_archivo_ya_no_este(almacen_temporal):
+    retirar_del_almacen(str(Path(almacen_temporal) / "inexistente.pdf"))
+    retirar_del_almacen(None)

@@ -1,0 +1,87 @@
+{# Documentos cargados, con su avance de curación. Se renderiza en la carga de
+   la página, la vuelve a pedir HTMX tras cada ingesta (evento
+   `documentos-actualizados`) y es también la respuesta de «Eliminar», que
+   llega con `aviso`.
+   `oob` solo viene en las respuestas a HTMX: actualiza el contador de arriba
+   sin recargar la página. #}
+{% import "components/ui.html" as ui %}
+{% if oob %}
+<span id="stat-documentos" class="stat-value" hx-swap-oob="true">{{ documentos | length }}</span>
+{% endif %}
+{% if documentos or aviso %}
+<section class="card mt-6" aria-labelledby="docs-titulo">
+    <h2 id="docs-titulo" class="card-title mb-4">Documentos cargados</h2>
+    {% if aviso %}
+    <div class="mb-4">
+        {% call ui.alert("ok" if aviso.estado == "ok" else "error") %}{{ aviso.mensaje }}{% endcall %}
+    </div>
+    {% endif %}
+    {% if documentos %}
+    <div class="table-container">
+        <table class="table table-stack">
+            <thead>
+                <tr>
+                    <th scope="col">Documento</th>
+                    <th scope="col">Estado</th>
+                    <th scope="col">Avance de curación</th>
+                    <th scope="col"><span class="visually-hidden">Acciones</span></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for fila in documentos %}
+                {% set c = fila.conteo %}
+                {% set total = (c.validado or 0) + (c.pendiente or 0) + (c.descartado or 0) %}
+                <tr>
+                    <td data-label="Documento">
+                        <div class="font-semibold">{{ fila.documento.titulo }}</div>
+                        <div class="text-sm text-muted">
+                            {{ fila.documento.formato }}{% if fila.documento.asignatura %} · {{ fila.documento.asignatura }}{% endif %}
+                        </div>
+                    </td>
+                    <td data-label="Estado">
+                        {% if fila.documento.estado_curacion == 'validado' %}
+                        <span class="badge badge-success">validado</span>
+                        {% elif fila.documento.estado_curacion == 'rechazado' %}
+                        <span class="badge badge-danger">rechazado</span>
+                        {% else %}
+                        <span class="badge badge-warning">pendiente</span>
+                        {% endif %}
+                    </td>
+                    <td data-label="Avance de curación">
+                        <div class="avance" aria-hidden="true">
+                            {% if total %}
+                            <span class="avance-ok" style="width: {{ (c.validado or 0) / total * 100 }}%"></span>
+                            <span class="avance-desc" style="width: {{ (c.descartado or 0) / total * 100 }}%"></span>
+                            {% endif %}
+                        </div>
+                        <div class="text-xs text-muted mt-1">
+                            {{ c.validado }} validados · {{ c.pendiente }} pendientes · {{ c.descartado }} descartados
+                        </div>
+                    </td>
+                    <td data-label="">
+                        <div class="cluster cluster-sm">
+                            <a class="btn btn-secondary btn-sm" href="/teacher/curation?id_documento={{ fila.documento.id_documento }}">
+                                Revisar solo este
+                            </a>
+                            {# El aviso nombra lo que se pierde. Los validados se
+                               mencionan aparte porque son los únicos que hoy
+                               llegan a las cápsulas. #}
+                            <button type="button" class="btn btn-danger btn-sm"
+                                    hx-post="/teacher/curation/documentos/{{ fila.documento.id_documento }}/delete"
+                                    hx-target="#documentos"
+                                    hx-swap="innerHTML"
+                                    hx-confirm="¿Eliminar «{{ fila.documento.titulo }}»? Se borran el archivo y sus fragmentos ({{ total }}).{% if c.validado %} Los validados ({{ c.validado }}) dejarán de usarse en las cápsulas nuevas.{% endif %} No se puede deshacer.">
+                                {{ ui.icon("trash-2") }}Eliminar
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="text-sm text-muted">No quedan documentos cargados.</p>
+    {% endif %}
+</section>
+{% endif %}

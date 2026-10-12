@@ -23,6 +23,7 @@ intentar.
 """
 
 from decimal import Decimal
+from urllib.parse import parse_qs, urlsplit
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse
@@ -33,6 +34,7 @@ from sqlalchemy.orm import Session
 from studify.api.routers.capsules import ClienteLLM, get_cliente_llm
 from studify.api.routers.knowledge import (
     crear_objetivo,
+    eliminar_documento,
     listar_documentos,
     listar_objetivos,
     subir_documento,
@@ -41,6 +43,7 @@ from studify.api.schemas_knowledge import ObjetivoIn
 from studify.config import get_settings
 from studify.db.models import (
     DiagnosticoVark,
+    DocumentoFuente,
     Fragmento,
     InteraccionQuiz,
     MicrocapsulaGenerada,
@@ -159,6 +162,52 @@ def get_fragmentos(
         name="teacher/_bandeja.html",
         context=_contexto_panel(db, id_documento),
     )
+
+
+@router.get("/curation/documentos", response_class=HTMLResponse)
+def get_documentos(request: Request, db: Session = Depends(get_db)):
+    """Solo la lista de documentos, para que HTMX la refresque tras una ingesta."""
+    return _documentos(request, db)
+
+
+@router.post("/curation/documentos/{id_documento}/delete", response_class=HTMLResponse)
+def delete_document(request: Request, id_documento: int, db: Session = Depends(get_db)):
+    """Elimina un documento cargado por error, con sus fragmentos y su archivo.
+
+    Reutiliza `eliminar_documento`, el handler de `DELETE /api/documentos/{id}`,
+    con su regla incluida: un documento que ya fundamenta cápsulas no se borra.
+    Al irse la fila queda libre su hash, así que el mismo archivo se puede
+    volver a subir.
+
+    Responde con la lista ya actualizada y el resultado arriba, en vez de un
+    aviso suelto: lo que el docente necesita ver es que el documento ya no está.
+    """
+    documento = db.get(DocumentoFuente, id_documento)
+    titulo = documento.titulo if documento else None
+    total = curation.resumen_documento(db, id_documento)["total"]
+
+    try:
+        eliminar_documento(id_documento=id_documento, db=db)
+    except HTTPException as exc:
+        return _documentos(request, db, aviso=("error", _explicar_borrado(exc, titulo)))
+
+    respuesta = _documentos(
+        request,
+        db,
+        aviso=(
+            "ok",
+            f"«{titulo}» se eliminó, con {total} fragmento(s). "
+            f"Si lo necesitas, ya puedes volver a subir el archivo.",
+        ),
+    )
+    if _filtrado_por(request, id_documento):
+        # La página estaba mostrando solo este documento. La bandeja seguiría
+        # pidiendo sus fragmentos y diría «no hay pendientes» aunque los haya en
+        # otros documentos, así que se vuelve al panel completo.
+        respuesta.headers["HX-Redirect"] = "/teacher/curation"
+    else:
+        respuesta.headers["HX-Trigger"] = "fragmentos-actualizados"
+    return respuesta
 
 
 @router.get("/analytics", response_class=HTMLResponse)
@@ -351,8 +400,9 @@ def upload_document(
         f"{resultado.palabras_totales} palabras. Todos están pendientes de "
         f"revisión: ninguno llegará a una cápsula hasta que lo valides.",
     )
-    # La bandeja se recarga sola en vez de pedirle al docente que refresque.
-    respuesta.headers["HX-Trigger"] = "fragmentos-actualizados"
+    # La bandeja y la lista de documentos se recargan solas en vez de pedirle
+    # al docente que refresque.
+    respuesta.headers["HX-Trigger"] = "fragmentos-actualizados, documentos-actualizados"
     return respuesta
 
 
@@ -701,6 +751,27 @@ def _documentos_con_avance(db: Session) -> list[dict]:
     return filas
 
 
+def _documentos(
+    request: Request, db: Session, aviso: tuple[str, str] | None = None
+) -> HTMLResponse:
+    """La lista de documentos como respuesta a HTMX, con un aviso opcional."""
+    return templates.TemplateResponse(
+        request=request,
+        name="teacher/_documentos.html",
+        context={
+            "documentos": _documentos_con_avance(db),
+            "aviso": {"estado": aviso[0], "mensaje": aviso[1]} if aviso else None,
+            "oob": True,
+        },
+    )
+
+
+def _filtrado_por(request: Request, id_documento: int) -> bool:
+    """Si la página desde la que llega la petición muestra solo ese documento."""
+    consulta = parse_qs(urlsplit(request.headers.get("HX-Current-URL", "")).query)
+    return consulta.get("id_documento") == [str(id_documento)]
+
+
 def _a_fila(fragmento) -> dict:
     """Un fragmento tal como lo necesita la plantilla de la bandeja.
 
@@ -788,7 +859,8 @@ def _explicar_ingesta(exc: HTTPException) -> str:
     if exc.status_code == 409:
         return (
             f"{exc.detail} La deduplicación es por contenido, no por nombre: "
-            f"subir el mismo archivo con otro nombre no lo duplica."
+            f"subir el mismo archivo con otro nombre no lo duplica. Para volver "
+            f"a ingerirlo, elimínalo antes en «Documentos cargados»."
         )
     if exc.status_code == 415:
         return f"{exc.detail}"
@@ -797,4 +869,15 @@ def _explicar_ingesta(exc: HTTPException) -> str:
             f"{exc.detail} Suele pasar con PDF escaneados (imágenes sin capa de "
             f"texto): no sirven para un RAG textual."
         )
+    return str(exc.detail)
+
+
+def _explicar_borrado(exc: HTTPException, titulo: str | None) -> str:
+    if exc.status_code == 409:
+        return (
+            f"«{titulo}» no se puede eliminar: ya hay cápsulas generadas que lo "
+            f"citan como fuente, y borrarlo las dejaría sin respaldo."
+        )
+    if exc.status_code == 404:
+        return "Ese documento ya no existe. La lista de abajo está actualizada."
     return str(exc.detail)

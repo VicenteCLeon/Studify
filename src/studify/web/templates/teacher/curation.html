@@ -17,7 +17,7 @@
 
     <div class="panel-stats">
         <div class="stat">{{ ui.icon("target", cls="stat-icon") }}<span class="stat-value">{{ objetivos | length }}</span><span class="stat-label">objetivos en el catálogo</span></div>
-        <div class="stat">{{ ui.icon("file-text", cls="stat-icon") }}<span class="stat-value">{{ documentos | length }}</span><span class="stat-label">documentos cargados</span></div>
+        <div class="stat">{{ ui.icon("file-text", cls="stat-icon") }}<span id="stat-documentos" class="stat-value">{{ documentos | length }}</span><span class="stat-label">documentos cargados</span></div>
         <div class="stat">{{ ui.icon("inbox", cls="stat-icon") }}<span class="stat-value">{{ fragmentos | length }}</span><span class="stat-label">fragmentos en la bandeja</span></div>
     </div>
 
@@ -128,62 +128,15 @@
         </section>
     </div>
 
-    {% if documentos %}
-    <section class="card mt-6" aria-labelledby="docs-titulo">
-        <h2 id="docs-titulo" class="card-title mb-4">Documentos cargados</h2>
-        <div class="table-container">
-            <table class="table table-stack">
-                <thead>
-                    <tr>
-                        <th scope="col">Documento</th>
-                        <th scope="col">Estado</th>
-                        <th scope="col">Avance de curación</th>
-                        <th scope="col"><span class="visually-hidden">Acciones</span></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for fila in documentos %}
-                    {% set c = fila.conteo %}
-                    {% set total = (c.validado or 0) + (c.pendiente or 0) + (c.descartado or 0) %}
-                    <tr>
-                        <td data-label="Documento">
-                            <div class="font-semibold">{{ fila.documento.titulo }}</div>
-                            <div class="text-sm text-muted">
-                                {{ fila.documento.formato }}{% if fila.documento.asignatura %} · {{ fila.documento.asignatura }}{% endif %}
-                            </div>
-                        </td>
-                        <td data-label="Estado">
-                            {% if fila.documento.estado_curacion == 'validado' %}
-                            <span class="badge badge-success">validado</span>
-                            {% elif fila.documento.estado_curacion == 'rechazado' %}
-                            <span class="badge badge-danger">rechazado</span>
-                            {% else %}
-                            <span class="badge badge-warning">pendiente</span>
-                            {% endif %}
-                        </td>
-                        <td data-label="Avance de curación">
-                            <div class="avance" aria-hidden="true">
-                                {% if total %}
-                                <span class="avance-ok" style="width: {{ (c.validado or 0) / total * 100 }}%"></span>
-                                <span class="avance-desc" style="width: {{ (c.descartado or 0) / total * 100 }}%"></span>
-                                {% endif %}
-                            </div>
-                            <div class="text-xs text-muted mt-1">
-                                {{ c.validado }} validados · {{ c.pendiente }} pendientes · {{ c.descartado }} descartados
-                            </div>
-                        </td>
-                        <td data-label="">
-                            <a class="btn btn-secondary btn-sm" href="/teacher/curation?id_documento={{ fila.documento.id_documento }}">
-                                Revisar solo este
-                            </a>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </section>
-    {% endif %}
+    {# La lista se vuelve a pedir tras cada ingesta; «Eliminar» la reemplaza con
+       su propia respuesta. #}
+    <div id="documentos"
+         hx-get="/teacher/curation/documentos"
+         hx-trigger="documentos-actualizados from:body"
+         hx-target="this"
+         hx-swap="innerHTML">
+        {% include "teacher/_documentos.html" %}
+    </div>
 
     <section class="card mt-6" aria-labelledby="bandeja-titulo">
         <div class="card-header">
