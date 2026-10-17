@@ -2576,6 +2576,8 @@ tener que saltar de archivo:
 
 ## 8. Correcciones detectadas en el informe (`seminario_titulo.md`), no aplicadas aún
 
+> **Registro al 17-oct-2026; ya no se actualiza.** Esta lista y las diferencias entre el informe y la implementación están en [`CORRECCIONES_INFORME.md`](CORRECCIONES_INFORME.md).
+
 Estas no bloquean código, pero quedaron identificadas para el informe final (ver
 `PLAN_DESARROLLO.md` sección 7 para el detalle completo):
 

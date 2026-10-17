@@ -286,7 +286,8 @@ Origen: `AVANCE.md` §5 tervicies «Riesgos legales que siguen abiertos» y
 
 - **D1. Tablas 16.2/16.3 del informe:** no se reproducen desde el CSV de los 43
   diagnósticos. O se corrige el informe con los valores recalculados, o
-  aparece la planilla que explique la diferencia. Origen: AVANCE §6 n.º 5 y §5 ter.
+  aparece la planilla que explique la diferencia. Origen: AVANCE §6 n.º 5 y §5 ter;
+  `CORRECCIONES_INFORME.md` C1.
 - **D2. ¿«Contenido» y «OA» son la misma jerarquía?** Pidió OA secundarios por
   fragmento y a la vez evitar que un fragmento pertenezca a varios contenidos;
   con `Fragmento.id_objetivo` singular lo segundo se cumple y lo primero es
@@ -323,8 +324,8 @@ Origen: `AVANCE.md` §5 tervicies «Riesgos legales que siguen abiertos» y
 
 ## Correcciones al informe
 
-Las correcciones detectadas en el informe de avance están en `AVANCE.md` §8 y
-`PLAN_DESARROLLO.md` §7.
+Qué corregir, actualizar o agregar en el informe final respecto del de avance
+está en [`CORRECCIONES_INFORME.md`](CORRECCIONES_INFORME.md).
 
 ---
 

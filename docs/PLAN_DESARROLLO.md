@@ -314,6 +314,8 @@ Todas nacen de vacíos del informe:
 
 ## 7. Correcciones pendientes en el informe
 
+> **Registro al 31-jul-2026; ya no se actualiza.** Esta lista y las diferencias entre el informe y la implementación están en [`CORRECCIONES_INFORME.md`](CORRECCIONES_INFORME.md).
+
 Detectadas al leerlo para este plan. No bloquean el código, pero conviene arreglarlas para el informe final:
 
 - **Referencias cruzadas desfasadas** (parecen haber quedado de una numeración anterior): el cap. 16.4 remite a "sección 12.2" cuando las reglas de mapeo están en **11.2**; el cap. 17 remite a "sección 14" cuando la justificación de la BD es el **13**, y a "sección 12.3" que no existe; el cap. 17.1 remite a "sección 10" para los datos sociodemográficos, que están en el **9**, y a "sección 11" para la calificación, que está en el **10**.
