@@ -136,12 +136,20 @@ def verificar_credenciales_docente(usuario: str, clave: str) -> bool:
     Sin clave configurada devuelve `False` siempre, incluida una petición con la
     cadena vacía: si no, un `.env` con `TEACHER_PASSWORD=` dejaría el panel
     abierto a quien mandara el formulario en blanco.
+
+    Se comparan los **bytes UTF-8** y no los `str`: con `str`,
+    `compare_digest` solo acepta ASCII y levanta `TypeError` ante una «ñ» o una
+    tilde, de modo que el login respondía 500 en vez de rechazar la clave.
     """
     settings = get_settings()
     if not settings.teacher_password:
         return False
-    usuario_ok = hmac.compare_digest(usuario, settings.teacher_username)
-    clave_ok = hmac.compare_digest(clave, settings.teacher_password)
+    usuario_ok = hmac.compare_digest(
+        usuario.encode("utf-8"), settings.teacher_username.encode("utf-8")
+    )
+    clave_ok = hmac.compare_digest(
+        clave.encode("utf-8"), settings.teacher_password.encode("utf-8")
+    )
     return usuario_ok and clave_ok
 
 

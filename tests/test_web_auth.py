@@ -294,6 +294,38 @@ def test_el_usuario_incorrecto_no_abre_nada(http, clave_docente):
     assert sesion.COOKIE_DOCENTE not in respuesta.cookies
 
 
+@pytest.mark.parametrize(
+    ("usuario", "clave"),
+    [(USUARIO_DOCENTE, "contraseña"), ("admín", CLAVE_DOCENTE)],
+    ids=["clave-con-enie", "usuario-con-tilde"],
+)
+def test_una_credencial_con_tildes_o_enie_se_rechaza_sin_romper(
+    http, clave_docente, usuario, clave
+):
+    """Una «ñ» o una tilde son lo más normal en un teclado chileno.
+
+    `hmac.compare_digest` no acepta `str` con caracteres fuera de ASCII y
+    levanta `TypeError`: el login respondía 500 en vez de «Usuario o clave
+    incorrectos», y ese intento ni siquiera contaba para el freno.
+    """
+    respuesta = _login(http, usuario=usuario, clave=clave)
+
+    assert respuesta.status_code == 401
+    assert sesion.COOKIE_DOCENTE not in respuesta.cookies
+
+
+def test_una_clave_configurada_con_enie_abre_la_sesion(http, monkeypatch):
+    """Si la clave del `.env` lleva «ñ», el panel tiene que seguir abriendo."""
+    settings = get_settings()
+    monkeypatch.setattr(settings, "teacher_username", "profesora")
+    monkeypatch.setattr(settings, "teacher_password", "contraseña-del-piloto")
+
+    respuesta = _login(http, usuario="profesora", clave="contraseña-del-piloto")
+
+    assert respuesta.status_code == 303
+    assert sesion.COOKIE_DOCENTE in respuesta.cookies
+
+
 def test_el_login_recuerda_a_donde_iba_el_docente(http, clave_docente):
     respuesta = _login(http, next="/teacher/analytics")
 
