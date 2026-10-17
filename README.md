@@ -165,10 +165,15 @@ proveedor anunció retirar; producción usa `deepseek-flash` con el razonamiento
 
 ## 📄 Documentación del proyecto
 
+El índice completo, con qué es cada documento y cuándo leerlo, está en
+[`docs/README.md`](docs/README.md). Los principales:
+
 | Documento | Contenido |
 |---|---|
+| [`docs/AVANCE.md`](docs/AVANCE.md) | Estado actual del proyecto y bitácora: qué se hizo y cómo se verificó. |
+| [`docs/PENDIENTES.md`](docs/PENDIENTES.md) | Todo lo que falta, empezando por lo que hay que cerrar antes del piloto. |
 | [`docs/PLAN_DESARROLLO.md`](docs/PLAN_DESARROLLO.md) | Roadmap por fases, decisiones de stack, riesgos y contrato de la microcápsula. |
-| [`docs/AVANCE.md`](docs/AVANCE.md) | Bitácora viva del proyecto: qué se hizo, qué se verificó y qué queda pendiente. |
+| [`docs/CORRECCIONES_INFORME.md`](docs/CORRECCIONES_INFORME.md) | Qué corregir o agregar en el informe final respecto del de avance. |
 
 ---
 

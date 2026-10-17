@@ -1,7 +1,8 @@
 # Studify — Estado de avance
 
 > Bitácora del proyecto: qué se hizo, qué se verificó y qué se decidió en el camino.
-> Última actualización: **17-oct-2026**. Lo que falta está en [`PENDIENTES.md`](PENDIENTES.md).
+> Última actualización: **17-oct-2026**. Lo que falta está en [`PENDIENTES.md`](PENDIENTES.md);
+> el índice de toda la documentación, en [`README.md`](README.md).
 
 ---
 
