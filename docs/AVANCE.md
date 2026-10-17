@@ -1,132 +1,7 @@
 # Studify — Estado de avance
 
-> Documento vivo. Se actualiza al cierre de cada fase para que cualquier sesión de trabajo
-> (o cualquier persona) pueda retomar el proyecto sin releer todo el hilo de conversación.
-> Última actualización: **05-oct-2026** — **licencia AGPL-3.0-or-later** (sección 5
-> tritricies): el código es software libre. Se agregan `LICENSE` y los metadatos en
-> `pyproject.toml`, Términos y Política suben a 0.2 (motores de voz, componentes de terceros,
-> preferencia de voz) y el pie de todas las páginas ofrece el código fuente.
-> Antes, el mismo día: **audio, Etapa 3 Parte A** (sección 5
-> duotricies): el audio del visor se cachea por la huella del guion normalizado + voz +
-> motor, no por `id_capsula` (H10, parte 2). Medición final: Kokoro ~0,19 × la duración
-> del audio (con episodios de ~0,6 no explicados) y Piper 0,026.
-> Antes, el mismo día: **preferencia de voz, Etapa 2** (sección 5
-> undetricies): el estudiante elige Dora, Alex, voz femenina rápida o voz masculina
-> rápida, en el visor o en el perfil. Se guarda en `estudiante.voz_genero` y `voz_modo`
-> (migración `c3a91f5e7d20`), y el visor narra con la voz del dueño de la cápsula.
-> Antes, el mismo día: **motores de voz, Etapa 1** (sección 5
-> duodetricies): Kokoro por defecto (Dora o Alex), Piper como modo rápido (sharvard, voces
-> masculina y femenina) y XTTS solo administrativo, detrás de la misma `generar_audio`. El
-> estudiante elige {género, modo}, y el guion se normaliza a palabras antes de narrarse.
-> Falta la interfaz (Etapa 2) y el servicio de audio (Etapa 3).
-> Antes: **04-oct-2026** — **H5 corregido** (sección 5 septvicies):
-> `POST /api/capsulas` ya no sintetiza audio ni imagen. Se eliminan ~100–130 s de bloqueo
-> (medidos) en cada cápsula nueva con A ≥ 25 %; el audio del visor no cambia.
-> Antes, el mismo día: **H2 corregido** (sección 5 sexvicies): el bucle
-> de reparación ya no se queda repitiendo la misma respuesta. El mensaje «bajo mínimo» va
-> cuantificado y una respuesta idéntica reinicia la conversación. Cumple los criterios
-> fijados de antemano en dos corridas por semilla, y recupera las dos cápsulas que se
-> habían perdido en la Etapa 1.
-> Antes, el mismo día: **corrección de H1 + H3 medida y no aplicada**
-> (sección 5 quinvicies): el glosario de R aparece en el 100 % de los casos con el texto
-> nuevo, pero ningún brazo cumplió la regla de cierre fijada de antemano. La causa es el
-> bucle de reparación que repite la respuesta (H2), que pasa a ser prioritario. Además, se
-> arregló H9: un paquete `tests` de gruut impedía importar 12 archivos de tests.
-> Antes: **03-oct-2026** — **batería de pruebas VARK de punta a punta**
-> (sección 5 quatervicies): 30 perfiles A/R/K contra DeepSeek y XTTS reales; 29/30 cápsulas
-> válidas y 0 citas inventadas, el audio funciona (16/16) y K también con p_K ≥ 40 %, pero
-> **el perfil R nunca recibe su glosario** (directiva que apunta a un campo eliminado). Hay
-> ocho hallazgos reportados sin corregir en [`PRUEBAS_VARK.md`](PRUEBAS_VARK.md).
-> Antes: **02-oct-2026** — **marco legal** (sección 5 tervicies): Términos y
-> Política de Privacidad (Ley 19.628/21.719) en borrador con `[PLACEHOLDER]`, footer legal,
-> consentimiento con trazabilidad (`aceptacion_legal`), `/mis-datos` para ejercer derechos,
-> cierre de los endpoints de la API que exponían perfiles ajenos y fuentes/HTMX sin terceros.
-> Antes, el mismo día: **rediseño completo del frontend** (sección 5
-> duovicies): design system propio (tokens, modo oscuro, íconos, componentes), landing en `/`,
-> cuestionario de una pregunta a la vez, perfil con radar SVG, catálogo con buscador, pantalla
-> "Generando tu cápsula…", visor con referencias que muestran el fragmento citado y panel
-> docente responsive con el gráfico VARK de la cohorte. Solo capa de presentación: ningún
-> endpoint ni flujo HTMX cambió. Convenciones en [`DESIGN_SYSTEM.md`](DESIGN_SYSTEM.md).
-> **341 tests en verde** (4 fallos previos, documentados en la sección).
-> Antes: **26-ago-2026** — **separación de las vistas del estudiante y del
-> docente** (secciones 5 duodevicies y 5 undevicies). Hasta ahora `/teacher/*` estaba abierto:
-> la cabecera ofrecía las tres pestañas del docente a cualquiera y ninguna comprobaba nada, de
-> modo que la bandeja de curación —que decide qué material llega a las cápsulas, cap. 12/13— la
-> podía usar quien escribiera la URL. Ahora hay un botón «Soy docente» que lleva a
-> `/teacher/login`, una credencial única (usuario + clave) y un guardián declarado en el
-> `APIRouter`, de forma que toda vista nueva del panel queda cerrada por construcción y no por
-> disciplina; un test lo comprueba recorriendo las rutas ya montadas. La cookie del docente
-> lleva el vencimiento y la huella de la credencial dentro de la firma (rotar usuario o clave
-> expulsa las sesiones abiertas), las peticiones HTMX sin sesión reciben `HX-Redirect` en vez
-> de un 303 que HTMX incrustaría dentro de un `<div>`, y con `TEACHER_PASSWORD=` puesta vacía a
-> propósito el panel se cierra para todos en vez de quedar abierto en silencio. **A pedido del
-> equipo, el valor de fábrica —sin tocar el `.env`— es usuario `admin` y clave `admin123`**
-> (sección 5 undevicies): es un retroceso de seguridad deliberado a cambio de que el panel
-> funcione nada más clonar el repo, documentado como tal y a cambiar antes de exponer el
-> sistema a estudiantes reales. **330 tests en verde** (327 + 3). El mismo día, además,
-> **higiene operativa** (sección 5 vicies): al ir a cerrar los tres pendientes «operativos»,
-> dos describían un estado que ya no era cierto —las dependencias de ingesta ya estaban
-> instaladas, y la base no estaba vacía sino **contaminada**: 157 diagnósticos donde los reales
-> son 43—. La causa era `tests/test_api_diagnosticos.py`, el único archivo de la suite sin
-> fixture de limpieza, que sumaba una decena de estudiantes en cada corrida de `pytest`; el
-> mismo problema que la sección 3 ter ya había documentado el 10-ago y que volvió porque
-> entonces se limpió el resultado y no la causa. Se arregló primero la causa (fixture autouse,
-> verificada con dos corridas seguidas sin que se muevan los conteos) y después el resultado
-> (`--reset` + recarga: 43 estudiantes y 1.202 respuestas, el número exacto de la sección
-> 5 ter). El material curado no se tocó y `SESSION_SECRET` quedó fijada. Y por último, también
-> el mismo día, **el cierre de `/api/*`** (sección 5 unvicies, pendiente n.º 17): el login había
-> separado las *vistas* pero no los *endpoints*, así que `POST /api/objetivos`, los `PATCH` de
-> curación y `DELETE /api/documentos/{id}` seguían aceptando escrituras anónimas. Los 13 de
-> curación y analítica pasaron a un `router_docente` que responde 401 con `WWW-Authenticate`
-> —no el 303 de la web, que un cliente HTTP seguiría hasta creer que la llamada funcionó— y
-> acepta cookie o HTTP Basic; quedan abiertos los seis del estudiante. **De paso apareció un
-> problema peor:** el test de cobertura de rutas escrito esa mañana **pasaba en vacío**, porque
-> FastAPI 0.141 no aplana `include_router` y el filtro veía 2 de 41 rutas — corregido, con un
-> test que ahora vigila al vigilante. **339 tests en verde.**
-> Antes: **24-ago-2026** — repaso de coherencia entre `PLAN_DESARROLLO.md` y el
-> estado real: quedaron marcadas ✅/reabiertas las cinco decisiones de la sección 6 del plan
-> (el mapeo de C_* se cerró con una fórmula **distinta** a la propuesta original — sobre
-> porcentajes VARK, no sobre C_* —, fragmentos no textuales quedó parcialmente cerrado, tema y
-> regeneración cerrados, audio reabierto), se corrigió una frase de la Fase 5 que ya no era
-> cierta (el simulador "todavía no" comparaba V/A/R/K — sí lo hace desde hoy mismo), se anotó
-> el estado real del criterio de término de la Fase 3 (comparación hecha, ≥95% todavía no) y se
-> marcó como superado el esquema de cápsula de la sección 3, reemplazado el 19-ago por la
-> estructura de siete pasos. Nada de esto es código nuevo — es que el plan había quedado un
-> paso atrás del propio `AVANCE.md`. Antes, el mismo día: se agregó la **Fase 6** a
-> `PLAN_DESARROLLO.md` §4 a pedido del equipo — generación local de imagen/audio/video con
-> modelos gratuitos (candidatos: SDXL-Turbo, Piper TTS, video compuesto con `ffmpeg`/`moviepy`)
-> para complementar los canales V/A/K, fuera del horizonte de 10 semanas y sin bloquear el
-> criterio de término de las fases 1–5. Reabre el punto 2 de la sección 7 (`audio_activo`);
-> queda como pendiente n.º 16 de la sección 6, no iniciado — falta confirmar qué GPU/VRAM tiene
-> disponible cada máquina del equipo antes de empezar a implementar. Antes, el mismo día (esta
-> vez sí con código): implementado `knowledge/tagger.py`: el LLM propone objetivo y etiqueta
-> temática por fragmento contra el catálogo curricular activo, y la bandeja
-> de revisión del docente preselecciona esa propuesta en el `<select>` que ya existía. La
-> propuesta nunca escribe `Fragmento.id_objetivo` ni `estado_validacion` — "propone, no decide"
-> se hizo cumplir en el código, no solo en la intención —, y un `id_objetivo` fuera del catálogo
-> entregado (u otra asignatura) se descarta igual que una cita alucinada. Verificado contra
-> DeepSeek real: acertó los dos objetivos que sí correspondían a sus fragmentos y devolvió
-> `null`, con motivo, en el que no calzaba con ninguno. Cierra el pendiente n.º 3 (sección 5
-> septendecies). Suite completa: 308 tests en verde. Antes, el mismo día: investigado por qué el
-> perfil lector-escritor (R) fallaba la validación más que los otros tres (pendiente n.º 15),
-> hasta encontrar y corregir
-> **dos causas reales**: su objetivo de palabras interpolaba exactamente en el máximo duro del
-> validador, sin margen para la variación normal del modelo (corregido en
-> `rag/orchestrator.py`); y, capturando el texto crudo de cada intento, se confirmó que el
-> modelo **reenviaba la respuesta anterior byte a byte idéntica** cuando el mensaje de
-> reparación no le daba un blanco concreto (corregido en `generation/validator.py`). Verificado
-> contra DeepSeek real en tres rondas: **6 de 11 generaciones de R exitosas en total (55%)**,
-> con dos de los tres temas de prueba pasando ya de forma consistente — mejora real medida, no
-> resuelto del todo: ver sección 5 sedecies. Antes, el mismo día: el simulador docente pasó a
-> comparar los cuatro perfiles VARK lado a lado
-> (`POST /teacher/simulator/compare`), cerrando el criterio de término de la Fase 3 y siendo la
-> corrida que encontró el problema de R (sección 5 quindecies). Antes de eso: los 16 enunciados
-> del cuestionario VARK se verificaron carácter a carácter contra el CSV original y resultaron
-> idénticos, cerrando el pendiente n.º 6 (sección 5 quaterdecies). Antes de eso: la microcápsula
-> pasó a tener la estructura pedagógica de siete pasos que definió la profesora guía (19-ago,
-> sección 5 terdecies), alta de objetivos desde el panel del docente (14-ago,
-> sección 5 duodecies), rebranding a "RepasAi" y fondo de marca (13-ago, sección 5 undecies) y
-> panel de analíticas con tres bugs de fondo corregidos (12-ago, sección 5 decies).
+> Bitácora del proyecto: qué se hizo, qué se verificó y qué se decidió en el camino.
+> Última actualización: **17-oct-2026**. Lo que falta está en [`PENDIENTES.md`](PENDIENTES.md).
 
 ---
 
@@ -136,82 +11,80 @@ Studify es el prototipo funcional del Seminario de Título *"Generación de micr
 educativo mediante IA generativa, basado en estilos de aprendizaje del estudiante"* (Patricio
 Hernández Vergara, Vicente Cisternas León — PUCV, profesora guía Sandra Cano Mazuera).
 
-Genera **microcápsulas educativas** (150–300 palabras, 3–7 min de consumo, con quiz de cierre)
-adaptadas al perfil VARK del estudiante (Visual / Auditivo / Lector-escritor / Kinestésico),
-ancladas mediante **RAG estructurado sobre base de datos relacional** — es decir, sin
-embeddings ni búsqueda vectorial: la recuperación de fragmentos de conocimiento se hace con
-SQL determinista sobre metadatos curados, para garantizar trazabilidad y control curricular.
+Genera **microcápsulas educativas** (150–300 palabras, 3–7 min de consumo, con actividad de
+cierre) adaptadas al perfil VARK del estudiante (Visual / Auditivo / Lector-escritor /
+Kinestésico), ancladas mediante **RAG estructurado sobre base de datos relacional**: sin
+embeddings ni búsqueda vectorial, la recuperación es SQL determinista sobre metadatos curados,
+para garantizar trazabilidad y control curricular. La interfaz se llama **RepasAi**.
 
-El documento fuente de todo el diseño es [`seminario_titulo.md`](seminario_titulo.md)
-(el informe de avance ya entregado). El plan de implementación derivado de ese informe está en
-[`PLAN_DESARROLLO.md`](PLAN_DESARROLLO.md) — **léase antes de tocar código**, ahí están las
-decisiones de arquitectura, el roadmap de 10 semanas y las decisiones pendientes.
-
-Este archivo (`AVANCE.md`) es el complemento: qué se hizo realmente, qué se verificó, qué
-quedó pendiente y qué decisiones se tomaron sobre la marcha.
+El documento fuente del diseño es [`seminario_titulo.md`](seminario_titulo.md) (el informe de
+avance ya entregado) y el plan de implementación derivado, [`PLAN_DESARROLLO.md`](PLAN_DESARROLLO.md).
 
 ---
 
-## 1. Estado actual en una frase
+## 1. Estado actual (17-oct-2026)
 
-**Semana 0 completa** (`fbf4b3f`, pusheada a `origin/main` —
-https://github.com/VicenteCLeon/Studify.git) y **Fase 1 cerrada**: las 8 entidades del cap. 17
-migradas sobre Postgres, el motor VARK completo (scoring → pesos → jerarquía → reglas) y los 43
-diagnósticos reales cargados.
-Además, se construyó el **andamiaje inicial de la UI (Fase 4)** utilizando Jinja2, HTMX y Vanilla CSS, con 5 vistas principales (flujo estudiante y docente) — que en su momento usaban datos *mock* y hoy están conectadas al motor real (sección 5 nonies).
+| Área | Estado | Dónde |
+|---|---|---|
+| **Fase 1 — Perfil VARK** | Cerrada. 16 ítems → puntajes → vector porcentual → pesos C_* → reglas de la tabla 11.1. | §5, §5 ter |
+| **Fase 2 — Base de conocimiento** | Cerrada. Ingesta de PDF/PPTX con página, curación humana, retriever SQL sin embeddings, etiquetado asistido por LLM y borrado de documentos desde el panel. | §5 septies, §5 septendecies, §5 quatertricies |
+| **Fase 3 — Generación** | Cerrada. Contrato de siete pasos, validador, bucle de reparación y caché por huella. Batería VARK del 03-oct (con `deepseek-chat`): 29/30 cápsulas válidas, 26 a la primera (96,7 %), 0 citas inventadas. | §5 octies, §5 terdecies, §5 quatervicies |
+| **Fase 4 — Interfaz** | Cerrada y rediseñada el 02-oct: cuestionario, perfil, catálogo, visor y panel del docente con login. | §5 nonies, §5 duovicies |
+| **Marco legal** | Términos y Política 0.2, consentimiento registrado, `/mis-datos` y código bajo AGPL-3.0-or-later. | §5 tervicies, §5 tritricies |
+| **Audio (Fase 6)** | Kokoro y Piper según la preferencia de voz del estudiante, con caché por huella. | §5 duodetricies a §5 duotricies |
+| **Imagen (Fase 6)** | En pausa. El módulo Visual (SVG dibujado a partir de una especificación del LLM) está propuesto, sin integrar a la app. | §5 quatertricies |
+| **Fase 5 — Evaluación** | Sin empezar: A/B, batería técnica, validación docente, TAM. | `PENDIENTES.md` E |
+| **Modelo** | `deepseek-flash` con el razonamiento apagado (`LLM_THINKING=disabled`) desde el 11-oct. | §5 quatertricies |
+| **Suite** | Con Postgres: 580 pasan y 2 fallan; con la base apagada: 384 pasan y 4 fallan. Los 6 fallos son previos y dependen de la base de desarrollo. | §5 quintricies |
 
-**Núcleo de la Fase 2 cerrado** (sección 5 septies): ingesta de PDF/PPTX con trazabilidad de
-página, curación humana con estados reales y **retriever determinista sin embeddings**.
+Lo primero que falta antes del piloto con estudiantes está al inicio de
+[`PENDIENTES.md`](PENDIENTES.md).
 
-**Motor de generación de la Fase 3 cerrado** (sección 5 octies): contrato Pydantic de la
-microcápsula, validador con las seis reglas de rechazo, prompt maestro en cuatro bloques,
-bucle de reparación y `POST /api/capsulas` con caché y versionado. *(El contrato de la
-microcápsula se reemplazó el 19-ago por la estructura de siete pasos — sección 5 terdecies;
-el resto de esta sección sigue vigente.)*
+**Cómo leer el resto de este archivo:**
 
-**Fase 4 cerrada** (sección 5 nonies): la UI dejó de usar datos *mock*. El cuestionario
-muestra los 16 ítems reales del instrumento, el diagnóstico se guarda de verdad, hay sesión
-por cookie firmada, el perfil lee el vector y la configuración persistidos, el catálogo
-consulta `objetivo_aprendizaje` ocultando lo que no tiene material curado, el visor invoca el
-motor de generación y renderiza los siete tipos de bloque del contrato, el quiz se corrige
-contra `mini_quiz_json`, y el panel del docente ingiere y cura material real.
-**229 tests en verde y `ruff` limpio en todo el repositorio** (desaparecieron los 21 avisos
-que arrastraban los routers mock).
+- §2 a §4 son las decisiones de stack, la instalación y la estructura del repositorio **tal
+  como quedaron en agosto**; §4 no se actualizó después.
+- §5 es la bitácora, en orden: cada sección cuenta qué se hizo, qué se encontró y cómo se
+  verificó. El código cita estas secciones por su nombre («AVANCE.md sección 5 sedecies»), así
+  que no se renumeran.
+- §6 y §7 son las listas de pendientes de su época, que ya no se actualizan.
+- §8 son las correcciones detectadas en el informe y §9 cómo retomar el trabajo.
 
-**Fase 3 finalizada al 100% (incluyendo validación LLM):** Se agregó la credencial real de DeepSeek (`LLM_API_KEY`) al entorno y se cargó material curricular genuino (objetivo 369). El **bake-off de modelos** fue ejecutado exitosamente, obteniendo cápsulas 100% válidas en el primer intento con `deepseek-chat` (latencia ~5.5s) y quedando seleccionada definitivamente tras fallos de autorización de los otros candidatos (Qwen y GLM). ⚠️ Matiz sobre "bake-off": solo se pudo **medir** un modelo — Qwen y GLM fallaron por autorización, no por calidad — así que es más preciso decir que se seleccionó DeepSeek por ser el único candidato evaluable, no que ganó una comparación de tres.
+### Índice de la bitácora (§5)
 
-**Panel de analíticas del docente (12-ago-2026, sección 5 decies):** se agregaron cinco vistas nuevas para el docente y se auditaron a fondo. Tres tenían fallos de fondo, no solo visuales: el simulador VARK generaba cápsulas rotas e indistinguibles de un perfil inválido, la métrica de aciertos del quiz podía inflarse por reintentos, y la cobertura curricular podía marcar en verde temas cuyo material el retriever ya no recupera. Las tres quedaron corregidas con 32 tests nuevos (261 en total) y una migración (`interaccion_quiz` con intentos numerados).
-
-**Rebranding y fondo de marca (13-ago-2026, sección 5 undecies):** la UI pasó a llamarse "RepasAi" y toda la web tiene ahora una textura de fondo con íconos educativos. Es un cambio visual, sin código de dominio.
-
-**Estructura pedagógica de siete pasos (19-ago-2026, sección 5 terdecies):** la profesora guía observó que el informe no define la estructura de una microcápsula y propuso una (OA → activación → concepto central → representación adaptativa VARK → ejemplo → pregunta de comprobación → retroalimentación). Está implementada: cada paso es ahora un campo obligatorio del contrato en vez de un bloque suelto dentro de una lista, y el prompt le muestra al modelo los cuatro pesos C_* en crudo además de las instrucciones estructurales. Verificado contra DeepSeek con material real: cápsula válida al primer intento, 247 palabras, los siete pasos en orden. **277 tests en verde.** Tres puntos de su lista quedaron fuera a propósito (embeddings, OA secundarios y el campo "contenido" del OA) — el detalle está en la sección 5 terdecies y en `AUDITORIA_LISTA_PROFESORA_14AGO2026.md`, que no quedó versionado en el repo.
-
-**Alta de objetivos desde el panel del docente (14-ago-2026, sección 5 duodecies):** `POST /api/objetivos` existía desde la Fase 2 pero no estaba conectado a ninguna pantalla — el catálogo solo se podía cargar por consola. Ahora hay un formulario en `/teacher/curation` que reutiliza el mismo handler; el script de carga masiva se conserva para sembrar un plan de estudios completo. **265 tests en verde** (261 + 4), `ruff` limpio. De paso se cargó el primer material curricular real del proyecto —5 objetivos de "Diseño de UX" y un PPTX con 40 fragmentos— aunque todavía sin curar, y se encontró que esta máquina tenía dos migraciones de Patricio sin aplicar (`/teacher/analytics` daba 500 hasta correr `alembic upgrade head`).
-
-**Enunciados VARK verificados (24-ago-2026, sección 5 quaterdecies):** los 16 enunciados del cuestionario en `web/textos.py`, marcados como "provisionales" desde la Fase 4, resultaron ser idénticos carácter a carácter al CSV original al compararlos programáticamente — no hubo nada que reemplazar. Test de regresión nuevo (`tests/test_textos_vark.py`) para que no vuelva a divergir en silencio.
-
-**Simulador: comparación V/A/R/K lado a lado (24-ago-2026, sección 5 quindecies):** `POST /teacher/simulator/compare` genera las cuatro cápsulas puras del mismo objetivo y las muestra una junto a otra, cerrando el criterio de término de la Fase 3. Verificado contra DeepSeek real (no solo tests): V, A y K salieron válidos y visiblemente distintos entre sí; **R falló la validación las tres veces por exceder las 300 palabras**, un hallazgo no buscado.
-
-**Investigación y doble corrección del fallo de R (24-ago-2026, sección 5 sedecies):** investigando por qué el perfil lector-escritor fallaba más que los otros tres, se encontraron y corrigieron **dos causas reales**, cada una verificada contra DeepSeek real por separado. La primera: el objetivo de palabras de R interpola exactamente en el máximo duro del validador (300), sin margen para la variación normal del modelo — corregido en `rag/orchestrator.py` (el modelo ahora apunta a 270, sin tocar el `palabras_texto` de `vark/rules.py` que persiste la tabla 17.4); la tasa de éxito subió de 1/3 a 2/3 sobre los mismos tres temas. La segunda, más sorprendente: capturando el texto crudo de cada intento se vio que el modelo **reenviaba la respuesta anterior byte a byte idéntica** cuando el mensaje de reparación no le daba un blanco concreto — corregido en `generation/validator.py`, y verificado que ahora el modelo sí recorta en vueltas sucesivas (3257→3202→3104 caracteres, cada una distinta) en vez de repetirse. **Panorama agregado de las tres rondas de verificación: 6 de 11 generaciones de R exitosas (55%)**, todavía lejos del ≥95% del criterio de término, pero dos de los tres temas de prueba ya pasan de forma consistente. Detalle completo y lo que queda pendiente en el pendiente n.º 15.
-
-**Etiquetado asistido por LLM (24-ago-2026, sección 5 septendecies):** `knowledge/tagger.py` le muestra al modelo el catálogo de objetivos activos de la asignatura y el texto de un fragmento, y le pide que proponga objetivo y etiqueta temática. La propuesta **no escribe** `Fragmento.id_objetivo` ni `estado_validacion` — vive en `metadatos_json` y solo preselecciona el `<select>` que el curador ya tenía que confirmar con «Validar» —, y un objetivo fuera del catálogo entregado se descarta igual que una cita alucinada. Verificado contra DeepSeek real: acertó los dos objetivos que sí correspondían a sus fragmentos y devolvió `null` en el que no calzaba con ninguno. Cierra el pendiente n.º 3. **308 tests en verde** (289 + 19).
-
-**Separación de vistas estudiante/docente (26-ago-2026, sección 5 duodevicies):** `/teacher/*`
-dejó de estar abierto. La cabecera muestra un botón «Soy docente» a quien no tiene sesión y las
-tres pestañas del panel más «Salir» a quien sí; el acceso lo da `/teacher/login` con una
-credencial única, y el guardián está declarado en el `APIRouter` para que cualquier vista que
-se agregue después quede cerrada por construcción — hay un test que lo verifica sobre las
-rutas ya montadas, no sobre una lista escrita a mano.
-
-**Credencial de fábrica `admin`/`admin123` (mismo día, sección 5 undevicies):** a pedido del
-equipo, el default sin tocar el `.env` pasó de "panel cerrado" a "panel abierto con
-`admin`/`admin123`" — retroceso de seguridad deliberado a cambio de que el sistema funcione
-nada más clonar el repo, documentado como tal (`config.py`, `.env.example`) y a cambiar antes
-de exponer el sistema a estudiantes reales. **330 tests en verde** (308 + 19 + 3).
-
-**Rediseño completo del frontend (02-oct-2026, sección 5 duovicies):** la UI pasó de un estilo mínimo a un design system propio, sin build y sin migrar de Jinja2 + HTMX: modo claro/oscuro, navegación móvil, landing, cuestionario paginado, radar VARK, catálogo con buscador, visor con referencias que muestran el fragmento citado y panel docente responsive. Contraste AA, foco visible y `prefers-reduced-motion` en todas las vistas. Convenciones en [`DESIGN_SYSTEM.md`](DESIGN_SYSTEM.md). **341 tests en verde.**
-
-Queda una discrepancia abierta: las tablas 16.2/16.3 del informe no se reproducen desde el CSV (sección 5 ter) — es un problema del informe, no del código.
+| Sección | Fecha | Tema |
+|---|---|---|
+| 5 | 06-ago | Fase 1: modelo de datos y motor VARK |
+| 5 ter | 06-ago | Carga de los 43 diagnósticos reales; las tablas 16.2/16.3 no se reproducen |
+| 5 quinquies | 06-ago | `POST /api/diagnosticos` |
+| 5 sexies | 07-ago | Primera UI mínima |
+| 5 septies | 10-ago | Fase 2: ingesta, curación y retriever |
+| 5 octies | 11-ago | Fase 3: motor de generación, caché y versionado |
+| 5 nonies | 11-ago | Fase 4: UI conectada al motor |
+| 5 decies | 12-ago | Panel de analíticas del docente: tres bugs de fondo |
+| 5 undecies | 13-ago | Rebranding a RepasAi y fondo de marca |
+| 5 duodecies | 14-ago | Alta de objetivos desde el panel |
+| 5 terdecies | 19-ago | Estructura pedagógica de siete pasos |
+| 5 quaterdecies | 24-ago | Verificación de los 16 enunciados VARK |
+| 5 quindecies | 24-ago | Simulador: comparación V/A/R/K |
+| 5 sedecies | 24-ago | Por qué fallaba el perfil R: dos causas |
+| 5 septendecies | 24-ago | Etiquetado asistido por LLM (`tagger.py`) |
+| 5 duodevicies | 26-ago | Login del docente |
+| 5 undevicies | 26-ago | Credencial de fábrica `admin`/`admin123` |
+| 5 vicies | 26-ago | Los tests ensuciaban la base |
+| 5 unvicies | 26-ago | Cierre de `/api/*` del docente |
+| 5 duovicies | 02-oct | Rediseño completo del frontend |
+| 5 tervicies | 02-oct | Marco legal: Términos, Privacidad, consentimiento y derechos |
+| 5 quatervicies | 03-oct | Batería de pruebas VARK de punta a punta |
+| 5 quinvicies | 04-oct | H1 + H3 medidos y no aplicados; H9 |
+| 5 sexvicies | 04-oct | H2: el bucle de reparación ya no repite |
+| 5 septvicies | 04-oct | H5: la API ya no sintetiza audio ni imagen |
+| 5 duodetricies | 05-oct | Motores de voz, Etapa 1 |
+| 5 undetricies | 05-oct | Preferencia de voz, Etapa 2 |
+| 5 duotricies | 05-oct | Caché del audio por huella (H10) |
+| 5 tritricies | 05-oct | Licencia AGPL-3.0-or-later y legal 0.2 |
+| 5 quatertricies | 10–11-oct | Migración a `deepseek-flash`, módulo Visual y borrado de documentos |
+| 5 quintricies | 16–17-oct | Revisión de código y cinco correcciones |
 
 ---
 
@@ -764,6 +637,15 @@ todavía: falta `LLM_API_KEY` y falta material real. El motor está completo y e
 construido para que la diferenciación ocurra —hay tests que prueban que los cuatro perfiles
 producen prompts distintos y estructuralmente distintos—, pero que las **cápsulas** resulten
 distinguibles es una observación empírica pendiente.
+
+### Bake-off de modelos (13-ago-2026)
+
+Con la credencial real de DeepSeek y material curricular genuino (objetivo 369),
+`scripts/eval_runner.py` obtuvo cápsulas 100 % válidas al primer intento con `deepseek-chat`
+(latencia ~5,5 s; resultados en `data/resultados_evaluacion.csv`, fuera del repo). Qwen y GLM
+fallaron por **autorización**, no por calidad. Por eso es más preciso decir que DeepSeek se
+seleccionó por ser **el único candidato que se pudo medir**, no que ganó una comparación de
+tres. Desde el 11-oct-2026 se usa `deepseek-flash` (sección 5 quatertricies).
 
 ---
 
@@ -2434,6 +2316,79 @@ imágenes de prueba, `referencia.wav` y `prueba_entorno.wav`. La tabla con lo qu
 necesita confirmar, una redacción neutra para `referencia.wav` y una sección propuesta
 «Material gráfico y de prueba» para los Términos están en PRUEBAS_VARK.
 
+## 5 quatertricies. Migración a `deepseek-flash`, módulo Visual y borrado de documentos (10–11-oct-2026)
+
+### Migración del modelo (`136e747`, `2876808`)
+
+- **Por qué:** `deepseek-chat` es un alias que DeepSeek anunció retirar; el ID vigente es
+  `deepseek-flash`. Ese modelo razona por defecto y los tokens de razonamiento se descuentan
+  de `max_tokens`: con 2.000, la cápsula llegaba truncada y fallaba los tres intentos.
+- **Cambio:** ajuste nuevo `LLM_THINKING` (`disabled`, `enabled` o vacío), con `disabled` por
+  defecto, que viaja dentro de `extra_body`. Los scripts de prueba dejaron de nombrar
+  `deepseek-chat`.
+- **Verificación:** 8 de 8 cápsulas válidas a la primera en los 4 objetivos de
+  `data/objetivos.csv`, comparando la configuración anterior con la nueva. Todas eran de
+  perfil V; la batería VARK completa no se repitió con el modelo nuevo (`PENDIENTES.md` G1).
+- **Ojo:** un `.env` existente hay que cambiarlo a mano a `LLM_MODEL=deepseek-flash`.
+- Detalle y mediciones: `modulo-visual/analisis-modulo-visual.md` §10.1 y §10.8.
+
+### Módulo Visual (`3bb8ba4`, `30d5c69`)
+
+Análisis y propuesta del recurso visual del perfil V. El LLM entrega una especificación
+JSON del esquema (conceptos y relaciones) y la plataforma la dibuja como SVG con plantillas
+propias, sin modelo de imagen. Incluye la comparativa de modelos y proveedores, costos,
+estimación de esfuerzo, el prompt (`rag/prompts/visual.py`) y la validación con 12
+especificaciones generadas por DeepSeek. **La aplicación todavía no lo usa.** Todo en
+`docs/modulo-visual/`.
+
+### Borrar documentos desde el panel (`f73736d`)
+
+El docente puede eliminar un documento cargado por error desde «Documentos cargados». Se
+rechaza si algún fragmento suyo ya fundamentó una cápsula: borrarlo dejaría esas cápsulas sin
+fuente. Para retirar material ya usado haría falta marcar el documento como rechazado, y eso
+todavía no tiene pantalla (`PENDIENTES.md` R7).
+
+---
+
+## 5 quintricies. Revisión de código y cinco correcciones (16–17-oct-2026)
+
+El 16-oct se revisó todo `src/`, las migraciones, los tests y la documentación. Los hallazgos
+que siguen abiertos están en [`PENDIENTES.md`](PENDIENTES.md), sección R. El 17-oct se
+corrigieron cinco, de menor a mayor riesgo, cada uno con un test que reproducía el bug antes
+del arreglo.
+
+| Commit | Qué estaba mal | Qué quedó |
+|---|---|---|
+| `b7f769d` | El login del docente respondía 500 si el usuario o la clave tenían ñ o tilde (`hmac.compare_digest` no acepta `str` fuera de ASCII). | Se comparan los bytes UTF-8. |
+| `a3883ef` | Un timeout, la falta de saldo o un rechazo del proveedor llegaban como excepciones del SDK de `openai` y terminaban en 500, después de dos capas de reintentos anidadas. | `ErrorProveedorLLM`; la API responde 504 (el 502 sigue significando «no pasó la validación»); el visor explica y ofrece reintentar; el comparador del simulador y el lote del tagger ya no se caen. `LLM_MAX_RETRIES=1`. |
+| `6e081fe` | **«Eliminar mis datos» respondía 500 a todo estudiante con cápsulas** (faltaba `cascade` en `Estudiante.capsulas`), y los audios narrados no se borraban porque la supresión buscaba el nombre anterior a H10. | La supresión funciona y borra los WAV de las cápsulas del estudiante con cualquier voz. Módulo `web/narracion.py` compartido por el visor y la supresión; el directorio de audios pasa a ser absoluto. |
+| `ce30e6d` | La huella del caché solo miraba los ids de los fragmentos: corregir el texto de un fragmento o el prompt seguía sirviendo la cápsula vieja. | La huella incluye el texto y la procedencia de los fragmentos, el objetivo y un hash de las plantillas. Los pesos C_* siguen fuera a propósito. |
+| `a922240` | La métrica del panel mezclaba instrumentos: `flashcards` contaba como acierto, la API guardaba el `es_correcta` del cliente y los cuestionarios contaban solo si todo estaba bien. | El servidor corrige siempre; los cuestionarios se guardan pregunta por pregunta; el panel separa «Selección única» y «Cuestionario». Migración `d7e2b9c41a58`. |
+
+**Efectos para el A/B:**
+
+- Con la huella nueva, ninguna cápsula ya guardada vuelve a coincidir: la primera visita a
+  cada tema genera una cápsula nueva, una sola vez. Conviene que esté desplegado antes del
+  piloto y no a mitad.
+- La métrica del panel cambió de definición. «Selección única» es el % de acierto al primer
+  intento en `quiz_mc`. «Cuestionario» es el promedio de preguntas acertadas al primer
+  intento en los cuestionarios de varias preguntas, que reciben sobre todo los perfiles K.
+  Son instrumentos distintos y se comparan por separado (decidido por el autor el 17-oct).
+
+**Migración:** `d7e2b9c41a58` quedó aplicada en la base de la máquina donde se hizo la
+revisión (`D:\PUCV\…`). Sus dos intentos reales no cambiaron de valor. Cualquier otra
+máquina tiene que correr `alembic upgrade head`.
+
+**Suite al cierre:** con Postgres, 580 pasan y 2 fallan; con la base apagada, 384 pasan y 4
+fallan. Los 6 fallos son previos: tests que dependen del estado de la base de desarrollo o a
+los que les falta `@necesita_bd` (`PENDIENTES.md` R10).
+
+**Documentación (`2c583f4`, `8099650`, `db353a2`):** se borró lo obsoleto, los informes del
+03-sep y el fondo de marca pasaron a `docs/historico/`, y todos los pendientes del proyecto se
+reunieron en `PENDIENTES.md`.
+
+---
+
 ## 6. Pendiente inmediato
 
 > **Registro al 17-oct-2026; ya no se actualiza.** Lo que sigue abierto de esta lista está en [`PENDIENTES.md`](PENDIENTES.md), junto con el resto de los pendientes del proyecto.
@@ -2710,6 +2665,8 @@ el puerto real.
 | `SESSION_SECRET` | ✅ fijada (26-ago-2026) | ⚠️ pendiente — sin ella cada `--reload` cierra las sesiones de estudiante |
 | `TEACHER_USERNAME` / `TEACHER_PASSWORD` | de fábrica (`admin`/`admin123`) | de fábrica (`admin`/`admin123`) |
 | Datos VARK (`estudiante`, `diagnostico_vark`) | ✅ 43 reales, sin ruido de tests (sección 5 vicies) | sin auditar — puede tener el mismo ruido que se encontró en la máquina 1 |
+
+Esta tabla es del 26-ago-2026. La máquina donde se hizo la revisión del 16-oct (`D:\PUCV\…`) tiene otra base: 1 estudiante, 5 diagnósticos y objetivos de Bases de Datos e Introducción a la Programación. Desde el 11-oct, además, cada `.env` tiene que decir `LLM_MODEL=deepseek-flash`, y cada base tiene que estar en la migración `d7e2b9c41a58` (17-oct).
 
 Si `.venv` no existe (máquina nueva): seguir `README.md` sección "Puesta en marcha" completa,
 incluyendo la creación del rol/base de Postgres (comando en README sección "Crear el rol y la

@@ -58,7 +58,7 @@ de cada uno está más abajo.
 3. **Repetir la batería VARK con `deepseek-flash`**, incluido el perfil V (G1).
 4. **Desplegar ya los cambios del 17-oct**: el cambio de la huella del caché
    (`ce30e6d`) regenera cada cápsula una vez, y no conviene que eso pase a mitad
-   del piloto. En la máquina 2, además, falta la migración (O2).
+   del piloto. Y cada máquina tiene que quedar al día (O2).
 5. **Instrumentos y consentimiento de la Fase 5** (E1–E4).
 6. **Riesgos legales** L1, L3 y L5.
 
@@ -269,9 +269,11 @@ Origen: `AVANCE.md` §5 tervicies «Riesgos legales que siguen abiertos» y
 - **O1. Credenciales.** Cambiar `TEACHER_USERNAME`/`TEACHER_PASSWORD` del valor
   de fábrica antes de exponer el sistema; fijar `SESSION_SECRET` en la máquina
   2. Origen: AVANCE §6 n.º 7 y §9.
-- **O2. La máquina 2 tiene que correr `alembic upgrade head`** (migración
-  `d7e2b9c41a58`, 17-oct-2026), y sus datos VARK siguen sin auditar: puede
-  tener el mismo ruido de tests que tuvo la máquina 1. Origen: AVANCE §9.
+- **O2. Dejar cada máquina al día.** Correr `alembic upgrade head` (migración
+  `d7e2b9c41a58`, 17-oct-2026; ya aplicada en la de la revisión, `D:\PUCV\…`)
+  y fijar `LLM_MODEL=deepseek-flash` en el `.env` (desde el 11-oct). Los datos
+  VARK de la máquina 2 siguen sin auditar: puede tener el mismo ruido de tests
+  que tuvo la máquina 1. Origen: AVANCE §9 y §5 quatertricies.
 - **O3. `scripts/reset_db.py` no pide confirmación** antes de `drop_all`.
   Origen: AVANCE §6 n.º 12.
 - **O4. Los `codigo_objetivo` siguen el patrón `PREFIJO-Ux-NN`, pero la API no
