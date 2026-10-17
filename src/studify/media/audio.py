@@ -147,6 +147,28 @@ def resolver_voz(
     return VozElegida(motor="kokoro", voz=voz)
 
 
+def voces_posibles(ajustes: Settings | None = None) -> tuple[VozElegida, ...]:
+    """Todas las voces con que el visor puede haber narrado, sea cual sea la preferencia.
+
+    Las cuatro de la preferencia del estudiante más XTTS. Sirve para encontrar
+    todos los archivos de un guion (p. ej. al ejercer la supresión): el
+    estudiante puede haber cambiado de voz, y cada voz deja su propio WAV.
+    """
+    ajustes = ajustes or get_settings()
+    # `resolver_voz` devuelve XTTS para todos si ese es el motor configurado;
+    # acá interesan las cuatro de la preferencia, así que se resuelven como si
+    # el motor fuera el de la interfaz.
+    de_la_interfaz = ajustes.model_copy(update={"tts_motor": "kokoro"})
+    return (
+        *(
+            resolver_voz(PreferenciaVoz(genero, modo), ajustes=de_la_interfaz)
+            for genero in ("femenina", "masculina")
+            for modo in ("calidad", "rapida")
+        ),
+        VozElegida(motor="xtts"),
+    )
+
+
 def generar_audio(
     texto: str,
     output_path: Path,

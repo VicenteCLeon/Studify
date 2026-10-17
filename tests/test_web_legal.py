@@ -14,14 +14,22 @@ género pide su propio consentimiento y una versión nueva se vuelve a pedir.
 import re
 from dataclasses import replace
 from datetime import UTC, datetime, timedelta
+from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import func, select
 
-from studify.db.models import AceptacionLegal, DiagnosticoVark, Estudiante
+from studify.db.models import (
+    AceptacionLegal,
+    DiagnosticoVark,
+    Estudiante,
+    MicrocapsulaGenerada,
+    ObjetivoAprendizaje,
+)
 from studify.main import app
-from studify.web import consentimiento, legal, sesion
+from studify.media import audio
+from studify.web import consentimiento, legal, narracion, sesion
 from tests.conftest import necesita_bd
 from tests.test_web_auth import rutas_montadas
 
@@ -427,3 +435,108 @@ def test_eliminar_borra_todo_en_cascada_y_cierra_la_sesion(http, db, creados):
             DiagnosticoVark.id_estudiante == id_estudiante
         )
     ) == 0
+
+
+# --- Supresión de los audios narrados ------------------------------------------
+#
+# La Política declara el audio narrado de cada cápsula como dato del estudiante
+# (sección 2). Desde H10 los WAV se nombran por la huella del guion y la voz, no
+# por `capsula_{id}.wav`, y la supresión seguía buscando el nombre viejo: los
+# audios quedaban en el disco.
+
+
+@pytest.fixture
+def objetivo(db):
+    obj = ObjetivoAprendizaje(
+        codigo_objetivo="TEST-LEGAL-AUDIO",
+        asignatura="Bases de Datos (test legal)",
+        unidad="Unidad 3",
+        tema="Segunda forma normal",
+        estado="activo",
+    )
+    db.add(obj)
+    db.commit()
+    yield obj
+    # Las cápsulas tienen FK RESTRICT contra el objetivo: primero ellas.
+    db.query(MicrocapsulaGenerada).filter(
+        MicrocapsulaGenerada.id_objetivo == obj.id_objetivo
+    ).delete()
+    db.delete(obj)
+    db.commit()
+
+
+@pytest.fixture
+def narraciones(monkeypatch, tmp_path) -> list[Path]:
+    """Síntesis falsa que deja el WAV donde el visor lo pide, y anota la ruta.
+
+    El directorio de los audios se redirige a `tmp_path`: el test no toca la
+    carpeta del repo.
+    """
+    monkeypatch.setattr(narracion, "DIRECTORIO_AUDIO", tmp_path / "audio")
+    escritos: list[Path] = []
+
+    def _escribe(texto, destino, language="es", *, preferencia=None):
+        destino.parent.mkdir(parents=True, exist_ok=True)
+        destino.write_bytes(b"RIFF")
+        escritos.append(destino.resolve())
+
+    monkeypatch.setattr(audio, "generar_audio", _escribe)
+    return escritos
+
+
+def _capsula(db, id_estudiante: int, objetivo) -> MicrocapsulaGenerada:
+    capsula = MicrocapsulaGenerada(
+        id_estudiante=id_estudiante,
+        id_objetivo=objetivo.id_objetivo,
+        titulo="Segunda forma normal",
+        contenido_json={
+            "activacion": "¿Por qué se repite el mismo dato en muchas filas?",
+            "concepto_central": "Una dependencia parcial rompe la segunda forma normal.",
+        },
+    )
+    db.add(capsula)
+    db.commit()
+    return capsula
+
+
+@necesita_bd
+def test_eliminar_borra_los_audios_narrados_con_cualquier_voz(
+    http, db, creados, objetivo, narraciones
+):
+    """Con la voz por defecto y con otra elegida después: ninguno queda en el disco."""
+    id_estudiante = _conectado(http, creados)
+    capsula = _capsula(db, id_estudiante, objetivo)
+    ruta = f"/student/viewer/{capsula.id_capsula}/generate-audio"
+
+    http.post(ruta)
+    http.post("/student/preferencias/voz", data={"voz": "masculina-rapida"})
+    http.post(ruta)
+    assert len(narraciones) == 2
+    assert all(p.exists() for p in narraciones)
+
+    http.post("/mis-datos/eliminar", data={"confirmo": "si"})
+
+    assert [p.name for p in narraciones if p.exists()] == []
+
+
+@necesita_bd
+def test_eliminar_conserva_el_audio_que_tambien_usa_otro_estudiante(
+    http, db, creados, objetivo, narraciones
+):
+    """Una copia del caché compartido narra el mismo guion con el mismo archivo.
+
+    Ese WAV no identifica a nadie y lo sigue usando el otro estudiante: borrarlo
+    solo lo obligaría a esperar una síntesis nueva.
+    """
+    id_estudiante = _conectado(http, creados)
+    capsula = _capsula(db, id_estudiante, objetivo)
+    otro = Estudiante()
+    db.add(otro)
+    db.commit()
+    creados.append(otro.id_estudiante)
+    _capsula(db, otro.id_estudiante, objetivo)
+
+    http.post(f"/student/viewer/{capsula.id_capsula}/generate-audio")
+    http.post("/mis-datos/eliminar", data={"confirmo": "si"})
+
+    assert narraciones[0].exists()

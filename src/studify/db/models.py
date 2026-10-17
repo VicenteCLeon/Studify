@@ -104,8 +104,13 @@ class Estudiante(Base):
     diagnosticos: Mapped[list["DiagnosticoVark"]] = relationship(
         back_populates="estudiante", cascade="all, delete-orphan"
     )
+    # `cascade` y `passive_deletes` acompañan al `ON DELETE CASCADE` de la FK.
+    # Sin ellos, al borrar al estudiante (`/mis-datos/eliminar`) el ORM intentaba
+    # dejar en NULL el `id_estudiante` de sus cápsulas en vez de borrarlas, y
+    # la columna es NOT NULL: la supresión fallaba para todo estudiante con al
+    # menos una cápsula.
     capsulas: Mapped[list["MicrocapsulaGenerada"]] = relationship(
-        back_populates="estudiante"
+        back_populates="estudiante", cascade="all, delete-orphan", passive_deletes=True
     )
     aceptaciones: Mapped[list["AceptacionLegal"]] = relationship(
         back_populates="estudiante", cascade="all, delete-orphan"

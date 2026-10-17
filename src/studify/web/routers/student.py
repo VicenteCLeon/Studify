@@ -47,7 +47,7 @@ from studify.generation.schemas import BloqueContenido
 from studify.vark import instrumento
 from studify.vark.rules import aplicar_reglas
 from studify.vark.scoring import PerfilVark
-from studify.web import consentimiento, sesion, textos
+from studify.web import consentimiento, narracion, sesion, textos
 from studify.web.deps import templates
 
 logger = logging.getLogger(__name__)
@@ -530,12 +530,9 @@ def generate_capsule_audio(
     archivo, las copias del caché compartido de cápsulas reutilizan el mismo, y
     una base recreada no puede servir el audio de otra cápsula (H10).
     """
-    from pathlib import Path
-
     from studify.media import audio
 
     es_docente = sesion.es_docente(request)
-    texto = ""
     preferencia = audio.PreferenciaVoz()
     if id_capsula > 0:
         fila = db.get(MicrocapsulaGenerada, id_capsula)
@@ -543,23 +540,19 @@ def generate_capsule_audio(
             not es_docente and fila.id_estudiante != sesion.estudiante_actual(request)
         ):
             raise HTTPException(status_code=404, detail=f"no existe la cápsula {id_capsula}")
-        if fila.contenido_json:
-            concepto = fila.contenido_json.get("concepto_central", "")
-            activacion = fila.contenido_json.get("activacion", "")
-            texto = f"{activacion} {concepto}".strip()
+        # El guion lo calcula `narracion`, el mismo módulo que usa la supresión
+        # para encontrar estos archivos (`/mis-datos/eliminar`).
+        texto = narracion.guion(fila.contenido_json)
         dueno = db.get(Estudiante, fila.id_estudiante)
         if dueno is not None:
             preferencia = audio.preferencia_guardada(dueno.voz_genero, dueno.voz_modo)
     else:
         if not es_docente:
             raise HTTPException(status_code=403, detail="el audio del simulador es del docente")
-        texto = texto_override.strip()
+        texto = texto_override.strip() or narracion.GUION_POR_DEFECTO
 
-    public_audio_dir = Path("src/studify/public/audio")
+    public_audio_dir = narracion.DIRECTORIO_AUDIO
     public_audio_dir.mkdir(parents=True, exist_ok=True)
-
-    if not texto:
-        texto = "Esta es una microcápsula adaptativa sintetizada con IA para el canal auditivo."
 
     eleccion = audio.resolver_voz(preferencia)
     filename = f"{audio.huella_de_audio(texto, eleccion)}.wav"

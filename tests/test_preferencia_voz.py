@@ -33,7 +33,7 @@ from studify.main import app
 from studify.media import audio
 from studify.media.audio import PreferenciaVoz, preferencia_guardada
 from studify.vark.scoring import PerfilVark
-from studify.web import consentimiento, exportacion, sesion
+from studify.web import consentimiento, exportacion, narracion, sesion
 from tests.conftest import necesita_bd
 from tests.test_api_capsulas import TEXTO_LARGO, ClienteObediente, _estudiante_con_perfil
 
@@ -371,10 +371,10 @@ def test_cambiar_de_voz_no_reusa_el_audio_de_la_anterior(db, escenario, sintesis
 def sintesis_que_escribe(monkeypatch, tmp_path):
     """Síntesis falsa que sí deja el WAV, en un directorio temporal.
 
-    El visor escribe en `src/studify/public/audio` relativo al directorio de
-    trabajo; con `chdir` a `tmp_path` el test no toca la carpeta del repo.
+    El visor escribe en `narracion.DIRECTORIO_AUDIO`; redirigido a `tmp_path`,
+    el test no toca la carpeta del repo.
     """
-    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(narracion, "DIRECTORIO_AUDIO", tmp_path / "audio")
     pedidos: list[str] = []
 
     def _escribe(texto, destino, language="es", *, preferencia=None):

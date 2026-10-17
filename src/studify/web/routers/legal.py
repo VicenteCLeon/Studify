@@ -11,15 +11,15 @@ agregó el marco legal, y todos cada vez que sube una versión en `web/legal.py`
 
 import json
 import logging
-from pathlib import Path
 
 from fastapi import APIRouter, Depends, Form, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from studify.db.models import Estudiante
+from studify.db.models import Estudiante, MicrocapsulaGenerada
 from studify.db.session import get_db
-from studify.web import consentimiento, exportacion, legal, sesion
+from studify.web import consentimiento, exportacion, legal, narracion, sesion
 from studify.web.deps import templates
 
 logger = logging.getLogger(__name__)
@@ -115,8 +115,6 @@ def post_aceptar(
 # Los POST van con formulario normal: la cookie es `samesite=lax`, así que un
 # sitio de terceros no puede disparar el borrado en nombre del estudiante.
 
-# Mismo directorio en que `student.generate_capsule_audio` deja los .wav.
-DIRECTORIO_AUDIO = Path(__file__).resolve().parents[2] / "public" / "audio"
 RANGOS_ETARIOS = ("18 - 20 años", "21 - 23 años", "24 - 26 años", "27 años o más")
 GENEROS = ("Femenino", "Masculino", "No Binario / otra identidad")
 
@@ -234,8 +232,15 @@ def post_eliminar(
     """Supresión: borra al estudiante y, en cascada, todo lo asociado a él.
 
     Diagnósticos, respuestas, configuraciones, cápsulas, intentos y aceptaciones
-    caen por `ON DELETE CASCADE`; los audios narrados son archivos y se borran
-    a mano. Después se cierra la sesión: la cookie ya no apunta a nadie.
+    caen por `ON DELETE CASCADE`. Después se cierra la sesión: la cookie ya no
+    apunta a nadie.
+
+    **Los audios narrados son archivos y se borran aparte.** Se nombran por la
+    huella del guion y la voz (H10), así que se buscan todos los que pudo dejar
+    cada cápsula con cualquiera de las voces. Se conservan los que también
+    narran una cápsula de otro estudiante: una copia del caché compartido
+    tiene el mismo guion y usa el mismo archivo, que no identifica a nadie.
+    Los `capsula_{id}.wav` son los de antes de H10.
     """
     id_estudiante = _id_con_sesion(request, db)
     if id_estudiante is None:
@@ -249,12 +254,28 @@ def post_eliminar(
             error="Para eliminar tus datos marca la casilla de confirmación.",
         )
 
-    ids_capsulas = [c.id_capsula for c in estudiante.capsulas]
+    capsulas = list(estudiante.capsulas)
+    propios = narracion.archivos(narracion.guion(c.contenido_json) for c in capsulas)
+    propios |= {f"capsula_{c.id_capsula}.wav" for c in capsulas}
+    objetivos = {c.id_objetivo for c in capsulas}
+
     db.delete(estudiante)
     db.commit()
-    for id_capsula in ids_capsulas:
-        (DIRECTORIO_AUDIO / f"capsula_{id_capsula}.wav").unlink(missing_ok=True)
-    logger.info("estudiante %s eliminó sus datos (%s cápsulas)", id_estudiante, len(ids_capsulas))
+
+    # Las copias del caché compartido son del mismo objetivo: basta mirar ahí.
+    de_otros = (
+        db.scalars(
+            select(MicrocapsulaGenerada.contenido_json).where(
+                MicrocapsulaGenerada.id_objetivo.in_(objetivos)
+            )
+        ).all()
+        if objetivos
+        else []
+    )
+    compartidos = narracion.archivos(narracion.guion(c) for c in de_otros)
+    for nombre in propios - compartidos:
+        (narracion.DIRECTORIO_AUDIO / nombre).unlink(missing_ok=True)
+    logger.info("estudiante %s eliminó sus datos (%s cápsulas)", id_estudiante, len(capsulas))
 
     respuesta = templates.TemplateResponse(request=request, name="legal/datos_eliminados.html")
     sesion.cerrar(respuesta)
