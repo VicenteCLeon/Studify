@@ -49,6 +49,18 @@ class ErrorGeneracion(Exception):
         self.errores_por_intento = [list(e) for e in errores_por_intento]
 
 
+class ErrorProveedorLLM(ErrorGeneracion):
+    """El proveedor no entregó respuesta: timeout, sin red o rechazó la llamada.
+
+    Es distinto de agotar los reintentos de reparación: ahí el modelo sí
+    respondió y lo que falló fue la validación. Acá no hay nada que reparar,
+    así que `generar` no la reintenta y la API la informa como 504 en vez de
+    502. Es subclase de `ErrorGeneracion` para que todo lo que ya capturaba
+    los fallos de generación (el simulador, por ejemplo) la capture también:
+    antes llegaba como excepción del SDK de `openai` y terminaba en un 500.
+    """
+
+
 @dataclass(frozen=True, slots=True)
 class Mensaje:
     rol: Rol
@@ -111,6 +123,9 @@ class ClienteOpenAILike:
             api_key=clave,
             temperature=ajustes.llm_temperature,
             timeout=ajustes.llm_timeout,
+            # Explícito: el valor por defecto de llama-index (3) se aplica dos
+            # veces, en el SDK y otra vez por fuera (ver `llm_max_retries`).
+            max_retries=ajustes.llm_max_retries,
             max_tokens=ajustes.llm_max_tokens,
             # Sin esto OpenAILike pega contra el endpoint de completions
             # antiguo, que ninguno de los tres proveedores expone.
@@ -119,11 +134,33 @@ class ClienteOpenAILike:
         )
 
     def responder(self, mensajes: Sequence[Mensaje]) -> str:
+        """La respuesta del modelo, o `ErrorProveedorLLM` si no llegó ninguna.
+
+        Las excepciones del SDK de `openai` se traducen acá para que el resto
+        del sistema no tenga que conocerlas: `openai.APIStatusError` es un
+        rechazo con código HTTP (402 sin saldo, 401 clave inválida, 429 límite
+        de uso, 5xx), y el resto de `openai.APIError` son timeout y conexión.
+        """
+        import openai
         from llama_index.core.base.llms.types import ChatMessage
 
-        respuesta = self._llm.chat(
-            [ChatMessage(role=m.rol, content=m.contenido) for m in mensajes]
-        )
+        try:
+            respuesta = self._llm.chat(
+                [ChatMessage(role=m.rol, content=m.contenido) for m in mensajes]
+            )
+        except openai.APIStatusError as exc:
+            raise ErrorProveedorLLM(
+                f"el proveedor del modelo rechazó la llamada (HTTP {exc.status_code}): "
+                f"{exc.message}"
+            ) from exc
+        except openai.APITimeoutError as exc:
+            raise ErrorProveedorLLM(
+                f"el proveedor del modelo no respondió en {get_settings().llm_timeout} s"
+            ) from exc
+        except openai.APIError as exc:
+            raise ErrorProveedorLLM(
+                f"el proveedor del modelo no respondió: no se pudo conectar ({exc.message})"
+            ) from exc
         return respuesta.message.content or ""
 
 

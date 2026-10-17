@@ -61,6 +61,13 @@ class Settings(BaseSettings):
     llm_api_key: str = ""
     llm_temperature: float = 0.4
     llm_timeout: int = 90
+    # Reintentos de red por llamada al modelo (timeout, conexión caída, 429,
+    # 5xx), distintos de los de reparación de abajo. Sin fijarlo, llama-index
+    # usa 3 y los aplica dos veces: en el SDK de OpenAI y otra vez por fuera
+    # con tenacity, así que un proveedor caído podía tener al estudiante varios
+    # minutos en «Generando…». Con 1, una llamada se intenta como máximo dos
+    # veces: con `llm_timeout = 90`, unos 3 minutos en el peor caso.
+    llm_max_retries: int = 1
     llm_max_repair_attempts: int = 2
     # Una cápsula de 300 palabras más la estructura JSON ronda los 1.200 tokens.
     # El margen cubre los perfiles largos sin dejar que una respuesta desbocada

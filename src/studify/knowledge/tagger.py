@@ -30,7 +30,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from studify.db.models import DocumentoFuente, Fragmento, ObjetivoAprendizaje
-from studify.generation.generator import ClienteLLM, Mensaje
+from studify.generation.generator import ClienteLLM, ErrorProveedorLLM, Mensaje
 from studify.generation.validator import ErrorFormatoJSON, extraer_json
 
 logger = logging.getLogger(__name__)
@@ -222,6 +222,11 @@ def etiquetar_pendientes(
     resto, igual que hace `_generar_capsula_pura` en el simulador con cada
     columna del comparador V/A/R/K.
 
+    **La excepción es el proveedor caído** (`ErrorProveedorLLM`: timeout, sin
+    saldo, sin red). Ese error no es del fragmento y se repetiría en todos, con
+    una espera por cada uno, así que el lote se detiene en el primero y lo
+    informa como una sugerencia fallida. Lo ya sugerido queda guardado.
+
     Vuelve a pedir sugerencia para un fragmento ya sugerido antes si sigue sin
     objetivo asignado: es una decisión deliberada — el curador puede haber
     corregido el texto (`curation.editar_texto`) desde la última corrida y
@@ -246,4 +251,7 @@ def etiquetar_pendientes(
             )
         except ErrorEtiquetado as exc:
             resultados.append(Sugerencia(id_fragmento=fragmento.id_fragmento, error=str(exc)))
+        except ErrorProveedorLLM as exc:
+            resultados.append(Sugerencia(id_fragmento=fragmento.id_fragmento, error=str(exc)))
+            break
     return resultados

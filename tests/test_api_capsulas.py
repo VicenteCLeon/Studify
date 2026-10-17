@@ -35,7 +35,7 @@ from studify.main import app
 from studify.vark.rules import aplicar_reglas
 from studify.vark.scoring import PerfilVark
 from studify.web import consentimiento, sesion
-from tests.conftest import USUARIO_DOCENTE, necesita_bd
+from tests.conftest import USUARIO_DOCENTE, cliente_con_proveedor_caido, necesita_bd
 
 pytestmark = necesita_bd
 
@@ -479,6 +479,23 @@ def test_sin_api_key_no_se_genera_pero_el_cache_sigue_sirviendo(
     forzada = _pedir(http, escenario, regenerar="true")
     assert forzada.status_code == 503
     assert "LLM_API_KEY" in forzada.json()["detail"]
+
+
+@pytest.mark.parametrize("falla", ["timeout", "conexion", "sin_saldo"])
+def test_un_proveedor_caido_responde_504_y_no_500(http, escenario, falla):
+    """504 y no 502: el modelo no respondió, no es que la cápsula fallara la validación.
+
+    Antes la excepción del SDK de `openai` escapaba del handler y el cliente
+    recibía un 500 sin explicación.
+    """
+    app.dependency_overrides[get_cliente_llm] = lambda: cliente_con_proveedor_caido(falla)
+    try:
+        respuesta = _pedir(http, escenario)
+    finally:
+        app.dependency_overrides.pop(get_cliente_llm, None)
+
+    assert respuesta.status_code == 504
+    assert "proveedor" in respuesta.json()["detail"]
 
 
 # --- Quién puede pedir y leer una cápsula (auditoría de datos, 02-oct-2026) --

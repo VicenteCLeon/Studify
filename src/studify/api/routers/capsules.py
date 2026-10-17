@@ -50,6 +50,7 @@ from studify.generation.generator import (
     ClienteLLM,
     ClienteOpenAILike,
     ErrorGeneracion,
+    ErrorProveedorLLM,
     ResultadoGeneracion,
     generar,
 )
@@ -350,6 +351,17 @@ def crear_capsula(
 
     try:
         resultado = generar(prompt, cliente=cliente)
+    except ErrorProveedorLLM as exc:
+        # 504 y no 502: el modelo no llegó a responder (timeout, sin saldo,
+        # límite de uso), así que no es una tasa de fallo de la generación.
+        # Antes la excepción del SDK escapaba y el cliente recibía un 500.
+        logger.error(
+            "el proveedor del modelo falló para estudiante=%s objetivo=%s: %s",
+            payload.id_estudiante,
+            payload.id_objetivo,
+            exc,
+        )
+        raise HTTPException(status_code=status.HTTP_504_GATEWAY_TIMEOUT, detail=str(exc)) from exc
     except ErrorGeneracion as exc:
         # El plan §3: agotados los reintentos «se registra y se devuelve 502».
         # Esa tasa de fallo es un dato de resultados para el informe.

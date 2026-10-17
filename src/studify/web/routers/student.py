@@ -447,9 +447,10 @@ def get_viewer(
             objetivo=objetivo,
             titulo=titulo,
             mensaje=mensaje,
-            # Solo un fallo del modelo puede salir distinto al reintentar; sin
-            # material o sin credencial, ofrecer "intentar de nuevo" engaña.
-            reintentable=exc.status_code == 502,
+            # Solo un fallo del modelo o del proveedor puede salir distinto al
+            # reintentar; sin material o sin credencial, ofrecer "intentar de
+            # nuevo" engaña.
+            reintentable=exc.status_code in (502, 504),
         )
 
     diag = db.scalars(
@@ -851,11 +852,12 @@ def _referencias(db: Session, fuentes) -> list[dict]:
 def _explicar_fallo(exc: HTTPException) -> tuple[str, str]:
     """Traduce el error del endpoint a algo que el estudiante entienda.
 
-    Los tres casos son distintos y conviene que se distingan en pantalla: falta
-    la credencial (problema de configuración), falta material curado (problema
-    del docente) o el modelo no logró producir una cápsula válida en los
-    reintentos (problema de generación, y una métrica del criterio de término de
-    la Fase 3).
+    Los cuatro casos son distintos y conviene que se distingan en pantalla:
+    falta la credencial (problema de configuración), falta material curado
+    (problema del docente), el modelo no logró producir una cápsula válida en
+    los reintentos (problema de generación, y una métrica del criterio de
+    término de la Fase 3) o el proveedor ni siquiera respondió (504: timeout,
+    sin saldo, límite de uso).
     """
     if exc.status_code == 503:
         return (
@@ -870,6 +872,13 @@ def _explicar_fallo(exc: HTTPException) -> tuple[str, str]:
             "La respuesta no pasó la validación en ninguno de los reintentos. "
             "Puedes volver a intentarlo; si se repite, hay que revisar el "
             "prompt o el material del tema.",
+        )
+    if exc.status_code == 504:
+        return (
+            "El servicio del modelo no respondió",
+            "No pudimos comunicarnos con el modelo de lenguaje: puede estar "
+            "caído, saturado o sin saldo. Tu cápsula no se generó. Intenta de "
+            "nuevo en unos minutos y, si se repite, avísale a tu docente.",
         )
     if exc.status_code == 422:
         return (

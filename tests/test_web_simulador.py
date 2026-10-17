@@ -27,7 +27,7 @@ from studify.db.models import (
     ObjetivoAprendizaje,
 )
 from studify.main import app
-from tests.conftest import necesita_bd
+from tests.conftest import cliente_con_proveedor_caido, necesita_bd
 from tests.test_api_capsulas import TEXTO_LARGO, ClienteObediente, cliente_falso  # noqa: F401
 
 pytestmark = necesita_bd
@@ -280,3 +280,21 @@ def test_compare_una_columna_que_falla_no_tumba_a_las_otras(http, objetivo_con_m
     # El título que devuelve el cliente falso solo aparece cuando la
     # generación tuvo éxito: dos veces, una por columna que sí funcionó.
     assert cuerpo.count("Segunda forma normal y dependencias parciales") == 2
+
+
+def test_compare_con_el_proveedor_caido_muestra_las_cuatro_columnas_en_error(
+    http, objetivo_con_material
+):
+    """El caso que el docstring de `/simulator/compare` nombra primero: un timeout.
+
+    Antes la excepción del SDK escapaba de `_generar_capsula_pura` y el
+    docente recibía un 500 en lugar de la comparación.
+    """
+    app.dependency_overrides[get_cliente_llm] = lambda: cliente_con_proveedor_caido("timeout")
+    try:
+        respuesta = _comparar(http, objetivo_con_material)
+    finally:
+        app.dependency_overrides.pop(get_cliente_llm, None)
+
+    assert respuesta.status_code == 200
+    assert respuesta.text.count("el proveedor del modelo no respondió") == 4

@@ -30,7 +30,7 @@ from studify.db.models import (
 from studify.main import app
 from studify.vark import instrumento
 from studify.web import sesion
-from tests.conftest import necesita_bd
+from tests.conftest import cliente_con_proveedor_caido, necesita_bd
 
 
 @pytest.fixture
@@ -685,6 +685,27 @@ def test_sin_credencial_del_llm_se_explica_en_pantalla(
     """
     html = cliente.get(f"/student/viewer/{material['con_material'].id_objetivo}").text
     assert "Falta configurar el modelo de lenguaje" in html
+
+
+@necesita_bd
+def test_un_proveedor_caido_se_explica_en_pantalla_y_se_puede_reintentar(
+    cliente, estudiante_conectado, material
+):
+    """Un timeout o un proveedor sin saldo no puede terminar en un 500 crudo.
+
+    Tampoco es «el modelo no logró una cápsula válida»: el modelo ni siquiera
+    respondió, y a diferencia de la falta de credencial, reintentar sí puede
+    resolverlo.
+    """
+    app.dependency_overrides[get_cliente_llm] = lambda: cliente_con_proveedor_caido("timeout")
+    try:
+        respuesta = cliente.get(f"/student/viewer/{material['con_material'].id_objetivo}")
+    finally:
+        app.dependency_overrides.pop(get_cliente_llm, None)
+
+    assert respuesta.status_code == 200
+    assert "El servicio del modelo no respondió" in respuesta.text
+    assert "Intentar de nuevo" in respuesta.text
 
 
 @necesita_bd

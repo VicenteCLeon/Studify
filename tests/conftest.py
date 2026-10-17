@@ -85,6 +85,52 @@ def http_docente(clave_docente) -> TestClient:
     return cliente
 
 
+class _LLMCaido:
+    """Sustituto de `OpenAILike` que falla como falla el proveedor de verdad.
+
+    Lanza las excepciones del SDK de `openai`, que es lo que llega desde
+    llama-index cuando hay un timeout, el proveedor rechaza la llamada (sin
+    saldo, límite de uso) o no hay red. Cuenta las llamadas para poder
+    comprobar que una caída no se reintenta en el bucle de reparación.
+    """
+
+    def __init__(self, falla: str) -> None:
+        self.falla = falla
+        self.llamadas = 0
+
+    def chat(self, mensajes):
+        import httpx
+        import openai
+
+        self.llamadas += 1
+        peticion = httpx.Request("POST", "https://api.deepseek.com/v1/chat/completions")
+        if self.falla == "timeout":
+            raise openai.APITimeoutError(request=peticion)
+        if self.falla == "conexion":
+            raise openai.APIConnectionError(request=peticion)
+        if self.falla == "sin_saldo":
+            raise openai.APIStatusError(
+                "Insufficient Balance",
+                response=httpx.Response(402, request=peticion),
+                body=None,
+            )
+        raise ValueError(f"falla desconocida: {self.falla}")
+
+
+def cliente_con_proveedor_caido(falla: str = "timeout"):
+    """Un `ClienteOpenAILike` real cuyo proveedor no responde.
+
+    Se usa el cliente real —no un doble que imite su contrato— para que el
+    test recorra exactamente el camino de producción: `responder` → `generar`
+    → el handler que corresponda.
+    """
+    from studify.generation.generator import ClienteOpenAILike
+
+    cliente = ClienteOpenAILike(api_key="clave-de-prueba")
+    cliente._llm = _LLMCaido(falla)
+    return cliente
+
+
 @pytest.fixture
 def almacen_temporal(tmp_path, monkeypatch) -> str:
     """Redirige el almacén de documentos a un directorio desechable.

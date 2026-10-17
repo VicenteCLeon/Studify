@@ -14,7 +14,7 @@ from sqlalchemy import select
 
 from studify.db.models import DocumentoFuente, Fragmento, ObjetivoAprendizaje
 from studify.knowledge import tagger
-from tests.conftest import necesita_bd
+from tests.conftest import cliente_con_proveedor_caido, necesita_bd
 
 pytestmark = necesita_bd
 
@@ -270,6 +270,29 @@ def test_etiquetar_pendientes_sigue_tras_un_fallo(db, documento, objetivo):
     assert len(fallidos) == 1
     assert len(exitosos) == 2
     assert fallidos[0].id_fragmento == fragmentos[1].id_fragmento
+
+
+def test_con_el_proveedor_caido_el_lote_se_detiene_y_lo_informa(db, documento, objetivo):
+    """Un timeout no es «un fragmento que falló»: va a fallar igual en todos.
+
+    Antes la excepción del SDK escapaba del lote y el docente recibía un 500.
+    Seguir con el resto solo sumaría una espera por fragmento (hasta 60 en el
+    panel) para terminar con el mismo error.
+    """
+    cliente = cliente_con_proveedor_caido("timeout")
+
+    resultados = tagger.etiquetar_pendientes(
+        db, cliente=cliente, id_documento=documento.id_documento
+    )
+
+    assert len(resultados) == 1
+    assert not resultados[0].ok
+    assert "proveedor" in resultados[0].error
+    assert cliente._llm.llamadas == 1
+    # Nada se escribió: la sugerencia solo se guarda cuando hay respuesta.
+    assert all(
+        "sugerencia_llm" not in (f.metadatos_json or {}) for f in _fragmentos(db, documento)
+    )
 
 
 def test_etiquetar_pendientes_respeta_el_limite(db, documento, objetivo):
