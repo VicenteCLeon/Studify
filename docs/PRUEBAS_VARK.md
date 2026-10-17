@@ -2074,6 +2074,8 @@ No se ejecutó por decisión del equipo. Su comportamiento actual, leído del c�
 
 ### Hallazgos reportados sin corregir
 
+> **Registro al 05-oct-2026; ya no se actualiza.** Lo que sigue abierto de esta lista está en [`PENDIENTES.md`](PENDIENTES.md), junto con el resto de los pendientes del proyecto.
+
 La batería no toca lógica de negocio: cada corrección se hace aparte, por etapas (ver «Correcciones»). Estado al 05-oct-2026: H2, H5 y H9 corregidos; H1 cerrado como limitación conocida (el perfil R no incluye glosario; ver «Etapa 1 — Ronda 4») y H3 abierto; H4, H8, H10, H11 y H12 registrados sin corregir; H13 es una decisión de diseño anotada, no un defecto; el resto, sin tocar. Ordenados por impacto. En H5, «el visor lo llama» se refiere a cada cápsula **nueva**: las que salen del caché no pasaban por `GeneradorMultimedia`.
 
 | # | Hallazgo | Evidencia | Propuesta (pendiente de aprobación) |

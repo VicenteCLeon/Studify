@@ -9,7 +9,7 @@
 > `components/_generando.html`; AVANCE §5 duovicies). La cifra de 163 tests es
 > de esa fecha. Desde el 17-oct-2026 las `flashcards` se registran sin
 > corrección y los cuestionarios pregunta por pregunta
-> (`docs/PENDIENTES_REVISION.md`, punto 3).
+> (commit `a922240`).
 
 **Proyecto:** Studify — Micro-aprendizaje adaptativo con RAG curricular y perfilamiento VARK  
 **Rol:** Desarrollador Senior / Arquitecto de Software  

@@ -283,6 +283,8 @@ tiene disponible cada máquina del equipo — ver el nuevo riesgo en la sección
 
 ## 6. Decisiones pendientes que bloquean código
 
+> **Registro al 24-ago-2026; ya no se actualiza.** Lo que sigue abierto de esta lista está en [`PENDIENTES.md`](PENDIENTES.md), junto con el resto de los pendientes del proyecto.
+
 Se planeó cerrarlas en la Semana 0 / Fase 1; en la práctica se fueron cerrando entre la Fase 1
 y la Fase 3, y no siempre con la propuesta que se anotó acá — el detalle de qué se implementó
 realmente y por qué está en `AVANCE.md` sección 7, que se mantiene sincronizada con esta lista.

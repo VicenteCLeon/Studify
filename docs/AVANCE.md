@@ -2436,6 +2436,8 @@ necesita confirmar, una redacción neutra para `referencia.wav` y una sección p
 
 ## 6. Pendiente inmediato
 
+> **Registro al 17-oct-2026; ya no se actualiza.** Lo que sigue abierto de esta lista está en [`PENDIENTES.md`](PENDIENTES.md), junto con el resto de los pendientes del proyecto.
+
 Los dos primeros son ahora los que bloquean todo lo demás: el motor está escrito y probado,
 pero **no se ha ejecutado nunca contra un modelo real ni sobre material real**.
 
@@ -2581,6 +2583,8 @@ interpolación lineal sobre C_texto tal como está implementada.
 ---
 
 ## 7. Decisiones de diseño aún abiertas (no bloquean la Semana 0, sí bloquean partes de la Fase 1/3)
+
+> **Registro al 17-oct-2026; ya no se actualiza.** Lo que sigue abierto de esta lista está en [`PENDIENTES.md`](PENDIENTES.md), junto con el resto de los pendientes del proyecto.
 
 Copiadas y mantenidas en sincronía con `PLAN_DESARROLLO.md` sección 6 — resumen aquí para no
 tener que saltar de archivo:
