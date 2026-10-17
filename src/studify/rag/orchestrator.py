@@ -13,10 +13,12 @@ listas distintas, la regla 5 («ningún `id_fragmento` citado fuera de los
 inyectados») podría rechazar una cita legítima o —peor— dejar pasar una
 inventada, y el proyecto entero se apoya en que esa comprobación sea exacta.
 
-**2. La huella de caché depende de todo lo que cambia la salida, y de nada
-más.** Está construida sobre los mismos valores que entran al prompt, así que
-dos peticiones con la misma huella habrían producido el mismo prompt. Si el
-docente cura material nuevo o el perfil cambia de tramo, la huella cambia sola.
+**2. La huella de caché depende de lo que entra al prompt.** Material, texto
+de los fragmentos, objetivo, plantillas, tramo del perfil y modelo: si el
+docente cura o corrige material, si cambia el prompt o si el perfil cambia de
+tramo, la huella cambia sola. La única excepción deliberada son los pesos
+`C_*`, que van al prompt pero no a la huella para que el caché se comparta por
+tramo (ver `huella`).
 """
 
 import hashlib
@@ -152,39 +154,82 @@ def bloque_tarea(objetivo: ObjetivoAprendizaje) -> str:
     )
 
 
+def _sha(texto: str) -> str:
+    return hashlib.sha256(texto.encode("utf-8")).hexdigest()
+
+
+def _huella_plantillas() -> str:
+    """El texto fijo del prompt: reglas, secuencia, esquema, instrucciones y tonos.
+
+    Se calcula en cada llamada a partir de las propias plantillas, y no con un
+    número de versión a mano, para que ninguna corrección del prompt dependa
+    de que alguien se acuerde de subirlo.
+    """
+    ajustes = get_settings()
+    partes = [
+        prompts.SISTEMA,
+        prompts.SECUENCIA,
+        prompts.ESQUEMA_JSON,
+        prompts.CONTEXTO.template,
+        prompts.FRAGMENTO.template,
+        prompts.PERFIL.template,
+        prompts.FORMATO.template,
+        prompts.TAREA.template,
+        *(f"{k}={v}" for k, v in sorted(prompts.INSTRUCCION_POR_DIRECTIVA.items())),
+        *(f"{k}={v}" for k, v in sorted(prompts.DESCRIPCION_TONO.items())),
+        f"rango={ajustes.capsula_min_palabras}-{ajustes.capsula_max_palabras}",
+    ]
+    return _sha("\x1f".join(partes))
+
+
 def huella(
     config: ConfiguracionGenerada,
     fragmentos: Sequence[FragmentoRecuperado],
     *,
-    id_objetivo: int,
+    objetivo: ObjetivoAprendizaje,
     modelo: str,
     palabras_objetivo: int,
 ) -> str:
-    """Clave de caché: todo lo que cambia la cápsula, y nada más.
+    """Clave de caché: todo lo que entra al prompt, salvo los pesos `C_*`.
 
     El plan §4 la define como «(id_objetivo, hash de configuracion_contenido
-    redondeada)». Se le agregan los fragmentos y el modelo porque ambos también
-    cambian la salida: si el docente valida material nuevo, la cápsula cacheada
-    dejó de reflejar el material disponible; y durante el bake-off la misma
-    configuración se corre contra tres modelos distintos, que sin esto se
-    pisarían entre sí en el caché.
+    redondeada)». Se le agregan:
 
-    Los pesos continuos `C_*` **no** entran: no llegan al prompt, solo lo hacen
-    los enteros que se derivan de ellos. Incluirlos daría una huella distinta
-    para dos perfiles que producen exactamente el mismo prompt.
+    - **los fragmentos con su contenido** —id, tipo, procedencia y texto—, no
+      solo sus ids. Material nuevo cambia la cápsula, y también corregir el
+      texto de un fragmento ya validado (`curation.editar_texto`): con solo los
+      ids se seguía sirviendo la cápsula escrita sobre el texto viejo. Se
+      ordenan por id, porque los mismos fragmentos son el mismo material;
+    - **el objetivo tal como aparece en la tarea** (asignatura, unidad, tema y
+      descripción);
+    - **las plantillas del prompt** (`_huella_plantillas`): sin ellas, una
+      corrección del prompt no llegaba a ningún tramo que ya tuviera cápsula;
+    - **el modelo**: durante el bake-off la misma configuración se corre contra
+      tres modelos, que sin esto se pisarían en el caché.
+
+    **La excepción deliberada son los pesos continuos `C_*`.** Sí llegan al
+    prompt (bloque «Perfil de representación», H13), pero si entraran a la
+    huella casi cada estudiante tendría la suya y el caché compartido por tramo
+    dejaría de servir. Dos perfiles con la misma huella reciben el mismo prompt
+    salvo esas cuatro cifras (`test_misma_huella_es_el_mismo_prompt_salvo_los_pesos`).
     """
-    ids = ",".join(str(i) for i in sorted(f.id_fragmento for f in fragmentos))
+    material = "\x1e".join(
+        f"{f.id_fragmento}\x1f{f.tipo}\x1f{f.cita}\x1f{_sha(f.texto.strip())}"
+        for f in sorted(fragmentos, key=lambda f: f.id_fragmento)
+    )
     partes = [
-        f"objetivo={id_objetivo}",
+        f"objetivo={objetivo.id_objetivo}",
+        f"tarea={_sha(bloque_tarea(objetivo))}",
         f"modelo={modelo}",
         f"palabras={palabras_objetivo}",
         f"visuales={config.recursos_visuales}",
         f"practicos={config.componentes_practicos}",
         f"tono={config.tono_narrativo}",
         f"directivas={','.join(sorted(config.directivas))}",
-        f"fragmentos={ids}",
+        f"fragmentos={_sha(material)}",
+        f"plantillas={_huella_plantillas()}",
     ]
-    return hashlib.sha256("|".join(partes).encode("utf-8")).hexdigest()
+    return _sha("|".join(partes))
 
 
 def construir(
@@ -226,7 +271,7 @@ def construir(
         huella=huella(
             config,
             fragmentos,
-            id_objetivo=objetivo.id_objetivo,
+            objetivo=objetivo,
             modelo=modelo,
             palabras_objetivo=palabras_objetivo,
         ),

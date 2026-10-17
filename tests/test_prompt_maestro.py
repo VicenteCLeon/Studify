@@ -13,11 +13,13 @@ es el tipo de fallo que no produce ningún error y sí cápsulas peores:
 No requieren Postgres ni `LLM_API_KEY`: el ensamblado es puro.
 """
 
+from dataclasses import replace
 from decimal import Decimal
 from itertools import product
 
 import pytest
 
+from studify.db.models import ObjetivoAprendizaje
 from studify.generation.schemas import Actividad, Fuente, Microcapsula
 from studify.rag import orchestrator, prompts
 from studify.rag.orchestrator import ErrorPrompt
@@ -302,6 +304,96 @@ def test_dos_perfiles_casi_iguales_comparten_cache():
 
     assert uno.palabras_texto != otro.palabras_texto  # el perfil sí cambia
     assert construir(perfil(0, 0, 100, 0)).huella == construir(perfil(1, 0, 99, 0)).huella
+
+
+def test_editar_el_texto_de_un_fragmento_invalida_el_cache():
+    """Los mismos ids con otro texto son otro material.
+
+    El docente puede corregir un fragmento ya validado (`curation.editar_texto`).
+    Si la huella solo mirara los ids, se seguiría sirviendo la cápsula escrita
+    sobre el texto viejo, mientras las referencias del visor muestran el nuevo.
+    """
+    editado = [replace(FRAGMENTOS[0], texto=FRAGMENTOS[0].texto + " Corrección."), *FRAGMENTOS[1:]]
+
+    original = construir(perfil(0, 0, 0, 100))
+    corregido = construir(perfil(0, 0, 0, 100), fragmentos=editado)
+
+    assert original.huella != corregido.huella
+
+
+def test_cambiar_la_procedencia_de_un_fragmento_invalida_el_cache():
+    """El título del documento y la página van en el prompt (la cita del fragmento)."""
+    otra_pagina = [replace(FRAGMENTOS[0], pagina_inicio=99, pagina_fin=99), *FRAGMENTOS[1:]]
+
+    assert construir(perfil(0, 0, 0, 100)).huella != construir(
+        perfil(0, 0, 0, 100), fragmentos=otra_pagina
+    ).huella
+
+
+def test_cambiar_una_instruccion_del_prompt_invalida_el_cache(monkeypatch):
+    """Una corrección del prompt (H1, H12) tiene que llegar a quien pide la cápsula.
+
+    Con la huella vieja, cualquier tramo que ya tuviera una cápsula —propia o
+    copiada del caché compartido— la seguía recibiendo escrita con el texto
+    anterior del prompt.
+    """
+    antes = construir(perfil(0, 0, 100, 0)).huella
+    monkeypatch.setitem(
+        prompts.INSTRUCCION_POR_DIRECTIVA,
+        "glosario",
+        "El último bloque de `representacion_adaptativa` es un bloque `glosario`.",
+    )
+
+    assert construir(perfil(0, 0, 100, 0)).huella != antes
+
+
+def test_cambiar_las_reglas_del_sistema_invalida_el_cache(monkeypatch):
+    antes = construir(perfil(0, 0, 0, 100)).huella
+    monkeypatch.setattr(prompts, "SISTEMA", prompts.SISTEMA + "\n5. Regla nueva.")
+
+    assert construir(perfil(0, 0, 0, 100)).huella != antes
+
+
+def test_cambiar_la_descripcion_del_objetivo_invalida_el_cache():
+    """La descripción del objetivo va en el bloque de la tarea."""
+    otro = ObjetivoAprendizaje(
+        id_objetivo=OBJETIVO.id_objetivo,
+        codigo_objetivo=OBJETIVO.codigo_objetivo,
+        asignatura=OBJETIVO.asignatura,
+        unidad=OBJETIVO.unidad,
+        tema=OBJETIVO.tema,
+        descripcion="Otra descripción del objetivo.",
+    )
+    config = aplicar_reglas(perfil(0, 0, 0, 100))
+    original = orchestrator.construir(
+        objetivo=OBJETIVO, fragmentos=FRAGMENTOS, config=config, modelo="deepseek-chat"
+    )
+    cambiado = orchestrator.construir(
+        objetivo=otro, fragmentos=FRAGMENTOS, config=config, modelo="deepseek-chat"
+    )
+
+    assert original.huella != cambiado.huella
+
+
+def test_misma_huella_es_el_mismo_prompt_salvo_los_pesos():
+    """La única diferencia que la huella ignora a propósito son los pesos C_*.
+
+    Van al prompt para indicar cuánto énfasis lleva cada canal (H13), pero son
+    continuos: si entraran a la huella, casi cada estudiante tendría la suya y
+    el caché compartido por tramo dejaría de servir. Este test fija esa
+    excepción para que no aparezca otra sin que nadie lo decida.
+    """
+    uno = construir(perfil(0, 0, 100, 0))
+    otro = construir(perfil(1, 0, 99, 0))
+
+    def sin_pesos(texto: str) -> str:
+        nombres = ("- Texto:", "- Visual:", "- Narrativo:", "- Práctico:")
+        return "\n".join(ln for ln in texto.splitlines() if not ln.startswith(nombres))
+
+    assert uno.huella == otro.huella
+    assert uno.usuario != otro.usuario
+    assert sin_pesos(uno.usuario) == sin_pesos(otro.usuario)
+    assert uno.sistema == otro.sistema
 
 
 def test_el_objetivo_de_palabras_no_llega_pegado_al_maximo():

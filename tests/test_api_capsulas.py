@@ -20,6 +20,7 @@ from decimal import Decimal
 
 import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy import select
 
 from studify.api.routers.capsules import get_cliente_llm
 from studify.db.models import (
@@ -31,6 +32,7 @@ from studify.db.models import (
     MicrocapsulaGenerada,
     ObjetivoAprendizaje,
 )
+from studify.knowledge import curation
 from studify.main import app
 from studify.vark.rules import aplicar_reglas
 from studify.vark.scoring import PerfilVark
@@ -423,6 +425,27 @@ def test_otro_estudiante_del_mismo_tramo_no_vuelve_a_pagar_la_generacion(
     assert cuerpo["id_estudiante"] == gemelo.id_estudiante
     assert cuerpo["titulo"] == primera["titulo"]
     assert cliente_falso.llamadas == 1
+
+
+def test_corregir_el_texto_de_un_fragmento_genera_una_capsula_nueva(
+    http, db, escenario, cliente_falso
+):
+    """La corrección del docente tiene que llegar a la cápsula, no solo al visor.
+
+    Antes la huella solo miraba los ids de los fragmentos: editar el texto de
+    uno ya validado dejaba sirviéndose la cápsula escrita sobre el texto viejo.
+    """
+    primera = _pedir(http, escenario).json()
+    fragmento = db.scalar(
+        select(Fragmento).where(Fragmento.id_documento == escenario["documento"].id_documento)
+    )
+    curation.editar_texto(db, fragmento.id_fragmento, TEXTO_LARGO + " Corrección del docente.")
+
+    segunda = _pedir(http, escenario).json()
+
+    assert segunda["origen"] == "generada"
+    assert segunda["id_capsula"] != primera["id_capsula"]
+    assert cliente_falso.llamadas == 2
 
 
 def test_un_perfil_distinto_no_reutiliza_el_cache(http, db, escenario, cliente_falso):

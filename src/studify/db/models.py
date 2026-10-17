@@ -429,7 +429,8 @@ class MicrocapsulaGenerada(Base):
     #
     # `huella_generacion` es la clave de caché que calcula
     # `rag/orchestrator.huella()`: resume todo lo que determina la cápsula
-    # (objetivo, tramo del perfil, fragmentos disponibles y modelo). Va como
+    # (objetivo, tramo del perfil, fragmentos con su texto, plantillas del
+    # prompt y modelo). Va como
     # columna y no dentro de `contenido_json` porque es lo que se consulta en
     # cada petición, y un `->>` sobre JSONB no aprovecha índice.
     #
