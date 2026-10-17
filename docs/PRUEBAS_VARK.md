@@ -1783,7 +1783,7 @@ falla en los 4 casos conocidos y las dos páginas se renderizan. Cambia:
 | `privacidad.html` §9 | Derecho a cambiar la preferencia de voz desde el visor o el perfil |
 | `web/legal.py` | Términos y Política suben de **0.1 a 0.2**, con fecha de publicación |
 | `tests/test_web_legal.py` | El test de nueva versión deja de fijar `"0.1"`: captura la versión vigente |
-| `docs/PLAN_DESARROLLO.md:244`, `docs/IMPLEMENTACION_IA_LOCAL.md:31` | Notas internas: Piper es GPL-3.0, y Kokoro y Piper reemplazan a XTTS |
+| `docs/PLAN_DESARROLLO.md:244`, `docs/IMPLEMENTACION_IA_LOCAL.md:31` (borrado el 17-oct-2026 por obsoleto) | Notas internas: Piper es GPL-3.0, y Kokoro y Piper reemplazan a XTTS |
 
 **Cómo funciona hoy la re-aceptación** (`web/consentimiento.py`):
 
@@ -1844,9 +1844,9 @@ código es software libre bajo **AGPL-3.0-or-later**, © 2026 de ambos. Reposito
 
 | Archivo | Origen que se pudo comprobar | Licencia conocida | Qué tiene que confirmar el equipo |
 |---|---|---|---|
-| `src/studify/public/animacionCarga.mp4` | Lo agregó Vicente en `614238e` (03-sep), como pantalla de carga (`docs/sesion de testeo y mejoras 03-09.md`). Su metadato dice `encoder=Google`. Ya no se usa: la reemplazó la animación CSS de `_generando.html` | Desconocida | Con qué herramienta o de qué fuente se obtuvo (¿un generador de video de Google?) y sus condiciones de uso. Si no se puede saber, conviene sacarlo del repo, porque no se usa |
-| `docs/School Background.dc.html` | Lo agregó Vicente en `7b34ba3` (13-ago). Es la exportación de una herramienta de diseño: carga `./support.js`, que no está en el repo. De él sale la textura `static/img/textura-escolar.svg` (AVANCE §5) | Desconocida | Con qué herramienta se hizo y si sus íconos y dibujos son propios o de una biblioteca con licencia |
-| `docs/images/ciclo_del_agua*.png`, `prueba_flux_klein.png` | Los agregó Vicente en `614238e`. Según `docs/decicionesIAlocal.md` son salidas de **FLUX.2 [klein] 4B**, en local | El modelo `black-forest-labs/FLUX.2-klein-4B` declara Apache-2.0 en Hugging Face | Que es exactamente ese modelo; por ejemplo, el GGUF de `unsloth/FLUX.2-klein-4B-GGUF`, también Apache-2.0 |
+| `src/studify/public/animacionCarga.mp4` | Lo agregó Vicente en `614238e` (03-sep), como pantalla de carga (`docs/historico/2026-09-03_sesion_de_testeo_y_mejoras.md`). Su metadato dice `encoder=Google`. Ya no se usa: la reemplazó la animación CSS de `_generando.html` | Desconocida | Con qué herramienta o de qué fuente se obtuvo (¿un generador de video de Google?) y sus condiciones de uso. Si no se puede saber, conviene sacarlo del repo, porque no se usa |
+| `docs/historico/2026-08-13_fondo_de_marca.dc.html` (antes `docs/School Background.dc.html`) | Lo agregó Vicente en `7b34ba3` (13-ago). Es la exportación de una herramienta de diseño: carga `./support.js`, que no está en el repo. De él sale la textura `static/img/textura-escolar.svg` (AVANCE §5) | Desconocida | Con qué herramienta se hizo y si sus íconos y dibujos son propios o de una biblioteca con licencia |
+| `docs/images/ciclo_del_agua*.png`, `prueba_flux_klein.png` | Los agregó Vicente en `614238e`. Según `docs/historico/2026-09-03_experimento_flux2_klein.md` son salidas de **FLUX.2 [klein] 4B**, en local | El modelo `black-forest-labs/FLUX.2-klein-4B` declara Apache-2.0 en Hugging Face | Que es exactamente ese modelo; por ejemplo, el GGUF de `unsloth/FLUX.2-klein-4B-GGUF`, también Apache-2.0 |
 | `docs/images/prueba_sdxl.png` | Movido por Patricio en `b6b9beb`; viene de `614238e`. `image.py` usa `stabilityai/stable-diffusion-xl-base-1.0` | CreativeML OpenRAIL++-M (Hugging Face) | Que salió de ese modelo |
 | `docs/images/prueba_stable_diffusion_3.png` | Mismo historial. El repo **no** guarda qué variante de SD3 se usó | SD3 Medium: Stability NC Research Community; SD 3.5: Stability Community License | Qué variante exacta se usó. La primera es **solo para investigación sin uso comercial** |
 | `docs/images/prueba_z_image.png` | Agregado por Patricio en `cee69ec` (02-sep). `image.py` dice «Z-Image Turbo (Alibaba)», sin id del modelo | `Tongyi-MAI/Z-Image-Turbo` declara Apache-2.0 | Que es ese modelo |
@@ -2068,7 +2068,7 @@ No se ejecutó por decisión del equipo. Su comportamiento actual, leído del c�
   [`capsules.py`](../src/studify/api/routers/capsules.py): la cápsula de texto se entrega
   igual, pero **el audio de ese perfil se omite**, porque la imagen se genera antes.
 - La imagen se guarda en `data/media/`, que ninguna plantilla muestra.
-- `docs/decicionesIAlocal.md` describe FLUX.2 Klein sobre CUDA y la imagen «en stand-by y
+- `docs/historico/2026-09-03_experimento_flux2_klein.md` describe FLUX.2 Klein sobre CUDA y la imagen «en stand-by y
   desacoplada de la UI»; el código del repo sigue siendo SDXL sobre DirectML y sigue
   conectado al endpoint.
 

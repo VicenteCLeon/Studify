@@ -195,7 +195,6 @@ esperar su visto bueno.
   cápsulas (Fase 5) y el caché compartido no filtraría las rechazadas.
 - Código muerto o desfasado: `media/generator.py` (`GeneradorMultimedia`),
   docstring de `media/image.py` (dice Z-Image/FLUX, carga SDXL),
-  `docs/IMPLEMENTACION_IA_LOCAL.md` (describe un `video.py` inexistente),
   `scripts/check_taesd3.py` (UTF-16, no se ejecuta), `scripts/scratch.py`.
 - `AVANCE.md` no se actualiza desde el 05-oct-2026: faltan la migración a
   `deepseek-flash`, el borrado de documentos y los cinco commits del 17-oct.

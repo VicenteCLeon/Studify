@@ -12,7 +12,7 @@ Convención de este informe: **✅ oficial** es un dato leído hoy en la página
 ## 1. Resumen ejecutivo
 
 1. **Recomendación principal: no usar un modelo de imagen para el esquema.** El LLM de texto que ya usamos (DeepSeek) entrega una especificación JSON y nosotros la dibujamos como SVG con plantillas propias.
-2. **Por qué:** el texto sale exacto, con tildes y ñ, porque lo escribe un motor tipográfico y no un modelo de difusión. Es lo mismo que el equipo ya concluyó en `docs/decicionesIAlocal.md` §10 tras probar FLUX.2 klein en local.
+2. **Por qué:** el texto sale exacto, con tildes y ñ, porque lo escribe un motor tipográfico y no un modelo de difusión. Es lo mismo que el equipo ya concluyó en `docs/historico/2026-09-03_experimento_flux2_klein.md` §10 tras probar FLUX.2 klein en local.
 3. **Ya funciona como prototipo:** los 3 ejemplos con contenido real del repo se dibujaron en menos de 1 ms cada uno (`pruebas/resultados/deterministico/`).
 4. **Costo de la opción principal:** ~US$0,002 por lección (una llamada extra a DeepSeek; medido: US$0,0007 en horario valle, §10.3). El proyecto completo, incluido el desarrollo, queda bajo US$1 (≈ CLP 1.000).
 5. **Plan B:** Nano Banana 2.1 de Google (`gemini-nano-banana-2.1`), US$0,0336 por imagen a 1K ✅, detrás de un adaptador `ImageProvider`. Tope sugerido: US$10 prepagados (≈ CLP 9.800).
@@ -48,7 +48,7 @@ Convención de este informe: **✅ oficial** es un dato leído hoy en la página
   - Extra `media` de `pyproject.toml` (torch, diffusers): sin uso.
   - `config.py::media_dir` (`data/media`): carpeta vacía que ninguna plantilla sirve.
   - No hay endpoint, tabla ni variable de entorno para imágenes.
-- **Decisión previa del equipo:** `docs/decicionesIAlocal.md` §10 y `PLAN_DESARROLLO.md` §5 ya dicen que los diagramas con rótulos deben generarse con código vectorial (SVG o Mermaid). Esta propuesta lo concreta.
+- **Decisión previa del equipo:** `docs/historico/2026-09-03_experimento_flux2_klein.md` §10 y `PLAN_DESARROLLO.md` §5 ya dicen que los diagramas con rótulos deben generarse con código vectorial (SVG o Mermaid). Esta propuesta lo concreta.
 
 ### 2.3 Flujo actual
 
@@ -411,7 +411,7 @@ Todo verificado el 10-oct-2026. Precios en USD por imagen a ~1 megapíxel salvo 
 | Recraft V4.1 ráster | 0,035 ✅ | Por imagen | ❓ | Ráster | — | Vigente | [10] |
 | Recraft V4.1 Flash | 0,007, ~1,3 s ✅ | Por imagen | ❓ | Ráster; no admite `style` | — | Vigente | [10] [11] |
 | FLUX.2 pro / flex / max | 0,03 / 0,05 / 0,07 por MP ✅ | Megapíxel | Por debajo de los anteriores en el ranking 🟡 | Ráster | No se menciona | Vigente; existe FLUX 3 ❓ | [12] |
-| FLUX.2 klein 4B / 9B | 0,014 / 0,015 ✅ | Megapíxel | **Insuficiente: ya lo probó el equipo en local** (`decicionesIAlocal.md`) | Ráster | Ver Cloudflare | Vigente | [12] |
+| FLUX.2 klein 4B / 9B | 0,014 / 0,015 ✅ | Megapíxel | **Insuficiente: ya lo probó el equipo en local** (`historico/2026-09-03_experimento_flux2_klein.md`) | Ráster | Ver Cloudflare | Vigente | [12] |
 | FLUX.2 dev | Sin API de BFL; pesos no comerciales ✅ | — | — | — | — | Solo local | [12] |
 | Qwen-Image 2.0 / 2.0 Pro | 0,035 / 0,075 (Singapur) 🟡 | Por imagen | Líder en chino 🟡. Español ❓ | Ráster | Cuota de prueba ❓ | Existe 3.0 ❓ | [13] |
 | Seedream 5.0 Pro | 0,045 (≤ 2,36 MP) · 0,09 🟡 | Por imagen | ❓ | Ráster | ❓ | Vigente 🟡 | [14] |

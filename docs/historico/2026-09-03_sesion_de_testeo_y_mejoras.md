@@ -1,5 +1,16 @@
 # Sesión de Testeo y Mejoras — 03 de Septiembre de 2026
 
+> **Documento histórico.** Es el único registro de por qué existen las
+> actividades `flashcards` y `quiz_multi` (después `flashcards_y_quiz`):
+> `AVANCE.md` no tiene una sección para esta sesión.
+>
+> **Lo que ya no es cierto:** `style.css` y el video de carga en
+> `catalog.html` los reemplazó el rediseño del 02-oct-2026 (`app.css` y
+> `components/_generando.html`; AVANCE §5 duovicies). La cifra de 163 tests es
+> de esa fecha. Desde el 17-oct-2026 las `flashcards` se registran sin
+> corrección y los cuestionarios pregunta por pregunta
+> (`docs/PENDIENTES_REVISION.md`, punto 3).
+
 **Proyecto:** Studify — Micro-aprendizaje adaptativo con RAG curricular y perfilamiento VARK  
 **Rol:** Desarrollador Senior / Arquitecto de Software  
 **Fecha:** 03 de Septiembre de 2026  
@@ -33,8 +44,8 @@ Todas las modificaciones fueron validadas mediante pruebas de integración, aná
 ### 3.1. Corrección del Límite de Palabras y Generación de Cápsulas
 * **Diagnóstico del problema:** Al solicitar la cápsula `UX-U1-05 — Diferencia entre diseño UX y diseño UI` para el estudiante `2012` ($R=45.45\%$, $K=40.91\%$), el modelo DeepSeek entregó 361 palabras (límite: 300 palabras). El mensaje de error solo señalaba `concepto_central`, haciendo que el modelo recortara solo ahí y volviera a fallar con 335 palabras.
 * **Archivos modificados:**
-  * [src/studify/generation/validator.py](file:///e:/code/Studify/Studify/src/studify/generation/validator.py): Se recalculó el feedback para instruir un recorte obligatorio de `exceso + 15` palabras repartido entre `concepto_central`, `representacion_adaptativa` y `ejemplo`.
-  * [src/studify/rag/prompts/maestro.py](file:///e:/code/Studify/Studify/src/studify/rag/prompts/maestro.py): Se añadieron directivas estrictas de concisión en `PERFIL` y `FORMATO`.
+  * `src/studify/generation/validator.py`: Se recalculó el feedback para instruir un recorte obligatorio de `exceso + 15` palabras repartido entre `concepto_central`, `representacion_adaptativa` y `ejemplo`.
+  * `src/studify/rag/prompts/maestro.py`: Se añadieron directivas estrictas de concisión en `PERFIL` y `FORMATO`.
 * **Resultado:** La cápsula #1317 se generó, validó y persistió con éxito en PostgreSQL al primer intento.
 
 ---
@@ -61,12 +72,12 @@ Se desarrollaron dos nuevas modalidades pedagógicas enriquecidas:
 * En `/teacher/simulator`, el profesor puede simular perfiles kinestésicos y auditar de inmediato la baraja completa de flashcards desplegada o las preguntas del cuestionario con sus respectivas claves y justificaciones.
 
 **Archivos afectados:**
-* [src/studify/generation/schemas.py](file:///e:/code/Studify/Studify/src/studify/generation/schemas.py)
-* [src/studify/rag/prompts/maestro.py](file:///e:/code/Studify/Studify/src/studify/rag/prompts/maestro.py)
-* [src/studify/web/templates/student/_capsula.html](file:///e:/code/Studify/Studify/src/studify/web/templates/student/_capsula.html)
-* [src/studify/web/templates/student/_feedback.html](file:///e:/code/Studify/Studify/src/studify/web/templates/student/_feedback.html)
-* [src/studify/web/routers/student.py](file:///e:/code/Studify/Studify/src/studify/web/routers/student.py)
-* [tests/test_generacion_contrato.py](file:///e:/code/Studify/Studify/tests/test_generacion_contrato.py)
+* `src/studify/generation/schemas.py`
+* `src/studify/rag/prompts/maestro.py`
+* `src/studify/web/templates/student/_capsula.html`
+* `src/studify/web/templates/student/_feedback.html`
+* `src/studify/web/routers/student.py`
+* `tests/test_generacion_contrato.py`
 
 ---
 
@@ -75,10 +86,10 @@ Se desarrollaron dos nuevas modalidades pedagógicas enriquecidas:
 Para evitar la incertidumbre del estudiante mientras el LLM y el RAG estructuran la cápsula (proceso que toma entre 4 y 15 segundos), se diseñó una pantalla de carga inmersiva:
 
 1. **Montaje de Assets Públicos:**
-   * En [src/studify/main.py](file:///e:/code/Studify/Studify/src/studify/main.py), se montó la carpeta `src/studify/public` en la ruta `/public`.
+   * En `src/studify/main.py`, se montó la carpeta `src/studify/public` en la ruta `/public`.
 2. **Video de Carga (`animacionCarga.mp4`):**
-   * Se incorporó el elemento `<video>` en [catalog.html](file:///e:/code/Studify/Studify/src/studify/web/templates/student/catalog.html) con reproducción continua silenciada (`autoplay`, `loop`, `muted`, `playsinline`).
-   * Contenedor estilizado en [style.css](file:///e:/code/Studify/Studify/src/studify/web/static/css/style.css) con bordes redondeados (`border-radius: 1rem`), iluminación sutil y sombra de elevación.
+   * Se incorporó el elemento `<video>` en `src/studify/web/templates/student/catalog.html` con reproducción continua silenciada (`autoplay`, `loop`, `muted`, `playsinline`).
+   * Contenedor estilizado en `src/studify/web/static/css/style.css` con bordes redondeados (`border-radius: 1rem`), iluminación sutil y sombra de elevación.
 3. **Control del Ciclo de Vida (JavaScript):**
    * Al hacer clic en «Estudiar», el video reinicia en `0s` y arranca la reproducción.
    * La interfaz muestra el código y tema seleccionado dinámicamente (`UX-U1-01`, etc.).

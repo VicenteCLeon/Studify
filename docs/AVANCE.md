@@ -184,7 +184,7 @@ que arrastraban los routers mock).
 
 **Rebranding y fondo de marca (13-ago-2026, sección 5 undecies):** la UI pasó a llamarse "RepasAi" y toda la web tiene ahora una textura de fondo con íconos educativos. Es un cambio visual, sin código de dominio.
 
-**Estructura pedagógica de siete pasos (19-ago-2026, sección 5 terdecies):** la profesora guía observó que el informe no define la estructura de una microcápsula y propuso una (OA → activación → concepto central → representación adaptativa VARK → ejemplo → pregunta de comprobación → retroalimentación). Está implementada: cada paso es ahora un campo obligatorio del contrato en vez de un bloque suelto dentro de una lista, y el prompt le muestra al modelo los cuatro pesos C_* en crudo además de las instrucciones estructurales. Verificado contra DeepSeek con material real: cápsula válida al primer intento, 247 palabras, los siete pasos en orden. **277 tests en verde.** Tres puntos de su lista quedaron fuera a propósito (embeddings, OA secundarios y el campo "contenido" del OA) — el detalle está en la sección 5 terdecies y en [`AUDITORIA_LISTA_PROFESORA_14AGO2026.md`](AUDITORIA_LISTA_PROFESORA_14AGO2026.md).
+**Estructura pedagógica de siete pasos (19-ago-2026, sección 5 terdecies):** la profesora guía observó que el informe no define la estructura de una microcápsula y propuso una (OA → activación → concepto central → representación adaptativa VARK → ejemplo → pregunta de comprobación → retroalimentación). Está implementada: cada paso es ahora un campo obligatorio del contrato en vez de un bloque suelto dentro de una lista, y el prompt le muestra al modelo los cuatro pesos C_* en crudo además de las instrucciones estructurales. Verificado contra DeepSeek con material real: cápsula válida al primer intento, 247 palabras, los siete pasos en orden. **277 tests en verde.** Tres puntos de su lista quedaron fuera a propósito (embeddings, OA secundarios y el campo "contenido" del OA) — el detalle está en la sección 5 terdecies y en `AUDITORIA_LISTA_PROFESORA_14AGO2026.md`, que no quedó versionado en el repo.
 
 **Alta de objetivos desde el panel del docente (14-ago-2026, sección 5 duodecies):** `POST /api/objetivos` existía desde la Fase 2 pero no estaba conectado a ninguna pantalla — el catálogo solo se podía cargar por consola. Ahora hay un formulario en `/teacher/curation` que reutiliza el mismo handler; el script de carga masiva se conserva para sembrar un plan de estudios completo. **265 tests en verde** (261 + 4), `ruff` limpio. De paso se cargó el primer material curricular real del proyecto —5 objetivos de "Diseño de UX" y un PPTX con 40 fragmentos— aunque todavía sin curar, y se encontró que esta máquina tenía dos migraciones de Patricio sin aplicar (`/teacher/analytics` daba 500 hasta correr `alembic upgrade head`).
 
@@ -994,7 +994,7 @@ la interfaz.
 
 - **Fondo de marca en toda la web:** textura repetible de íconos educativos (libro, lápiz,
   regla, compás, globo, letras sueltas "A"/"3") en verde y azul muy tenues, sobre un degradado
-  casi blanco. Viene de `docs/School Background.dc.html` y quedó aplicado a `body` en
+  casi blanco. Viene de `docs/historico/2026-08-13_fondo_de_marca.dc.html` (antes `docs/School Background.dc.html`) y quedó aplicado a `body` en
   `style.css` con `background-attachment: fixed`, para que se vea igual y quieta en toda la
   app y no se repita "por página". El header conserva su fondo blanco sólido (`--bg-surface`),
   así que la textura solo se nota detrás del contenido — no compite con la navegación.
@@ -1075,7 +1075,7 @@ una microcápsula**. Propuso una, y esta sección la implementa. Es el cambio m�
 la Fase 3: toca el contrato, el validador, el prompt, el visor y cinco archivos de tests.
 
 La auditoría completa de su lista de revisión —punto por punto, con veredicto y ruta de archivo—
-está en [`AUDITORIA_LISTA_PROFESORA_14AGO2026.md`](AUDITORIA_LISTA_PROFESORA_14AGO2026.md).
+está en `AUDITORIA_LISTA_PROFESORA_14AGO2026.md`, que no quedó versionado en el repo.
 Esta sección documenta solo lo que se implementó de ahí.
 
 ### Qué cambió en el contrato
@@ -2429,7 +2429,7 @@ software libre bajo **AGPL-3.0-or-later**, © 2026 de ambos. Detalle y verificac
 
 ### Investigado, sin mover nada
 
-Material de origen no documentado: `animacionCarga.mp4`, `School Background.dc.html`, las
+Material de origen no documentado: `animacionCarga.mp4`, `School Background.dc.html` (hoy `historico/2026-08-13_fondo_de_marca.dc.html`), las
 imágenes de prueba, `referencia.wav` y `prueba_entorno.wav`. La tabla con lo que cada uno
 necesita confirmar, una redacción neutra para `referencia.wav` y una sección propuesta
 «Material gráfico y de prueba» para los Términos están en PRUEBAS_VARK.
@@ -2521,7 +2521,7 @@ pero **no se ha ejecutado nunca contra un modelo real ni sobre material real**.
     que un chunk pertenezca a varios contenidos». Con el modelo actual —`Fragmento.id_objetivo`
     como FK singular— el segundo se cumple por construcción y el primero es imposible. Implementar
     OA secundarios exige una tabla de asociación nueva, y antes hay que cerrar esa ambigüedad
-    conceptual. Detalle en `AUDITORIA_LISTA_PROFESORA_14AGO2026.md`, punto 3.
+    conceptual. Detalle en `AUDITORIA_LISTA_PROFESORA_14AGO2026.md`, punto 3 (no quedó versionado en el repo).
 14. **Zanjar el punto de los embeddings con la profesora.** Su pipeline propuesto los incluye
     (paso 5); el cap. 13 del informe que ella aceptó argumenta explícitamente en contra. No es
     trabajo de programación: es una conversación pendiente sobre si la arquitectura sigue siendo

@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="340" height="340" viewBox="0 0 340 340">
 <!-- Textura de íconos escolares (libro, lápiz, regla, globo, letras) de la
-     marca original de RepasAi (docs/School Background.dc.html). Monocroma a
+     marca original de RepasAi (docs/historico/2026-08-13_fondo_de_marca.dc.html). Monocroma a
      propósito: se usa como mask-image y el color lo pone el CSS, así se adapta
      al tema claro u oscuro. -->
 <g fill="none" stroke="#000" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
