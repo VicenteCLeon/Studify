@@ -21,10 +21,14 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from studify.api.routers.capsules import (
+    TIPOS_CUESTIONARIO,
+    Correccion,
+    ErrorRespuesta,
+    corregir_actividad,
     crear_capsula,
     diagnostico_vigente,
     get_cliente_llm,
-    registrar_quiz,
+    registrar_intento,
 )
 from studify.api.routers.diagnostics import crear_diagnostico
 from studify.api.routers.knowledge import catalogo
@@ -33,7 +37,7 @@ from studify.api.schemas import (
     EstudianteIn,
     RespuestaItemIn,
 )
-from studify.api.schemas_capsulas import CapsulaIn, InteraccionQuizIn
+from studify.api.schemas_capsulas import CapsulaIn
 from studify.db.models import (
     DiagnosticoVark,
     Estudiante,
@@ -672,7 +676,7 @@ def submit_activity(
         # acierto ni alternativa— porque si no, los objetivos con actividad
         # aplicada (los perfiles K) no aparecerían nunca en el panel del
         # docente, como si nadie los hubiera trabajado.
-        _registrar_intento(db, fila, alternativa=None, acerto=None)
+        _registrar_intento(db, fila, Correccion())
         return _feedback(
             request,
             estado="esperada",
@@ -681,8 +685,10 @@ def submit_activity(
         )
 
     if quiz.get("tipo") == "flashcards":
-        # Actividad kinestésica de memorización y práctica activa.
-        _registrar_intento(db, fila, alternativa=None, acerto=True)
+        # Un repaso, no una respuesta: se registra sin corrección, igual que
+        # `intentalo_tu`. Hasta el 17-oct-2026 quedaba como acierto, y un
+        # perfil K con flashcards sumaba 100 % en el panel sin responder nada.
+        _registrar_intento(db, fila, Correccion())
         return _feedback(
             request,
             estado="ok",
@@ -690,39 +696,38 @@ def submit_activity(
             retroalimentacion="Has ejercitado el recuerdo activo (Active Recall) de los conceptos fundamentales. ¡Excelente trabajo de práctica kinestésica!",
         )
 
-    if quiz.get("tipo") in ("quiz_multi", "flashcards_y_quiz"):
+    if quiz.get("tipo") in TIPOS_CUESTIONARIO:
         preguntas = quiz.get("preguntas") or []
         if not preguntas:
             return _error("Esta cápsula no tiene preguntas configuradas.")
 
+        # El navegador manda las respuestas juntas en `answer` ("0,2,1").
         partes = [p.strip() for p in answer.split(",") if p.strip()]
-        if len(partes) < len(preguntas):
+        if len(partes) != len(preguntas) or not all(p.isdecimal() for p in partes):
             return _error(f"Por favor responde las {len(preguntas)} preguntas antes de revisar.")
+        try:
+            correccion = corregir_actividad(quiz, respuestas=[int(p) for p in partes])
+        except ErrorRespuesta as exc:
+            return _error(f"No pudimos revisar tus respuestas: {exc}.")
 
-        aciertos = 0
         detalles = []
-        for i, preg in enumerate(preguntas):
+        for preg, resultado in zip(preguntas, correccion.detalle, strict=True):
             correcta_idx = preg.get("indice_correcta", 0)
             alts = preg.get("alternativas") or []
-            seleccion = int(partes[i]) if (i < len(partes) and partes[i].isdigit()) else -1
-            es_correcta = seleccion == correcta_idx
-            if es_correcta:
-                aciertos += 1
-            corr_txt = alts[correcta_idx] if 0 <= correcta_idx < len(alts) else ""
             detalles.append(
                 {
-                    "enunciado": preg.get("enunciado", f"Pregunta {i + 1}"),
-                    "es_correcta": es_correcta,
-                    "correcta_texto": corr_txt,
+                    "enunciado": preg.get("enunciado", f"Pregunta {resultado['pregunta'] + 1}"),
+                    "es_correcta": resultado["correcta"],
+                    "correcta_texto": alts[correcta_idx] if 0 <= correcta_idx < len(alts) else "",
                     "explicacion": preg.get("explicacion", ""),
                 }
             )
 
-        todos_bien = aciertos == len(preguntas)
-        _registrar_intento(db, fila, alternativa=None, acerto=todos_bien)
+        aciertos = correccion.aciertos
+        _registrar_intento(db, fila, correccion)
         return _feedback(
             request,
-            estado="ok" if todos_bien else "esperada",
+            estado="ok" if correccion.es_correcta else "esperada",
             titulo=f"Cuestionario finalizado: {aciertos} de {len(preguntas)} respuestas correctas",
             retroalimentacion="Revisa las explicaciones de cada pregunta para consolidar los conceptos clave.",
             detalles=detalles,
@@ -733,11 +738,15 @@ def submit_activity(
     if indice_correcta is None:
         return _error("Esta cápsula no tiene una actividad corregible.")
 
-    if not answer.isdigit():
+    if not answer.isdecimal():
+        return _error("Selecciona una alternativa antes de revisar.")
+    try:
+        correccion = corregir_actividad(quiz, alternativa=int(answer))
+    except ErrorRespuesta:
         return _error("Selecciona una alternativa antes de revisar.")
 
-    acerto = int(answer) == indice_correcta
-    _registrar_intento(db, fila, alternativa=int(answer), acerto=acerto)
+    acerto = correccion.es_correcta
+    _registrar_intento(db, fila, correccion)
 
     correcta = alternativas[indice_correcta] if 0 <= indice_correcta < len(alternativas) else ""
     return _feedback(
@@ -749,34 +758,21 @@ def submit_activity(
     )
 
 
-def _registrar_intento(
-    db: Session,
-    fila: MicrocapsulaGenerada,
-    *,
-    alternativa: int | None,
-    acerto: bool | None,
-) -> None:
+def _registrar_intento(db: Session, fila: MicrocapsulaGenerada, correccion: Correccion) -> None:
     """Deja el intento en la base para el panel del docente (Fase 5).
 
-    Se llama al mismo handler de `POST /api/capsulas/{id}/quiz`, que es quien
-    numera el intento y comprueba el dueño de la cápsula.
+    La corrección viene de `corregir_actividad` y la numeración de
+    `registrar_intento`: las mismas dos funciones que usa
+    `POST /api/capsulas/{id}/quiz`, así que la API y el visor no pueden medir
+    con criterios distintos.
 
-    El 404 y el 403 de ese handler no pueden darse acá: `submit_activity` ya
-    verificó ambas cosas antes de corregir. Lo único que puede fallar es el 409
-    de dos peticiones simultáneas —el doble clic—, y en ese caso el intento que
-    llegó primero ya quedó registrado. Perder el duplicado no vale interrumpirle
-    la retroalimentación al estudiante.
+    El dueño ya lo verificó `submit_activity` antes de corregir. Lo único que
+    puede fallar es el 409 de dos peticiones simultáneas —el doble clic—, y en
+    ese caso el intento que llegó primero ya quedó registrado. Perder el
+    duplicado no vale interrumpirle la retroalimentación al estudiante.
     """
     try:
-        registrar_quiz(
-            id_capsula=fila.id_capsula,
-            payload=InteraccionQuizIn(
-                id_estudiante=fila.id_estudiante,
-                alternativa_seleccionada=alternativa,
-                es_correcta=acerto,
-            ),
-            db=db,
-        )
+        registrar_intento(db, fila, correccion)
     except HTTPException:
         logger.warning("no se pudo registrar el intento de la cápsula %s", fila.id_capsula)
 

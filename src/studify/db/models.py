@@ -472,11 +472,20 @@ class InteraccionQuiz(Base):
       posibilidad de que las dos copias se contradigan.
 
     - **`es_correcta` y `alternativa_seleccionada` admiten NULL.** Las
-      actividades `intentalo_tu` —las que pide la tabla 11.1 cuando p_K ≥ 40%—
-      no tienen alternativas ni una respuesta única que corregir. Registrarlas
-      igual, con ambos campos nulos, evita que los objetivos trabajados con
-      actividad aplicada desaparezcan del panel como si nadie los hubiera
-      abierto.
+      actividades sin corrección (`intentalo_tu` y `flashcards`) no tienen
+      alternativas ni una respuesta única que corregir. Registrarlas igual,
+      con ambos campos nulos, evita que los objetivos trabajados con actividad
+      aplicada desaparezcan del panel como si nadie los hubiera abierto.
+
+    - **Los cuestionarios (`quiz_multi`, `flashcards_y_quiz`) se guardan
+      pregunta por pregunta** (17-oct-2026): `detalle_json` dice qué marcó en
+      cada una y si acertó, y `aciertos`/`total_preguntas` lo resumen. Antes
+      solo quedaba `es_correcta` = «todas correctas», así que 3 de 4 contaba
+      igual que 0 de 4. `es_correcta` conserva ese significado; el panel usa
+      `aciertos / total_preguntas`.
+
+    La corrección la hace siempre el servidor contra `mini_quiz_json`
+    (`api/routers/capsules.py::corregir_actividad`), nunca el cliente.
     """
 
     __tablename__ = "interaccion_quiz"
@@ -487,6 +496,11 @@ class InteraccionQuiz(Base):
             "id_capsula", "numero_intento", name="uq_interaccion_capsula_intento"
         ),
         CheckConstraint("numero_intento >= 1", name="ck_interaccion_numero_intento"),
+        CheckConstraint(
+            "aciertos IS NULL OR (total_preguntas >= 1 "
+            "AND aciertos BETWEEN 0 AND total_preguntas)",
+            name="ck_interaccion_aciertos",
+        ),
     )
 
     id_interaccion: Mapped[int] = mapped_column(primary_key=True)
@@ -496,6 +510,10 @@ class InteraccionQuiz(Base):
     numero_intento: Mapped[int] = mapped_column(SmallInteger, default=1)
     alternativa_seleccionada: Mapped[int | None] = mapped_column(SmallInteger)
     es_correcta: Mapped[bool | None]
+    # Solo en los cuestionarios: `[{"pregunta": 0, "seleccion": 2, "correcta": false}, …]`.
+    aciertos: Mapped[int | None] = mapped_column(SmallInteger)
+    total_preguntas: Mapped[int | None] = mapped_column(SmallInteger)
+    detalle_json: Mapped[list | None] = mapped_column(JSONB)
     fecha_respuesta: Mapped[datetime] = mapped_column(
         TS, server_default=func.now(), nullable=False
     )

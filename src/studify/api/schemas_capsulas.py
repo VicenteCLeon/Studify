@@ -93,14 +93,21 @@ class InteraccionQuizIn(BaseModel):
     del docente desde afuera. No es autenticación; es la comprobación de
     coherencia que este prototipo sí puede hacer.
 
-    Los dos campos nulables son las actividades `intentalo_tu`: no tienen
-    alternativas ni respuesta única, así que se registra el intento sin marcar
-    acierto ni error.
+    **Lleva lo que el estudiante respondió, no si acertó.** La corrección la
+    hace el servidor contra `mini_quiz_json`. Hasta el 17-oct-2026 el cuerpo
+    traía `es_correcta` y se guardaba tal cual, así que cualquiera podía
+    registrar sus intentos como correctos; si un cliente viejo lo sigue
+    mandando, se ignora.
+
+    - `quiz_mc`: `alternativa_seleccionada` (obligatoria).
+    - `quiz_multi` y `flashcards_y_quiz`: `respuestas`, una alternativa por
+      pregunta y en orden.
+    - `intentalo_tu` y `flashcards`: nada; se registra sin corrección.
     """
 
     id_estudiante: int
     alternativa_seleccionada: int | None = None
-    es_correcta: bool | None = None
+    respuestas: list[int] | None = None
 
 
 class InteraccionQuizOut(BaseModel):
@@ -113,4 +120,6 @@ class InteraccionQuizOut(BaseModel):
     numero_intento: int
     alternativa_seleccionada: int | None = None
     es_correcta: bool | None = None
+    aciertos: int | None = None
+    total_preguntas: int | None = None
     fecha_respuesta: datetime

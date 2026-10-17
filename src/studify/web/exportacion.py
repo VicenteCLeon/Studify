@@ -75,6 +75,10 @@ def datos_de(db: Session, estudiante: Estudiante) -> dict:
                 "numero_intento": i.numero_intento,
                 "alternativa_seleccionada": i.alternativa_seleccionada,
                 "es_correcta": i.es_correcta,
+                # Solo en los cuestionarios: qué marcó en cada pregunta y si acertó.
+                "aciertos": i.aciertos,
+                "total_preguntas": i.total_preguntas,
+                "detalle": i.detalle_json,
                 "fecha": i.fecha_respuesta,
             }
             for i in intentos

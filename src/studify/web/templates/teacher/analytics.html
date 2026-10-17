@@ -5,7 +5,21 @@
 
 {% block content %}
 {%- set temas_con_material = cobertura | rejectattr("estado", "equalto", "sin_material") | list | length -%}
-{%- set respuestas = quizzes | sum(attribute="primeras") -%}
+{%- set respuestas = (quizzes | sum(attribute="unica.primeras")) + (quizzes | sum(attribute="cuestionario.primeras")) -%}
+
+{# Celda con barra para un porcentaje del primer intento, o el motivo de que no haya. #}
+{% macro celda_porcentaje(valor, primeras, etiqueta) -%}
+{% if valor is none %}
+<span class="text-muted text-sm">—</span>
+{% else %}
+{% set nivel = 'ok' if valor >= 70 else ('medio' if valor >= 40 else 'bajo') %}
+<div class="acierto acierto-{{ nivel }}">
+    {{ ui.progress(valor, etiqueta) }}
+    <span class="tabular">{{ valor }}%</span>
+</div>
+<span class="text-muted text-xs">{{ primeras }} respuesta{{ '' if primeras == 1 else 's' }}</span>
+{% endif %}
+{%- endmacro %}
 
 <div class="panel">
     {{ ui.page_header("Analíticas del curso",
@@ -125,14 +139,18 @@
         <div class="card-header">
             <div>
                 <h2 id="quiz-titulo" class="card-title">Rendimiento en las actividades</h2>
-                <p class="card-subtitle">Aciertos al primer intento, por tema.</p>
+                <p class="card-subtitle">Resultado al primer intento, por tema y por tipo de actividad.</p>
             </div>
         </div>
         <p class="text-sm text-muted mb-4">
             Se cuenta <strong>solo el primer intento</strong>: el estudiante puede reenviar la
             actividad, y contar los reintentos subiría el porcentaje sin que nadie haya
-            entendido más. Si el porcentaje es bajo o hay muchos reintentos, considera
-            mejorar el material curado para ese tema.
+            entendido más. <strong>Selección única</strong> es el % de acierto en la pregunta de
+            alternativas; <strong>Cuestionario</strong> es el promedio de preguntas acertadas en
+            los cuestionarios de varias preguntas (3 de 4 cuenta 75 %), que reciben sobre todo los
+            perfiles kinestésicos. Son instrumentos distintos: compáralos por separado.
+            Las actividades <strong>sin corrección</strong> (inténtalo tú y tarjetas de repaso)
+            solo se cuentan.
         </p>
         <div class="table-container">
             <table class="table table-stack">
@@ -140,9 +158,9 @@
                     <tr>
                         <th scope="col">Tema</th>
                         <th scope="col">Alumnos</th>
-                        <th scope="col">Respuestas (1er intento)</th>
-                        <th scope="col">Aciertos</th>
-                        <th scope="col">Acierto al 1er intento</th>
+                        <th scope="col">Selección única</th>
+                        <th scope="col">Cuestionario</th>
+                        <th scope="col">Sin corrección</th>
                         <th scope="col">Reintentos</th>
                     </tr>
                 </thead>
@@ -151,22 +169,13 @@
                     <tr>
                         <td data-label="Tema" class="font-semibold">{{ row.tema }}</td>
                         <td data-label="Alumnos" class="tabular">{{ row.alumnos }}</td>
-                        <td data-label="Respuestas (1er intento)" class="tabular">
-                            {{ row.primeras }}
-                            {% if row.abiertas %}<span class="text-muted text-xs">(+{{ row.abiertas }} abiertas)</span>{% endif %}
+                        <td data-label="Selección única">
+                            {{ celda_porcentaje(row.unica.porcentaje, row.unica.primeras, "Acierto al primer intento en selección única, " ~ row.tema) }}
                         </td>
-                        <td data-label="Aciertos" class="tabular">{{ row.aciertos }}</td>
-                        <td data-label="Acierto al 1er intento">
-                            {% if row.porcentaje is none %}
-                            <span class="text-muted text-sm">sin quiz corregible</span>
-                            {% else %}
-                            {% set nivel = 'ok' if row.porcentaje >= 70 else ('medio' if row.porcentaje >= 40 else 'bajo') %}
-                            <div class="acierto acierto-{{ nivel }}">
-                                {{ ui.progress(row.porcentaje, "Acierto al primer intento en " ~ row.tema) }}
-                                <span class="tabular">{{ row.porcentaje }}%</span>
-                            </div>
-                            {% endif %}
+                        <td data-label="Cuestionario">
+                            {{ celda_porcentaje(row.cuestionario.promedio, row.cuestionario.primeras, "Preguntas acertadas al primer intento en cuestionarios, " ~ row.tema) }}
                         </td>
+                        <td data-label="Sin corrección" class="tabular">{{ row.abiertas }}</td>
                         <td data-label="Reintentos" class="tabular">{{ row.reintentos }}</td>
                     </tr>
                     {% else %}

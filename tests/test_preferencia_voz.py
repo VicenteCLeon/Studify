@@ -102,7 +102,9 @@ def test_la_migracion_sube_baja_y_vuelve_a_subir(monkeypatch):
 
         command.upgrade(cfg, "head")
         assert {"voz_genero", "voz_modo"} <= columnas()
-        command.downgrade(cfg, "-1")
+        # A la revisión anterior a la de voz, por nombre: con `-1` el test
+        # dependía de que `c3a91f5e7d20` siguiera siendo la última migración.
+        command.downgrade(cfg, "aaf2d3de8b4e")
         assert not {"voz_genero", "voz_modo"} & columnas()
         command.upgrade(cfg, "head")
         assert {"voz_genero", "voz_modo"} <= columnas()

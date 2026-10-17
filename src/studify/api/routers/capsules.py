@@ -24,6 +24,8 @@ cápsula a un estudiante, y el A/B de la Fase 5 necesita saber qué vio cada uno
 """
 
 import logging
+from collections.abc import Sequence
+from dataclasses import dataclass
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func, select
@@ -509,15 +511,17 @@ def _persistir(
 def registrar_quiz(
     id_capsula: int, payload: InteraccionQuizIn, db: Session = Depends(get_db)
 ) -> InteraccionQuiz:
-    """Deja constancia de un intento, numerado dentro de su cápsula.
+    """Corrige un intento contra la cápsula y lo deja registrado, numerado.
 
-    **El número de intento lo pone el servidor**, nunca el cliente: es
-    exactamente lo que distingue «acertó» de «acertó a la cuarta», y si viniera
-    en el cuerpo el navegador podría declarar siempre 1 y el panel del docente
-    mediría una cosa distinta de la que dice medir.
+    **El número de intento y la corrección los pone el servidor**, nunca el
+    cliente. El número es lo que distingue «acertó» de «acertó a la cuarta»; la
+    corrección, lo que hace que el acierto sea un acierto. Hasta el 17-oct-2026
+    `es_correcta` venía en el cuerpo y se guardaba tal cual.
 
     La cápsula tiene dueño, así que responder la de otro es un 403: sin esta
     comprobación cualquiera podría inflar desde fuera las métricas del curso.
+    Una respuesta que no se puede corregir (falta la alternativa, no existe, el
+    cuestionario está incompleto) es un 422 y no se registra.
     """
     capsula = db.get(MicrocapsulaGenerada, id_capsula)
     if not capsula:
@@ -531,10 +535,114 @@ def registrar_quiz(
             detail=(f"la cápsula {id_capsula} no es del estudiante {payload.id_estudiante}"),
         )
 
+    try:
+        correccion = corregir_actividad(
+            capsula.mini_quiz_json or {},
+            alternativa=payload.alternativa_seleccionada,
+            respuestas=payload.respuestas,
+        )
+    except ErrorRespuesta as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(exc)
+        ) from exc
+
+    return registrar_intento(db, capsula, correccion)
+
+
+# --- Corrección de la actividad de cierre -------------------------------------
+#
+# En un solo lugar para la API y el visor (`web/routers/student.py`): si cada
+# uno corrigiera por su cuenta, el panel del docente mezclaría dos criterios.
+
+# Varias preguntas: se corrigen una por una y el panel promedia `aciertos /
+# total_preguntas`. `es_correcta` queda como «todas correctas».
+TIPOS_CUESTIONARIO = ("quiz_multi", "flashcards_y_quiz")
+# Sin nada que corregir: se registra el intento con `es_correcta` NULL. Las
+# `flashcards` estaban acá por error como acierto (antes del 17-oct-2026).
+TIPOS_SIN_CORRECCION = ("intentalo_tu", "flashcards")
+
+
+class ErrorRespuesta(ValueError):
+    """La respuesta no se puede corregir: falta, está incompleta o no existe."""
+
+
+@dataclass(frozen=True, slots=True)
+class Correccion:
+    """El resultado de corregir un intento, tal como se guarda en `interaccion_quiz`."""
+
+    alternativa: int | None = None
+    es_correcta: bool | None = None
+    aciertos: int | None = None
+    total_preguntas: int | None = None
+    detalle: list[dict] | None = None
+
+
+def corregir_actividad(
+    quiz: dict,
+    *,
+    alternativa: int | None = None,
+    respuestas: Sequence[int] | None = None,
+) -> Correccion:
+    """Corrige contra `mini_quiz_json`, la única fuente de la respuesta correcta.
+
+    `alternativa` es la del `quiz_mc`; `respuestas`, una alternativa por
+    pregunta de un cuestionario, en orden. Levanta `ErrorRespuesta` si lo que
+    llegó no se puede corregir.
+    """
+    tipo = quiz.get("tipo")
+    if tipo in TIPOS_SIN_CORRECCION:
+        return Correccion()
+
+    if tipo in TIPOS_CUESTIONARIO:
+        preguntas = quiz.get("preguntas") or []
+        if not preguntas:
+            raise ErrorRespuesta("esta cápsula no tiene preguntas configuradas")
+        if respuestas is None or len(respuestas) != len(preguntas):
+            raise ErrorRespuesta(f"hay que responder las {len(preguntas)} preguntas")
+        detalle = []
+        for numero, (pregunta, seleccion) in enumerate(zip(preguntas, respuestas, strict=True)):
+            if not 0 <= seleccion < len(pregunta.get("alternativas") or []):
+                raise ErrorRespuesta(
+                    f"la pregunta {numero + 1} no tiene la alternativa {seleccion}"
+                )
+            detalle.append(
+                {
+                    "pregunta": numero,
+                    "seleccion": seleccion,
+                    "correcta": seleccion == pregunta.get("indice_correcta"),
+                }
+            )
+        aciertos = sum(d["correcta"] for d in detalle)
+        return Correccion(
+            es_correcta=aciertos == len(preguntas),
+            aciertos=aciertos,
+            total_preguntas=len(preguntas),
+            detalle=detalle,
+        )
+
+    correcta = quiz.get("indice_correcta")
+    if correcta is None:
+        raise ErrorRespuesta("esta cápsula no tiene una actividad corregible")
+    if alternativa is None:
+        raise ErrorRespuesta("falta la alternativa seleccionada")
+    if not 0 <= alternativa < len(quiz.get("alternativas") or []):
+        raise ErrorRespuesta(f"la actividad no tiene la alternativa {alternativa}")
+    return Correccion(alternativa=alternativa, es_correcta=alternativa == correcta)
+
+
+def registrar_intento(
+    db: Session, capsula: MicrocapsulaGenerada, correccion: Correccion
+) -> InteraccionQuiz:
+    """Guarda un intento ya corregido, con el número siguiente dentro de su cápsula.
+
+    No comprueba el dueño: lo hacen quienes la llaman (`registrar_quiz` y el
+    visor del estudiante) antes de corregir.
+    """
     # Calcular el número y escribirlo no es atómico: dos peticiones a la vez
     # —el doble clic de siempre en «Revisar Respuesta»— leen el mismo máximo. La
     # restricción única deja entrar una sola, y acá se reintenta con el número
     # siguiente en lugar de devolverle un 500 al estudiante.
+    id_capsula = capsula.id_capsula
     for _ in range(INTENTOS_DE_ESCRITURA):
         siguiente = (
             db.scalar(
@@ -547,8 +655,11 @@ def registrar_quiz(
         interaccion = InteraccionQuiz(
             id_capsula=id_capsula,
             numero_intento=siguiente,
-            alternativa_seleccionada=payload.alternativa_seleccionada,
-            es_correcta=payload.es_correcta,
+            alternativa_seleccionada=correccion.alternativa,
+            es_correcta=correccion.es_correcta,
+            aciertos=correccion.aciertos,
+            total_preguntas=correccion.total_preguntas,
+            detalle_json=correccion.detalle,
         )
         db.add(interaccion)
         try:

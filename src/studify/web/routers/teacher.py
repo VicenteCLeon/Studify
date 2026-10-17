@@ -28,10 +28,10 @@ from urllib.parse import parse_qs, urlsplit
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse
 from pydantic import ValidationError
-from sqlalchemy import func, select
+from sqlalchemy import Float, cast, func, select
 from sqlalchemy.orm import Session
 
-from studify.api.routers.capsules import ClienteLLM, get_cliente_llm
+from studify.api.routers.capsules import TIPOS_CUESTIONARIO, ClienteLLM, get_cliente_llm
 from studify.api.routers.knowledge import (
     crear_objetivo,
     eliminar_documento,
@@ -652,27 +652,49 @@ def _rendimiento_actividades(db: Session) -> list[dict]:
     aparte porque son una señal por derecho propio: mucho reintento en un tema
     es material que no se está entendiendo a la primera.
 
-    Las actividades `intentalo_tu` no tienen respuesta corregible (`es_correcta`
-    nula) y quedan fuera del porcentaje, pero se cuentan igual: sin eso, un
-    objetivo trabajado solo por perfiles K se vería idéntico a uno que nadie
-    abrió nunca.
+    **Separado por tipo de actividad, no en un solo porcentaje** (decidido el
+    17-oct-2026). Los perfiles K (p_K ≥ 40 %) reciben un cuestionario de 3 a 5
+    preguntas y el resto un ítem de selección única; promediarlos juntos
+    compararía instrumentos distintos. Por eso hay dos columnas:
+
+    - `unica`: % de acierto al primer intento en los `quiz_mc`.
+    - `cuestionario`: promedio de la proporción de preguntas acertadas al
+      primer intento (`aciertos / total_preguntas`, 3 de 4 = 75 %) en
+      `quiz_multi` y `flashcards_y_quiz`. Cada intento pesa lo mismo, tenga 3
+      o 5 preguntas. Los cuestionarios registrados antes de guardar el detalle
+      por pregunta no tienen `aciertos` y quedan fuera del promedio.
+
+    Las actividades sin corrección (`intentalo_tu` y `flashcards`, con
+    `es_correcta` nula) no entran en ningún porcentaje, pero se cuentan en
+    `abiertas`: sin eso, un objetivo trabajado solo con ellas se vería idéntico
+    a uno que nadie abrió nunca.
 
     Va en una función y no dentro del endpoint para poder comprobar la métrica
     contra la base sin levantar una plantilla de por medio.
     """
     primero = InteraccionQuiz.numero_intento == 1
-    corregible = InteraccionQuiz.es_correcta.is_not(None)
+    tipo = MicrocapsulaGenerada.mini_quiz_json["tipo"].astext
+    unica = primero & (tipo == "quiz_mc") & InteraccionQuiz.es_correcta.is_not(None)
+    cuestionario = (
+        primero & tipo.in_(TIPOS_CUESTIONARIO) & InteraccionQuiz.aciertos.is_not(None)
+    )
+    sin_correccion = (
+        primero & InteraccionQuiz.es_correcta.is_(None) & InteraccionQuiz.aciertos.is_(None)
+    )
+    proporcion = cast(InteraccionQuiz.aciertos, Float) / InteraccionQuiz.total_preguntas
     stmt = (
         select(
             ObjetivoAprendizaje.tema,
             func.count(func.distinct(MicrocapsulaGenerada.id_estudiante)).label(
                 "alumnos"
             ),
-            func.count().filter(primero & corregible).label("primeras"),
-            func.count().filter(primero & InteraccionQuiz.es_correcta.is_(True)).label(
-                "aciertos"
+            func.count().filter(unica).label("unica_primeras"),
+            func.count().filter(unica & InteraccionQuiz.es_correcta.is_(True)).label(
+                "unica_aciertos"
             ),
-            func.count().filter(primero & ~corregible).label("abiertas"),
+            func.count().filter(cuestionario).label("cuestionario_primeras"),
+            func.avg(proporcion).filter(cuestionario).label("cuestionario_promedio"),
+            func.count().filter(sin_correccion).label("abiertas"),
             func.count().filter(InteraccionQuiz.numero_intento > 1).label("reintentos"),
         )
         .select_from(InteraccionQuiz)
@@ -687,19 +709,31 @@ def _rendimiento_actividades(db: Session) -> list[dict]:
         .group_by(ObjetivoAprendizaje.id_objetivo)
         .order_by(ObjetivoAprendizaje.codigo_objetivo)
     )
+    # None y 0 no son lo mismo: sin respuestas corregibles no hay porcentaje
+    # que mostrar, y un 0 % diría que todos fallaron.
     return [
         {
             "tema": row.tema,
             "alumnos": row.alumnos,
-            "primeras": row.primeras,
-            "aciertos": row.aciertos,
+            "unica": {
+                "primeras": row.unica_primeras,
+                "aciertos": row.unica_aciertos,
+                "porcentaje": (
+                    round(row.unica_aciertos * 100 / row.unica_primeras, 1)
+                    if row.unica_primeras
+                    else None
+                ),
+            },
+            "cuestionario": {
+                "primeras": row.cuestionario_primeras,
+                "promedio": (
+                    round(row.cuestionario_promedio * 100, 1)
+                    if row.cuestionario_primeras
+                    else None
+                ),
+            },
             "abiertas": row.abiertas,
             "reintentos": row.reintentos,
-            # None y 0 no son lo mismo: sin quiz corregible no hay porcentaje
-            # que mostrar, y un 0% diría que todos fallaron.
-            "porcentaje": (
-                round(row.aciertos * 100 / row.primeras, 1) if row.primeras else None
-            ),
         }
         for row in db.execute(stmt).all()
     ]
