@@ -34,7 +34,7 @@ from studify.media import audio
 from studify.media.audio import PreferenciaVoz, preferencia_guardada
 from studify.vark.scoring import PerfilVark
 from studify.web import consentimiento, exportacion, narracion, sesion
-from tests.conftest import necesita_bd
+from tests.conftest import cookie_de, necesita_bd
 from tests.test_api_capsulas import TEXTO_LARGO, ClienteObediente, _estudiante_con_perfil
 
 RAIZ = Path(__file__).resolve().parents[1]
@@ -183,7 +183,7 @@ def escenario(db):
 
 def _navegador(id_estudiante: int) -> TestClient:
     cliente = TestClient(app)
-    cliente.cookies.set(sesion.COOKIE_ESTUDIANTE, f"{id_estudiante}.{sesion._firma(id_estudiante)}")
+    cliente.cookies.set(sesion.COOKIE_ESTUDIANTE, cookie_de(id_estudiante))
     return cliente
 
 

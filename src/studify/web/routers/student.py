@@ -67,13 +67,27 @@ router = APIRouter(
 
 LETRAS = ("a", "b", "c", "d")
 
+# Qué hace el envío del cuestionario con la sesión que traiga el navegador (R2).
+# Solo `actualizar` agrega el diagnóstico al estudiante de la cookie; cualquier
+# otro valor —o ninguno, como en un formulario viejo— registra a alguien nuevo.
+MODO_ACTUALIZAR = "actualizar"
+MODO_NUEVO = "nuevo"
+
 
 # --- Cuestionario VARK --------------------------------------------------------
 
 
 @router.get("/vark", response_class=HTMLResponse)
-def get_vark(request: Request):
+def get_vark(request: Request, modo: str = "", db: Session = Depends(get_db)):
     """Muestra los 16 ítems reales del instrumento (cap. 10).
+
+    **Con una sesión abierta, primero pregunta «¿Eres tú?»** (R2): en un
+    computador compartido, quien llega puede no ser el dueño de la sesión. La
+    pantalla muestra solo la fecha y hora del diagnóstico vigente, nada del
+    perfil. «Soy yo» vuelve acá con `?modo=actualizar`; «Soy otra persona» cierra
+    la sesión (`POST /student/salir`) y vuelve sin ella. El formulario lleva el
+    `modo` en un campo oculto, y es lo único que `post_vark` mira para decidir si
+    agrega el diagnóstico al estudiante de la cookie.
 
     Las alternativas se leen de `vark/instrumento.py`, que es la definición del
     instrumento y la misma fuente que usa la calificación. Así la pantalla no
@@ -86,6 +100,20 @@ def get_vark(request: Request):
     `respuesta_vark`: la matriz no se filtra al frontend, de modo que los
     perfiles se pueden recalcular sin volver a aplicar el cuestionario.
     """
+    id_actual = sesion.estudiante_actual(request, db)
+    if id_actual is not None and modo != MODO_ACTUALIZAR:
+        diagnostico = diagnostico_vigente(db, id_actual)
+        cuando = (
+            diagnostico.fecha_diagnostico
+            if diagnostico is not None
+            else db.get(Estudiante, id_actual).fecha_registro
+        )
+        return templates.TemplateResponse(
+            request=request,
+            name="student/eres_tu.html",
+            context={"cuando": textos.fecha_hora_chile(cuando)},
+        )
+
     items = [
         {
             "numero": numero,
@@ -97,7 +125,10 @@ def get_vark(request: Request):
     return templates.TemplateResponse(
         request=request,
         name="student/vark.html",
-        context={"items": items},
+        context={
+            "items": items,
+            "modo": MODO_ACTUALIZAR if id_actual is not None else MODO_NUEVO,
+        },
     )
 
 
@@ -128,9 +159,15 @@ def post_vark(
     carrera: str = Form(default=""),
     acepto: str = Form(default=""),
     consiento_genero: str = Form(default=""),
+    modo: str = Form(default=""),
     db: Session = Depends(get_db),
 ):
     """Califica el cuestionario de verdad y deja al estudiante conectado.
+
+    **Solo con `modo=actualizar` y una sesión vigente** el diagnóstico se agrega
+    al estudiante de la cookie; cualquier otro envío registra a alguien nuevo
+    y le pasa la sesión (R2). Antes se reutilizaba la sesión en silencio, y una
+    segunda persona en el mismo navegador pisaba el perfil de la primera.
 
     **Antes de calificar nada exige la aceptación** de los Términos y la
     Política (la casilla del primer paso, que nunca viene marcada). El botón
@@ -173,8 +210,15 @@ def post_vark(
             "para calcular tu perfil."
         )
 
+    id_actual = sesion.estudiante_actual(request, db)
     try:
-        payload = _armar_payload(request, db, respuestas, rango_etario, genero, carrera)
+        payload = _armar_payload(
+            id_actual if modo == MODO_ACTUALIZAR else None,
+            respuestas,
+            rango_etario,
+            genero,
+            carrera,
+        )
     except ValidationError:
         # Los límites de `EstudianteIn` (largo de carrera, género, rango etario).
         # El formulario ya los acota con `maxlength`, pero eso es del navegador:
@@ -189,21 +233,48 @@ def post_vark(
     except HTTPException as exc:
         return _error(str(exc.detail))
 
+    es_nuevo = payload.estudiante is not None
+    estudiante = db.get(Estudiante, resultado.id_estudiante)
+    if es_nuevo:
+        estudiante.origen_registro = _origen_del_registro(request, db, id_actual)
+        db.commit()
+
     # El género solo se guardó si el estudiante es nuevo (`_armar_payload`
-    # ignora los datos personales de quien ya tiene sesión), y solo entonces
-    # hay un consentimiento de género que registrar.
+    # ignora los datos personales de quien actualiza), y solo entonces hay un
+    # consentimiento de género que registrar.
     consentimiento.registrar(
         db,
         resultado.id_estudiante,
-        genero=payload.estudiante is not None and payload.estudiante.genero is not None,
+        genero=es_nuevo and payload.estudiante.genero is not None,
     )
 
     # 204 + HX-Redirect: HTMX procesa la cabecera y navega, así la URL del
     # navegador queda en /student/profile y el botón «atrás» funciona.
     respuesta = Response(status_code=204)
     respuesta.headers["HX-Redirect"] = "/student/profile"
-    sesion.iniciar(respuesta, resultado.id_estudiante)
+    sesion.iniciar(respuesta, estudiante)
+    if es_nuevo:
+        # La marca de «Salir» ya se usó: el siguiente registro no la hereda.
+        sesion.borrar_origen(respuesta)
     return respuesta
+
+
+def _origen_del_registro(request: Request, db: Session, id_actual: int | None) -> str:
+    """Por qué este navegador registra a alguien nuevo (`estudiante.origen_registro`).
+
+    Con una sesión vigente de otro estudiante abierta, es otra persona: eligió
+    «Soy otra persona» o mandó un formulario cargado antes de que el otro
+    entrara. Si no, manda la marca que dejó «Salir», y después una sesión que
+    venció. Sin nada de eso, es un navegador sin historia.
+    """
+    if id_actual is not None:
+        return "otra_persona"
+    marcado = sesion.origen_marcado(request)
+    if marcado is not None:
+        return marcado
+    if sesion.sesion_vencida(request, db):
+        return "sesion_vencida"
+    return "nuevo"
 
 
 def _respuestas_desde_formulario(marcadas: tuple[list[str], ...]) -> list[RespuestaItemIn]:
@@ -226,24 +297,22 @@ def _respuestas_desde_formulario(marcadas: tuple[list[str], ...]) -> list[Respue
 
 
 def _armar_payload(
-    request: Request,
-    db: Session,
+    id_a_actualizar: int | None,
     respuestas: list[RespuestaItemIn],
     rango_etario: str,
     genero: str,
     carrera: str,
 ) -> DiagnosticoIn:
-    """Decide si el diagnóstico es de un estudiante nuevo o de uno ya conectado.
+    """El diagnóstico de un estudiante nuevo, o uno más para quien actualiza.
 
-    Repetir el cuestionario con la sesión abierta agrega un diagnóstico al mismo
-    estudiante en vez de crear uno nuevo. Importa para el A/B de la Fase 5: si
-    cada intento creara una persona distinta, la cohorte quedaría inflada con
-    duplicados y las cápsulas de un mismo estudiante repartidas entre varios
-    identificadores.
+    Actualizar agrega un diagnóstico al mismo estudiante en vez de crear uno
+    nuevo. Importa para el A/B de la Fase 5: si cada intento creara una persona
+    distinta, la cohorte quedaría inflada con duplicados y las cápsulas de un
+    mismo estudiante repartidas entre varios identificadores. Quién actualiza
+    lo decide `post_vark` (solo con `modo=actualizar` y sesión vigente).
     """
-    id_actual = sesion.estudiante_actual(request)
-    if id_actual is not None and db.get(Estudiante, id_actual) is not None:
-        return DiagnosticoIn(id_estudiante=id_actual, respuestas=respuestas)
+    if id_a_actualizar is not None:
+        return DiagnosticoIn(id_estudiante=id_a_actualizar, respuestas=respuestas)
 
     return DiagnosticoIn(
         estudiante=EstudianteIn(
@@ -267,6 +336,44 @@ def _error(mensaje: str) -> HTMLResponse:
     return HTMLResponse(f'<div class="alerta alerta-error" role="alert">{escape(mensaje)}</div>')
 
 
+# --- Salir (R2) ---------------------------------------------------------------
+#
+# Sin cuenta, la sesión es lo único que dice quién es el estudiante, y en un
+# computador compartido la del anterior le queda abierta al siguiente. «Salir»
+# olvida la cookie y nada más: el perfil, las cápsulas y la aceptación quedan
+# guardados. No pide haber aceptado los documentos vigentes
+# (`consentimiento.RUTAS_SIN_ACEPTACION`): quien no es el dueño no tiene que
+# aceptar nada a nombre de otro para poder irse.
+
+MOTIVOS_SALIDA = {"salir": "tras_salir", "otra_persona": "otra_persona"}
+
+
+@router.get("/salir", response_class=HTMLResponse)
+def get_salir(request: Request, db: Session = Depends(get_db)):
+    """Confirma antes de salir: sin cuenta, la salida no tiene vuelta atrás."""
+    if sesion.estudiante_actual(request, db) is None:
+        return RedirectResponse(url="/", status_code=303)
+    return templates.TemplateResponse(request=request, name="student/salir.html")
+
+
+@router.post("/salir")
+def post_salir(request: Request, motivo: str = Form(default="salir")):
+    """Olvida la sesión del estudiante; la del docente, si la hay, sigue.
+
+    Deja la marca de por qué salió (`sesion.COOKIE_ORIGEN`) para que el
+    siguiente registro de este navegador quede con su `origen_registro`. Con
+    `motivo=otra_persona` («Soy otra persona», en «¿Eres tú?») vuelve directo al
+    cuestionario; si no, a la portada con el aviso de que salió.
+    """
+    origen = MOTIVOS_SALIDA.get(motivo, "tras_salir")
+    destino = "/student/vark" if origen == "otra_persona" else "/?salio=1"
+    respuesta = RedirectResponse(url=destino, status_code=303)
+    if request.cookies.get(sesion.COOKIE_ESTUDIANTE):
+        sesion.marcar_origen(respuesta, origen)
+    sesion.cerrar(respuesta)
+    return respuesta
+
+
 # --- Perfil -------------------------------------------------------------------
 
 
@@ -285,7 +392,7 @@ def get_profile(request: Request, db: Session = Depends(get_db)):
     persistir la etiqueta del perfil: derivarla siempre es lo que garantiza que
     no pueda quedar desincronizada.
     """
-    id_estudiante = sesion.estudiante_actual(request)
+    id_estudiante = sesion.estudiante_actual(request, db)
     if id_estudiante is None:
         return _sin_sesion()
 
@@ -394,7 +501,7 @@ def get_catalog(request: Request, db: Session = Depends(get_db)):
     presentación — ofrecer un tema sin material curado llevaría al estudiante a
     un error de generación o, peor, a contenido inventado (cap. 12/13).
     """
-    id_estudiante = sesion.estudiante_actual(request)
+    id_estudiante = sesion.estudiante_actual(request, db)
     if id_estudiante is None or db.get(Estudiante, id_estudiante) is None:
         return _sin_sesion()
 
@@ -424,7 +531,7 @@ def get_viewer(
     —caché en dos niveles, versionado— vive en `crear_capsula`, que es el mismo
     handler de `POST /api/capsulas`; acá solo se renderiza lo que devuelve.
     """
-    id_estudiante = sesion.estudiante_actual(request)
+    id_estudiante = sesion.estudiante_actual(request, db)
     if id_estudiante is None or db.get(Estudiante, id_estudiante) is None:
         return _sin_sesion()
 
@@ -541,7 +648,7 @@ def generate_capsule_audio(
     if id_capsula > 0:
         fila = db.get(MicrocapsulaGenerada, id_capsula)
         if fila is None or (
-            not es_docente and fila.id_estudiante != sesion.estudiante_actual(request)
+            not es_docente and fila.id_estudiante != sesion.estudiante_actual(request, db)
         ):
             raise HTTPException(status_code=404, detail=f"no existe la cápsula {id_capsula}")
         # El guion lo calcula `narracion`, el mismo módulo que usa la supresión
@@ -613,7 +720,7 @@ def guardar_preferencia_voz(
     a pedir la narración con la voz nueva; en el perfil, un aviso. Sin
     JavaScript, redirige de vuelta a la página donde estaba el selector.
     """
-    id_estudiante = sesion.estudiante_actual(request)
+    id_estudiante = sesion.estudiante_actual(request, db)
     estudiante = db.get(Estudiante, id_estudiante) if id_estudiante is not None else None
     if estudiante is None:
         return _sin_sesion()
@@ -660,7 +767,7 @@ def submit_activity(
     que el estudiante tiene en pantalla. La corrección se hace en el servidor
     contra ese JSON y no contra nada que haya viajado al navegador.
     """
-    id_estudiante = sesion.estudiante_actual(request)
+    id_estudiante = sesion.estudiante_actual(request, db)
     fila = db.get(MicrocapsulaGenerada, id_capsula)
 
     # Se comprueba el dueño para que la respuesta correcta de una cápsula no se

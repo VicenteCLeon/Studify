@@ -91,6 +91,14 @@
                     {{ ui.icon("moon", cls="theme-icon-moon") }}
                     {{ ui.icon("sun", cls="theme-icon-sun") }}
                 </button>
+                {# «Salir» del estudiante (R2): en un computador compartido es lo
+                   que evita que el siguiente use el perfil del anterior. Lleva a
+                   una confirmación, porque sin cuenta no hay vuelta atrás. #}
+                {% if con_sesion_estudiante %}
+                <a href="/student/salir" class="btn btn-ghost btn-sm">
+                    {{ ui.icon("log-out") }}<span>Salir</span>
+                </a>
+                {% endif %}
                 {% if es_docente %}
                 <form method="post" action="/teacher/logout" class="nav-form">
                     <button type="submit" class="btn btn-secondary btn-sm">

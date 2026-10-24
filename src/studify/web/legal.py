@@ -52,9 +52,12 @@ PRIVACIDAD = Documento(
     ruta="/privacidad",
     template="legal/privacidad.html",
     # 0.2: motores de voz (Kokoro y Piper en vez de XTTS-v2) y preferencia de
-    # voz (`voz_genero`, `voz_modo`) como dato nuevo. Fecha = día en que se publique.
-    version="0.2",
-    actualizado=date(2026, 10, 5),
+    # voz (`voz_genero`, `voz_modo`) como dato nuevo.
+    # 0.3: «Salir» y la sesión compartida (R2): `origen_registro` como dato
+    # nuevo, la cookie del mismo nombre y el vencimiento de la sesión.
+    # Fecha = día en que se publique.
+    version="0.3",
+    actualizado=date(2026, 10, 24),
 )
 
 DOCUMENTOS = (TERMINOS, PRIVACIDAD)

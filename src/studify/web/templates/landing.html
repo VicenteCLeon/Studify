@@ -10,6 +10,11 @@
 <section class="hero" aria-labelledby="hero-titulo">
     <div class="container hero-grid">
         <div class="hero-copy">
+            {% if salio %}
+            {% call ui.alert("ok", "Saliste de RepasAi en este navegador") %}
+                Tu perfil quedó guardado. La próxima persona que use este computador empieza de cero.
+            {% endcall %}
+            {% endif %}
             <span class="eyebrow reveal" style="--i: 0">{{ ui.icon("sparkles", cls="icon-sm") }}Micro-aprendizaje adaptativo</span>
             <h1 id="hero-titulo" class="hero-title reveal" style="--i: 1">
                 Estudia en cápsulas hechas <span class="marker">a tu manera</span>
@@ -25,6 +30,7 @@
                     Seguir estudiando {{ ui.icon("arrow-right") }}
                 </a>
                 <a href="/student/profile" class="btn btn-secondary btn-lg">Ver mi perfil</a>
+                <a href="/student/salir" class="btn btn-ghost btn-lg">¿No eres tú? Salir</a>
                 {% else %}
                 <a href="/student/vark" class="btn btn-primary btn-lg">
                     Descubre tu estilo {{ ui.icon("arrow-right") }}

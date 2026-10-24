@@ -15,7 +15,7 @@ from studify.db.models import Estudiante
 from studify.db.session import SessionLocal, engine
 from studify.main import app
 from studify.web import sesion
-from tests.conftest import CLAVE_DOCENTE, USUARIO_DOCENTE
+from tests.conftest import CLAVE_DOCENTE, USUARIO_DOCENTE, cookie_de
 
 # `POST /api/diagnosticos` es del docente desde la auditoría de datos del
 # 02-oct-2026 (el estudiante se diagnostica por `/student/vark`), así que este
@@ -319,7 +319,7 @@ def _cliente_de(id_estudiante: int) -> TestClient:
     """Un navegador con la cookie del estudiante y sin credencial de docente."""
     navegador = TestClient(app)
     navegador.cookies.set(
-        sesion.COOKIE_ESTUDIANTE, f"{id_estudiante}.{sesion._firma(id_estudiante)}"
+        sesion.COOKIE_ESTUDIANTE, cookie_de(id_estudiante)
     )
     return navegador
 
@@ -338,8 +338,10 @@ def test_el_estudiante_lee_su_diagnostico_y_no_el_ajeno():
     assert navegador.get(f"/api/diagnosticos/{ajeno['id_diagnostico']}").status_code == 404
 
 
+@necesita_bd
 def test_el_estudiante_no_crea_diagnosticos_por_la_api():
-    navegador = _cliente_de(7)
+    cuerpo ={"estudiante": {}, "respuestas": respuestas_kinestesicas()}
+    navegador = _cliente_de(client.post("/api/diagnosticos", json=cuerpo).json()["id_estudiante"])
 
     respuesta = navegador.post(
         "/api/diagnosticos", json={"estudiante": {}, "respuestas": respuestas_kinestesicas()}

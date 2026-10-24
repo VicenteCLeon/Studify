@@ -15,6 +15,9 @@
     <form id="vark-form" class="vark-form"
           hx-post="/student/vark" hx-target="#form-error" hx-swap="innerHTML" hx-indicator="#enviando"
           data-vark-stepper data-total="{{ items | length }}">
+        {# Lo único que el servidor mira para decidir si el diagnóstico es del
+           estudiante de la cookie («Soy yo») o de alguien nuevo (R2). #}
+        <input type="hidden" name="modo" value="{{ modo }}">
 
         <div class="vark-progress js-only">
             <div class="vark-progress-top">
@@ -51,6 +54,13 @@
                 </li>
             </ul>
 
+            {# Al actualizar el perfil los datos sociodemográficos no se piden:
+               el servidor conserva los del primer registro y descartaría estos. #}
+            {% if modo == "actualizar" %}
+            {% call ui.alert("info", "Vas a actualizar tu perfil") %}
+                Tus respuestas reemplazan tu perfil actual. Tus cápsulas anteriores se conservan.
+            {% endcall %}
+            {% else %}
             <fieldset class="vark-datos">
                 <legend>Antes de empezar <span class="badge badge-neutral">Opcional</span></legend>
                 <p class="form-hint">
@@ -96,6 +106,7 @@
                     </span>
                 </label>
             </fieldset>
+            {% endif %}
 
             <div class="vark-aceptacion">
                 {{ ui.casilla_aceptacion() }}

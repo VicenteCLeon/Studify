@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% import "components/ui.html" as ui %}
+
+{#
+  Confirmación de «Salir» (R2). Sin cuenta, salir no tiene vuelta atrás: el
+  perfil queda guardado, pero este navegador deja de saber de quién es. Es un
+  <form> normal y no un diálogo de JavaScript (DESIGN_SYSTEM.md, §1).
+#}
+
+{% block title %}Salir · RepasAi{% endblock %}
+{% block footer_class %}site-footer-compacto{% endblock %}
+
+{% block content %}
+<div class="sesion-compartida">
+    {% call ui.empty_state("log-out", "¿Salir de RepasAi en este navegador?", heading="h1") %}
+    <p>
+        Tu perfil y tus cápsulas quedan guardados, pero como no hay cuenta, este navegador olvidará
+        quién eres. Para volver a usar RepasAi tendrás que responder el cuestionario de nuevo.
+    </p>
+    <div class="cluster">
+        <form method="post" action="/student/salir" data-olvidar-borrador>
+            <input type="hidden" name="motivo" value="salir">
+            <button type="submit" class="btn btn-primary btn-lg">
+                {{ ui.icon("log-out") }}<span>Salir</span>
+            </button>
+        </form>
+        <a class="btn btn-ghost btn-lg" href="/student/catalog">Cancelar</a>
+    </div>
+    {% endcall %}
+</div>
+{% endblock %}

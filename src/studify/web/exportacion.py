@@ -43,6 +43,8 @@ def datos_de(db: Session, estudiante: Estudiante) -> dict:
             # Preferencia de la voz de la narración (null = la por defecto).
             "voz_genero": estudiante.voz_genero,
             "voz_modo": estudiante.voz_modo,
+            # Cómo empezó el registro en el navegador (R2; null = anterior).
+            "origen_registro": estudiante.origen_registro,
         },
         "diagnosticos_vark": [
             {

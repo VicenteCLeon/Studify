@@ -1,7 +1,7 @@
 # Studify — Estado de avance
 
 > Bitácora del proyecto: qué se hizo, qué se verificó y qué se decidió en el camino.
-> Última actualización: **24-oct-2026** (§4 y §9; la bitácora llega al 17-oct). Lo que falta está en [`PENDIENTES.md`](PENDIENTES.md);
+> Última actualización: **24-oct-2026**. Lo que falta está en [`PENDIENTES.md`](PENDIENTES.md);
 > el índice de toda la documentación, en [`README.md`](README.md).
 
 ---
@@ -36,7 +36,7 @@ avance ya entregado) y el plan de implementación derivado, [`PLAN_DESARROLLO.md
 | **Imagen (Fase 6)** | En pausa. El módulo Visual (SVG dibujado a partir de una especificación del LLM) está propuesto, sin integrar a la app. | §5 quatertricies |
 | **Fase 5 — Evaluación** | Sin empezar: A/B, batería técnica, validación docente, TAM. | `PENDIENTES.md` E |
 | **Modelo** | `deepseek-flash` con el razonamiento apagado (`LLM_THINKING=disabled`) desde el 11-oct. | §5 quatertricies |
-| **Suite** | Con Postgres: 580 pasan y 2 fallan; con la base apagada: 384 pasan y 4 fallan. Los 6 fallos son previos y dependen de la base de desarrollo. | §5 quintricies |
+| **Suite** | Con Postgres: 607 pasan y 0 fallan; con la base apagada: 381 pasan y 4 fallan (tests sin `@necesita_bd`, R10). | §5 sextricies |
 
 Lo primero que falta antes del piloto con estudiantes está al inicio de
 [`PENDIENTES.md`](PENDIENTES.md).
@@ -86,6 +86,7 @@ Lo primero que falta antes del piloto con estudiantes está al inicio de
 | 5 tritricies | 05-oct | Licencia AGPL-3.0-or-later y legal 0.2 |
 | 5 quatertricies | 10–11-oct | Migración a `deepseek-flash`, módulo Visual y borrado de documentos |
 | 5 quintricies | 16–17-oct | Revisión de código y cinco correcciones |
+| 5 sextricies | 24-oct | R2: dos estudiantes en el mismo computador («Salir», «¿Eres tú?») |
 
 ---
 
@@ -235,7 +236,8 @@ Studify/
 │     ├─ 2fbc7391c0a3_*.py  # numero_intento + actividades abiertas
 │     ├─ aaf2d3de8b4e_*.py  # tabla aceptacion_legal (02-oct, §5 tervicies)
 │     ├─ c3a91f5e7d20_*.py  # estudiante.voz_genero / voz_modo (05-oct, §5 undetricies)
-│     └─ d7e2b9c41a58_*.py  # corrección en el servidor y detalle de cuestionarios (17-oct)
+│     ├─ d7e2b9c41a58_*.py  # corrección en el servidor y detalle de cuestionarios (17-oct)
+│     └─ e5c1a7b39d42_*.py  # estudiante.origen_registro (24-oct, §5 sextricies)
 │                           # ⚠️ en todas, autogenerate quiere borrar el índice GIN
 │                           #   ix_fragmento_contenido_fts: se quita a mano (PENDIENTES.md)
 ├─ src/studify/
@@ -306,6 +308,7 @@ Studify/
 │  ├─ test_audio.py · test_narracion.py · test_preferencia_voz.py # narración y voz
 │  ├─ test_web_estudiante.py · test_web_docente.py · test_web_simulador.py · test_web_auth.py
 │  ├─ test_web_legal.py · test_web_codigo_fuente.py               # marco legal y enlace AGPL
+│  ├─ test_web_no_soy_yo.py                                       # sesión compartida (R2)
 │  ├─ test_health.py
 │  ├─ test_visual.py · test_voz.py   # ⚠️ cargan SDXL y XTTS al importarse: se ignoran (H8)
 │  └─ referencia.wav · prueba_*.wav  # voz de referencia de XTTS y audios de prueba (licencia: L7)
@@ -2391,6 +2394,45 @@ los que les falta `@necesita_bd` (`PENDIENTES.md` R10).
 **Documentación (`2c583f4`, `8099650`, `db353a2`):** se borró lo obsoleto, los informes del
 03-sep y el fondo de marca pasaron a `docs/historico/`, y todos los pendientes del proyecto se
 reunieron en `PENDIENTES.md`.
+
+---
+
+## 5 sextricies. R2: dos estudiantes en el mismo computador (24-oct-2026)
+
+**Qué pasaba.** Con una cookie válida, `POST /student/vark` agregaba el diagnóstico **al
+estudiante de la cookie**. En un computador compartido, una segunda persona pisaba el perfil
+vigente de la primera, sus datos sociodemográficos se descartaban, su aceptación legal quedaba a
+nombre del otro y, sin responder nada, podía ver el perfil y las cápsulas ajenas y exportar,
+corregir o eliminar sus datos en `/mis-datos`. No había forma de cerrar la sesión: la cookie
+duraba 30 días. Las pruebas de usuario del 25-oct son en un PC compartido.
+
+Antes de implementar se le mostró el flujo al autor, que lo aprobó con cambios (los incorporados
+abajo). Reproducido antes del arreglo: `tests/test_web_no_soy_yo.py`, 24 tests en rojo; la
+segunda persona quedaba con el mismo id que la primera.
+
+| Pieza | Qué quedó |
+|---|---|
+| Campo `modo` | El cuestionario lleva `modo` oculto (`nuevo` o `actualizar`). Solo `modo=actualizar` con una sesión vigente agrega el diagnóstico al estudiante de la cookie; cualquier otro envío —incluido un formulario viejo sin el campo— registra a alguien nuevo y le pasa la sesión. |
+| «Salir» | Botón en la cabecera con sesión de estudiante → confirmación (`GET /student/salir`) → `POST /student/salir`: olvida la cookie, no borra datos y conserva la sesión del docente. No exige aceptar los documentos vigentes. Vuelve a la portada con el aviso «Saliste». |
+| «¿Eres tú?» | `GET /student/vark` con sesión muestra solo la fecha y hora del diagnóstico vigente (hora de Chile), nunca el perfil. «Soy yo» abre el cuestionario sin los datos opcionales; «Soy otra persona» cierra la sesión y vuelve al cuestionario limpio. |
+| Vencimiento | `SESION_ESTUDIANTE_HORAS` (720 por defecto = 30 días). El vencimiento va dentro de la firma, como en la cookie del docente. El navegador guarda la cookie 30 días; vencida, deja de dar acceso, pero todavía permite marcar al siguiente registro. |
+| Base recreada | La firma incluye `fecha_registro` en microsegundos: tras `reset_db.py`, una cookie vieja no abre el perfil de quien hoy tenga ese id. `estudiante_actual` ahora consulta la base. |
+| Pistas | «¿No eres tú? Salir» en la portada con sesión, en `/aceptar` y en `/mis-datos`. |
+| Origen | `estudiante.origen_registro` (migración `e5c1a7b39d42`): `nuevo`, `tras_salir`, `otra_persona` o `sesion_vencida`; NULL para los anteriores, la API y el CSV. «Salir» deja una cookie `origen_registro`, sin datos personales, que se borra al usarse. Se incluye en la exportación de `/mis-datos`. |
+| Borrador | El borrador del cuestionario (`sessionStorage`) ya no guarda `acepto` ni `consiento_genero` (B encontraba la aceptación de A ya marcada), y «Salir» lo borra. |
+| Política 0.3 | Fila nueva en §2 (origen del registro) y en §7 (cookie `origen_registro`, vencimiento de la sesión). Subir la versión hace que todos vuelvan a aceptar una vez. |
+
+**Formato de la cookie.** `<id>.<fecha_registro en µs>.<vence>.<firma>`. Las cookies del formato
+anterior se ignoran: las sesiones abiertas se cierran una vez. Los tests arman la cookie con
+`conftest.cookie_de(id)`; los que usaban ids inexistentes (7, `dueño + 10.000.000`) ahora usan
+estudiantes reales, porque una sesión de un id que no existe ya no vale.
+
+**Limitación aceptada:** sin cuenta, quien sale o deja vencer la sesión no puede volver a su
+perfil. Queda en `PENDIENTES.md` junto a D6, con los duplicados marcados en `origen_registro`.
+
+**Suite al cierre:** con Postgres, 607 pasan y 0 fallan; con la base apagada, 381 pasan y 4
+fallan (los de `test_web_auth.py` sin `@necesita_bd`, R10). `ruff check .` sigue en los 40
+avisos previos.
 
 ---
 

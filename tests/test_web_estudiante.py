@@ -130,9 +130,15 @@ def test_ninguna_pagina_carga_recursos_de_terceros(cliente):
         assert cliente.get(recurso).status_code == 200, recurso
 
 
-def test_portada_con_sesion_lleva_al_catalogo(cliente):
-    """Quien ya respondió el cuestionario no tiene que volver a pasar por él."""
-    cliente.cookies.set(sesion.COOKIE_ESTUDIANTE, f"7.{sesion._firma(7)}")
+@necesita_bd
+def test_portada_con_sesion_lleva_al_catalogo(cliente, limpiar_estudiantes):
+    """Quien ya respondió el cuestionario no tiene que volver a pasar por él.
+
+    Necesita la base desde R2: la sesión vale solo si el estudiante existe con
+    la misma `fecha_registro` que firmó la cookie.
+    """
+    cliente.post("/student/vark", data={"q1": ["a"]} | ACEPTA)
+    limpiar_estudiantes.append(_id_de_la_cookie(cliente))
 
     respuesta = cliente.get("/")
 
@@ -260,17 +266,21 @@ def test_el_perfil_muestra_el_vector_y_la_configuracion_guardados(
 def test_responder_de_nuevo_agrega_un_diagnostico_al_mismo_estudiante(
     cliente, db, limpiar_estudiantes
 ):
-    """Repetir el cuestionario no crea una persona nueva.
+    """Actualizar el perfil («Soy yo») no crea una persona nueva.
 
     Si lo hiciera, la cohorte del A/B de la Fase 5 quedaría inflada con
     duplicados y las cápsulas de un mismo estudiante repartidas entre varios
-    identificadores.
+    identificadores. Desde R2 hace falta `modo=actualizar`: sin él, el envío es
+    de otra persona (ver `tests/test_web_no_soy_yo.py`).
     """
     cliente.post("/student/vark", data={f"q{n}": ["a"] for n in range(1, 17)} | ACEPTA)
     id_estudiante = _id_de_la_cookie(cliente)
     limpiar_estudiantes.append(id_estudiante)
 
-    cliente.post("/student/vark", data={f"q{n}": ["c"] for n in range(1, 17)} | ACEPTA)
+    cliente.post(
+        "/student/vark",
+        data={f"q{n}": ["c"] for n in range(1, 17)} | ACEPTA | {"modo": "actualizar"},
+    )
 
     assert _id_de_la_cookie(cliente) == id_estudiante
     diagnosticos = db.scalars(

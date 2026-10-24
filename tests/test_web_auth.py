@@ -20,10 +20,11 @@ from fastapi.routing import APIRoute
 from fastapi.testclient import TestClient
 
 from studify.config import get_settings
+from studify.db.models import Estudiante
 from studify.main import app
 from studify.web import sesion
 from studify.web.routers import auth
-from tests.conftest import CLAVE_DOCENTE, USUARIO_DOCENTE, necesita_bd
+from tests.conftest import CLAVE_DOCENTE, USUARIO_DOCENTE, cookie_de, necesita_bd
 
 # Rutas de `/teacher/*` que tienen que quedar abiertas: el login, porque es la
 # forma de entrar, y el logout, porque cerrar sesión debe funcionar aunque la
@@ -239,13 +240,27 @@ def test_los_endpoints_con_dueno_rechazan_al_anonimo(http):
     assert http.post("/api/diagnosticos", json={"respuestas": []}).status_code == 401
 
 
-def test_no_se_pide_una_capsula_a_nombre_de_otro(http):
-    """Con sesión de estudiante, el `id_estudiante` del cuerpo tiene que ser el suyo."""
-    http.cookies.set(sesion.COOKIE_ESTUDIANTE, f"7.{sesion._firma(7)}")
+@necesita_bd
+def test_no_se_pide_una_capsula_a_nombre_de_otro(http, db):
+    """Con sesión de estudiante, el `id_estudiante` del cuerpo tiene que ser el suyo.
 
-    respuesta = http.post("/api/capsulas", json={"id_estudiante": 8, "id_objetivo": 1})
+    Necesita la base desde R2: la sesión vale solo si el estudiante existe.
+    """
+    estudiante = Estudiante()
+    db.add(estudiante)
+    db.commit()
+    try:
+        http.cookies.set(sesion.COOKIE_ESTUDIANTE, cookie_de(estudiante.id_estudiante))
 
-    assert respuesta.status_code == 403
+        respuesta = http.post(
+            "/api/capsulas",
+            json={"id_estudiante": estudiante.id_estudiante + 1, "id_objetivo": 1},
+        )
+
+        assert respuesta.status_code == 403
+    finally:
+        db.delete(estudiante)
+        db.commit()
 
 
 def test_el_audio_del_simulador_es_del_docente(http):

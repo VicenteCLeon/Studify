@@ -2667,6 +2667,13 @@ html:not(.js) .js-only {
 }
 
 
+/* «¿Eres tú?» y «Salir» (R2): pantallas de un computador compartido. El
+   empty-state ya centra y acota el ancho; solo faltan las acciones al centro. */
+.sesion-compartida .cluster {
+  justify-content: center;
+}
+
+
 /* --- 6.3 Perfil VARK ---------------------------------------------------- */
 .perfil {
   max-width: 64rem;

@@ -31,7 +31,9 @@ import time
 from fastapi import APIRouter, Depends, Form, HTTPException, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
+from sqlalchemy.orm import Session
 
+from studify.db.session import get_db
 from studify.web import sesion
 from studify.web.deps import templates
 
@@ -197,6 +199,7 @@ def requiere_docente_api(
 def estudiante_o_docente_api(
     request: Request,
     credenciales: HTTPBasicCredentials | None = Depends(_basic),
+    db: Session = Depends(get_db),
 ) -> int | None:
     """Quién llama a un endpoint de `/api` que tiene dueño.
 
@@ -220,7 +223,7 @@ def estudiante_o_docente_api(
         requiere_docente_api(request, credenciales)
         return None
 
-    id_estudiante = sesion.estudiante_actual(request)
+    id_estudiante = sesion.estudiante_actual(request, db)
     if id_estudiante is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

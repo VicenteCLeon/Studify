@@ -35,7 +35,7 @@ from studify.db.models import (
 from studify.main import app
 from studify.web import consentimiento, sesion
 from studify.web.routers.teacher import _rendimiento_actividades
-from tests.conftest import USUARIO_DOCENTE, necesita_bd
+from tests.conftest import USUARIO_DOCENTE, cookie_de, necesita_bd
 from tests.test_api_capsulas import TEXTO_LARGO
 
 pytestmark = necesita_bd
@@ -202,7 +202,7 @@ def _conectar(http, estudiante) -> None:
     """Deja al cliente con la cookie de sesión firmada de ese estudiante."""
     http.cookies.set(
         sesion.COOKIE_ESTUDIANTE,
-        f"{estudiante.id_estudiante}.{sesion._firma(estudiante.id_estudiante)}",
+        cookie_de(estudiante.id_estudiante),
     )
 
 

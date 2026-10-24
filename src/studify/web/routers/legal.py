@@ -46,10 +46,7 @@ def get_privacidad(request: Request):
 
 
 def _id_con_sesion(request: Request, db: Session) -> int | None:
-    id_estudiante = sesion.estudiante_actual(request)
-    if id_estudiante is None or db.get(Estudiante, id_estudiante) is None:
-        return None
-    return id_estudiante
+    return sesion.estudiante_actual(request, db)
 
 
 def _pantalla_aceptar(

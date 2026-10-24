@@ -17,25 +17,44 @@ HMAC el servidor detecta el cambio y trata la cookie como inexistente.
 
 Se firma con `hmac` de la biblioteca estándar y no con `itsdangerous` para no
 agregar una dependencia por unas pocas líneas.
+
+**Qué firma la cookie del estudiante** (24-oct-2026, R2): el id, la
+`fecha_registro` del estudiante en microsegundos y el vencimiento de la sesión.
+La fecha hace que una cookie emitida contra otra base —tras `reset_db.py` los
+ids vuelven a 1— no abra el perfil de quien hoy tenga ese id; el vencimiento,
+que una sesión olvidada en un computador compartido no le quede abierta al
+siguiente. Por eso `estudiante_actual` consulta la base.
 """
 
 import hmac
 import logging
 import secrets
 import time
+from dataclasses import dataclass
+from datetime import UTC, datetime, timedelta
 from hashlib import sha256
 
 from fastapi import Request, Response
+from sqlalchemy.orm import Session
 
 from studify.config import get_settings
+from studify.db.models import Estudiante
 
 logger = logging.getLogger(__name__)
 
 COOKIE_ESTUDIANTE = "id_estudiante"
 COOKIE_DOCENTE = "docente"
+# Marca que deja «Salir» para que el siguiente registro del navegador quede con
+# su `origen_registro` (ver `db/models.py`). No identifica a nadie: solo dice
+# por qué se cerró la sesión anterior, y se borra al usarse.
+COOKIE_ORIGEN = "origen_registro"
+ORIGENES_MARCADOS = ("tras_salir", "otra_persona")
 
-# 30 días. El diagnóstico VARK no caduca —el perfil de aprendizaje no cambia de
-# una semana a otra— así que la sesión dura lo que dura el estudio de la unidad.
+# 30 días: cuánto **guarda** el navegador la cookie, que es lo que declara la
+# Política de Privacidad. Cuánto **vale** la sesión lo fija aparte
+# `SESION_ESTUDIANTE_HORAS` (720 por defecto, los mismos 30 días). Que la cookie
+# dure más que la sesión es a propósito: una cookie vencida todavía llega al
+# servidor y deja marcar al siguiente registro como `sesion_vencida`.
 DURACION_SEGUNDOS = 60 * 60 * 24 * 30
 
 # 12 horas para el docente, muy por debajo de los 30 días del estudiante. Las
@@ -58,16 +77,37 @@ def _secreto() -> bytes:
     return _SECRETO_EFIMERO
 
 
-def _firma(id_estudiante: int) -> str:
-    return hmac.new(_secreto(), str(id_estudiante).encode("utf-8"), sha256).hexdigest()
+_EPOCA = datetime(1970, 1, 1, tzinfo=UTC)
 
 
-def iniciar(response: Response, id_estudiante: int) -> None:
+def _microsegundos(fecha: datetime) -> int:
+    """La fecha como entero exacto: con `timestamp()` (float) se perderían µs."""
+    return (fecha - _EPOCA) // timedelta(microseconds=1)
+
+
+def _firma(id_estudiante: int, registro: int, expira: int) -> str:
+    mensaje = f"estudiante:{id_estudiante}:{registro}:{expira}"
+    return hmac.new(_secreto(), mensaje.encode("utf-8"), sha256).hexdigest()
+
+
+def _duracion_sesion() -> int:
+    return get_settings().sesion_estudiante_horas * 60 * 60
+
+
+def valor_cookie(id_estudiante: int, fecha_registro: datetime, *, expira: int | None = None) -> str:
+    """`<id>.<registro en µs>.<vence>.<firma>`; sin `expira`, la sesión empieza ahora."""
+    if expira is None:
+        expira = int(time.time()) + _duracion_sesion()
+    registro = _microsegundos(fecha_registro)
+    return f"{id_estudiante}.{registro}.{expira}.{_firma(id_estudiante, registro, expira)}"
+
+
+def iniciar(response: Response, estudiante: Estudiante) -> None:
     """Deja al estudiante conectado en las siguientes vistas."""
     response.set_cookie(
         key=COOKIE_ESTUDIANTE,
-        value=f"{id_estudiante}.{_firma(id_estudiante)}",
-        max_age=DURACION_SEGUNDOS,
+        value=valor_cookie(estudiante.id_estudiante, estudiante.fecha_registro),
+        max_age=max(DURACION_SEGUNDOS, _duracion_sesion()),
         # Ningún script de la página necesita leerla: la UI es HTML renderizado
         # en el servidor y HTMX manda las cookies solo.
         httponly=True,
@@ -85,27 +125,92 @@ def cerrar(response: Response) -> None:
     response.delete_cookie(COOKIE_ESTUDIANTE, path="/")
 
 
-def estudiante_actual(request: Request) -> int | None:
-    """El `id_estudiante` de la cookie, o None si no hay o no es de fiar.
+@dataclass(frozen=True, slots=True)
+class _CookieEstudiante:
+    id_estudiante: int
+    registro: int
+    expira: int
+
+    @property
+    def vencida(self) -> bool:
+        return self.expira <= int(time.time())
+
+
+def _leer(request: Request) -> _CookieEstudiante | None:
+    """La cookie del estudiante si su firma es auténtica, vencida o no.
 
     Una firma que no calza se trata como "no hay sesión" y no como un error:
     también ocurre de forma legítima cuando el servidor se reinicia sin
     `SESSION_SECRET` fijo, y en ese caso lo correcto es mandar al estudiante a
-    responder el cuestionario, no mostrarle una pantalla de fallo.
+    responder el cuestionario, no mostrarle una pantalla de fallo. Las cookies
+    del formato anterior (`<id>.<firma>`) caen acá y se ignoran.
     """
     crudo = request.cookies.get(COOKIE_ESTUDIANTE)
-    if not crudo or "." not in crudo:
+    if not crudo:
         return None
 
-    valor, _, firma = crudo.partition(".")
-    if not valor.isdigit():
+    partes = crudo.split(".")
+    if len(partes) != 4 or not all(p.isdigit() for p in partes[:3]):
         return None
 
-    if not hmac.compare_digest(firma, _firma(int(valor))):
+    id_estudiante, registro, expira = (int(p) for p in partes[:3])
+    if not hmac.compare_digest(partes[3], _firma(id_estudiante, registro, expira)):
         logger.warning("cookie de sesión con firma inválida; se ignora")
         return None
 
-    return int(valor)
+    return _CookieEstudiante(id_estudiante, registro, expira)
+
+
+def _es_de_la_base(cookie: _CookieEstudiante, db: Session) -> bool:
+    """Que el estudiante exista y sea el mismo que recibió la cookie."""
+    estudiante = db.get(Estudiante, cookie.id_estudiante)
+    return estudiante is not None and _microsegundos(estudiante.fecha_registro) == cookie.registro
+
+
+def estudiante_actual(request: Request, db: Session) -> int | None:
+    """El `id_estudiante` de la sesión, o None si no hay, venció o no es de fiar."""
+    cookie = _leer(request)
+    if cookie is None or cookie.vencida or not _es_de_la_base(cookie, db):
+        return None
+    return cookie.id_estudiante
+
+
+def sesion_vencida(request: Request, db: Session) -> bool:
+    """Si el navegador trae la sesión auténtica de un estudiante, pero vencida."""
+    cookie = _leer(request)
+    return cookie is not None and cookie.vencida and _es_de_la_base(cookie, db)
+
+
+def tiene_sesion(request: Request) -> bool:
+    """Si hay una sesión firmada y vigente, sin consultar la base.
+
+    Es para la cabecera, que se dibuja en cada página: basta para decidir si
+    se ofrece «Salir». Para saber **quién** es, `estudiante_actual`.
+    """
+    cookie = _leer(request)
+    return cookie is not None and not cookie.vencida
+
+
+def marcar_origen(response: Response, origen: str) -> None:
+    """Deja dicho por qué se cerró la sesión, para el siguiente registro."""
+    response.set_cookie(
+        key=COOKIE_ORIGEN,
+        value=origen,
+        max_age=DURACION_SEGUNDOS,
+        httponly=True,
+        samesite="lax",
+        secure=get_settings().app_env != "dev",
+        path="/",
+    )
+
+
+def origen_marcado(request: Request) -> str | None:
+    valor = request.cookies.get(COOKIE_ORIGEN)
+    return valor if valor in ORIGENES_MARCADOS else None
+
+
+def borrar_origen(response: Response) -> None:
+    response.delete_cookie(COOKIE_ORIGEN, path="/")
 
 
 # --- Sesión del docente -------------------------------------------------------

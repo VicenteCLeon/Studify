@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% import "components/ui.html" as ui %}
+
+{#
+  «¿Eres tú?» (R2). Aparece en vez del cuestionario cuando el navegador ya trae
+  una sesión: en un computador compartido, quien llega puede no ser el dueño.
+  Muestra solo la fecha y hora del diagnóstico, nada del perfil, para no
+  revelarle a otra persona cómo aprende quien estuvo antes.
+#}
+
+{% block title %}¿Eres tú? · RepasAi{% endblock %}
+{% block footer_class %}site-footer-compacto{% endblock %}
+
+{% block content %}
+<div class="sesion-compartida">
+    {% call ui.empty_state("users", "Este navegador ya tiene un perfil", heading="h1") %}
+    <p>Alguien respondió el cuestionario en este navegador el <strong>{{ cuando }}</strong>. ¿Eres tú?</p>
+    <div class="cluster">
+        <a class="btn btn-primary btn-lg" href="/student/vark?modo=actualizar">
+            {{ ui.icon("refresh-cw") }}<span>Soy yo: actualizar mi perfil</span>
+        </a>
+        <form method="post" action="/student/salir" data-olvidar-borrador>
+            <input type="hidden" name="motivo" value="otra_persona">
+            <button type="submit" class="btn btn-secondary btn-lg">
+                {{ ui.icon("users") }}<span>Soy otra persona: empezar de cero</span>
+            </button>
+        </form>
+    </div>
+    <p class="text-sm text-muted">
+        Si eres otra persona, el perfil anterior queda guardado tal como está: no lo verás ni lo cambiarás.
+    </p>
+    {% endcall %}
+</div>
+{% endblock %}

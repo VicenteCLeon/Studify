@@ -16,6 +16,11 @@ que se aplicó el cuestionario a los 43 estudiantes ya cargados—, los 16 son
 el CSV está presente; el archivo no está versionado). No hubo que corregir nada.
 """
 
+from datetime import datetime
+from zoneinfo import ZoneInfo
+
+from studify.web.legal import MESES
+
 # Un enunciado por ítem, en el mismo orden que `instrumento.ITEMS`.
 ENUNCIADOS: tuple[str, ...] = (
     "Cuando necesitas aprender un concepto nuevo en clases, prefieres:",
@@ -130,3 +135,15 @@ OPCIONES_VOZ: tuple[tuple[str, str, str, str], ...] = (
     ("masculina-rapida", "Voz masculina rápida", "Voz masculina · rápida", "Casi inmediata."),
 )
 NOMBRE_VOZ = {valor: nombre for valor, nombre, _, _ in OPCIONES_VOZ}
+
+
+# Hora de Chile para lo que se le muestra al estudiante. La base guarda UTC
+# (`TIMESTAMP WITH TIME ZONE`); `zoneinfo` aplica el horario de verano. En
+# Windows la zona sale del paquete `tzdata`, que ya instala `psycopg`.
+ZONA_CHILE = ZoneInfo("America/Santiago")
+
+
+def fecha_hora_chile(momento: datetime) -> str:
+    """`20 de octubre de 2026, 15:30`, en hora de Chile."""
+    local = momento.astimezone(ZONA_CHILE)
+    return f"{local.day} de {MESES[local.month - 1]} de {local.year}, {local:%H:%M}"

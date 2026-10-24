@@ -3,6 +3,7 @@
 from functools import lru_cache
 from typing import Literal
 
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -22,6 +23,13 @@ class Settings(BaseSettings):
     # igual, pero las sesiones no sobreviven a un reinicio (ni a cada recarga de
     # `uvicorn --reload`). Fijarla en el `.env` es lo que hace cómoda la demo.
     session_secret: str = ""
+
+    # Cuántas horas vale la sesión del estudiante desde que responde el
+    # cuestionario. 720 (30 días) para quien estudia en su propio equipo; en un
+    # computador compartido conviene bajarla (1–4) para que la sesión de uno no
+    # le quede abierta al siguiente. El vencimiento va dentro de la firma (ver
+    # `web/sesion.py`), así que no se puede extender desde el navegador.
+    sesion_estudiante_horas: int = Field(default=720, ge=1)
 
     # Usuario y clave del panel del docente (`/teacher/*`). No hay tabla de
     # usuarios: el cap. 9 identifica al estudiante por su diagnóstico y no por

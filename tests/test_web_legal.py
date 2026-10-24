@@ -30,7 +30,7 @@ from studify.db.models import (
 from studify.main import app
 from studify.media import audio
 from studify.web import consentimiento, legal, narracion, sesion
-from tests.conftest import necesita_bd
+from tests.conftest import cookie_de, necesita_bd
 from tests.test_web_auth import rutas_montadas
 
 AVISO_IA = (
@@ -250,7 +250,7 @@ def test_un_estudiante_sin_aceptacion_va_primero_a_aceptar(http, db, creados):
     creados.append(estudiante.id_estudiante)
     http.cookies.set(
         sesion.COOKIE_ESTUDIANTE,
-        f"{estudiante.id_estudiante}.{sesion._firma(estudiante.id_estudiante)}",
+        cookie_de(estudiante.id_estudiante),
     )
 
     normal = http.get("/student/catalog", follow_redirects=False)
@@ -363,7 +363,7 @@ def test_mis_datos_no_exige_aceptar_antes(http, db, creados):
     creados.append(estudiante.id_estudiante)
     http.cookies.set(
         sesion.COOKIE_ESTUDIANTE,
-        f"{estudiante.id_estudiante}.{sesion._firma(estudiante.id_estudiante)}",
+        cookie_de(estudiante.id_estudiante),
     )
 
     respuesta = http.get("/mis-datos", follow_redirects=False)

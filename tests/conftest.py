@@ -37,6 +37,21 @@ necesita_bd = pytest.mark.skipif(
 )
 
 
+def cookie_de(id_estudiante: int) -> str:
+    """La cookie de sesión firmada y vigente de un estudiante que existe en la base.
+
+    Desde el 24-oct-2026 (R2) la firma incluye la `fecha_registro` del
+    estudiante y el vencimiento, así que ya no se arma solo con el id.
+    """
+    from studify.db.models import Estudiante
+    from studify.web import sesion
+
+    with SessionLocal() as db:
+        estudiante = db.get(Estudiante, id_estudiante)
+        assert estudiante is not None, f"no existe el estudiante {id_estudiante}"
+        return sesion.valor_cookie(estudiante.id_estudiante, estudiante.fecha_registro)
+
+
 @pytest.fixture
 def db() -> Iterator[Session]:
     """Sesión de base de datos para un test."""

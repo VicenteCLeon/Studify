@@ -118,12 +118,15 @@
     };
 
     // Borrador en sessionStorage: una recarga accidental en el celular no
-    // borra lo ya respondido. Se descarta al enviar con éxito.
+    // borra lo ya respondido. Se descarta al enviar con éxito. Las casillas de
+    // aceptación y de consentimiento no se guardan: nunca pueden aparecer ya
+    // marcadas, y en un computador compartido serían las de otra persona (R2).
+    const NO_SE_GUARDAN = ["acepto", "consiento_genero"];
     function save() {
       const data = { paso: current, marcadas: [] };
-      form.querySelectorAll('input[type="checkbox"]:checked').forEach((b) =>
-        data.marcadas.push(b.name + "=" + b.value)
-      );
+      form.querySelectorAll('input[type="checkbox"]:checked').forEach((b) => {
+        if (!NO_SE_GUARDAN.includes(b.name)) data.marcadas.push(b.name + "=" + b.value);
+      });
       ["rango_etario", "genero", "carrera"].forEach((n) => {
         if (form.elements[n]) data[n] = form.elements[n].value;
       });
@@ -284,6 +287,16 @@
     const sync = () => botones.forEach((b) => { b.disabled = !box.checked; });
     box.addEventListener("change", sync);
     sync();
+  }
+
+  // ------------------------------------------------------------------------
+  // «Salir» y «Soy otra persona»: el borrador del cuestionario es de quien se
+  // va, así que se borra antes de que llegue la persona siguiente (R2).
+  // ------------------------------------------------------------------------
+  function initOlvidarBorrador(form) {
+    form.addEventListener("submit", () => {
+      try { sessionStorage.removeItem(VARK_KEY); } catch (err) { /* nada */ }
+    });
   }
 
   // ------------------------------------------------------------------------
@@ -508,6 +521,7 @@
     ["[data-theme-toggle]", initThemeToggle],
     ["[data-vark-stepper]", initVarkStepper],
     ["[data-aceptacion]", initAceptacion],
+    ["[data-olvidar-borrador]", initOlvidarBorrador],
     ["[data-catalog-filter]", initCatalogFilter],
     ["[data-study-link]", initStudyLink],
     ["[data-flashcards]", initFlashcards],

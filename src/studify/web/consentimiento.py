@@ -23,7 +23,7 @@ from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
-from studify.db.models import AceptacionLegal, Estudiante
+from studify.db.models import AceptacionLegal
 from studify.db.session import get_db
 from studify.web import legal, sesion
 
@@ -32,8 +32,10 @@ logger = logging.getLogger(__name__)
 RUTA_ACEPTAR = "/aceptar"
 
 # Las vistas del estudiante que **no** exigen aceptación previa: el cuestionario
-# es donde se acepta por primera vez (la casilla está en su primer paso).
-RUTAS_SIN_ACEPTACION = frozenset({"/student/vark"})
+# es donde se acepta por primera vez (la casilla está en su primer paso), y
+# «Salir», porque quien no es el dueño de la sesión no tiene que aceptar nada a
+# nombre de otro para poder irse.
+RUTAS_SIN_ACEPTACION = frozenset({"/student/vark", "/student/salir"})
 
 
 def pendientes(db: Session, id_estudiante: int) -> list[legal.Documento]:
@@ -116,8 +118,8 @@ def exigir_vigente(request: Request, db: Session = Depends(get_db)) -> None:
     if request.url.path in RUTAS_SIN_ACEPTACION:
         return
 
-    id_estudiante = sesion.estudiante_actual(request)
-    if id_estudiante is None or db.get(Estudiante, id_estudiante) is None:
+    id_estudiante = sesion.estudiante_actual(request, db)
+    if id_estudiante is None:
         return
 
     if not pendientes(db, id_estudiante):

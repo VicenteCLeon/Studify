@@ -46,6 +46,11 @@
             Si no estás de acuerdo, puedes dejar de usar RepasAi y pedir que eliminemos tus datos
             (<a href="/mis-datos">Mis datos</a>).
         </p>
+        {# R2: en un computador compartido, quien llega acá puede no ser el dueño
+           de la sesión, y aceptaría a nombre de otro. #}
+        <p class="text-sm text-muted">
+            ¿No eres tú? <a href="/student/salir">Salir</a> y empieza con tu propio perfil.
+        </p>
     </form>
 </div>
 {% endblock %}

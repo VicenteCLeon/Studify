@@ -80,6 +80,12 @@
                     <td data-label="De dónde sale">Se crea al enviar el cuestionario</td>
                     <td data-label="¿Obligatorio?">Sí</td>
                 </tr>
+                <!-- BORRADOR TÉCNICO (24-oct-2026): fila nueva por estudiante.origen_registro (R2). No constituye asesoría legal; revisar antes de publicar. -->
+                <tr>
+                    <td data-label="Dato"><strong>Cómo empezó tu registro en este navegador</strong>: si era la primera vez, si alguien había salido antes, si elegiste «Soy otra persona» o si había una sesión vencida. Sirve solo para detectar registros duplicados en el análisis de resultados; no dice quién eres ni quién usó el navegador antes</td>
+                    <td data-label="De dónde sale">Se calcula al enviar el cuestionario</td>
+                    <td data-label="¿Obligatorio?">Sí</td>
+                </tr>
                 <tr>
                     <td data-label="Dato"><strong>Respuestas al cuestionario VARK</strong>: cada alternativa que marcaste en las 16 preguntas</td>
                     <td data-label="De dónde sale">Tú, en el cuestionario</td>
@@ -260,7 +266,14 @@
                     <td data-label="Nombre"><code>id_estudiante</code></td>
                     <td data-label="Tipo">Cookie propia, esencial</td>
                     <td data-label="Para qué">Recordar cuál es tu perfil. Va firmada para que nadie pueda hacerse pasar por otro estudiante y no la puede leer ningún script de la página.</td>
-                    <td data-label="Duración">30 días</td>
+                    <td data-label="Duración">30 días en tu navegador. La sesión puede vencer antes (en computadores compartidos, en pocas horas), y la cierras cuando quieras con «Salir»</td>
+                </tr>
+                <!-- BORRADOR TÉCNICO (24-oct-2026): cookie nueva de R2. No constituye asesoría legal; revisar antes de publicar. -->
+                <tr>
+                    <td data-label="Nombre"><code>origen_registro</code></td>
+                    <td data-label="Tipo">Cookie propia</td>
+                    <td data-label="Para qué">Solo después de pulsar «Salir» o «Soy otra persona»: recordar por qué se cerró la sesión, para que el siguiente registro en este navegador quede marcado como posible duplicado. No guarda quién eras.</td>
+                    <td data-label="Duración">Hasta el siguiente registro en este navegador, y como máximo 30 días</td>
                 </tr>
                 <tr>
                     <td data-label="Nombre"><code>docente</code></td>
@@ -278,7 +291,7 @@
                     <td data-label="Nombre"><code>repasai-vark-borrador</code></td>
                     <td data-label="Tipo">Almacenamiento de sesión (sessionStorage)</td>
                     <td data-label="Para qué">Guardar tus respuestas a medio camino si recargas la página del cuestionario. No sale de tu navegador hasta que lo envías.</td>
-                    <td data-label="Duración">Se borra al enviar el cuestionario o cerrar la pestaña</td>
+                    <td data-label="Duración">Se borra al enviar el cuestionario, al salir o al cerrar la pestaña</td>
                 </tr>
             </tbody>
         </table>

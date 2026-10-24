@@ -76,6 +76,11 @@ class Estudiante(Base):
             "voz_modo IS NULL OR voz_modo IN ('calidad', 'rapida')",
             name="ck_estudiante_voz_modo",
         ),
+        CheckConstraint(
+            "origen_registro IS NULL OR origen_registro IN "
+            "('nuevo', 'tras_salir', 'otra_persona', 'sesion_vencida')",
+            name="ck_estudiante_origen_registro",
+        ),
     )
 
     id_estudiante: Mapped[int] = mapped_column(primary_key=True)
@@ -100,6 +105,19 @@ class Estudiante(Base):
     # **nunca** se deduce de él.
     voz_genero: Mapped[str | None] = mapped_column(String(10))
     voz_modo: Mapped[str | None] = mapped_column(String(10))
+
+    # --- Cómo llegó a registrarse desde la web (24-oct-2026, R2) --------------
+    #
+    # Sin cuenta, una misma persona puede quedar registrada dos veces: si sale
+    # y vuelve a responder, o si su sesión vence. Esta columna no identifica a
+    # nadie; marca los registros que **pueden** ser duplicados, para filtrarlos
+    # en el A/B:
+    #   'nuevo'          — el navegador no traía ninguna sesión;
+    #   'tras_salir'     — alguien pulsó «Salir» antes en ese navegador;
+    #   'otra_persona'   — «Soy otra persona», o había otra sesión abierta;
+    #   'sesion_vencida' — el navegador traía una sesión vencida.
+    # NULL = registrado antes de esta columna, por la API o desde el CSV.
+    origen_registro: Mapped[str | None] = mapped_column(String(20))
 
     diagnosticos: Mapped[list["DiagnosticoVark"]] = relationship(
         back_populates="estudiante", cascade="all, delete-orphan"

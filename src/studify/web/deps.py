@@ -19,8 +19,15 @@ def _contexto_global(request: Request) -> dict[str, Any]:
     nueva que lo olvidara le mostraría la cabecera de estudiante a un docente
     conectado: un fallo silencioso, puramente visual, que nadie notaría hasta
     estar en una demo. Como procesador de contexto no hay nada que recordar.
+
+    `con_sesion_estudiante` decide si la cabecera ofrece «Salir» (R2). Mira
+    solo la firma y el vencimiento, sin consultar la base: se dibuja en cada
+    página, y para ofrecer la salida no hace falta saber quién es.
     """
-    return {"es_docente": sesion.es_docente(request)}
+    return {
+        "es_docente": sesion.es_docente(request),
+        "con_sesion_estudiante": sesion.tiene_sesion(request),
+    }
 
 
 templates = Jinja2Templates(

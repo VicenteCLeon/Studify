@@ -10,7 +10,7 @@
 > `AVANCE.md` con su commit. Las listas de origen quedan como registro de su
 > fecha y no se vuelven a actualizar.
 >
-> Última revisión: 17-oct-2026. Las ubicaciones de código van por función; los
+> Última revisión: 24-oct-2026. Las ubicaciones de código van por función; los
 > números de línea son aproximados.
 
 ---
@@ -53,7 +53,9 @@
 Lo que conviene cerrar antes de que la app la usen personas reales. El detalle
 de cada uno está más abajo.
 
-1. **R2** — dos estudiantes en el mismo computador (siguiente punto de la revisión).
+1. **Sesión en computadores compartidos:** fijar `SESION_ESTUDIANTE_HORAS` según
+   dónde se use (1–4 en un laboratorio) y aplicar la migración `e5c1a7b39d42` en
+   cada máquina (O2). R2 ya está corregido (AVANCE §5 sextricies).
 2. **Credenciales de fábrica** (`admin`/`admin123`) y `SESSION_SECRET` de la máquina 2 (O1).
 3. **Repetir la batería VARK con `deepseek-flash`**, incluido el perfil V (G1).
 4. **Desplegar ya los cambios del 17-oct**: el cambio de la huella del caché
@@ -67,40 +69,9 @@ de cada uno está más abajo.
 ## R. Revisión de código del 16-oct-2026
 
 Corregidos el 17-oct: puntos 5 (`b7f769d`), 1 (`a3883ef`), 4 (`6e081fe`),
-6 (`ce30e6d`) y 3 (`a922240`). El detalle de qué cambió está en la descripción de
-cada commit.
-
-### R2. Dos estudiantes en el mismo computador — **siguiente**
-
-Prioridad alta: contamina los datos del A/B en un laboratorio.
-
-- **Qué pasa hoy:**
-  - El estudiante no tiene «cerrar sesión» ni «no soy yo».
-  - La cookie `id_estudiante` dura 30 días (`web/sesion.py`, `DURACION_SEGUNDOS`).
-  - `student.py::_armar_payload`: con sesión válida, el cuestionario se **agrega
-    al estudiante de la cookie**. Una segunda persona en el mismo navegador
-    pisa el perfil vigente del primero, sus datos sociodemográficos se
-    descartan y su aceptación legal queda a nombre del otro.
-  - Lo único que hoy borra la cookie es «Eliminar mis datos» o un id inexistente.
-- **Condición del autor:** antes de implementar, **mostrarle cómo quedaría el
-  flujo de «No soy yo»** (pantallas y qué pasa con la sesión y los datos) y
-  esperar su visto bueno.
-- **Ideas para la propuesta (no decididas):**
-  - Enlace «No soy yo / cerrar sesión» en la cabecera (`templates/base.html`):
-    un `POST` que llame a `sesion.cerrar` y vuelva a la portada. No borra
-    datos, solo olvida la cookie.
-  - En `GET /student/vark` con sesión abierta: aviso «Estás respondiendo como
-    el estudiante n.º X», con «Soy yo, actualizar mi perfil» o «Soy otra
-    persona» (cierra la sesión y empieza de cero).
-  - En `post_vark`: exigir esa elección en el formulario cuando hay sesión, en
-    vez de reutilizarla en silencio.
-  - Tests: con la cookie de A, responder como «otra persona» crea un
-    estudiante nuevo, deja intacto el diagnóstico vigente de A y registra la
-    aceptación a nombre del nuevo.
-- **Relacionado, preguntar si entra:** tras `scripts/reset_db.py` las ids
-  vuelven a 1 y una cookie vieja firmada con el mismo `SESSION_SECRET` apunta
-  a otro estudiante. Se resuelve metiendo algo propio del estudiante en la
-  firma (p. ej. `fecha_registro`).
+6 (`ce30e6d`) y 3 (`a922240`). El 24-oct, el punto 2 (R2, dos estudiantes en el
+mismo computador; AVANCE §5 sextricies). El detalle de qué cambió está en la
+descripción de cada commit.
 
 ### Prioridad media
 
@@ -135,8 +106,10 @@ Prioridad alta: contamina los datos del A/B en un laboratorio.
   efímeras. Los audios ya se resolvieron (`narracion.DIRECTORIO_AUDIO`).
 - **R13. Promedio VARK de la cohorte** (`teacher.py::get_analytics`): promedia
   todos los diagnósticos, con reintentos y los 43 del CSV mezclados con el
-  piloto. Debería tomar el último por estudiante; convendría una columna
-  `origen` (importado / app).
+  piloto. Debería tomar el último por estudiante. Desde R2 existe
+  `estudiante.origen_registro` (NULL para los del CSV, la API y los anteriores):
+  agregarle `importado` permitiría separar el CSV del piloto y, de paso,
+  excluir los posibles duplicados.
 - **R14. La fila 7 de la tabla 11.1 como regla de contenido no existe** →
   decisión del equipo (ver D4).
 
@@ -154,6 +127,10 @@ Prioridad alta: contamina los datos del A/B en un laboratorio.
   `<dl class="glosario">` de `_capsula.html` solo aparece con lista de listas.
 - **Guion de audio** (`media/guion.py`): «→» se lee «determina» (Bases de
   Datos) en todas las asignaturas.
+- **Secretos en la salida de `pytest`:** cuando falla un test que toca
+  `get_settings()`, el `repr` de `Settings` imprime `session_secret`,
+  `teacher_password` y `llm_api_key` en claro (visto el 24-oct). Pasarlos a
+  `SecretStr` de Pydantic.
 - **Registro:** con `APP_ENV=dev`, `db/session.py` usa `echo=True` y la consola
   muestra SQL con parámetros (género, contenido). `/health` expone el texto
   del error de la base.
@@ -306,6 +283,12 @@ Origen: `AVANCE.md` §5 tervicies «Riesgos legales que siguen abiertos» y
 - **D6. Identidad del estudiante:** hoy es solo la cookie firmada; una fase
   posterior agregaría Google Identity, con el consentimiento y los derechos
   colgando de `id_estudiante`. Origen: AVANCE §6 n.º 18.
+  - **Recuperar el perfil** (aceptado como limitación el 24-oct, con R2): sin
+    cuenta, quien pulsa «Salir», cambia de computador o deja vencer la sesión
+    no puede volver a su perfil y, si responde de nuevo, queda duplicado. Los
+    duplicados posibles quedan marcados en `estudiante.origen_registro`
+    (`tras_salir`, `otra_persona`, `sesion_vencida`). Un código de
+    recuperación sería una credencial: se decide junto con D6.
 
 ## X. Extensiones planificadas
 
@@ -329,4 +312,4 @@ está en [`CORRECCIONES_INFORME.md`](CORRECCIONES_INFORME.md).
 
 ---
 
-**Orden sugerido:** R2 → O1 → R10 → G1 → R7, R8, R9 → E1–E4 → el resto.
+**Orden sugerido:** O1 → R10 → G1 → R7, R8, R9 → E1–E4 → el resto.

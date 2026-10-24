@@ -37,7 +37,12 @@ from studify.main import app
 from studify.vark.rules import aplicar_reglas
 from studify.vark.scoring import PerfilVark
 from studify.web import consentimiento, sesion
-from tests.conftest import USUARIO_DOCENTE, cliente_con_proveedor_caido, necesita_bd
+from tests.conftest import (
+    USUARIO_DOCENTE,
+    cliente_con_proveedor_caido,
+    cookie_de,
+    necesita_bd,
+)
 
 pytestmark = necesita_bd
 
@@ -133,7 +138,7 @@ def navegador_de():
     def _crear(id_estudiante: int) -> TestClient:
         cliente = TestClient(app)
         cliente.cookies.set(
-            sesion.COOKIE_ESTUDIANTE, f"{id_estudiante}.{sesion._firma(id_estudiante)}"
+            sesion.COOKIE_ESTUDIANTE, cookie_de(id_estudiante)
         )
         return cliente
 
@@ -535,18 +540,26 @@ def test_el_estudiante_pide_y_lee_su_propia_capsula(escenario, cliente_falso, na
     assert leida.status_code == 200
 
 
-def test_la_capsula_ajena_no_se_lee_ni_se_responde(escenario, cliente_falso, navegador_de):
+def test_la_capsula_ajena_no_se_lee_ni_se_responde(escenario, cliente_falso, navegador_de, db):
     """Antes bastaba con recorrer ids: ahora el ajeno recibe 404, como si no existiera."""
     dueno = escenario["estudiante"].id_estudiante
     id_capsula = _pedir(navegador_de(dueno), escenario).json()["id_capsula"]
-    intruso = navegador_de(dueno + 10_000_000)
+    # Otro estudiante real: desde R2 la sesión de un id inexistente no vale.
+    otro = Estudiante()
+    db.add(otro)
+    db.commit()
+    try:
+        intruso = navegador_de(otro.id_estudiante)
 
-    assert intruso.get(f"/api/capsulas/{id_capsula}").status_code == 404
-    respuesta = intruso.post(
-        f"/api/capsulas/{id_capsula}/quiz",
-        json={"id_estudiante": dueno, "alternativa_seleccionada": 0},
-    )
-    assert respuesta.status_code == 404
+        assert intruso.get(f"/api/capsulas/{id_capsula}").status_code == 404
+        respuesta = intruso.post(
+            f"/api/capsulas/{id_capsula}/quiz",
+            json={"id_estudiante": dueno, "alternativa_seleccionada": 0},
+        )
+        assert respuesta.status_code == 404
+    finally:
+        db.delete(otro)
+        db.commit()
 
 
 # --- Sin síntesis multimedia en la API (hallazgo H5, PRUEBAS_VARK.md) ---------

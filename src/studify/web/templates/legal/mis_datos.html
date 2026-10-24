@@ -27,6 +27,15 @@
     {% endcall %}
     {% else %}
 
+    {# R2: en un computador compartido, quien llega acá puede no ser el dueño
+       de la sesión, y podría descargar, corregir o eliminar datos ajenos. #}
+    <div class="mb-4">
+        {% call ui.alert("info", "¿No eres tú?") %}
+            Estos son los datos de quien abrió la sesión en este navegador. Si no eres tú,
+            <a href="/student/salir">sal</a> sin tocar nada.
+        {% endcall %}
+    </div>
+
     {% if aviso %}<div class="mb-4">{% call ui.alert("ok") %}{{ aviso }}{% endcall %}</div>{% endif %}
     {% if error %}<div class="mb-4">{% call ui.alert("error") %}{{ error }}{% endcall %}</div>{% endif %}
 

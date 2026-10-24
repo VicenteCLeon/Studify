@@ -180,8 +180,9 @@ en un `<symbol id="i-nombre" viewBox="0 0 24 24">` nuevo de `sprite.svg`, en ord
   | Atributo | Módulo |
   |---|---|
   | `data-theme-toggle` | botón de tema |
-  | `data-vark-stepper` | cuestionario de a una pregunta (con borrador en `sessionStorage`); no avanza del paso 0 sin `[data-acepto]` y muestra el consentimiento del género solo si se eligió uno |
+  | `data-vark-stepper` | cuestionario de a una pregunta (con borrador en `sessionStorage`, que nunca guarda `acepto` ni `consiento_genero`); no avanza del paso 0 sin `[data-acepto]` y muestra el consentimiento del género solo si se eligió uno |
   | `data-aceptacion` | formulario de `/aceptar`: los `[data-requiere-acepto]` esperan a la casilla `[data-acepto]` |
+  | `data-olvidar-borrador` | formularios de «Salir» y «Soy otra persona»: borran el borrador del cuestionario al enviarse |
   | `data-catalog-filter` | buscador del catálogo |
   | `data-study-link` | abre "Generando tu cápsula…" al ir al visor |
   | `data-flashcards` | mazo de tarjetas (lee la lista que dibujó el servidor) |
@@ -214,7 +215,11 @@ Los tests y los routers dependen de este marcado. Cambiarlo rompe la suite o un 
   `#tag-status`, `#bandeja` (escucha `fragmentos-actualizados`), `#simulator-result`; cada fila
   de la bandeja es un `<tr>` autocontenido (`hx-target="closest tr"`, `outerHTML`).
 - Cabecera: «Soy docente» y `/teacher/login` sin sesión; pestañas del docente y `/teacher/logout`
-  solo con sesión.
+  solo con sesión. «Salir» (`href="/student/salir"`) solo con sesión de estudiante.
+- Cuestionario: el campo oculto `name="modo"` (`nuevo` | `actualizar`) es lo único que decide si el
+  diagnóstico se agrega al estudiante de la cookie; sin él, el servidor registra a alguien nuevo.
+- «¿Eres tú?» (`student/eres_tu.html`): muestra solo la fecha y hora del diagnóstico, nunca el
+  perfil; «Soy otra persona» es un `POST /student/salir` con `name="motivo" value="otra_persona"`.
 
 ---
 
