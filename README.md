@@ -58,8 +58,9 @@ src/studify/
 ├─ knowledge/      Ingesta documental, etiquetado asistido por LLM, curación humana
 ├─ rag/            Retriever SQL determinista, plantillas de prompt, orquestador
 ├─ generation/     Contrato de la microcápsula, generador LLM, validador + reparación
+├─ media/          Narración del visor (Kokoro, Piper; XTTS como opción administrativa)
 ├─ api/routers/    Endpoints REST
-└─ web/            UI mínima (Jinja2 + HTMX)
+└─ web/            UI de RepasAi (Jinja2 + HTMX): estudiante, panel del docente y páginas legales
 ```
 
 ---
@@ -105,34 +106,48 @@ python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 
 # 2. Dependencias (modo editable)
-pip install -e ".[dev]"
+#    ingest: lectura de PDF y PPTX en el panel del docente
+#    audio:  narración del visor (Kokoro y Piper)
+pip install -e ".[dev,ingest,audio]"
+python scripts/descargar_voces.py   # modelos de voz (~410 MB) a data/voces
 
 # 3. Configuración
 Copy-Item .env.example .env
-#    → editar .env y completar LLM_API_KEY
+#    → editar .env: LLM_API_KEY, SESSION_SECRET y la clave del docente
+#      (TEACHER_USERNAME/TEACHER_PASSWORD; sin fijarlas quedan admin/admin123)
 
 # 4. Base de datos
 docker compose up -d          # si eligieron Docker
 #    si usan Postgres nativo: crear la BD y ajustar DATABASE_URL en .env
 
-# 5. Migraciones (a partir de la Fase 1)
+# 5. Migraciones
 alembic upgrade head
 
 # 6. Levantar la API
 uvicorn studify.main:app --reload --app-dir src
 ```
 
-**Verificación:** [`http://127.0.0.1:8000/health`](http://127.0.0.1:8000/health) ·
-[`http://127.0.0.1:8000/docs`](http://127.0.0.1:8000/docs)
+La app se arranca desde la raíz del repositorio: el `.env` y las carpetas de `data/` se
+buscan relativas al directorio de trabajo.
+
+**Verificación:** [`http://127.0.0.1:8000/`](http://127.0.0.1:8000/) (portada) ·
+[`/health`](http://127.0.0.1:8000/health) · [`/docs`](http://127.0.0.1:8000/docs)
 
 ---
 
 ## 🧪 Testing y calidad
 
 ```powershell
-pytest        # los tests de /health corren sin necesidad de Postgres
+$env:LLM_API_KEY=""   # para no gastar en el proveedor
+.\.venv\Scripts\python -m pytest -q --ignore=tests/test_visual.py --ignore=tests/test_voz.py
 ruff check .
 ```
+
+- Sin Postgres, los tests que necesitan la base se omiten (`@necesita_bd`). Para correrlos todos,
+  la base de `DATABASE_URL` tiene que estar levantada.
+- `test_visual.py` y `test_voz.py` se ignoran: cargan SDXL y XTTS al importarse.
+- Los tests que usan la base escriben en la de desarrollo. Hay fallos conocidos que dependen de
+  eso: 4 sin Postgres y 2 con él (`docs/PENDIENTES.md`, R10).
 
 ---
 

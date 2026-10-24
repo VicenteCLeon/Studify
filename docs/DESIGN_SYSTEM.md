@@ -34,7 +34,7 @@ web/
 │  ├─ js/app.js            # comportamiento, sin dependencias (ver §6)
 │  ├─ vendor/htmx-1.9.10.min.js  # HTMX servido localmente (mismo SRI que unpkg)
 │  ├─ fonts/               # Figtree y Fraunces variables (woff2) + licencias OFL
-│  ├─ icons/sprite.svg     # 54 íconos de Lucide (ISC) como <symbol>
+│  ├─ icons/sprite.svg     # 56 íconos de Lucide (ISC) como <symbol>
 │  ├─ img/favicon.svg      # marca: cápsula en dos mitades
 │  ├─ img/textura-escolar.svg  # textura de la marca original, monocroma (máscara CSS)
 │  └─ styleguide.html      # referencia viva
@@ -43,8 +43,9 @@ web/
    ├─ landing.html         # portada en "/"
    ├─ components/ui.html   # macros reutilizables (ver §5)
    ├─ components/_generando.html  # pantalla "Generando tu cápsula…"
-   ├─ student/…            # cuestionario, perfil, catálogo, visor y parciales HTMX
-   └─ teacher/…            # login, curación, analíticas, simulador y parciales HTMX
+   ├─ student/…            # cuestionario, perfil, catálogo, visor, narración y parciales HTMX
+   ├─ teacher/…            # login, curación, analíticas, simulador y parciales HTMX
+   └─ legal/…              # Términos, Privacidad, /aceptar, /mis-datos y datos eliminados
 ```
 
 `app.css` está en **capas**; cada una solo usa lo de las anteriores:
@@ -140,6 +141,7 @@ Macros en `templates/components/ui.html` (`{% import "components/ui.html" as ui 
 | `ui.icon(nombre, label=None, cls="")` | `<svg class="icon">` del sprite. Decorativo (`aria-hidden`) salvo que se pase `label`. |
 | `ui.vark_chip(canal, nombre=None, size="", con_icono=False)` | Chip teñido del canal. |
 | `ui.vark_tile(canal, size="")` | Ícono del canal en recuadro teñido. |
+| `ui.vark_icon_name(canal)` | Solo el nombre del ícono del canal, para pasarlo a otra macro. |
 | `ui.badge(texto, variant, icono=None)` | Badge `primary · accent · success · danger · warning · neutral`. |
 | `{% call ui.alert(kind, titulo) %}…{% endcall %}` | Aviso con ícono. `kind`: `ok · error · warning · info`. Error → `role="alert"`; el resto, `role="status"`. |
 | `{% call ui.empty_state(icono, titulo, tone, heading) %}…{% endcall %}` | Estado vacío o de error centrado. |
@@ -147,6 +149,7 @@ Macros en `templates/components/ui.html` (`{% import "components/ui.html" as ui 
 | `ui.progress(valor, etiqueta, canal=None)` | Barra con `role="progressbar"`. |
 | `ui.spinner(etiqueta)` | Spinner para indicadores HTMX. |
 | `ui.placeholder(texto)` | Dato pendiente en un documento legal: `<mark>` resaltado con el texto literal `[PLACEHOLDER: …]`, que se encuentra con un grep. |
+| `ui.casilla_aceptacion()` | La casilla de aceptación de Términos y Política (`name="acepto"`, sin marcar). La usan el cuestionario y `/aceptar` (ver §7). |
 
 Clases de componente más usadas (capa 5 de `app.css`):
 

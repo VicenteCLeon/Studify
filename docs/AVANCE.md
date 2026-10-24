@@ -1,7 +1,7 @@
 # Studify — Estado de avance
 
 > Bitácora del proyecto: qué se hizo, qué se verificó y qué se decidió en el camino.
-> Última actualización: **17-oct-2026**. Lo que falta está en [`PENDIENTES.md`](PENDIENTES.md);
+> Última actualización: **24-oct-2026** (§4 y §9; la bitácora llega al 17-oct). Lo que falta está en [`PENDIENTES.md`](PENDIENTES.md);
 > el índice de toda la documentación, en [`README.md`](README.md).
 
 ---
@@ -43,8 +43,8 @@ Lo primero que falta antes del piloto con estudiantes está al inicio de
 
 **Cómo leer el resto de este archivo:**
 
-- §2 a §4 son las decisiones de stack, la instalación y la estructura del repositorio **tal
-  como quedaron en agosto**; §4 no se actualizó después.
+- §2 y §3 son las decisiones de stack y la instalación **tal como quedaron en agosto**. §4 es
+  la estructura del repositorio, al día al 24-oct-2026.
 - §5 es la bitácora, en orden: cada sección cuenta qué se hizo, qué se encontró y cómo se
   verificó. El código cita estas secciones por su nombre («AVANCE.md sección 5 sedecies»), así
   que no se renumeran.
@@ -213,112 +213,116 @@ quedado de una corrida end-to-end fallida durante la verificación de la Fase 2.
 
 ## 4. Estructura del repositorio (estado real, no aspiracional)
 
+Al día al 24-oct-2026. Las cantidades de tests por archivo se sacaron a propósito: cambiaban
+con cada sección del §5 y quedaban desfasadas; la suite completa está en el §1.
+
 ```
 Studify/
-├─ .env.example          # plantilla — LLM_BASE_URL, LLM_MODEL, LLM_API_KEY, DATABASE_URL, etc.
-├─ .env                  # copia local, NO versionada (ya creada en esta máquina)
-├─ .gitignore
-├─ .gitattributes
-├─ README.md             # instrucciones de instalación y arranque
+├─ .env.example          # plantilla: base, sesión, docente, LLM, reglas de la cápsula
+├─ .env                  # copia local, NO versionada
+├─ .gitignore · .gitattributes · LICENSE (AGPL-3.0-or-later)
+├─ README.md             # instalación, arranque, tests y licencia
 ├─ docker-compose.yml    # Postgres 16 alternativo a la instalación nativa
-├─ pyproject.toml        # dependencias + config de ruff/pytest
+├─ pyproject.toml        # dependencias (extras: ingest, audio, audio-xtts, media, dev) + ruff/pytest
 ├─ alembic.ini
 ├─ alembic/
 │  ├─ env.py             # lee DATABASE_URL desde studify.config; importa models para autogenerate
-│  ├─ script.py.mako
-│  └─ versions/
-│     ├─ ec6446cc3c52_*.py  # Fase 1: las 8 entidades. Aplicada y verificada reversible.
-│     ├─ 8eb6f0399fee_*.py  # Fase 1: estudiante.genero a VARCHAR(50)
-│     ├─ 8010505ef66e_*.py  # Fase 3: huella_generacion + modelo_llm. ⚠️ corregida a mano:
-│     │                     #   autogenerate quería borrar el índice GIN de FTS
-│     ├─ 5e11a9cf4a0b_*.py  # Fase 5: tabla interaccion_quiz
-│     └─ 2fbc7391c0a3_*.py  # Fase 5: numero_intento + nulables. ⚠️ corregida a mano: mismo
-│                           #   defecto del índice GIN, otra vez
+│  └─ versions/          # en orden de aplicación:
+│     ├─ ec6446cc3c52_*.py  # Fase 1: las 8 entidades del cap. 17
+│     ├─ 8eb6f0399fee_*.py  # estudiante.genero a VARCHAR(50)
+│     ├─ 8010505ef66e_*.py  # Fase 3: huella_generacion + modelo_llm en la cápsula
+│     ├─ 5e11a9cf4a0b_*.py  # tabla interaccion_quiz
+│     ├─ 2fbc7391c0a3_*.py  # numero_intento + actividades abiertas
+│     ├─ aaf2d3de8b4e_*.py  # tabla aceptacion_legal (02-oct, §5 tervicies)
+│     ├─ c3a91f5e7d20_*.py  # estudiante.voz_genero / voz_modo (05-oct, §5 undetricies)
+│     └─ d7e2b9c41a58_*.py  # corrección en el servidor y detalle de cuestionarios (17-oct)
+│                           # ⚠️ en todas, autogenerate quiere borrar el índice GIN
+│                           #   ix_fragmento_contenido_fts: se quita a mano (PENDIENTES.md)
 ├─ src/studify/
-│  ├─ main.py            # app FastAPI + endpoint /health
+│  ├─ main.py            # app FastAPI, portada en "/" y /health
 │  ├─ config.py          # Settings (pydantic-settings, lee .env)
 │  ├─ db/
-│  │  ├─ base.py         # DeclarativeBase compartida
-│  │  ├─ session.py      # engine + SessionLocal + get_db() síncronos
-│  │  └─ models.py       # ✅ las 8 entidades del cap. 17
-│  ├─ vark/              # ✅ motor completo
-│  │  ├─ scoring.py      #    16 ítems → puntajes crudos → vector porcentual
-│  │  ├─ weighting.py    #    fórmulas C_* del cap. 11.2 + rangos alcanzables
-│  │  ├─ hierarchy.py    #    canal primario/secundario/multimodalidad (derivado)
-│  │  └─ rules.py        #    tabla 11.1 → configuracion_contenido + directivas de prompt
-│  │  └─ instrumento.py  #    matriz de puntuación: las 64 alternativas → canal
-│  ├─ api/
-│  │  ├─ schemas.py      # ✅ contratos Pydantic del perfilamiento
-│  │  ├─ schemas_knowledge.py  # ✅ contratos de la base de conocimiento (Fase 2)
-│  │  ├─ schemas_capsulas.py   # ✅ contratos de la generación (Fase 3)
-│  │  └─ routers/
-│  │     ├─ diagnostics.py  # ✅ POST /api/diagnosticos, GET /api/diagnosticos/{id}
-│  │     ├─ knowledge.py    # ✅ documentos, fragmentos, curación, catálogo, recuperar
-│  │     └─ capsules.py     # ✅ POST /api/capsulas (+ caché, ?regenerar, historial)
-│  ├─ knowledge/         # ✅ ingesta, curación y etiquetado (Fase 2)
-│  │  ├─ extract.py      #    PDF/PPTX → bloques con página y detección de encabezados
-│  │  ├─ chunker.py      #    bloques → fragmentos recuperables (fronteras duras)
-│  │  ├─ ingest.py       #    persistencia + dedup por SHA-256 + almacén de archivos
-│  │  ├─ curation.py     #    validar / descartar / asignar objetivo / editar texto
-│  │  └─ tagger.py       #    ✅ sugerencia de objetivo/etiqueta por LLM — propone, no decide
-│  │                     #       (sección 5 septendecies, 24-ago-2026)
-│  ├─ rag/               # ✅ recuperación determinista (Fase 2) + prompt (Fase 3)
-│  │  ├─ retriever.py    #    SQL por id_objetivo + FTS español + orden por canal VARK
-│  │  ├─ orchestrator.py #    ✅ ensamblado del prompt maestro + huella de caché
+│  │  ├─ base.py · session.py  # DeclarativeBase; engine + get_db() síncronos
+│  │  └─ models.py       # las 8 entidades del cap. 17 + interaccion_quiz + aceptacion_legal
+│  ├─ vark/
+│  │  ├─ instrumento.py  # matriz de puntuación: las 64 alternativas → canal
+│  │  ├─ scoring.py      # 16 ítems → puntajes crudos → vector porcentual
+│  │  ├─ weighting.py    # fórmulas C_* del cap. 11.2 + rangos alcanzables
+│  │  ├─ hierarchy.py    # canal primario/secundario/multimodalidad (derivado)
+│  │  └─ rules.py        # tabla 11.1 → configuracion_contenido + directivas de prompt
+│  ├─ knowledge/
+│  │  ├─ extract.py      # PDF/PPTX → bloques con página y detección de encabezados
+│  │  ├─ chunker.py      # bloques → fragmentos recuperables (fronteras duras)
+│  │  ├─ ingest.py       # persistencia + dedup por SHA-256 + almacén de archivos
+│  │  ├─ curation.py     # validar / descartar / asignar objetivo / editar texto
+│  │  └─ tagger.py       # sugerencia de objetivo/etiqueta por LLM: propone, no decide (§5 septendecies)
+│  ├─ rag/
+│  │  ├─ retriever.py    # SQL por id_objetivo + FTS español + orden por canal VARK
+│  │  ├─ orchestrator.py # ensamblado del prompt maestro + huella de caché (§5 quintricies)
 │  │  └─ prompts/
-│  │     └─ maestro.py   #    ✅ plantillas + directiva VARK → instrucción estructural
-│  ├─ generation/        # ✅ motor de generación (Fase 3)
-│  │  ├─ schemas.py      #    contrato de la microcápsula: 7 pasos pedagógicos
-│  │  ├─ idioma.py       #    detección de deriva de idioma (regla 6)
-│  │  ├─ validator.py    #    parser tolerante + reglas 2, 5 y 6 + realimentación
-│  │  └─ generator.py    #    cliente LLM (inyectable) + bucle de reparación
-│  └─ web/               # ✅ UI mínima con HTMX + Jinja2 (Fase 4, conectada al motor)
-│     ├─ deps.py         #    entorno Jinja2 + procesador de contexto (`es_docente`)
-│     ├─ sesion.py       #    ✅ cookies firmadas: `id_estudiante` (quién) y `docente` (permiso)
-│     ├─ textos.py       #    ✅ copy de la UI + enunciados de los 16 ítems (verificados 24-ago)
+│  │     ├─ maestro.py   # plantillas + directiva VARK → instrucción estructural
+│  │     └─ visual.py    # prompt del módulo Visual; la app todavía no lo usa (PENDIENTES.md X1)
+│  ├─ generation/
+│  │  ├─ schemas.py      # contrato de la microcápsula: 7 pasos pedagógicos
+│  │  ├─ idioma.py       # detección de deriva de idioma (regla 6)
+│  │  ├─ validator.py    # parser tolerante + reglas 2, 5 y 6 + realimentación
+│  │  └─ generator.py    # cliente LLM (inyectable) + bucle de reparación + ErrorProveedorLLM
+│  ├─ media/
+│  │  ├─ audio.py        # narración: Kokoro, Piper y XTTS detrás de la misma firma
+│  │  ├─ guion.py        # normalización del guion antes de sintetizar
+│  │  └─ image.py · generator.py · memory_manager.py  # Fase 6 de imagen, en pausa y sin uso
+│  ├─ api/
+│  │  ├─ schemas.py · schemas_knowledge.py · schemas_capsulas.py  # contratos Pydantic
+│  │  └─ routers/
+│  │     ├─ diagnostics.py  # POST /api/diagnosticos, GET /api/diagnosticos/{id}
+│  │     ├─ knowledge.py    # documentos, fragmentos, curación, catálogo, recuperar
+│  │     │                  #   (router_docente: exige credencial, §5 unvicies)
+│  │     └─ capsules.py     # POST /api/capsulas (caché, ?regenerar, historial), quiz y corrección
+│  ├─ public/animacionCarga.mp4  # video de carga anterior, ya sin uso (licencia: PENDIENTES.md L7)
+│  └─ web/
+│     ├─ deps.py         # entorno Jinja2 + procesador de contexto (`es_docente`)
+│     ├─ sesion.py       # cookies firmadas: `id_estudiante` (quién) y `docente` (permiso)
+│     ├─ textos.py       # copy de la UI + enunciados de los 16 ítems (verificados 24-ago)
+│     ├─ narracion.py    # qué se narra de una cápsula y en qué archivo queda (visor y supresión)
+│     ├─ legal.py · consentimiento.py · exportacion.py  # versión legal, aceptación, /mis-datos
 │     ├─ routers/
-│     │  ├─ auth.py      #    ✅ login/logout del docente + guardián de /teacher/* (26-ago)
-│     │  ├─ student.py   #    ✅ cuestionario, perfil, catálogo, visor, quiz e intentos (Fase 5)
-│     │  └─ teacher.py   #    ✅ curación + analíticas + simulador VARK (Fase 5, sección 5 decies)
-│     ├─ templates/
-│     │  ├─ student/     #    _capsula.html (partial compartido con el simulador), _feedback, …
-│     │  └─ teacher/     #    login.html, _bandeja, _fila, analytics, simulator, _comparacion
-│     └─ static/css/
+│     │  ├─ auth.py      # login/logout del docente + guardián de /teacher/*
+│     │  ├─ student.py   # cuestionario, perfil, catálogo, visor, narración, quiz e intentos
+│     │  ├─ teacher.py   # curación, objetivos, analíticas y simulador
+│     │  └─ legal.py     # Términos, Privacidad, /aceptar, /mis-datos y su supresión
+│     ├─ templates/      # base, landing, components/, student/, teacher/, legal/
+│     └─ static/         # app.css, app.js, HTMX local, fuentes, íconos, styleguide (DESIGN_SYSTEM.md)
 ├─ tests/
-│  ├─ conftest.py        # ✅ fixtures compartidas (necesita_bd, db, almacen_temporal)
-│  ├─ test_health.py     # smoke test de Semana 0
-│  ├─ test_vark.py       # ✅ 44 tests del motor VARK, contrastados contra el informe
-│  ├─ test_api_diagnosticos.py   # ✅ 15 tests del endpoint (+ limpieza autouse, 26-ago)
-│  ├─ test_knowledge_ingesta.py  # ✅ 22 tests de extracción y chunking (sin BD)
-│  ├─ test_knowledge_persistencia.py  # ✅ 6 tests de ingesta contra Postgres
-│  ├─ test_curacion_retriever.py      # ✅ 17 tests de curación y determinismo
-│  ├─ test_tagger.py                  # ✅ 12 tests del etiquetado por LLM (propone, no decide)
-│  ├─ material.py                # ✅ material de prueba compartido de la Fase 3 (no es un test)
-│  ├─ test_generacion_contrato.py     # ✅ 56 tests del contrato y las 6 reglas (sin BD ni LLM)
-│  ├─ test_prompt_maestro.py          # ✅ 25 tests del prompt y la huella (sin BD ni LLM)
-│  ├─ test_generador.py               # ✅ 15 tests del bucle de reparación (LLM falso)
-│  ├─ test_api_capsulas.py            # ✅ 14 tests del endpoint (Postgres, LLM falso)
-│  ├─ test_web_estudiante.py          # ✅ 24 tests del flujo web del estudiante (Fase 4)
-│  ├─ test_web_auth.py                # ✅ 19 tests del login del docente y el guardián (26-ago)
-│  ├─ test_web_docente.py             # ✅ 18 tests del panel de curación, incl. etiquetado (Fase 4)
-│  ├─ test_web_simulador.py           # ✅ 13 tests del simulador VARK, incl. comparación (Fase 5)
-│  ├─ test_interaccion_quiz.py        # ✅ 12 tests de intentos numerados y ownership (Fase 5)
-│  ├─ test_cobertura_curricular.py    # ✅ 12 tests de cobertura por canal (Fase 5)
-│  └─ test_textos_vark.py             # ✅ 2 tests: enunciados vs. CSV original (se saltan sin el CSV)
+│  ├─ conftest.py        # fixtures compartidas (necesita_bd, db, almacen_temporal)
+│  ├─ material.py        # material de prueba compartido de la Fase 3 (no es un test)
+│  ├─ test_vark.py · test_perfiles_vark.py · test_textos_vark.py  # motor VARK e instrumento
+│  ├─ test_api_diagnosticos.py                                    # endpoint del diagnóstico
+│  ├─ test_knowledge_ingesta.py · test_knowledge_persistencia.py  # extracción, chunking, ingesta
+│  ├─ test_curacion_retriever.py · test_tagger.py                 # curación, retriever, etiquetado
+│  ├─ test_generacion_contrato.py · test_prompt_maestro.py        # contrato, reglas, prompt, huella
+│  ├─ test_generador.py · test_proveedor_llm.py                   # bucle de reparación, caídas del proveedor
+│  ├─ test_api_capsulas.py · test_interaccion_quiz.py             # cápsulas, caché, quiz y corrección
+│  ├─ test_cobertura_curricular.py                                # cobertura por canal del panel
+│  ├─ test_audio.py · test_narracion.py · test_preferencia_voz.py # narración y voz
+│  ├─ test_web_estudiante.py · test_web_docente.py · test_web_simulador.py · test_web_auth.py
+│  ├─ test_web_legal.py · test_web_codigo_fuente.py               # marco legal y enlace AGPL
+│  ├─ test_health.py
+│  ├─ test_visual.py · test_voz.py   # ⚠️ cargan SDXL y XTTS al importarse: se ignoran (H8)
+│  └─ referencia.wav · prueba_*.wav  # voz de referencia de XTTS y audios de prueba (licencia: L7)
 ├─ scripts/
-│  ├─ import_vark_csv.py   # ✅ carga los 43 diagnósticos reales (--dry-run, --reset)
-│  ├─ cargar_objetivos.py  # ✅ carga el catálogo curricular desde CSV (--dry-run)
-│  ├─ eval_runner.py       # ✅ batería de evaluación técnica / bake-off (Fase 3)
-│  └─ reset_db.py          # ⚠️ drop_all sin confirmación — ver sección 6, punto 12
-├─ data/                  # vacío (.gitkeep), ignorado por git salvo el .gitkeep
-└─ docs/
-   ├─ seminario_titulo.md # el informe fuente (subido el 06-ago-2026, antes no estaba en el repo)
-   ├─ PLAN_DESARROLLO.md  # plan completo de 10 semanas, decisiones pendientes, riesgos
-   └─ AVANCE.md           # este archivo
+│  ├─ import_vark_csv.py       # carga los 43 diagnósticos reales (--dry-run, --reset ⚠️ R11)
+│  ├─ cargar_objetivos.py      # catálogo curricular desde CSV (--dry-run)
+│  ├─ descargar_voces.py       # modelos de Kokoro y Piper, fijados por SHA-256
+│  ├─ eval_runner.py           # batería de evaluación técnica / bake-off
+│  ├─ probar_perfiles_vark.py  # batería VARK de punta a punta (PRUEBAS_VARK.md)
+│  ├─ h1h3/                    # rondas de H1 + H3: variantes, parches y métricas
+│  ├─ ingestar_documentos_prueba.py · validar_fragmentos_prueba.py · convertir_md_a_pdf.py
+│  ├─ probar_generacion_capsulas.py · probar_audio_1fn.py  # pruebas manuales contra el modelo
+│  ├─ reset_db.py              # ⚠️ drop_all sin confirmación (PENDIENTES.md O3)
+│  └─ check_taesd3.py · scratch.py  # sin uso (PENDIENTES.md, «Calidad»)
+├─ data/                 # ignorado por git salvo .gitkeep: documentos, voces, media, CSV, resultados
+└─ docs/                 # ver docs/README.md
 ```
-
-**Nota importante:** ya no queda ningún paquete vacío. `db/`, `vark/`, `knowledge/`, `rag/`,
-`generation/` y `api/` tienen lógica real y tests. Adicionalmente, el material curricular real y la credencial han sido incorporados al entorno (el Bake-off concluyó exitosamente con DeepSeek).
 
 ---
 
@@ -2637,24 +2641,29 @@ Estas no bloquean código, pero quedaron identificadas para el informe final (ve
 ```powershell
 # Máquina 1: e:\code\Studify\Studify
 # Máquina 2: C:\Users\vleon\Documents\proyectos\SpotCheck\Studify
-cd <la ruta que corresponda>
+# Máquina de la revisión del 16-oct: D:\PUCV\Projecto de titulo\Studify
+cd <la ruta que corresponda>  # siempre la raíz: el .env y data/ se leen relativos a ella (R12)
 .\.venv\Scripts\Activate.ps1
 
 alembic upgrade head          # deja el esquema al día antes de tocar nada
 uvicorn studify.main:app --reload --app-dir src
-# → http://127.0.0.1:8000/health  y  http://127.0.0.1:8000/docs
+# → http://127.0.0.1:8000/ (portada), /health y /docs
 # → el panel del docente: botón «Soy docente» → /teacher/login → admin / admin123
 #   (valor de fábrica en config.py si el .env no fija TEACHER_USERNAME/TEACHER_PASSWORD;
-#   cambiarlas antes de exponer el sistema fuera del equipo — ver pendiente n.º 7).
+#   cambiarlas antes de exponer el sistema fuera del equipo — PENDIENTES.md O1).
 
-pytest
+# Tests: LLM_API_KEY vacía para no gastar; test_visual.py y test_voz.py se ignoran (H8).
+# Las dos formas de correrla (sin base y con Postgres) están en PENDIENTES.md.
+$env:LLM_API_KEY=""
+.\.venv\Scripts\python -m pytest -q --ignore=tests/test_visual.py --ignore=tests/test_voz.py
 ruff check .
 ```
 
 ✅ **Verificado end-to-end contra el servidor real** (no solo `TestClient`) el 26-ago-2026, en
 la máquina 1, con el `.env` tal como queda tras las secciones 5 vicies/undevicies: `uvicorn`
 arriba, `GET /health` con `database.reachable: true` y `llm.api_key_configured: true`,
-`GET /` redirige a `/student/vark`, `GET /teacher/curation` sin sesión responde 303 al login,
+`GET /` redirigía entonces a `/student/vark` (desde el rediseño del 02-oct es la portada),
+`GET /teacher/curation` sin sesión responde 303 al login,
 `POST /teacher/login` con `admin`/`admin123` abre sesión y `GET /teacher/curation` y
 `/teacher/analytics` responden 200, y `GET /api/catalogo` devuelve los 5 objetivos reales de
 "Diseño de UX". Nada de esto quedó pendiente de "debería funcionar": se probó con curl contra
@@ -2685,5 +2694,6 @@ base"). Ojo con dos cosas que costaron tiempo en la máquina 2:
   CREATE DATABASE studify OWNER studify;
   ```
 
-**Orden de lectura recomendado para contexto:** este archivo → `docs/PLAN_DESARROLLO.md` →
-`seminario_titulo.md` (el informe fuente) → código en `src/studify/`.
+**Orden de lectura recomendado para contexto:** el que da [`README.md`](README.md) de esta
+carpeta: el inicio de este archivo hasta el §1, después [`PENDIENTES.md`](PENDIENTES.md), y de
+ahí las secciones de los demás documentos que correspondan a lo que se va a tocar.
