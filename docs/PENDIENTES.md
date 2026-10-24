@@ -55,7 +55,7 @@ de cada uno está más abajo.
 
 1. **Sesión en computadores compartidos:** fijar `SESION_ESTUDIANTE_HORAS` según
    dónde se use (1–4 en un laboratorio) y aplicar la migración `e5c1a7b39d42` en
-   cada máquina (O2). R2 ya está corregido (AVANCE §5 sextricies).
+   cada máquina (O2). R2 ya está corregido (`75c14fa`, AVANCE §5 sextricies).
 2. **Credenciales de fábrica** (`admin`/`admin123`) y `SESSION_SECRET` de la máquina 2 (O1).
 3. **Repetir la batería VARK con `deepseek-flash`**, incluido el perfil V (G1).
 4. **Desplegar ya los cambios del 17-oct**: el cambio de la huella del caché
@@ -69,8 +69,8 @@ de cada uno está más abajo.
 ## R. Revisión de código del 16-oct-2026
 
 Corregidos el 17-oct: puntos 5 (`b7f769d`), 1 (`a3883ef`), 4 (`6e081fe`),
-6 (`ce30e6d`) y 3 (`a922240`). El 24-oct, el punto 2 (R2, dos estudiantes en el
-mismo computador; AVANCE §5 sextricies). El detalle de qué cambió está en la
+6 (`ce30e6d`) y 3 (`a922240`). El 24-oct, el punto 2 (`75c14fa`: R2, dos estudiantes en
+el mismo computador; AVANCE §5 sextricies). El detalle de qué cambió está en la
 descripción de cada commit.
 
 ### Prioridad media

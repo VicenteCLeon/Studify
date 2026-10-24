@@ -2406,6 +2406,8 @@ nombre del otro y, sin responder nada, podía ver el perfil y las cápsulas ajen
 corregir o eliminar sus datos en `/mis-datos`. No había forma de cerrar la sesión: la cookie
 duraba 30 días. Las pruebas de usuario del 25-oct son en un PC compartido.
 
+**Commit:** `75c14fa`.
+
 Antes de implementar se le mostró el flujo al autor, que lo aprobó con cambios (los incorporados
 abajo). Reproducido antes del arreglo: `tests/test_web_no_soy_yo.py`, 24 tests en rojo; la
 segunda persona quedaba con el mismo id que la primera.
