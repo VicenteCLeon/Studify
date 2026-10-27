@@ -39,12 +39,13 @@
   o avisar; meterlo en el mismo commit solo si sin eso el punto no queda
   correcto, y decirlo.
 
-**Estado de la suite al 17-oct-2026** (los fallos son todos previos):
+**Estado de la suite al 27-oct-2026**, antes y después de O1 (los fallos son
+todos previos; O1 suma los 16 tests de `test_config_seguridad.py`):
 
-| Forma | Resultado | Fallos |
-|---|---|---|
-| Puerto cerrado | 384 pasan, 196 omitidos, 4 fallan | 4 de `test_web_auth.py` sin `@necesita_bd` (R10) |
-| Con Postgres | 580 pasan, 2 omitidos, 2 fallan | 2 de `test_interaccion_quiz.py` que exigen la tabla vacía (R10) |
+| Forma | Antes de O1 (`f5f0490`) | Después de O1 | Fallos |
+|---|---|---|---|
+| Puerto cerrado | 381 pasan, 224 omitidos, 4 fallan | 397 pasan, 224 omitidos, 4 fallan | Los mismos 4 de `test_web_auth.py` sin `@necesita_bd` (R10) |
+| Con Postgres | 607 pasan, 2 omitidos, 0 fallan | 623 pasan, 2 omitidos, 0 fallan | Ninguno: los 2 de `test_interaccion_quiz.py` pasan porque la tabla estaba vacía (R10) |
 
 ---
 
@@ -75,6 +76,21 @@ Corregidos el 17-oct: puntos 5 (`b7f769d`), 1 (`a3883ef`), 4 (`6e081fe`),
 el mismo computador; AVANCE §5 sextricies). El detalle de qué cambió está en la
 descripción de cada commit.
 
+### Prioridad alta
+
+- **H11. La suite se cuelga si Postgres no responde.** `tests/conftest.py::hay_base_de_datos()`
+  se conecta sin `connect_timeout`, así que cuando no hay base los tests no se
+  saltan: la corrida se queda esperando. **Causó un cuelgue real el 27-oct-2026**:
+  la suite «con Postgres» (sin `DATABASE_URL`, a `localhost:5432`) se lanzó con
+  Docker apagado y pasó más de 10 minutos sin salida ni avance (unos 6 s de
+  CPU) hasta que hubo que matar el proceso. La forma «puerto cerrado» no se
+  cuelga porque su `DATABASE_URL` ya trae `connect_timeout=2`. Arreglo:
+  pasar `connect_args={"connect_timeout": …}` al conectar en
+  `hay_base_de_datos()` (o en `db/session.py`). Mientras tanto, comprobar que
+  Postgres responde antes de correr la suite con base.
+  Origen: AVANCE §5 duodetricies («H11: `test_api_diagnosticos` se cuelga sin
+  Postgres») y R10.
+
 ### Prioridad media
 
 - **R7. No hay cómo retirar material ya usado.** El 409 de
@@ -94,9 +110,13 @@ descripción de cada commit.
   - `tests/test_api_diagnosticos.py::limpiar_lo_que_cree_el_test` borra todo
     estudiante con `id > max(antes)`: un registro real hecho mientras corre
     `pytest` se perdería.
-  - 4 tests de `test_web_auth.py` sin `@necesita_bd`; 2 de
-    `test_interaccion_quiz.py` exigen la tabla entera vacía.
-  - `hay_base_de_datos()` sin `connect_timeout` (es H11).
+  - 4 tests de `test_web_auth.py` sin `@necesita_bd`: **solo fallan sin
+    base** (en la forma «puerto cerrado»); con Postgres levantado pasan.
+  - 2 de `test_interaccion_quiz.py` exigen la tabla entera vacía: **su
+    resultado depende del estado de la base**. Pasan con la tabla vacía (así
+    estaba el 27-oct) y fallan en cuanto hay respuestas de quiz, por ejemplo
+    después de usar la app.
+  - `hay_base_de_datos()` sin `connect_timeout`: es H11, ahora en prioridad alta.
   - Propuesta: base de pruebas separada (`studify_test`) o transacción con
     rollback por test.
 - **R11. `scripts/import_vark_csv.py --reset`** hace `db.query(Estudiante).delete()`:
@@ -327,4 +347,4 @@ está en [`CORRECCIONES_INFORME.md`](CORRECCIONES_INFORME.md).
 
 ---
 
-**Orden sugerido:** O1 → R10 → G1 → R7, R8, R9 → E1–E4 → el resto.
+**Orden sugerido:** O1 → H11 → R10 → G1 → R7, R8, R9 → E1–E4 → el resto.
