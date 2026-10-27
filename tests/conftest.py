@@ -6,19 +6,25 @@ los que sí se **saltan** —no fallan— cuando Postgres no está levantado. As
 la base, y una suite roja significa siempre un problema real.
 """
 
+import os
 from collections.abc import Iterator
 
-import pytest
-from fastapi.testclient import TestClient
-from sqlalchemy import text
-from sqlalchemy.orm import Session
+# Antes de importar `studify`: la suite corre en modo desarrollo aunque el `.env`
+# local diga otra cosa, para que importar `studify.main` no dependa de que esa
+# máquina tenga un SESSION_SECRET fuerte (O1). Los tests de
+# `test_config_seguridad.py` construyen sus propios `Settings`.
+os.environ["APP_ENV"] = "dev"
 
-from studify.db.session import SessionLocal, engine
+import pytest  # noqa: E402
+from fastapi.testclient import TestClient  # noqa: E402
+from sqlalchemy import text  # noqa: E402
+from sqlalchemy.orm import Session  # noqa: E402
+
+from studify.db.session import SessionLocal, engine  # noqa: E402
 
 # Credenciales del panel del docente durante los tests. No se leen del `.env` a
-# propósito: la suite tiene que dar el mismo resultado en una máquina que aún no
-# tocó `TEACHER_USERNAME`/`TEACHER_PASSWORD` (quedan en admin/admin123) y en una
-# que sí, con cualquier valor.
+# propósito: la suite tiene que dar el mismo resultado en una máquina sin
+# `TEACHER_PASSWORD` (panel cerrado) y en una que la fijó, con cualquier valor.
 USUARIO_DOCENTE = "usuario-docente-de-prueba"
 CLAVE_DOCENTE = "clave-docente-de-prueba"
 

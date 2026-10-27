@@ -12,13 +12,16 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from studify.api.routers import capsules, diagnostics, knowledge
-from studify.config import get_settings
+from studify.config import get_settings, verificar_configuracion
 from studify.db.session import engine, get_db
 from studify.web import sesion
 from studify.web.deps import templates
 from studify.web.routers import auth, legal, student, teacher
 
 settings = get_settings()
+# Antes de montar nada: fuera de `APP_ENV=dev`, sin un SESSION_SECRET fuerte o
+# con una clave de docente débil la app no arranca (O1).
+verificar_configuracion(settings)
 
 app = FastAPI(
     title="Studify",

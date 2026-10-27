@@ -66,7 +66,9 @@ DURACION_DOCENTE_SEGUNDOS = 60 * 60 * 12
 
 # Secreto de respaldo cuando `SESSION_SECRET` no está en el `.env`. Es aleatorio
 # por proceso a propósito: un valor fijo escrito en el código sería un secreto
-# público, y firmar con un secreto público es lo mismo que no firmar.
+# público, y firmar con un secreto público es lo mismo que no firmar. Solo llega
+# a usarse con `APP_ENV=dev`: fuera de desarrollo `config.verificar_configuracion`
+# no deja arrancar sin secreto.
 _SECRETO_EFIMERO = secrets.token_bytes(32)
 
 
@@ -217,12 +219,11 @@ def borrar_origen(response: Response) -> None:
 
 
 def credenciales_docente_configuradas() -> bool:
-    """Si `TEACHER_PASSWORD` quedó vacía a propósito, el panel no abre para nadie.
+    """Sin `TEACHER_PASSWORD` (no fijada o vacía) el panel no abre para nadie.
 
     Solo mira la clave: `teacher_username` tiene un valor por defecto que nunca
     queda vacío por accidente (`""` en un `.env` sigue siendo un usuario, aunque
-    sea uno raro), así que la clave es la única señal confiable de "esto se
-    desactivó a propósito".
+    sea uno raro). La clave no tiene valor por defecto desde O1.
     """
     return bool(get_settings().teacher_password)
 

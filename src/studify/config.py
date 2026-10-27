@@ -1,10 +1,13 @@
 """Configuración central leída desde variables de entorno / archivo .env."""
 
+import logging
 from functools import lru_cache
 from typing import Literal
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+logger = logging.getLogger(__name__)
 
 
 class Settings(BaseSettings):
@@ -14,14 +17,17 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    app_env: str = "dev"
+    # `dev` es el único modo desarrollo y tiene que pedirse explícitamente: sin
+    # `APP_ENV` la app se trata como producción y `verificar_configuracion` exige
+    # un `SESSION_SECRET` fuerte (O1, 27-oct-2026).
+    app_env: str = "prod"
 
     database_url: str = "postgresql+psycopg://studify:studify@localhost:5432/studify"
 
-    # Clave con la que se firma la cookie de sesión de la UI (Fase 4). Si queda
-    # vacía, `web/sesion.py` genera una efímera al arrancar: la app funciona
-    # igual, pero las sesiones no sobreviven a un reinicio (ni a cada recarga de
-    # `uvicorn --reload`). Fijarla en el `.env` es lo que hace cómoda la demo.
+    # Clave con la que se firma la cookie de sesión de la UI (Fase 4). Fuera de
+    # `APP_ENV=dev` es obligatoria (32 caracteres o más). En desarrollo, si
+    # queda vacía, `web/sesion.py` genera una efímera al arrancar: la app
+    # funciona igual, pero las sesiones no sobreviven a un reinicio.
     session_secret: str = ""
 
     # Cuántas horas vale la sesión del estudiante desde que responde el
@@ -40,20 +46,14 @@ class Settings(BaseSettings):
     # panel tiene que poder abrirse aunque Postgres esté caído, que es
     # justamente cuando más falta hace poder entrar a revisar algo.
     #
-    # ⚠️ **`admin` / `admin123` son credenciales de demo, no un secreto.**
-    # Quedan como valor por defecto para que el panel funcione nada más clonar
-    # el repo, sin depender de un `.env` a medio completar. Cambiarlas antes de
-    # exponer el sistema a la cohorte (fijando `TEACHER_USERNAME` y
-    # `TEACHER_PASSWORD` en el `.env`) es responsabilidad de quien lo despliegue
-    # — acá no se puede distinguir "sigue en admin123 porque nadie lo cambió" de
-    # "developer lo dejó así a propósito para la demo local".
-    #
-    # **Si `TEACHER_PASSWORD` se deja vacía explícitamente, el panel se cierra
-    # por completo** (no cae de vuelta al valor por defecto). Es la puerta de la
-    # barrera de curación del cap. 12/13: para desactivarla del todo hay que
-    # hacerlo a propósito. Ver `web/routers/auth.py`.
+    # **La clave no tiene valor por defecto** (O1, 27-oct-2026; antes era
+    # `admin123`, un secreto tan público como no tener clave). Sin
+    # `TEACHER_PASSWORD` el panel queda cerrado para todos —fallar cerrado— y
+    # la pantalla de login dice qué variable fijar. Fuera de `APP_ENV=dev`,
+    # una clave débil impide arrancar (`verificar_configuracion`). Es la
+    # puerta de la barrera de curación del cap. 12/13. Ver `web/routers/auth.py`.
     teacher_username: str = "admin"
-    teacher_password: str = "admin123"
+    teacher_password: str = ""
 
     # Proveedor LLM con API compatible con OpenAI (DeepSeek / Qwen / GLM).
     # El modelo se decide con datos en el bake-off de la Fase 3.
@@ -131,3 +131,79 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
+
+
+# --- Verificación al arrancar (O1) --------------------------------------------
+
+MIN_LARGO_SECRETO = 32
+MIN_LARGO_CLAVE_DOCENTE = 12
+
+# Valores que circulan en ejemplos y tutoriales. Los cortos ya caen por largo;
+# esta lista atrapa los placeholders largos que alguien copia tal cual.
+SECRETOS_DE_EJEMPLO = {
+    "changeme",
+    "change-me",
+    "secret",
+    "your-secret-key",
+    "your-secret-key-here",
+    "replace-me-with-a-random-secret",
+    "cambia-este-secreto",
+    "cambiar-por-un-secreto-aleatorio",
+}
+CLAVES_DEBILES = {"admin", "admin123", "password", "contraseña", "studify", "docente", "123456"}
+
+
+class ConfiguracionInsegura(RuntimeError):
+    """La configuración no sirve fuera de desarrollo. El mensaje nunca incluye los valores."""
+
+
+def es_desarrollo(settings: Settings) -> bool:
+    return settings.app_env == "dev"
+
+
+def problemas_de_seguridad(settings: Settings) -> list[str]:
+    """Qué impide arrancar en producción. Describe cada problema sin citar el valor."""
+    problemas = []
+
+    secreto = settings.session_secret.strip()
+    if not secreto:
+        problemas.append("SESSION_SECRET no está fijada")
+    elif secreto.lower() in SECRETOS_DE_EJEMPLO:
+        problemas.append("SESSION_SECRET es un valor de ejemplo conocido")
+    elif len(secreto) < MIN_LARGO_SECRETO:
+        problemas.append(f"SESSION_SECRET tiene menos de {MIN_LARGO_SECRETO} caracteres")
+
+    # Sin clave el panel queda cerrado: es seguro, así que no impide arrancar.
+    clave = settings.teacher_password
+    if clave and (clave.lower() in CLAVES_DEBILES or len(clave) < MIN_LARGO_CLAVE_DOCENTE):
+        problemas.append(
+            "TEACHER_PASSWORD es débil (valor conocido o menos de "
+            f"{MIN_LARGO_CLAVE_DOCENTE} caracteres)"
+        )
+    return problemas
+
+
+def verificar_configuracion(settings: Settings) -> None:
+    """Se niega a arrancar fuera de `APP_ENV=dev` con secretos débiles.
+
+    En desarrollo solo avisa: el secreto efímero de `web/sesion.py` y una clave
+    de demo son aceptables en la máquina del autor.
+    """
+    problemas = problemas_de_seguridad(settings)
+    if not problemas:
+        return
+    if es_desarrollo(settings):
+        for problema in problemas:
+            logger.warning("APP_ENV=dev: %s. Aceptable solo en desarrollo.", problema)
+        if not settings.session_secret:
+            logger.warning(
+                "APP_ENV=dev: se usa un SESSION_SECRET efímero; las sesiones se "
+                "pierden en cada reinicio."
+            )
+        return
+    raise ConfiguracionInsegura(
+        "Studify no arranca con esta configuración (APP_ENV="
+        f"{settings.app_env!r}): " + "; ".join(problemas) + ". "
+        'Genera un secreto con: python -c "import secrets; print(secrets.token_urlsafe(48))" '
+        "o usa APP_ENV=dev para desarrollo local."
+    )

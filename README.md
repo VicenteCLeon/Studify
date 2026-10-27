@@ -114,7 +114,9 @@ python scripts/descargar_voces.py   # modelos de voz (~410 MB) a data/voces
 # 3. Configuración
 Copy-Item .env.example .env
 #    → editar .env: LLM_API_KEY, SESSION_SECRET y la clave del docente
-#      (TEACHER_USERNAME/TEACHER_PASSWORD; sin fijarlas quedan admin/admin123)
+#      (TEACHER_PASSWORD; sin ella el panel queda cerrado). Fuera de
+#      APP_ENV=dev la app no arranca sin un SESSION_SECRET de 32+ caracteres:
+#      python -c "import secrets; print(secrets.token_urlsafe(48))"
 
 # 4. Base de datos
 docker compose up -d          # si eligieron Docker

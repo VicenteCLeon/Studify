@@ -19,7 +19,7 @@ import pytest
 from fastapi.routing import APIRoute
 from fastapi.testclient import TestClient
 
-from studify.config import get_settings
+from studify.config import Settings, get_settings
 from studify.db.models import Estudiante
 from studify.main import app
 from studify.web import sesion
@@ -59,14 +59,12 @@ def sin_clave(monkeypatch):
 def credenciales_de_fabrica(monkeypatch):
     """Fuerza los valores por defecto del código, sin depender del `.env` local.
 
-    Los defaults de `config.Settings` ya son admin/admin123, así que en teoría
-    ni haría falta esta fixture — pero un `.env` real (el de esta máquina, por
-    ejemplo) puede traer otro valor, y este test verifica el comportamiento de
-    fábrica, no el de una máquina en particular.
+    Un `.env` real (el de esta máquina, por ejemplo) puede traer otro valor, y
+    este test verifica el comportamiento de fábrica, no el de una máquina.
     """
     settings = get_settings()
-    monkeypatch.setattr(settings, "teacher_username", "admin")
-    monkeypatch.setattr(settings, "teacher_password", "admin123")
+    for campo in ("teacher_username", "teacher_password"):
+        monkeypatch.setattr(settings, campo, Settings.model_fields[campo].default)
 
 
 def _login(
@@ -360,18 +358,19 @@ def test_el_login_no_rebota_sobre_si_mismo(http, clave_docente):
     assert respuesta.headers["location"] == "/teacher/curation"
 
 
-def test_las_credenciales_de_fabrica_son_admin_admin123(http, credenciales_de_fabrica):
-    """El panel tiene que ser usable nada más clonar el repo, sin tocar el `.env`.
+def test_admin123_ya_no_abre_el_panel_de_fabrica(http, credenciales_de_fabrica):
+    """O1: sin `.env`, `admin`/`admin123` no entra; el panel queda cerrado y lo dice.
 
-    Son credenciales de demo, no un secreto — el propio `config.py` lo dice —
-    pero mientras sigan siendo el valor por defecto documentado (`.env.example`,
-    `AVANCE.md`), un cambio accidental acá dejaría a cualquiera que las siga
-    fuera del panel sin ningún aviso.
+    Hasta el 27-oct-2026 era la credencial de fábrica, tan pública como no
+    tener clave.
     """
+    assert Settings.model_fields["teacher_password"].default == ""
+
     respuesta = _login(http, usuario="admin", clave="admin123")
 
-    assert respuesta.status_code == 303
-    assert sesion.COOKIE_DOCENTE in respuesta.cookies
+    assert respuesta.status_code == 503
+    assert sesion.COOKIE_DOCENTE not in respuesta.cookies
+    assert "TEACHER_PASSWORD" in respuesta.text
 
 
 # --- Sin clave configurada ----------------------------------------------------

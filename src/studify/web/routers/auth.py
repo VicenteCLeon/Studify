@@ -277,8 +277,8 @@ def post_login(
     destino = destino_seguro(next)
 
     if not sesion.credenciales_docente_configuradas():
-        # No es un error del docente: es `TEACHER_PASSWORD` puesta vacía a
-        # propósito. La pantalla lo explica con el nombre exacto de la variable
+        # No es un error del docente: es `TEACHER_PASSWORD` sin fijar o puesta
+        # vacía. La pantalla lo explica con el nombre exacto de la variable
         # en vez de decir "credenciales incorrectas", que mandaría a buscar el
         # problema donde no está.
         return _pantalla_login(

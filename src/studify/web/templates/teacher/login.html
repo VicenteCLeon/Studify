@@ -18,7 +18,7 @@
 
         {% if not clave_configurada %}
         {% call ui.alert("error", "El panel está cerrado en esta instalación.") %}
-        <code>TEACHER_PASSWORD</code> quedó vacía en el archivo <code>.env</code>.
+        <code>TEACHER_PASSWORD</code> no está fijada (o quedó vacía) en el archivo <code>.env</code>.
         Fíjala y reinicia el servidor: <code>TEACHER_PASSWORD=la-clave-que-elijas</code>
         {% endcall %}
         {% else %}

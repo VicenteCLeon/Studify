@@ -10,7 +10,7 @@
 > `AVANCE.md` con su commit. Las listas de origen quedan como registro de su
 > fecha y no se vuelven a actualizar.
 >
-> Última revisión: 24-oct-2026. Las ubicaciones de código van por función; los
+> Última revisión: 27-oct-2026. Las ubicaciones de código van por función; los
 > números de línea son aproximados.
 
 ---
@@ -56,7 +56,9 @@ de cada uno está más abajo.
 1. **Sesión en computadores compartidos:** fijar `SESION_ESTUDIANTE_HORAS` según
    dónde se use (1–4 en un laboratorio) y aplicar la migración `e5c1a7b39d42` en
    cada máquina (O2). R2 ya está corregido (`75c14fa`, AVANCE §5 sextricies).
-2. **Credenciales de fábrica** (`admin`/`admin123`) y `SESSION_SECRET` de la máquina 2 (O1).
+2. **Credenciales en la máquina 2** (O1): la parte de código está hecha el
+   27-oct (sin `admin123` de fábrica; fuera de `APP_ENV=dev` no arranca sin un
+   `SESSION_SECRET` fuerte). Falta fijar los valores a mano.
 3. **Repetir la batería VARK con `deepseek-flash`**, incluido el perfil V (G1).
 4. **Desplegar ya los cambios del 17-oct**: el cambio de la huella del caché
    (`ce30e6d`) regenera cada cápsula una vez, y no conviene que eso pase a mitad
@@ -102,8 +104,9 @@ descripción de cada commit.
 - **R12. Rutas relativas al directorio de trabajo**: `config.py` lee `.env`
   con `env_file=".env"`; `documentos_dir`, `media_dir` y `tts_modelos_dir` son
   `data/...`; XTTS busca `tests/referencia.wav`. Arrancada desde otra carpeta,
-  la app queda sin `.env`: clave de docente `admin123`, sin LLM, sesiones
-  efímeras. Los audios ya se resolvieron (`narracion.DIRECTORIO_AUDIO`).
+  la app queda sin `.env`: desde O1 no arranca (sin `SESSION_SECRET` y sin
+  `APP_ENV=dev`), y con las variables en el entorno arrancaría sin LLM. Los
+  audios ya se resolvieron (`narracion.DIRECTORIO_AUDIO`).
 - **R13. Promedio VARK de la cohorte** (`teacher.py::get_analytics`): promedia
   todos los diagnósticos, con reintentos y los 43 del CSV mezclados con el
   piloto. Debería tomar el último por estudiante. Desde R2 existe
@@ -243,9 +246,21 @@ Origen: `AVANCE.md` §5 tervicies «Riesgos legales que siguen abiertos» y
 
 ## O. Operación y entorno
 
-- **O1. Credenciales.** Cambiar `TEACHER_USERNAME`/`TEACHER_PASSWORD` del valor
-  de fábrica antes de exponer el sistema; fijar `SESSION_SECRET` en la máquina
-  2. Origen: AVANCE §6 n.º 7 y §9.
+- **O1. Credenciales.** Origen: AVANCE §6 n.º 7 y §9.
+  - ✅ **Código (27-oct-2026):** `TEACHER_PASSWORD` ya no tiene valor por
+    defecto (sin ella el panel queda cerrado). `APP_ENV` vale `prod` si no se
+    fija, y fuera de `dev` `config.verificar_configuracion` no deja arrancar sin
+    un `SESSION_SECRET` de 32+ caracteres que no sea de ejemplo, ni con una
+    clave de docente débil (menos de 12 caracteres o conocida, como `admin123`).
+    En `dev` solo avisa. Tests en `tests/test_config_seguridad.py`.
+  - **Falta, a mano en la máquina 2:** fijar en su `.env` un `SESSION_SECRET`
+    propio (`python -c "import secrets; print(secrets.token_urlsafe(48))"`) y
+    una `TEACHER_PASSWORD` nueva de 12+ caracteres, y reiniciar la app.
+    Decidir su `APP_ENV`: fuera de `dev` la cookie lleva `Secure`, así que con
+    `prod` la app hay que servirla por HTTPS o desde `localhost`; por HTTP a la
+    IP de la red el navegador descarta la cookie y nadie puede iniciar sesión.
+  - En la máquina 1 conviene revisar que su `TEACHER_PASSWORD` no siga siendo
+    `admin123` (en `dev` arranca igual, con un aviso).
 - **O2. Dejar cada máquina al día.** Correr `alembic upgrade head` (migración
   `d7e2b9c41a58`, 17-oct-2026; ya aplicada en la de la revisión, `D:\PUCV\…`)
   y fijar `LLM_MODEL=deepseek-flash` en el `.env` (desde el 11-oct). Los datos
