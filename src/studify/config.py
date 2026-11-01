@@ -37,6 +37,12 @@ class Settings(BaseSettings):
     # `web/sesion.py`), así que no se puede extender desde el navegador.
     sesion_estudiante_horas: int = Field(default=720, ge=1)
 
+    # Google OpenID Connect para estudiantes. Opcional: sin credenciales se
+    # conserva el registro local. El secret nunca se envía al navegador.
+    google_client_id: str = ""
+    google_client_secret: str = Field(default="", repr=False)
+    google_redirect_uri: str = "http://127.0.0.1:8000/student/google/callback"
+
     # Usuario y clave del panel del docente (`/teacher/*`). No hay tabla de
     # usuarios: el cap. 9 identifica al estudiante por su diagnóstico y no por
     # una credencial, y el docente es un rol operativo del piloto —una o dos

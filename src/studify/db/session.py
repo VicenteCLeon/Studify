@@ -19,6 +19,8 @@ engine = create_engine(
     _settings.database_url,
     pool_pre_ping=True,
     echo=_settings.app_env == "dev",
+    # Los parámetros incluyen identidad de Google y verificadores OAuth.
+    hide_parameters=True,
 )
 
 SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)

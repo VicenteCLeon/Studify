@@ -135,6 +135,65 @@ buscan relativas al directorio de trabajo.
 **Verificación:** [`http://127.0.0.1:8000/`](http://127.0.0.1:8000/) (portada) ·
 [`/health`](http://127.0.0.1:8000/health) · [`/docs`](http://127.0.0.1:8000/docs)
 
+### Inicio de sesión con Google
+
+El acceso de estudiantes está en `/student/login`. Permite recuperar el mismo
+perfil, cápsulas, intentos y grupo de estudio desde otro navegador. El grupo
+control conserva siempre su perfil general. El acceso docente usa sus
+credenciales del panel.
+
+1. En Google Cloud, configura la pantalla de consentimiento de Google Auth y
+   crea un **cliente OAuth 2.0 de tipo Aplicación web**. Mientras esté en modo
+   de prueba, incorpora las cuentas que probarán la app como usuarios de prueba.
+2. Añade como **URI de redirección autorizada**, exactamente:
+   `http://127.0.0.1:8000/student/google/callback`.
+3. Completa el `.env` local con las credenciales de ese cliente:
+
+   ```dotenv
+   GOOGLE_CLIENT_ID=tu-client-id.apps.googleusercontent.com
+   GOOGLE_CLIENT_SECRET=tu-client-secret
+   GOOGLE_REDIRECT_URI=http://127.0.0.1:8000/student/google/callback
+   ```
+
+4. Instala las dependencias actualizadas (`.\.venv\Scripts\python -m pip install -e .`),
+   aplica `alembic upgrade head` y reinicia la aplicación. Abre
+   `http://127.0.0.1:8000/student/login`.
+
+Si ya tienes un perfil local, abre su sesión y pulsa **Vincular mi perfil a
+Google**, desde el perfil o «Mis datos». Confirma que ese perfil es tuyo antes
+de vincularlo. La cuenta queda asociada al mismo `id_estudiante`; no se unen
+perfiles por coincidencia de correo. Los registros antiguos sin una sesión
+válida no se pueden vincular automáticamente: el CSV original no identifica
+cuentas de Google.
+
+Para una cuenta nueva se completa el cuestionario VARK o el registro del grupo
+control y se registra la aceptación legal. Entrar con Google no acepta los
+documentos automáticamente. Puedes salir de RepasAi y volver a entrar con la
+misma cuenta; salir no desconecta la cuenta Google del navegador.
+
+**«Descubre tu estilo»** permite responder antes de iniciar sesión, pero no guarda
+el perfil VARK sin Google. Al terminar redirige al acceso; al volver se recupera
+el borrador de la misma pestaña. Revisa los datos opcionales, marca nuevamente
+los consentimientos y pulsa «Revisar mis respuestas» y «Guardar mi perfil».
+Una cuenta que ya tiene diagnóstico confirma su actualización; conserva sus
+datos demográficos anteriores. El grupo control no puede guardar VARK.
+Sin JavaScript, inicia sesión antes de responder para conservar las respuestas.
+
+Sin Client ID y Client Secret el acceso Google queda deshabilitado: se puede
+responder VARK, pero no guardarlo. El registro local de control permanece.
+`SESSION_SECRET` debe ser estable para mantener las sesiones
+entre reinicios. Para desarrollo local usa `APP_ENV=dev`; en un despliegue usa
+HTTPS y registra también la URI exacta de ese despliegue. No mezcles `localhost`
+con `127.0.0.1`, porque las cookies pertenecen a hosts distintos.
+
+Se usa OpenID Connect con código de autorización, state de un solo uso, nonce
+y PKCE S256. La biblioteca oficial `google-auth` verifica el ID token. Se
+guardan solo el identificador estable (`sub`), el correo verificado y el nombre;
+se descartan los tokens de Google. Esos datos se incluyen en «Mis datos» y su
+eliminación. La transacción de acceso vence en diez minutos.
+
+Referencia: [OpenID Connect de Google](https://developers.google.com/identity/openid-connect/openid-connect).
+
 ---
 
 ## 🧪 Testing y calidad
@@ -142,6 +201,7 @@ buscan relativas al directorio de trabajo.
 ```powershell
 $env:LLM_API_KEY=""   # para no gastar en el proveedor
 .\.venv\Scripts\python -m pytest -q --ignore=tests/test_visual.py --ignore=tests/test_voz.py
+node tests/test_borrador_vark.cjs  # aislamiento del borrador entre cuentas (sin npm)
 ruff check .
 ```
 

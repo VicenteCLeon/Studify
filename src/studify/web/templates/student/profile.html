@@ -1,58 +1,62 @@
 {% extends "base.html" %}
 {% import "components/ui.html" as ui %}
 
-{% block title %}Tu perfil de aprendizaje · RepasAi{% endblock %}
+{% block title %}{{ "Perfil general" if es_control else "Tu perfil de aprendizaje" }} · RepasAi{% endblock %}
 
 {% block content %}
 {%- set primario = jerarquia.canal_primario -%}
 
 {# Porcentaje por letra, para el radar (los `canales` vienen ordenados de
-   mayor a menor, que es lo que quieren las barras, no el gráfico). #}
+mayor a menor, que es lo que quieren las barras, no el gráfico). #}
 {%- set valor = {} -%}
 {%- for c in canales %}{% set _ = valor.update({c.canal: c.ancho | float}) %}{% endfor -%}
 {%- set texto = {} -%}
 {%- for c in canales %}{% set _ = texto.update({c.canal: c.texto}) %}{% endfor -%}
 
 {# Escala del radar: el eje llega al 50 % salvo que algún canal lo supere.
-   Con escala fija de 100 un perfil equilibrado (≈25 % cada uno) se vería
-   como un punto en el centro. #}
+Con escala fija de 100 un perfil equilibrado (≈25 % cada uno) se vería
+como un punto en el centro. #}
 {%- set maximo = valor.values() | max -%}
-{%- set escala = 50 if maximo <= 50 else (75 if maximo <= 75 else 100) -%}
-{%- set c0, radio = 160, 112 -%}
-{%- set px = {
-    "V": (c0, c0 - radio * valor.V / escala),
-    "A": (c0 + radio * valor.A / escala, c0),
-    "R": (c0, c0 + radio * valor.R / escala),
-    "K": (c0 - radio * valor.K / escala, c0),
-} -%}
-
-<div class="perfil">
+{%- set escala = 50 if maximo <= 50 else (75 if maximo <=75 else 100) -%} {%- set c0, radio=160, 112 -%} {%- set
+    px={ "V" : (c0, c0 - radio * valor.V / escala), "A" : (c0 + radio * valor.A / escala, c0), "R" : (c0, c0 + radio *
+    valor.R / escala), "K" : (c0 - radio * valor.K / escala, c0), } -%} <div class="perfil">
     <header class="perfil-head reveal">
+        {% if es_control %}
+        <span class="eyebrow">{{ ui.icon("users", cls="icon-sm") }}Grupo control</span>
+        <h1>Perfil general</h1>
+        <p class="perfil-bajada">Todas las personas del grupo control reciben esta misma configuración.
+            Es el promedio de la muestra previa; no describe tu estilo individual y no se puede personalizar.</p>
+        {% else %}
         <span class="eyebrow">{{ ui.icon("circle-user", cls="icon-sm") }}Tu perfil de aprendizaje</span>
         <h1>
             Tu canal principal es
             <span class="perfil-canal" data-canal="{{ primario }}">{{ canal_principal }}</span>
         </h1>
         <p class="perfil-bajada">Así es como procesas mejor la información.</p>
+        {% endif %}
         <div class="cluster cluster-sm">
             <span class="badge badge-primary">{{ ui.icon("layers") }}{{ modalidad }}</span>
             <span class="badge badge-neutral">Jerarquía {{ jerarquia.jerarquia }}</span>
-            <span class="badge badge-neutral">{{ ui.icon("hash") }}Diagnóstico #{{ id_diagnostico }}</span>
+            {% if not es_control %}<span class="badge badge-neutral">{{ ui.icon("hash") }}Diagnóstico #{{ id_diagnostico
+                }}</span>{% endif %}
         </div>
     </header>
 
     <div class="perfil-grid">
         <section class="card perfil-radar-card reveal" style="--i: 1" aria-labelledby="radar-titulo">
-            <h2 id="radar-titulo" class="card-title">Tu mezcla VARK</h2>
-            <p class="card-subtitle mb-4">Mientras más se estira hacia un canal, más lo aprovechas.</p>
+            <h2 id="radar-titulo" class="card-title">{{ "Mezcla VARK de referencia" if es_control else "Tu mezcla VARK"
+                }}</h2>
+            <p class="card-subtitle mb-4">{{ "Promedio fijo de los 43 perfiles previos." if es_control else "Mientras
+                más se estira hacia un canal, más lo aprovechas." }}</p>
 
             <svg class="radar" viewBox="0 0 320 320" role="img"
-                 aria-label="Gráfico radar de tu perfil: {% for c in canales %}{{ c.nombre }} {{ c.texto }}%{% if not loop.last %}, {% endif %}{% endfor %}.">
+                aria-label="Gráfico radar del perfil {{ 'general' if es_control else 'individual' }}: {% for c in canales %}{{ c.nombre }} {{ c.texto }}%{% if not loop.last %}, {% endif %}{% endfor %}.">
                 {# Rejilla: cuatro rombos concéntricos y los dos ejes. #}
                 <g class="radar-grid">
                     {% for f in [0.25, 0.5, 0.75, 1] %}
                     {% set r = radio * f %}
-                    <polygon points="{{ c0 }},{{ c0 - r }} {{ c0 + r }},{{ c0 }} {{ c0 }},{{ c0 + r }} {{ c0 - r }},{{ c0 }}" />
+                    <polygon
+                        points="{{ c0 }},{{ c0 - r }} {{ c0 + r }},{{ c0 }} {{ c0 }},{{ c0 + r }} {{ c0 - r }},{{ c0 }}" />
                     {% endfor %}
                     <line x1="{{ c0 }}" y1="{{ c0 - radio }}" x2="{{ c0 }}" y2="{{ c0 + radio }}" />
                     <line x1="{{ c0 - radio }}" y1="{{ c0 }}" x2="{{ c0 + radio }}" y2="{{ c0 }}" />
@@ -60,21 +64,24 @@
                 <text class="radar-escala" x="{{ c0 + 4 }}" y="{{ c0 - radio + 12 }}">{{ escala }}%</text>
 
                 <g class="radar-forma">
-                    <polygon points="{% for l in 'VARK' %}{{ px[l][0] | round(2) }},{{ px[l][1] | round(2) }} {% endfor %}" />
+                    <polygon
+                        points="{% for l in 'VARK' %}{{ px[l][0] | round(2) }},{{ px[l][1] | round(2) }} {% endfor %}" />
                     {% for l in 'VARK' %}
-                    <circle data-canal="{{ l }}" cx="{{ px[l][0] | round(2) }}" cy="{{ px[l][1] | round(2) }}" r="{{ 7 if l == primario else 5 }}" />
+                    <circle data-canal="{{ l }}" cx="{{ px[l][0] | round(2) }}" cy="{{ px[l][1] | round(2) }}"
+                        r="{{ 7 if l == primario else 5 }}" />
                     {% endfor %}
                 </g>
 
                 {# Etiquetas en la punta de cada eje. #}
                 {% set etiquetas = {
-                    "V": (c0, 14, "middle"),
-                    "A": (306, c0 + 5, "end"),
-                    "R": (c0, 314, "middle"),
-                    "K": (14, c0 + 5, "start"),
+                "V": (c0, 14, "middle"),
+                "A": (306, c0 + 5, "end"),
+                "R": (c0, 314, "middle"),
+                "K": (14, c0 + 5, "start"),
                 } %}
                 {% for l in 'VARK' %}
-                <text class="radar-label" data-canal="{{ l }}" x="{{ etiquetas[l][0] }}" y="{{ etiquetas[l][1] }}" text-anchor="{{ etiquetas[l][2] }}">
+                <text class="radar-label" data-canal="{{ l }}" x="{{ etiquetas[l][0] }}" y="{{ etiquetas[l][1] }}"
+                    text-anchor="{{ etiquetas[l][2] }}">
                     {{- l }} · {{ texto[l] }}%
                 </text>
                 {% endfor %}
@@ -82,16 +89,19 @@
         </section>
 
         <section class="card perfil-barras-card reveal" style="--i: 2" aria-labelledby="barras-titulo">
-            <h2 id="barras-titulo" class="card-title mb-4">Tus porcentajes</h2>
+            <h2 id="barras-titulo" class="card-title mb-4">{{ "Porcentajes de referencia" if es_control else "Tus
+                porcentajes" }}</h2>
             <ul class="perfil-barras" role="list">
                 {% for canal in canales %}
-                <li class="perfil-barra {% if canal.canal == primario %}is-primario{% endif %}" data-canal="{{ canal.canal }}">
+                <li class="perfil-barra {% if canal.canal == primario %}is-primario{% endif %}"
+                    data-canal="{{ canal.canal }}">
                     {{ ui.vark_tile(canal.canal) }}
                     <div class="perfil-barra-cuerpo">
                         <div class="perfil-barra-top">
                             <span class="perfil-barra-nombre">
                                 {{ canal.nombre }}
-                                {% if canal.canal == primario %}<span class="badge badge-accent">Principal</span>{% endif %}
+                                {% if canal.canal == primario %}<span class="badge badge-accent">Principal</span>{%
+                                endif %}
                             </span>
                             <span class="perfil-barra-valor">{{ canal.texto }}%</span>
                         </div>
@@ -103,22 +113,30 @@
         </section>
     </div>
 
-    <section class="perfil-significado reveal" data-canal="{{ primario }}" style="--i: 3" aria-labelledby="significado-titulo">
+    {% if not es_control %}
+    <section class="perfil-significado reveal" data-canal="{{ primario }}" style="--i: 3"
+        aria-labelledby="significado-titulo">
         {{ ui.vark_tile(primario, size="lg") }}
         <div>
             <h2 id="significado-titulo">¿Qué significa esto para ti?</h2>
             <p>{{ explicacion }}</p>
         </div>
     </section>
+    {% endif %}
 
     <section class="perfil-config" aria-labelledby="config-titulo">
         <header class="section-header">
             <span class="eyebrow">{{ ui.icon("sparkles", cls="icon-sm") }}Tus microcápsulas</span>
             <h2 id="config-titulo">Cómo se construirán tus microcápsulas</h2>
             <p>
+                {% if es_control %}
+                Estos parámetros proceden del perfil general de la muestra previa y son iguales
+                para todo el grupo control. No dependen de tus preferencias individuales.
+                {% else %}
                 Estos parámetros los derivó el sistema desde tu vector y son los que
                 recibe el generador. No son una descripción de tu personalidad: son
                 instrucciones de armado.
+                {% endif %}
             </p>
         </header>
 
@@ -164,15 +182,19 @@
     </section>
 
     <div class="perfil-acciones">
+        {% if google_disponible %}
+        <a href="/student/login" class="btn btn-secondary btn-lg">{{ "Mi cuenta Google" if google_vinculado else
+            "Vincular mi perfil a Google" }}</a>
+        {% endif %}
         <a href="/student/catalog" class="btn btn-primary btn-lg">
             {{ ui.icon("layers") }}Explorar temas
         </a>
-        <a href="/student/vark" class="btn btn-secondary btn-lg">
+        {% if not es_control %}<a href="/student/vark" class="btn btn-secondary btn-lg">
             {{ ui.icon("refresh-cw") }}Volver a responder
-        </a>
+        </a>{% endif %}
         <a href="/mis-datos" class="btn btn-ghost btn-lg">
             {{ ui.icon("shield-check") }}Mis datos
         </a>
     </div>
-</div>
-{% endblock %}
+    </div>
+    {% endblock %}

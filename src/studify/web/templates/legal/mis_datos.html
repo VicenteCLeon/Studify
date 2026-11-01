@@ -19,10 +19,15 @@
     {% if not estudiante %}
     {% call ui.empty_state("circle-user", "No encontramos una sesión en este navegador", heading="h2") %}
     <p>
+        {% if google_disponible %}
+        Si vinculaste tu perfil, <a href="/student/login">entra con Google</a> para recuperar
+        tus datos desde este navegador.
+        {% else %}
         Como no te pedimos nombre ni correo, la única forma de saber qué datos son tuyos es la sesión
         guardada en tu navegador. Si respondiste el cuestionario en otro dispositivo, entra desde ahí.
         Si borraste la cookie, escríbenos por el canal indicado en la
         <a href="/privacidad#derechos">Política de Privacidad</a>.
+        {% endif %}
     </p>
     {% endcall %}
     {% else %}
@@ -48,6 +53,9 @@
             </div>
         </div>
         <dl class="md-lista">
+            <div><dt>Cuenta Google</dt><dd>{{ estudiante.google_email or "Sin vincular" }}</dd></div>
+            {% if estudiante.google_nombre %}<div><dt>Nombre de Google</dt><dd>{{ estudiante.google_nombre }}</dd></div>{% endif %}
+            <div><dt>Grupo de estudio</dt><dd>{{ "Control (perfil general)" if estudiante.rol == "control" else "Personalizado" }}</dd></div>
             <div><dt>Diagnósticos VARK</dt><dd>{{ datos.diagnosticos_vark | length }}, con tus respuestas a cada pregunta</dd></div>
             <div><dt>Cápsulas generadas</dt><dd>{{ datos.capsulas | length }}</dd></div>
             <div><dt>Intentos en actividades</dt><dd>{{ datos.intentos_en_actividades | length }}</dd></div>
@@ -64,6 +72,9 @@
                 </dd>
             </div>
         </dl>
+        {% if google_disponible %}
+        <p><a href="/student/login">{{ "Ver mi cuenta Google" if estudiante.google_sub else "Vincular este perfil a Google para recuperarlo" }}</a></p>
+        {% endif %}
         <a class="btn btn-primary" href="/mis-datos/exportar" download>
             {{ ui.icon("download") }}<span>Descargar todos mis datos (JSON)</span>
         </a>
@@ -74,7 +85,11 @@
         <h2 id="md-corregir" class="card-title mb-2">Corregir mis datos opcionales</h2>
         <p class="text-sm text-muted mb-4">
             Deja un campo en blanco para borrarlo. Borrar el género retira tu autorización para usarlo.
+            {% if estudiante.rol == "control" %}
+            En el grupo control se utiliza el perfil general fijo de los 43 encuestados.
+            {% else %}
             Tu perfil VARK se corrige <a href="/student/vark">respondiendo de nuevo el cuestionario</a>.
+            {% endif %}
         </p>
         <form method="post" action="/mis-datos/rectificar" class="stack">
             <div class="form-grid">

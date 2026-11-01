@@ -2,9 +2,9 @@
 
 Son **dos cookies con propósitos distintos**, y la diferencia importa:
 
-- `id_estudiante` responde *quién es* el visitante. No es una credencial: el
-  cap. 9 identifica al estudiante por su diagnóstico VARK, no por una clave, y
-  este módulo solo hace que el navegador recuerde cuál diagnóstico es el suyo.
+- `id_estudiante` responde *quién es* el visitante. Se emite tras el registro
+  local o tras verificar el acceso con Google. Conserva el mismo id al vincular
+  una cuenta y recuperarlo; no contiene tokens ni datos personales de Google.
 - `docente` responde *qué puede hacer*. Sí es una credencial —se obtiene
   presentando `TEACHER_USERNAME`/`TEACHER_PASSWORD` en `/teacher/login`— y es lo
   único que separa las vistas del estudiante de las del profesor, incluida la
@@ -127,6 +127,18 @@ def cerrar(response: Response) -> None:
     response.delete_cookie(COOKIE_ESTUDIANTE, path="/")
 
 
+def token_formulario(request: Request, ambito: str) -> str:
+    """Liga un formulario al navegador y a la cuenta que lo abrió."""
+    cookie = request.cookies.get(COOKIE_ESTUDIANTE, "")
+    return hmac.new(_secreto(), f"formulario:{ambito}:{cookie}".encode(), sha256).hexdigest()
+
+
+def formulario_vigente(request: Request, ambito: str, token: str) -> bool:
+    return hmac.compare_digest(
+        token_formulario(request, ambito).encode(), token.encode("utf-8")
+    )
+
+
 @dataclass(frozen=True, slots=True)
 class _CookieEstudiante:
     id_estudiante: int
@@ -174,6 +186,9 @@ def estudiante_actual(request: Request, db: Session) -> int | None:
     cookie = _leer(request)
     if cookie is None or cookie.vencida or not _es_de_la_base(cookie, db):
         return None
+    estudiante = db.get(Estudiante, cookie.id_estudiante)
+    request.state.es_control = estudiante.rol == "control"
+    request.state.google_vinculado = bool(estudiante.google_sub)
     return cookie.id_estudiante
 
 

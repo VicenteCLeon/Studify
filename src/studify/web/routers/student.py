@@ -39,7 +39,6 @@ from studify.api.schemas import (
 )
 from studify.api.schemas_capsulas import CapsulaIn
 from studify.db.models import (
-    DiagnosticoVark,
     Estudiante,
     Fragmento,
     MicrocapsulaGenerada,
@@ -49,10 +48,12 @@ from studify.db.session import get_db
 from studify.generation.generator import ClienteLLM
 from studify.generation.schemas import BloqueContenido
 from studify.vark import instrumento
+from studify.vark.perfiles import perfil_de_contenido
 from studify.vark.rules import aplicar_reglas
 from studify.vark.scoring import PerfilVark
 from studify.web import consentimiento, narracion, sesion, textos
 from studify.web.deps import templates
+from studify.web.routers import google_login
 
 logger = logging.getLogger(__name__)
 
@@ -67,9 +68,8 @@ router = APIRouter(
 
 LETRAS = ("a", "b", "c", "d")
 
-# Qué hace el envío del cuestionario con la sesión que traiga el navegador (R2).
-# Solo `actualizar` agrega el diagnóstico al estudiante de la cookie; cualquier
-# otro valor —o ninguno, como en un formulario viejo— registra a alguien nuevo.
+# Distingue la presentación del primer perfil y de una actualización (R2).
+# Guardar exige además Google y el token del formulario ligado a esa cuenta.
 MODO_ACTUALIZAR = "actualizar"
 MODO_NUEVO = "nuevo"
 
@@ -85,9 +85,8 @@ def get_vark(request: Request, modo: str = "", db: Session = Depends(get_db)):
     computador compartido, quien llega puede no ser el dueño de la sesión. La
     pantalla muestra solo la fecha y hora del diagnóstico vigente, nada del
     perfil. «Soy yo» vuelve acá con `?modo=actualizar`; «Soy otra persona» cierra
-    la sesión (`POST /student/salir`) y vuelve sin ella. El formulario lleva el
-    `modo` en un campo oculto, y es lo único que `post_vark` mira para decidir si
-    agrega el diagnóstico al estudiante de la cookie.
+    la sesión (`POST /student/salir`) y vuelve sin ella. El primer perfil Google
+    y el regreso autenticado de un borrador van directamente al cuestionario.
 
     Las alternativas se leen de `vark/instrumento.py`, que es la definición del
     instrumento y la misma fuente que usa la calificación. Así la pantalla no
@@ -101,7 +100,18 @@ def get_vark(request: Request, modo: str = "", db: Session = Depends(get_db)):
     perfiles se pueden recalcular sin volver a aplicar el cuestionario.
     """
     id_actual = sesion.estudiante_actual(request, db)
-    if id_actual is not None and modo != MODO_ACTUALIZAR:
+    if id_actual is not None and db.get(Estudiante, id_actual).rol == "control":
+        return RedirectResponse(url="/student/profile", status_code=303)
+    primer_perfil_google = (
+        id_actual is not None and db.get(Estudiante, id_actual).google_sub
+        and diagnostico_vigente(db, id_actual) is None
+    )
+    actual = db.get(Estudiante, id_actual) if id_actual is not None else None
+    contexto_anterior = google_login.contexto_continuado(request, actual)
+    if (
+        id_actual is not None and modo != MODO_ACTUALIZAR
+        and not primer_perfil_google and not contexto_anterior
+    ):
         diagnostico = diagnostico_vigente(db, id_actual)
         cuando = (
             diagnostico.fecha_diagnostico
@@ -127,7 +137,12 @@ def get_vark(request: Request, modo: str = "", db: Session = Depends(get_db)):
         name="student/vark.html",
         context={
             "items": items,
-            "modo": MODO_ACTUALIZAR if id_actual is not None else MODO_NUEVO,
+            "token_sesion": sesion.token_formulario(request, "vark"),
+            "contexto_borrador": sesion.token_formulario(request, "borrador-vark"),
+            "contexto_anterior": contexto_anterior,
+            "requiere_google": actual is None or not actual.google_sub,
+            "modo": MODO_ACTUALIZAR
+            if id_actual is not None and not primer_perfil_google else MODO_NUEVO,
         },
     )
 
@@ -160,14 +175,14 @@ def post_vark(
     acepto: str = Form(default=""),
     consiento_genero: str = Form(default=""),
     modo: str = Form(default=""),
+    token_sesion: str = Form(default=""),
     db: Session = Depends(get_db),
 ):
     """Califica el cuestionario de verdad y deja al estudiante conectado.
 
-    **Solo con `modo=actualizar` y una sesión vigente** el diagnóstico se agrega
-    al estudiante de la cookie; cualquier otro envío registra a alguien nuevo
-    y le pasa la sesión (R2). Antes se reutilizaba la sesión en silencio, y una
-    segunda persona en el mismo navegador pisaba el perfil de la primera.
+    Solo guarda diagnósticos con una cuenta Google y un formulario ligado a
+    esa sesión. Un visitante puede completar el cuestionario, pero debe entrar
+    con Google y confirmar antes de persistirlo. No se crean altas locales.
 
     **Antes de calificar nada exige la aceptación** de los Términos y la
     Política (la casilla del primer paso, que nunca viene marcada). El botón
@@ -185,6 +200,22 @@ def post_vark(
     solo intercambia contenido en respuestas exitosas: un 422 dejaría al
     estudiante mirando un formulario que no reacciona.
     """
+    id_actual = sesion.estudiante_actual(request, db)
+    if id_actual is not None and db.get(Estudiante, id_actual).rol == "control":
+        return HTMLResponse(
+            '<div class="alerta alerta-error" role="alert">El grupo control utiliza '
+            'el perfil general y no admite personalización VARK.</div>',
+            status_code=403,
+        )
+    if id_actual is not None and db.get(Estudiante, id_actual).google_sub and not (
+        sesion.formulario_vigente(request, "vark", token_sesion)
+    ):
+        return HTMLResponse(
+            '<div class="alerta alerta-error" role="alert">La cuenta cambió o el formulario '
+            'ya no corresponde a esta sesión. Abre el cuestionario nuevamente.</div>',
+            status_code=403,
+            headers={"HX-Redirect": "/student/vark"},
+        )
     marcadas = (q1, q2, q3, q4, q5, q6, q7, q8, q9, q10, q11, q12, q13, q14, q15, q16)
 
     if acepto != "si":
@@ -211,9 +242,20 @@ def post_vark(
         )
 
     id_actual = sesion.estudiante_actual(request, db)
+    actual = db.get(Estudiante, id_actual) if id_actual is not None else None
     try:
+        primer_perfil_google = bool(
+            actual is not None and actual.google_sub and not actual.diagnosticos
+        )
+        datos_google = (
+            EstudianteIn(
+                rango_etario=rango_etario.strip() or None,
+                genero=genero.strip() or None,
+                carrera=carrera.strip() or None,
+            ) if primer_perfil_google else None
+        )
         payload = _armar_payload(
-            id_actual if modo == MODO_ACTUALIZAR else None,
+            id_actual if modo == MODO_ACTUALIZAR or (actual and actual.google_sub) else None,
             respuestas,
             rango_etario,
             genero,
@@ -228,34 +270,45 @@ def post_vark(
             "Puedes dejarlos en blanco: son opcionales."
         )
 
+    if actual is None or not actual.google_sub:
+        if request.headers.get("HX-Request") == "true":
+            return Response(headers={
+                "HX-Redirect": "/student/login?continuar=vark", "Cache-Control": "no-store",
+            })
+        return HTMLResponse(
+            '<div class="alerta alerta-info" role="status">'
+            '<p>Inicia sesión con Google para guardar tu perfil. Tus respuestas se '
+            'conservan en este navegador; al volver, revisa y confirma el guardado.</p>'
+            '<a class="btn btn-primary" href="/student/login?continuar=vark">'
+            'Continuar con Google</a></div>',
+            headers={"Cache-Control": "no-store"},
+        )
+
     try:
+        if datos_google is not None:
+            for campo, valor in datos_google.model_dump().items():
+                setattr(actual, campo, valor)
         resultado = crear_diagnostico(payload, db)
     except HTTPException as exc:
+        db.rollback()
         return _error(str(exc.detail))
 
-    es_nuevo = payload.estudiante is not None
     estudiante = db.get(Estudiante, resultado.id_estudiante)
-    if es_nuevo:
-        estudiante.origen_registro = _origen_del_registro(request, db, id_actual)
-        db.commit()
 
-    # El género solo se guardó si el estudiante es nuevo (`_armar_payload`
-    # ignora los datos personales de quien actualiza), y solo entonces hay un
-    # consentimiento de género que registrar.
+    # El alta y su origen ya quedaron establecidos al verificar Google. Solo el
+    # primer perfil completa los datos opcionales; una actualización los conserva.
     consentimiento.registrar(
         db,
         resultado.id_estudiante,
-        genero=es_nuevo and payload.estudiante.genero is not None,
+        genero=datos_google is not None and datos_google.genero is not None,
     )
 
     # 204 + HX-Redirect: HTMX procesa la cabecera y navega, así la URL del
     # navegador queda en /student/profile y el botón «atrás» funciona.
     respuesta = Response(status_code=204)
     respuesta.headers["HX-Redirect"] = "/student/profile"
+    respuesta.delete_cookie(google_login.COOKIE_VARK, path="/student")
     sesion.iniciar(respuesta, estudiante)
-    if es_nuevo:
-        # La marca de «Salir» ya se usó: el siguiente registro no la hereda.
-        sesion.borrar_origen(respuesta)
     return respuesta
 
 
@@ -309,7 +362,7 @@ def _armar_payload(
     nuevo. Importa para el A/B de la Fase 5: si cada intento creara una persona
     distinta, la cohorte quedaría inflada con duplicados y las cápsulas de un
     mismo estudiante repartidas entre varios identificadores. Quién actualiza
-    lo decide `post_vark` (solo con `modo=actualizar` y sesión vigente).
+    lo decide `post_vark`, que exige una cuenta Google antes de persistirlo.
     """
     if id_a_actualizar is not None:
         return DiagnosticoIn(id_estudiante=id_a_actualizar, respuestas=respuestas)
@@ -334,6 +387,88 @@ def _error(mensaje: str) -> HTMLResponse:
     de sesión que robar.
     """
     return HTMLResponse(f'<div class="alerta alerta-error" role="alert">{escape(mensaje)}</div>')
+
+
+@router.get("/control", response_class=HTMLResponse)
+def get_control(request: Request, db: Session = Depends(get_db)):
+    """Entrada del piloto para quienes fueron asignados al grupo control."""
+    id_actual = sesion.estudiante_actual(request, db)
+    if id_actual is not None:
+        estudiante = db.get(Estudiante, id_actual)
+        if estudiante.rol == "control" and estudiante.google_sub and not estudiante.aceptaciones:
+            return templates.TemplateResponse(
+                request=request, name="student/control.html",
+                context={"token_sesion": sesion.token_formulario(request, "control")},
+            )
+        return templates.TemplateResponse(
+            request=request,
+            name="student/eres_tu.html",
+            context={
+                "cuando": textos.fecha_hora_chile(estudiante.fecha_registro),
+                "registro_control": True,
+            },
+        )
+    return templates.TemplateResponse(request=request, name="student/control.html")
+
+
+@router.post("/control")
+def post_control(
+    request: Request,
+    rango_etario: str = Form(default=""),
+    genero: str = Form(default=""),
+    carrera: str = Form(default=""),
+    acepto: str = Form(default=""),
+    consiento_genero: str = Form(default=""),
+    token_sesion: str = Form(default=""),
+    db: Session = Depends(get_db),
+):
+    """Alta sin diagnóstico individual: el rol y el perfil los fija el servidor."""
+    id_actual = sesion.estudiante_actual(request, db)
+    actual = db.get(Estudiante, id_actual) if id_actual is not None else None
+    primer_control_google = bool(
+        actual is not None and actual.rol == "control" and actual.google_sub
+        and not actual.aceptaciones
+    )
+    if id_actual is not None and not primer_control_google:
+        return HTMLResponse(
+            '<div class="alerta alerta-error" role="alert">Ya hay una sesión abierta. '
+            'Sal antes de registrar a otra persona.</div>', status_code=409,
+        )
+    if primer_control_google and not sesion.formulario_vigente(request, "control", token_sesion):
+        return HTMLResponse(
+            '<div class="alerta alerta-error" role="alert">La cuenta cambió. '
+            'Abre el formulario del grupo control nuevamente.</div>', status_code=403,
+            headers={"HX-Redirect": "/student/control"},
+        )
+    if acepto != "si":
+        return _error("Debes aceptar los Términos y Condiciones y la Política de Privacidad.")
+    if genero.strip() and consiento_genero != "si":
+        return _error("Para guardar el género debes autorizar su uso o dejarlo en blanco.")
+    try:
+        datos = EstudianteIn(
+            rango_etario=rango_etario.strip() or None,
+            genero=genero.strip() or None,
+            carrera=carrera.strip() or None,
+        )
+    except ValidationError:
+        return _error("Alguno de los datos opcionales excede el largo permitido.")
+    if primer_control_google:
+        estudiante = actual
+        for campo, valor in datos.model_dump().items():
+            setattr(estudiante, campo, valor)
+    else:
+        estudiante = Estudiante(
+            **datos.model_dump(), rol="control",
+            origen_registro=_origen_del_registro(request, db, id_actual),
+        )
+        db.add(estudiante)
+    db.flush()
+    # `registrar` confirma también el alta, junto con su aceptación legal.
+    consentimiento.registrar(db, estudiante.id_estudiante, genero=datos.genero is not None)
+    respuesta = Response(status_code=204, headers={"HX-Redirect": "/student/profile"})
+    sesion.iniciar(respuesta, estudiante)
+    sesion.borrar_origen(respuesta)
+    return respuesta
 
 
 # --- Salir (R2) ---------------------------------------------------------------
@@ -367,10 +502,15 @@ def post_salir(request: Request, motivo: str = Form(default="salir")):
     """
     origen = MOTIVOS_SALIDA.get(motivo, "tras_salir")
     destino = "/student/vark" if origen == "otra_persona" else "/?salio=1"
+    if origen == "otra_persona" and request.query_params.get("grupo") == "control":
+        destino = "/student/control"
     respuesta = RedirectResponse(url=destino, status_code=303)
     if request.cookies.get(sesion.COOKIE_ESTUDIANTE):
         sesion.marcar_origen(respuesta, origen)
     sesion.cerrar(respuesta)
+    respuesta.delete_cookie("google_oauth", path="/student")
+    respuesta.delete_cookie("google_csrf", path="/student")
+    respuesta.delete_cookie(google_login.COOKIE_VARK, path="/student")
     return respuesta
 
 
@@ -404,15 +544,10 @@ def get_profile(request: Request, db: Session = Depends(get_db)):
         return respuesta
 
     diagnostico = diagnostico_vigente(db, id_estudiante)
-    if diagnostico is None:
+    perfil = perfil_de_contenido(estudiante, diagnostico)
+    if perfil is None:
         return _sin_sesion()
 
-    perfil = PerfilVark(
-        v=diagnostico.porcentaje_v,
-        a=diagnostico.porcentaje_a,
-        r=diagnostico.porcentaje_r,
-        k=diagnostico.porcentaje_k,
-    )
     config = aplicar_reglas(perfil)
     jerarquia = config.jerarquia
 
@@ -420,13 +555,14 @@ def get_profile(request: Request, db: Session = Depends(get_db)):
     # (`microcapsula_generada.id_config`); las reglas son función pura del
     # vector, así que sus valores coinciden, pero se muestra la guardada para
     # que la pantalla no pueda diferir de lo que el motor va a usar.
-    fila = diagnostico.configuracion
+    fila = diagnostico.configuracion if diagnostico and estudiante.rol != "control" else None
 
     explicacion = textos.EXPLICACION_CANAL[jerarquia.canal_primario]
     if jerarquia.es_multimodal:
         explicacion = f"{explicacion} {textos.EXPLICACION_MULTIMODAL}"
 
     contexto = {
+        "es_control": estudiante.rol == "control",
         "canales": _barras(perfil),
         "canal_principal": textos.NOMBRE_CANAL[jerarquia.canal_primario],
         "jerarquia": jerarquia,
@@ -448,7 +584,7 @@ def get_profile(request: Request, db: Session = Depends(get_db)):
             },
         },
         "directivas": [textos.glosa_directiva(d) for d in config.directivas],
-        "id_diagnostico": diagnostico.id_diagnostico,
+        "id_diagnostico": diagnostico.id_diagnostico if diagnostico else None,
         # La narración solo existe con audio activo (p_A ≥ 25 %): sin ella, el
         # selector de voz no tendría nada que cambiar.
         "audio_activo": config.audio_activo,
@@ -564,18 +700,10 @@ def get_viewer(
             reintentable=exc.status_code in (502, 504),
         )
 
-    diag = db.scalars(
-        select(DiagnosticoVark)
-        .where(DiagnosticoVark.id_estudiante == id_estudiante)
-        .order_by(DiagnosticoVark.id_diagnostico.desc())
-    ).first()
-    audio_activo = False
-    if diag:
-        p = PerfilVark(
-            v=diag.porcentaje_v, a=diag.porcentaje_a, r=diag.porcentaje_r, k=diag.porcentaje_k
-        )
-        config = aplicar_reglas(p)
-        audio_activo = config.audio_activo
+    perfil = perfil_de_contenido(
+        db.get(Estudiante, id_estudiante), diagnostico_vigente(db, id_estudiante)
+    )
+    audio_activo = aplicar_reglas(perfil).audio_activo if perfil is not None else False
 
     return templates.TemplateResponse(
         request=request,

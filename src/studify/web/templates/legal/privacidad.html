@@ -30,7 +30,7 @@
 <div class="legal-resumen">
     {% call ui.alert("info", "En pocas palabras") %}
     <ul>
-        <li><strong>No te pedimos nombre, correo ni RUT.</strong> Te reconocemos solo por un número guardado en una cookie de tu navegador.</li>
+        <li>Puedes responder VARK sin una cuenta; para guardar el perfil debes <strong>entrar con Google</strong>. Guardamos su identificador, nombre y correo verificado para recuperar tu perfil. El grupo control conserva su registro local sin nombre ni correo. No pedimos RUT ni tu contraseña de Google.</li>
         <li>Guardamos tus respuestas al cuestionario VARK, tu perfil, las cápsulas que abres y tus intentos en las actividades. La edad, el género y la carrera son <strong>opcionales</strong>.</li>
         <li>Al proveedor de IA <strong>no le enviamos ningún dato tuyo</strong>: solo el material del curso y los parámetros de formato que salen de tu perfil, sin nada que te identifique.</li>
         <li>Puedes ver, descargar, corregir o eliminar tus datos en <a href="/mis-datos">Mis datos</a> (sección 9).</li>
@@ -77,24 +77,34 @@
             <tbody>
                 <tr>
                     <td data-label="Dato"><strong>Número de estudiante</strong> (identificador interno) y fecha de registro</td>
-                    <td data-label="De dónde sale">Se crea al enviar el cuestionario</td>
+                    <td data-label="De dónde sale">Se crea al enviar el cuestionario o registrarte en el grupo control</td>
                     <td data-label="¿Obligatorio?">Sí</td>
                 </tr>
                 <!-- BORRADOR TÉCNICO (24-oct-2026): fila nueva por estudiante.origen_registro (R2). No constituye asesoría legal; revisar antes de publicar. -->
                 <tr>
                     <td data-label="Dato"><strong>Cómo empezó tu registro en este navegador</strong>: si era la primera vez, si alguien había salido antes, si elegiste «Soy otra persona» o si había una sesión vencida. Sirve solo para detectar registros duplicados en el análisis de resultados; no dice quién eres ni quién usó el navegador antes</td>
-                    <td data-label="De dónde sale">Se calcula al enviar el cuestionario</td>
+                    <td data-label="De dónde sale">Se calcula al registrarte en la plataforma</td>
                     <td data-label="¿Obligatorio?">Sí</td>
                 </tr>
                 <tr>
                     <td data-label="Dato"><strong>Respuestas al cuestionario VARK</strong>: cada alternativa que marcaste en las 16 preguntas</td>
                     <td data-label="De dónde sale">Tú, en el cuestionario</td>
-                    <td data-label="¿Obligatorio?">Sí (al menos una)</td>
+                    <td data-label="¿Obligatorio?">Solo en el grupo con personalización (al menos una)</td>
                 </tr>
                 <tr>
                     <td data-label="Dato"><strong>Perfil de aprendizaje</strong>: puntajes y porcentaje de cada dimensión V, A, R y K, y la configuración de contenido que se deriva de él</td>
                     <td data-label="De dónde sale">Se calcula con tus respuestas</td>
-                    <td data-label="¿Obligatorio?">Sí</td>
+                    <td data-label="¿Obligatorio?">Solo en el grupo con personalización</td>
+                </tr>
+                <tr>
+                    <td data-label="Dato"><strong>Grupo de estudio</strong>: personalizado o control</td>
+                    <td data-label="De dónde sale">La entrada de registro utilizada en el piloto. El grupo control usa el promedio fijo de los 43 encuestados previos, sin diagnóstico individual</td>
+                    <td data-label="¿Obligatorio?">Sí, para distinguir los grupos en la evaluación</td>
+                </tr>
+                <tr>
+                    <td data-label="Dato"><strong>Identidad de Google</strong>: identificador estable, nombre y correo verificado</td>
+                    <td data-label="De dónde sale">Google, cuando eliges entrar o vincular tu perfil. Permite recuperar el mismo estudiante, con su grupo y sus datos</td>
+                    <td data-label="¿Obligatorio?">Para guardar el perfil VARK en la web. Opcional para el registro local del grupo control</td>
                 </tr>
                 <tr>
                     <td data-label="Dato"><strong>Rango de edad y carrera</strong></td>
@@ -172,6 +182,9 @@
             intervienen en cómo se genera tu contenido. Para el género, la base es tu <strong>consentimiento
             expreso y separado</strong>, porque la ley lo considera un dato sensible.
         </li>
+        <li><strong>Recuperar tu perfil con Google</strong>, si eliges esta opción:
+            vincular su identificador estable al mismo registro, verificar el acceso y mostrarte
+            qué cuenta vinculaste. El nombre y el correo no modifican tu perfil VARK ni tu grupo.</li>
         <li>
             <strong>Seguridad</strong>: registrar intentos fallidos de acceso al panel docente y la IP de las
             peticiones para detectar abusos. Base: el <strong>interés legítimo</strong> de proteger el servicio y
@@ -187,6 +200,10 @@
 
 <section id="perfilamiento" aria-labelledby="perfilamiento-t">
     <h2 id="perfilamiento-t">4. Perfil de aprendizaje y decisiones automatizadas</h2>
+    <p>En el <strong>grupo control</strong> no se aplica un diagnóstico VARK individual:
+        todas las personas reciben el perfil promedio fijo de los 43 encuestados previos.
+        Guardamos tu grupo para evaluar los resultados y no puedes activar la personalización
+        desde ese registro. En el grupo personalizado se mantiene el siguiente funcionamiento.</p>
     <p>
         RepasAi elabora un <strong>perfil de aprendizaje</strong> con tus respuestas y lo usa, de forma
         automatizada, para decidir el formato de tus cápsulas: cuánto texto, cuántas tablas o esquemas, si
@@ -213,7 +230,7 @@
         <li>los fragmentos del material del curso revisados por el equipo docente, con su documento y página;</li>
         <li>instrucciones de formato derivadas de tu perfil: cuatro pesos de énfasis (texto, visual, narrativo y práctico), la extensión aproximada, el tono y qué tipo de bloques incluir.</li>
     </ul>
-    <p>Lo que <strong>no</strong> le enviamos: tu número de estudiante, tu edad, género o carrera, tus respuestas al cuestionario, tus resultados en las actividades, tu IP ni ninguna cookie. La conexión la hace nuestro servidor, así que el proveedor no ve tu dirección IP.</p>
+    <p>Lo que <strong>no</strong> le enviamos: tu número de estudiante, tu nombre, correo o identificador de Google, tu edad, género o carrera, tus respuestas al cuestionario, tus resultados en las actividades, tu IP ni ninguna cookie. La conexión la hace nuestro servidor, así que el proveedor no ve tu dirección IP.</p>
     <p>
         Como ese envío no contiene datos que te identifiquen, no constituye una transferencia internacional de
         tus datos personales. Lo informamos igual por transparencia, porque los parámetros de formato sí salen
@@ -233,10 +250,23 @@
 <section id="terceros" aria-labelledby="terceros-t">
     <h2 id="terceros-t">6. Con quién más se comparten</h2>
     <p>
-        Con nadie más. Las tipografías, los íconos y las bibliotecas de la página se sirven desde nuestro propio
+        Las tipografías, los íconos y las bibliotecas de la página se sirven desde nuestro propio
         servidor, de modo que ningún tercero (como Google Fonts o una red de distribución de contenido) recibe tu
         IP al abrir RepasAi.
     </p>
+    <h3 id="google">Acceso con Google</h3>
+    <p>Para guardar tu perfil VARK es necesario entrar con Google. Puedes completar el
+        cuestionario primero: el borrador permanece en esta pestaña hasta que vuelvas
+        del acceso y confirmes su guardado. Los consentimientos se piden nuevamente.</p>
+    <p>Solo cuando pulsas el botón de acceso te redirigimos a Google, que recibe tu IP
+        y la solicitud de autenticación y aplica sus propias cookies y políticas.
+        Google devuelve a nuestro servidor tu identificador, nombre y correo verificado.
+        No le enviamos tus respuestas VARK, cápsulas ni resultados de actividades.
+        Consulta la <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Política de Privacidad de Google</a>.</p>
+    <p>Guardamos la identidad vinculada con los mismos plazos y derechos del resto del perfil.
+        No guardamos contraseñas, access tokens, refresh tokens ni ID tokens de Google.
+        El registro temporal del acceso vence a los diez minutos: se consume al volver de
+        Google o se elimina al iniciar otro acceso una vez vencido. No contiene nombre ni correo.</p>
     <p>
         Los datos se almacenan en una base de datos PostgreSQL en un entorno local, en los equipos de los desarrolladores, sin acceso público desde internet.
         No hay un proveedor de alojamiento externo ni otros encargados del tratamiento.
@@ -247,8 +277,9 @@
 <section id="cookies" aria-labelledby="cookies-t">
     <h2 id="cookies-t">7. Cookies y almacenamiento en tu navegador</h2>
     <p>
-        Usamos solo lo necesario para que el servicio funcione. No hay cookies de terceros, de analítica ni de
-        publicidad, y por eso no te mostramos un aviso de cookies.
+        Usamos cookies propias necesarias para la sesión y, si eliges Google, para proteger
+        ese acceso. No cargamos cookies de Google al abrir RepasAi: el acceso ocurre mediante
+        una redirección voluntaria. No usamos analítica ni publicidad.
     </p>
     <div class="table-container">
         <table class="table table-stack">
@@ -262,6 +293,18 @@
                 </tr>
             </thead>
             <tbody>
+                <tr>
+                    <td data-label="Nombre"><code>google_vark</code></td>
+                    <td data-label="Tipo">Cookie propia, esencial para continuar el cuestionario</td>
+                    <td data-label="Para qué">Autorizar la recuperación del borrador de esta pestaña después de entrar con Google. Contiene una marca firmada, sin respuestas ni datos personales</td>
+                    <td data-label="Duración">10 minutos; se borra al guardar, salir o iniciar un acceso sin continuidad</td>
+                </tr>
+                <tr>
+                    <td data-label="Nombre"><code>google_csrf</code> y <code>google_oauth</code></td>
+                    <td data-label="Tipo">Cookies propias, esenciales para el acceso elegido</td>
+                    <td data-label="Para qué">Vincular el formulario y la respuesta de Google al navegador que inició el acceso. No contienen correo, nombre ni tokens de Google</td>
+                    <td data-label="Duración">Hasta 10 minutos; se borran al completar el acceso o salir</td>
+                </tr>
                 <tr>
                     <td data-label="Nombre"><code>id_estudiante</code></td>
                     <td data-label="Tipo">Cookie propia, esencial</td>
@@ -290,7 +333,7 @@
                 <tr>
                     <td data-label="Nombre"><code>repasai-vark-borrador</code></td>
                     <td data-label="Tipo">Almacenamiento de sesión (sessionStorage)</td>
-                    <td data-label="Para qué">Guardar tus respuestas a medio camino si recargas la página del cuestionario. No sale de tu navegador hasta que lo envías.</td>
+                    <td data-label="Para qué">Guardar tus respuestas a medio camino si recargas el cuestionario. Una marca de sesión impide restaurarlas para otra cuenta. No sale de tu navegador hasta que lo envías.</td>
                     <td data-label="Duración">Se borra al enviar el cuestionario, al salir o al cerrar la pestaña</td>
                 </tr>
             </tbody>
@@ -340,6 +383,10 @@
         <li><strong>eliminar todos tus datos</strong> de forma definitiva (supresión).</li>
     </ul>
     <p>
+        Si vinculaste tu perfil a Google, puedes recuperarlo entrando con esa cuenta y ejercer
+        los mismos derechos desde «Mis datos». Eliminar tus datos de RepasAi elimina también
+        la vinculación, sin eliminar tu cuenta de Google. El nombre y el correo se actualizan
+        con lo que Google verifica al volver a entrar.
         Tu perfil VARK se corrige respondiendo de nuevo el cuestionario. Para la <strong>oposición</strong>, el
         <strong>bloqueo</strong> o cualquier otra solicitud, escríbenos a <a href="mailto:patricio.hernandez.v@mail.pucv.cl">patricio.hernandez.v@mail.pucv.cl</a>.
         Te responderemos en un plazo de 15 días hábiles como máximo.
@@ -355,7 +402,7 @@
     <h2 id="seguridad-t">10. Seguridad y vulneraciones</h2>
     <p>Las medidas que existen hoy en RepasAi son:</p>
     <ul>
-        <li><strong>Minimización</strong>: no pedimos nombre, correo ni RUT, y los datos sociodemográficos son opcionales.</li>
+        <li><strong>Minimización</strong>: no pedimos RUT; recibimos nombre y correo solo al entrar con Google. Los datos sociodemográficos son opcionales.</li>
         <li><strong>Sesiones firmadas</strong>: las cookies llevan una firma criptográfica (HMAC-SHA256), no son legibles por scripts de la página y no se envían desde sitios de terceros.</li>
         <li><strong>Control de acceso</strong>: cada estudiante solo puede ver y usar sus propios datos; el panel docente exige credencial, tiene un freno contra intentos repetidos y su sesión vence a las 12 horas.</li>
         <li><strong>Sin terceros en la página</strong>: no se cargan recursos de otros dominios.</li>

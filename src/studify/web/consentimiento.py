@@ -35,7 +35,12 @@ RUTA_ACEPTAR = "/aceptar"
 # es donde se acepta por primera vez (la casilla está en su primer paso), y
 # «Salir», porque quien no es el dueño de la sesión no tiene que aceptar nada a
 # nombre de otro para poder irse.
-RUTAS_SIN_ACEPTACION = frozenset({"/student/vark", "/student/salir"})
+# El acceso y la vinculación permiten recuperar la identidad antes de aceptar
+# una versión nueva; nunca registran la aceptación por sí solos.
+RUTAS_SIN_ACEPTACION = frozenset({
+    "/student/vark", "/student/control", "/student/salir", "/student/login",
+    "/student/google/iniciar", "/student/google/callback",
+})
 
 
 def pendientes(db: Session, id_estudiante: int) -> list[legal.Documento]:

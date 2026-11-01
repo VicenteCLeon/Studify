@@ -14,12 +14,12 @@
 {% block content %}
 <div class="sesion-compartida">
     {% call ui.empty_state("users", "Este navegador ya tiene un perfil", heading="h1") %}
-    <p>Alguien respondió el cuestionario en este navegador el <strong>{{ cuando }}</strong>. ¿Eres tú?</p>
+    <p>Alguien {{ 'se registró' if registro_control else 'respondió el cuestionario' }} en este navegador el <strong>{{ cuando }}</strong>. ¿Eres tú?</p>
     <div class="cluster">
-        <a class="btn btn-primary btn-lg" href="/student/vark?modo=actualizar">
-            {{ ui.icon("refresh-cw") }}<span>Soy yo: actualizar mi perfil</span>
+        <a class="btn btn-primary btn-lg" href="{{ '/student/catalog' if registro_control else '/student/vark?modo=actualizar' }}">
+            {{ ui.icon("refresh-cw") }}<span>{{ 'Soy yo: seguir estudiando' if registro_control else 'Soy yo: actualizar mi perfil' }}</span>
         </a>
-        <form method="post" action="/student/salir" data-olvidar-borrador>
+        <form method="post" action="/student/salir{{ '?grupo=control' if registro_control else '' }}" data-olvidar-borrador>
             <input type="hidden" name="motivo" value="otra_persona">
             <button type="submit" class="btn btn-secondary btn-lg">
                 {{ ui.icon("users") }}<span>Soy otra persona: empezar de cero</span>

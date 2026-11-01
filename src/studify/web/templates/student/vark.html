@@ -13,11 +13,14 @@
    alternativa se tiñe con el color de un canal. #}
 <div class="vark-wrap">
     <form id="vark-form" class="vark-form"
+          method="post" action="/student/vark"
           hx-post="/student/vark" hx-target="#form-error" hx-swap="innerHTML" hx-indicator="#enviando"
-          data-vark-stepper data-total="{{ items | length }}">
+          data-vark-stepper data-total="{{ items | length }}" data-contexto-borrador="{{ contexto_borrador }}"
+          data-contexto-anterior="{{ contexto_anterior }}">
         {# Lo único que el servidor mira para decidir si el diagnóstico es del
            estudiante de la cookie («Soy yo») o de alguien nuevo (R2). #}
         <input type="hidden" name="modo" value="{{ modo }}">
+        <input type="hidden" name="token_sesion" value="{{ token_sesion }}">
 
         <div class="vark-progress js-only">
             <div class="vark-progress-top">
@@ -37,6 +40,16 @@
                     {{ items | length }} situaciones de la vida universitaria. Con tus
                     respuestas armamos tu perfil y adaptamos cada microcápsula a él.
                 </p>
+                {% if requiere_google %}
+                <p class="form-hint">Al terminar tendrás que iniciar sesión con Google
+                    para guardar tu perfil y recuperar tus datos después.</p>
+                <noscript><p>Para conservar tus respuestas sin JavaScript,
+                    <a href="/student/login">inicia sesión con Google antes de responder</a>.</p></noscript>
+                {% elif contexto_anterior %}
+                <p class="form-hint">Ya iniciaste sesión con Google. Tus respuestas siguen
+                    en este navegador. Revisa los datos y vuelve a aceptar los términos
+                    antes de guardar. Si no aparecen, vuelve a completar el cuestionario.</p>
+                {% endif %}
             </header>
 
             <ul class="vark-reglas" role="list">
@@ -163,7 +176,7 @@
 
             <button type="submit" class="btn btn-primary btn-lg btn-block vark-submit" data-requiere-acepto>
                 <span class="idle-only">{{ ui.icon("sparkles") }}</span>
-                <span>Descubrir mi perfil</span>
+                <span>{{ 'Continuar con Google para guardar' if requiere_google else 'Guardar mi perfil' }}</span>
                 <span id="enviando" class="htmx-indicator">{{ ui.spinner("Calculando tu perfil") }}</span>
             </button>
         </section>

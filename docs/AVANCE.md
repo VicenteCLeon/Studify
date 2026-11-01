@@ -1,7 +1,7 @@
 # Studify — Estado de avance
 
 > Bitácora del proyecto: qué se hizo, qué se verificó y qué se decidió en el camino.
-> Última actualización: **24-oct-2026**. Lo que falta está en [`PENDIENTES.md`](PENDIENTES.md);
+> Última actualización: **01-nov-2026**. Lo que falta está en [`PENDIENTES.md`](PENDIENTES.md);
 > el índice de toda la documentación, en [`README.md`](README.md).
 
 ---
@@ -23,7 +23,7 @@ avance ya entregado) y el plan de implementación derivado, [`PLAN_DESARROLLO.md
 
 ---
 
-## 1. Estado actual (17-oct-2026)
+## 1. Estado actual (01-nov-2026)
 
 | Área | Estado | Dónde |
 |---|---|---|
@@ -31,12 +31,14 @@ avance ya entregado) y el plan de implementación derivado, [`PLAN_DESARROLLO.md
 | **Fase 2 — Base de conocimiento** | Cerrada. Ingesta de PDF/PPTX con página, curación humana, retriever SQL sin embeddings, etiquetado asistido por LLM y borrado de documentos desde el panel. | §5 septies, §5 septendecies, §5 quatertricies |
 | **Fase 3 — Generación** | Cerrada. Contrato de siete pasos, validador, bucle de reparación y caché por huella. Batería VARK del 03-oct (con `deepseek-chat`): 29/30 cápsulas válidas, 26 a la primera (96,7 %), 0 citas inventadas. | §5 octies, §5 terdecies, §5 quatervicies |
 | **Fase 4 — Interfaz** | Cerrada y rediseñada el 02-oct: cuestionario, perfil, catálogo, visor y panel del docente con login. | §5 nonies, §5 duovicies |
-| **Marco legal** | Términos y Política 0.2, consentimiento registrado, `/mis-datos` y código bajo AGPL-3.0-or-later. | §5 tervicies, §5 tritricies |
+| **Grupo control del piloto** | Rol `control`, sin cuestionario ni personalización individual. Perfil fijo: media de los porcentajes de los 43 encuestados. Registro en `/student/control`. | §5 septtricies |
+| **Acceso Google** | Implementado para ambos grupos: vincular el perfil local y recuperar el mismo estudiante. Pendiente configurar el cliente OAuth real (O6). | §5 octtricies |
+| **Marco legal** | Términos 0.3 y Política 0.5, consentimiento registrado, `/mis-datos` y código bajo AGPL-3.0-or-later. | §5 tervicies, §5 tritricies, §5 octtricies |
 | **Audio (Fase 6)** | Kokoro y Piper según la preferencia de voz del estudiante, con caché por huella. | §5 duodetricies a §5 duotricies |
 | **Imagen (Fase 6)** | En pausa. El módulo Visual (SVG dibujado a partir de una especificación del LLM) está propuesto, sin integrar a la app. | §5 quatertricies |
 | **Fase 5 — Evaluación** | Sin empezar: A/B, batería técnica, validación docente, TAM. | `PENDIENTES.md` E |
 | **Modelo** | `deepseek-flash` con el razonamiento apagado (`LLM_THINKING=disabled`) desde el 11-oct. | §5 quatertricies |
-| **Suite** | Con Postgres: 607 pasan y 0 fallan; con la base apagada: 381 pasan y 4 fallan (tests sin `@necesita_bd`, R10). | §5 sextricies |
+| **Suite local** | Con Postgres: 654 pasan, 24 omitidas y 2 fallan (falta `CREATEDB`); sin base: 412 pasan, 264 omitidas y 4 fallan (R10). | §5 octtricies |
 
 Lo primero que falta antes del piloto con estudiantes está al inicio de
 [`PENDIENTES.md`](PENDIENTES.md).
@@ -87,6 +89,8 @@ Lo primero que falta antes del piloto con estudiantes está al inicio de
 | 5 quatertricies | 10–11-oct | Migración a `deepseek-flash`, módulo Visual y borrado de documentos |
 | 5 quintricies | 16–17-oct | Revisión de código y cinco correcciones |
 | 5 sextricies | 24-oct | R2: dos estudiantes en el mismo computador («Salir», «¿Eres tú?») |
+| 5 septtricies | 01-nov | Grupo control con perfil general fijo de los 43 encuestados |
+| 5 octtricies | 01-nov | Google OpenID Connect, vinculación y recuperación del perfil (D6) |
 
 ---
 
@@ -2435,6 +2439,205 @@ perfil. Queda en `PENDIENTES.md` junto a D6, con los duplicados marcados en `ori
 **Suite al cierre:** con Postgres, 607 pasan y 0 fallan; con la base apagada, 381 pasan y 4
 fallan (los de `test_web_auth.py` sin `@necesita_bd`, R10). `ruff check .` sigue en los 40
 avisos previos.
+
+---
+
+## 5 septtricies. Grupo control de la evaluación (01-nov-2026)
+
+Se agregó el rol `control` a `estudiante`, separado del rol habitual
+`estudiante`. El rol se resuelve en el servidor: el grupo control conserva
+catálogo, cápsulas, actividades, narración, preferencias de voz y gestión de
+sus datos, pero no puede aplicar ni modificar un perfil VARK individual.
+El cambio está preparado para un único commit del autor.
+
+### Perfil de referencia y registro
+
+- `vark/perfiles.py::PERFIL_CONTROL`: **V 19,12 %, A 27,11 %, R 25,56 %,
+  K 28,21 %**, suma exacta de 100. Es la media de los 43 vectores porcentuales
+  calculados con el instrumento original; cada persona pesa igual. Se aplica
+  resto mayor para redondear a centésimas. Un test lo reproduce desde el CSV
+  local, sin versionar respuestas personales.
+- Es una referencia fija (`control-cohorte43-v1`), independiente de los
+  registros de la base viva. No se usa el promedio de las tablas 16.2/16.3,
+  cuya discrepancia sigue abierta, ni se fabrica un diagnóstico individual.
+- El equipo distribuye `/student/control` a los participantes asignados a ese
+  grupo; también hay un enlace desde la portada. El registro pide aceptación
+  legal y admite los mismos datos opcionales, con consentimiento separado
+  para el género. No hay asignación aleatoria ni cambio de grupo desde una
+  sesión abierta.
+- La identificación sigue dependiendo de la cookie del proyecto (D6): salir
+  o cambiar de navegador no permite recuperar el registro anterior. El rol
+  restringe el registro activo; no identifica a una persona entre dispositivos.
+
+### Conexiones y restricciones
+
+- `perfil_de_contenido` se comparte entre la generación, el perfil y el audio
+  del visor. En el control ignora cualquier diagnóstico individual, incluso
+  si un proceso externo hubiera agregado uno.
+- `GET /student/vark` lleva al perfil general; `POST /student/vark` y el alta
+  de diagnósticos por API para un estudiante control responden 403. Enviar
+  campos `rol` o `perfil` no habilita personalización.
+- El caché de cápsulas tiene un espacio separado para el control: se comparte
+  entre controles, sin tomar cápsulas personalizadas del mismo tramo. Cada
+  participante conserva su propia cápsula, sus actividades y sus intentos.
+- El rol aparece en `/mis-datos`, su JSON y el historial docente. La Política
+  sube a **0.4**, de modo que las sesiones anteriores deben volver a aceptarla.
+
+### Migración y verificación
+
+- Migración **`f6b2c8d40e53`**, sobre `e5c1a7b39d42`: columna `rol`, no nula,
+  default `estudiante` y CHECK `estudiante | control`. Probada la subida,
+  bajada y nueva subida con filas existentes, sin perderlas.
+- **20 pruebas nuevas pasan**: promedio reproducible, perfil individual
+  conservado, registro, aceptación, computador compartido, bloqueos web/API,
+  generación y regeneración genéricas, actividades, audio en el visor,
+  separación y reutilización del caché, exportación y migración.
+- Suite completa de esta máquina: **619 pasan, 24 omitidas y 2 fallan** con
+  Postgres; los dos fallos son pruebas anteriores de migraciones que exigen
+  `CREATEDB`, permiso que el rol local no tiene. Sin base: **397 pasan,
+  244 omitidas y 4 fallan**, los cuatro casos conocidos de `test_web_auth.py`
+  sin `@necesita_bd` (R10). `ruff check .` conserva los **40 avisos previos**;
+  no se agregaron avisos. La zona de las conexiones de prueba se fijó a UTC.
+- Las pruebas con Postgres se ejecutaron en esquemas temporales, sin usar los
+  datos de desarrollo. Las llamadas al LLM se sustituyeron por el cliente
+  falso existente; `LLM_API_KEY` estuvo vacía y se ignoraron `test_visual.py`
+  y `test_voz.py`. No se probó generación ni síntesis real.
+- El intento de revisión visual quedó bloqueado: el host de navegador no
+  estaba disponible y el control nativo de Brave se detuvo porque no pudo
+  determinar la URL con confianza. Se verificaron rutas y plantillas por HTTP.
+- **Máquina 2 actualizada:** estaba en `8eb6f0399fee`. Antes de aplicar las
+  ocho migraciones pendientes se creó el respaldo
+  `data/antes_grupo_control_20261101_155034.dump` (ignorado por Git). Quedó en
+  `f6b2c8d40e53`, con los **49 estudiantes** previos en rol `estudiante` y sin
+  cambios de conteos en las ocho tablas anteriores. Ese total no acredita que
+  los 49 sean reales: la auditoría de ruido anterior sigue pendiente.
+
+---
+
+## 5 octtricies. Acceso con Google y recuperación del perfil (01-nov-2026, D6)
+
+Se implementó el acceso de estudiantes con Google, sin modificar el acceso
+docente ni el motor de personalización. Queda preparado para un commit del
+autor; se conserva el cambio previo del grupo control que todavía no tenía
+commit. La prueba real con Google depende de configurar su cliente OAuth (O6).
+
+### Flujo y continuidad de los datos
+
+- `/student/login` permite entrar o **vincular el perfil local activo**. Un
+  registro previo se vincula solo desde su sesión válida y con una acción
+  explícita protegida contra CSRF. No se emparejan registros por correo,
+  carrera, edad ni nombre y no se fusionan perfiles de dos estudiantes.
+- La identidad estable es `google_sub`, único y nullable en `estudiante`.
+  Se guardan además correo verificado y nombre; nunca contraseñas ni tokens
+  de Google. Los registros anteriores quedan sin vincular.
+- Una cuenta nueva completa su cuestionario o su registro de control en el
+  **mismo id creado por Google**, incluidos los datos opcionales y su
+  aceptación legal. Repetir el cuestionario no crea otro estudiante.
+- Los formularios de una cuenta Google van ligados a su sesión mediante una
+  firma: un formulario abierto antes de cambiar de cuenta se rechaza y HTMX
+  vuelve a cargar el correcto. El borrador del cuestionario también comprueba
+  su contexto antes de restaurar respuestas o datos de otra sesión.
+- Al volver a entrar se recupera el mismo `id_estudiante`: diagnóstico,
+  cápsulas, actividades y aceptaciones. El rol guardado prevalece aunque el
+  formulario solicite otro grupo. El control sigue sin personalización VARK.
+- Los datos de Google aparecen en «Mis datos» y su JSON y desaparecen con la
+  supresión del estudiante. La eliminación también cancela sus intentos de
+  vinculación pendientes, por FK con cascada.
+- El acceso es opcional: sin credenciales OAuth continúa funcionando el
+  registro local. Un perfil local que nunca se vinculó y cuya sesión se perdió
+  sigue sin poder recuperarse automáticamente.
+
+### Protocolo y configuración
+
+- `web/routers/google_login.py`: código de autorización OpenID Connect,
+  `state` ligado a una cookie HttpOnly, formulario con CSRF firmado y ligado a
+  la sesión, nonce y PKCE S256. Los intentos duran diez minutos y se consumen
+  atómicamente con `DELETE RETURNING`, también entre procesos distintos.
+- `google-auth[requests]` verifica firma RSA, audiencia, emisor y vigencia;
+  se comprueban también nonce, cliente autorizado y correo verificado. El
+  intercambio de código y secreto ocurre exclusivamente en el servidor, con
+  timeout. No se guardan access tokens, refresh tokens ni ID tokens.
+- Se conservan las cookies firmadas existentes para la sesión de RepasAi.
+  «Salir» también borra las cookies temporales del acceso Google y el borrador
+  del cuestionario. No desconecta al usuario de otros servicios de Google.
+- Se ocultan los parámetros SQL (`hide_parameters=True`) para no imprimir
+  identidad ni verificadores OAuth en el log de desarrollo.
+- `.env.example` y README documentan `GOOGLE_CLIENT_ID`,
+  `GOOGLE_CLIENT_SECRET` y `GOOGLE_REDIRECT_URI`. En el `.env` de esta máquina
+  se agregaron solo las claves ausentes, sin reemplazar valores anteriores.
+  La URI local es `http://127.0.0.1:8000/student/google/callback`.
+- Términos **0.3** y Política **0.5** describen la identidad opcional, la
+  redirección voluntaria a Google, sus cookies temporales y los derechos.
+  Entrar con Google no acepta los documentos automáticamente. Las rutas de
+  acceso y vinculación son excepciones explícitas al guardián de aceptación,
+  para poder recuperar una cuenta antes de aceptar una versión nueva.
+
+### Verificación y base local
+
+- **35 pruebas nuevas** (`test_google_login.py`): configuración ausente,
+  CSRF, PKCE, registro, vinculación, recuperación en otro navegador, rol
+  inmutable, conflictos de cuentas, state ajeno/vencido/repetido, cancelación,
+  caídas del proveedor, cambio de sesión, exportación y supresión con cápsulas.
+  La verificación de JWT se prueba con firmas RSA reales generadas localmente,
+  incluyendo firma alterada, emisor, audiencia, fechas, nonce y correo inválidos.
+- Comprobación focalizada final: **143 pruebas pasan**. El test independiente
+  `node tests/test_borrador_vark.cjs` verifica la sintaxis del JS y tres casos
+  del borrador: restauración propia, cambio de cuenta y datos antiguos sin
+  contexto. Las cuatro comprobaciones pasan, sin navegador ni npm.
+- Migración **`a7c3d9e51f64`** sobre `f6b2c8d40e53`: tres columnas nullable,
+  unicidad de `google_sub` y tabla temporal `intento_google`. Probados upgrade,
+  downgrade y upgrade, roles conservados y eliminación en cascada.
+- Suite completa en esquema temporal: **654 pasan, 24 omitidas y 2 fallan**
+  por falta de `CREATEDB` en dos tests anteriores. Sin base: **412 pasan,
+  264 omitidas y los 4 fallos conocidos** de `test_web_auth.py` (R10).
+  `ruff check .` conserva los **40 avisos anteriores**, ninguno nuevo.
+  `LLM_API_KEY` estuvo vacía, sin llamadas al LLM ni a Google.
+- La base local quedó en `a7c3d9e51f64`, con respaldo previo en
+  `data/antes_google_20261101_162758.dump` (ignorado por Git). Tenía **51
+  estudiantes** al migrar; se compararon todos sus campos anteriores y se
+  conservaron exactamente, incluidos sus roles. El índice FTS sigue intacto.
+- **No se pudo verificar el acceso con una cuenta Google real**: todavía no
+  se han configurado Client ID y Client Secret. La guía de activación y la URI
+  exacta están en README. Tampoco se hizo automatización del navegador en esta
+  entrega; el flujo se verificó por HTTP con el proveedor sustituido en tests.
+
+**Ajuste posterior del login (01-nov):** se retiraron de `/student/login` los
+dos enlaces «Registro local del grupo control» y «Registro local personalizado»,
+y el aviso sin configuración ya no ofrece entrar localmente. La pantalla
+informa que, al crear una cuenta con Google, se solicitan rango etario, género
+y carrera como datos opcionales. Se verificaron su presencia y persistencia
+en ambos grupos y su conservación al recuperar una cuenta; el consentimiento
+del género sigue siendo separado. Las 35 pruebas de Google pasan.
+
+### «Descubre tu estilo»: entrar con Google antes de guardar (01-nov)
+
+El cuestionario sigue abierto sin sesión, pero su POST ya no crea estudiantes
+ni diagnósticos locales. Después de responder, HTMX lleva al acceso Google y
+conserva el borrador de la misma pestaña. Los perfiles locales anteriores deben
+vincularse antes de guardar otro diagnóstico; el registro local de control y
+la API docente conservan su funcionamiento.
+
+La cookie temporal `google_vark` contiene solo el contexto opaco del borrador,
+con firma y vencimiento de diez minutos: primero queda ligada al intento OAuth
+y después a la identidad verificada. Al volver se restauran respuestas, rango
+etario, género y carrera, sin restaurar consentimientos. El usuario los confirma
+y pasa a la revisión final para guardar. Una cuenta existente conserva sus
+datos demográficos y no actualiza su diagnóstico hasta esa confirmación. Una
+cuenta control nunca recibe acceso VARK. Salir y guardar eliminan la marca.
+Sin JavaScript se indica entrar antes de responder para conservar las respuestas.
+
+Se actualizaron README, Términos (0.4) y Privacidad (0.6). No hay migración nueva
+ni modificaciones a `.env`. Se añadieron 12 casos al conjunto Google y se
+adaptaron las pruebas de las vistas al requisito de autenticación; el proveedor
+se sustituye por uno de prueba y no se desactivan los guardianes.
+
+Verificación: **155 pruebas focalizadas pasan**, y seis comprobaciones de
+JavaScript cubren continuidad, datos opcionales, consentimientos sin marcar y
+aislamiento entre cuentas. Suite completa en esquema temporal de Postgres:
+**666 pasan, 24 omitidas, 2 fallan** por el permiso `CREATEDB` de pruebas
+anteriores. Sin Postgres: **412 pasan, 276 omitidas, 4 fallan**, los casos
+conocidos de R10. `LLM_API_KEY` vacía; sin llamadas reales a Google ni al LLM.
+No se verificó el recorrido visual en un navegador ni con una cuenta Google real.
 
 ---
 

@@ -60,8 +60,8 @@ from studify.generation.schemas import Microcapsula
 from studify.rag import orchestrator
 from studify.rag.orchestrator import ErrorPrompt
 from studify.rag.retriever import recuperar
+from studify.vark.perfiles import VERSION_PERFIL_CONTROL, perfil_de_contenido
 from studify.vark.rules import aplicar_reglas
-from studify.vark.scoring import PerfilVark
 from studify.web.routers import auth
 
 logger = logging.getLogger(__name__)
@@ -276,7 +276,8 @@ def crear_capsula(
         )
 
     diagnostico = diagnostico_vigente(db, payload.id_estudiante)
-    if diagnostico is None:
+    perfil = perfil_de_contenido(estudiante, diagnostico)
+    if perfil is None:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=(
@@ -286,13 +287,12 @@ def crear_capsula(
             ),
         )
 
-    perfil = PerfilVark(
-        v=diagnostico.porcentaje_v,
-        a=diagnostico.porcentaje_a,
-        r=diagnostico.porcentaje_r,
-        k=diagnostico.porcentaje_k,
-    )
     config = aplicar_reglas(perfil)
+    id_config = (
+        diagnostico.configuracion.id_config
+        if estudiante.rol != "control" and diagnostico and diagnostico.configuracion
+        else None
+    )
 
     # El canal primario reordena los fragmentos por tipo, no los filtra: un
     # perfil visual ve primero las tablas disponibles, pero si el apunte no
@@ -310,6 +310,7 @@ def crear_capsula(
             fragmentos=fragmentos,
             config=config,
             modelo=ajustes.llm_model,
+            variante=VERSION_PERFIL_CONTROL if estudiante.rol == "control" else "",
         )
     except ErrorPrompt as exc:
         # El caso típico es un objetivo sin material validado. Es un 422 y no un
@@ -334,9 +335,7 @@ def crear_capsula(
                 fila_origen=cacheada,
                 id_estudiante=payload.id_estudiante,
                 id_objetivo=payload.id_objetivo,
-                id_config=diagnostico.configuracion.id_config
-                if diagnostico.configuracion
-                else None,
+                id_config=id_config,
                 huella=prompt.huella,
                 modelo=cacheada.modelo_llm,
             )
@@ -381,7 +380,7 @@ def crear_capsula(
         fila_origen=None,
         id_estudiante=payload.id_estudiante,
         id_objetivo=payload.id_objetivo,
-        id_config=diagnostico.configuracion.id_config if diagnostico.configuracion else None,
+        id_config=id_config,
         huella=prompt.huella,
         modelo=resultado.modelo,
     )

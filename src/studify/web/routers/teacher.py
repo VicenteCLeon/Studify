@@ -29,7 +29,7 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, Uplo
 from fastapi.responses import HTMLResponse
 from pydantic import ValidationError
 from sqlalchemy import Float, cast, func, select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from studify.api.routers.capsules import TIPOS_CUESTIONARIO, ClienteLLM, get_cliente_llm
 from studify.api.routers.knowledge import (
@@ -220,6 +220,7 @@ def get_analytics(request: Request, db: Session = Depends(get_db)):
     # 2. Historial de Cápsulas (últimas 50)
     capsulas = db.scalars(
         select(MicrocapsulaGenerada)
+        .options(selectinload(MicrocapsulaGenerada.estudiante))
         .order_by(MicrocapsulaGenerada.fecha_generacion.desc())
         .limit(50)
     ).all()

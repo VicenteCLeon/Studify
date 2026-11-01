@@ -1,0 +1,372 @@
+"""El grupo control recibe siempre el perfil agregado, sin personalización."""
+
+import csv
+from decimal import Decimal
+from pathlib import Path
+from types import SimpleNamespace
+
+import pytest
+from fastapi.testclient import TestClient
+from sqlalchemy import func, select
+
+from studify.db.models import DiagnosticoVark, Estudiante, MicrocapsulaGenerada
+from studify.main import app
+from studify.vark.scoring import PerfilVark
+from studify.web import sesion
+from tests import test_api_capsulas as pruebas_capsulas
+from tests.conftest import necesita_bd
+
+# Reutilizan el material curado y el doble del LLM de las pruebas del motor.
+escenario = pruebas_capsulas.escenario
+cliente_falso = pruebas_capsulas.cliente_falso
+
+
+def test_perfil_control_es_fijo_y_suma_cien():
+    from studify.vark.perfiles import PERFIL_CONTROL, perfil_de_contenido
+
+    control = SimpleNamespace(rol="control")
+    assert PerfilVark(
+        Decimal("19.12"), Decimal("27.11"), Decimal("25.56"), Decimal("28.21")
+    ) == PERFIL_CONTROL
+    assert PERFIL_CONTROL.total == 100
+    # Ni la falta de diagnóstico ni un perfil individual extremo lo alteran.
+    assert perfil_de_contenido(control, None) == PERFIL_CONTROL
+    assert perfil_de_contenido(control, _diagnostico(100, 0, 0, 0)) == PERFIL_CONTROL
+
+
+def _diagnostico(v, a, r, k):
+    return SimpleNamespace(
+        porcentaje_v=Decimal(v), porcentaje_a=Decimal(a),
+        porcentaje_r=Decimal(r), porcentaje_k=Decimal(k),
+    )
+
+
+def test_estudiante_comun_conserva_su_perfil_individual():
+    from studify.vark.perfiles import perfil_de_contenido
+
+    comun = SimpleNamespace(rol="estudiante")
+    assert perfil_de_contenido(comun, _diagnostico(100, 0, 0, 0)).v == 100
+    assert perfil_de_contenido(comun, _diagnostico(0, 0, 0, 100)).k == 100
+    assert perfil_de_contenido(comun, None) is None
+
+
+def test_entrada_control_reutiliza_aceptacion_y_no_ofrece_cuestionario():
+    html = TestClient(app).get("/student/control").text
+    assert "43 encuestados" in html
+    assert "data-aceptacion" in html
+    assert "data-requiere-acepto" in html
+    assert 'name="acepto"' in html
+    assert 'name="q1"' not in html
+
+
+def test_perfil_control_reproduce_promedio_de_los_43():
+    from scripts.import_vark_csv import leer_selecciones
+    from studify.vark.perfiles import PERFIL_CONTROL
+    from studify.vark.scoring import PuntajesVark, calificar, normalizar_a_porcentajes
+
+    archivo = Path(__file__).resolve().parents[1] / "data/data_cuestionarios_43.csv"
+    if not archivo.is_file():
+        pytest.skip("el CSV original no se versiona")
+    with archivo.open(encoding="utf-8-sig", newline="") as entrada:
+        filas = list(csv.reader(entrada))[1:]
+    perfiles = []
+    for fila in filas:
+        if not any(fila):
+            continue
+        selecciones, errores = leer_selecciones(fila)
+        assert not errores
+        perfiles.append(calificar(selecciones)[1])
+    assert len(perfiles) == 43
+    # Las sumas en centésimas permiten reutilizar el reparto de resto mayor.
+    sumas = [int(sum(p.como_dict()[c] for p in perfiles) * 100) for c in "VARK"]
+    assert normalizar_a_porcentajes(PuntajesVark(*sumas)) == PERFIL_CONTROL
+
+
+@pytest.fixture
+def navegador_control(db):
+    """Registra por HTTP y limpia solo el id creado por este test."""
+    cliente = TestClient(app)
+    respuesta = cliente.post("/student/control", data={"acepto": "si"})
+    assert respuesta.status_code == 204, respuesta.text
+    id_estudiante = int(cliente.cookies.get(sesion.COOKIE_ESTUDIANTE).split(".")[0])
+    try:
+        yield cliente, id_estudiante
+    finally:
+        db.expire_all()
+        estudiante = db.get(Estudiante, id_estudiante)
+        if estudiante is not None:
+            db.delete(estudiante)
+            db.commit()
+
+
+@necesita_bd
+def test_registro_control_sin_diagnostico_con_aceptacion(db, navegador_control):
+    from studify.web import consentimiento
+
+    cliente, id_estudiante = navegador_control
+    estudiante = db.get(Estudiante, id_estudiante)
+    assert estudiante.rol == "control"
+    assert not estudiante.diagnosticos
+    assert not consentimiento.pendientes(db, id_estudiante)
+    assert cliente.get("/student/catalog").status_code == 200
+    datos = cliente.get("/mis-datos/exportar").json()
+    assert datos["estudiante"]["rol"] == "control"
+    assert datos["diagnosticos_vark"] == []
+
+
+@necesita_bd
+@pytest.mark.parametrize("ruta", ["/student/vark", "/student/vark?modo=actualizar"])
+def test_control_no_accede_al_cuestionario(navegador_control, ruta):
+    cliente, _ = navegador_control
+    respuesta = cliente.get(ruta, follow_redirects=False)
+    assert respuesta.status_code == 303
+    assert respuesta.headers["location"] == "/student/profile"
+
+
+@necesita_bd
+@pytest.mark.parametrize("modo", ["nuevo", "actualizar", ""])
+def test_control_no_se_personaliza_con_post_manual(db, navegador_control, modo):
+    cliente, id_estudiante = navegador_control
+    antes = db.scalar(select(func.count()).select_from(Estudiante))
+    respuesta = cliente.post(
+        "/student/vark", data={"q1": "a", "acepto": "si", "modo": modo, "rol": "estudiante"}
+    )
+    assert respuesta.status_code == 403
+    db.expire_all()
+    assert db.get(Estudiante, id_estudiante).rol == "control"
+    assert db.scalar(select(func.count()).select_from(Estudiante)) == antes
+    assert not db.get(Estudiante, id_estudiante).diagnosticos
+
+
+@necesita_bd
+def test_control_tampoco_admite_diagnostico_por_api(db, navegador_control, http_docente):
+    _, id_estudiante = navegador_control
+    respuesta = http_docente.post(
+        "/api/diagnosticos",
+        json={"id_estudiante": id_estudiante, "respuestas": [
+            {"num_pregunta": 1, "alternativas": ["a"]},
+        ]},
+    )
+    assert respuesta.status_code == 403
+    assert db.scalar(select(func.count()).select_from(DiagnosticoVark).where(
+        DiagnosticoVark.id_estudiante == id_estudiante
+    )) == 0
+
+
+@necesita_bd
+def test_perfil_control_explica_origen_y_no_ofrece_personalizar(navegador_control):
+    cliente, _ = navegador_control
+    respuesta = cliente.get("/student/profile")
+    assert respuesta.status_code == 200
+    assert "43" in respuesta.text
+    assert "Perfil general" in respuesta.text
+    assert 'href="/student/vark"' not in respuesta.text
+    assert 'href="/student/vark"' not in cliente.get("/mis-datos").text
+
+
+@necesita_bd
+def test_registro_control_exige_aceptacion_y_consentimiento_de_genero(db):
+    cliente = TestClient(app)
+    antes = db.scalar(select(func.count()).select_from(Estudiante))
+    for datos in (
+        {}, {"acepto": "si", "genero": "Femenino"},
+        {"acepto": "si", "carrera": "x" * 81},
+    ):
+        respuesta = cliente.post("/student/control", data=datos)
+        assert respuesta.status_code == 200
+        assert "alerta-error" in respuesta.text
+    assert db.scalar(select(func.count()).select_from(Estudiante)) == antes
+
+
+@necesita_bd
+def test_registro_control_no_cambia_rol_de_sesion_abierta(navegador_control):
+    cliente, id_estudiante = navegador_control
+    respuesta = cliente.post("/student/control", data={"acepto": "si"})
+    assert respuesta.status_code == 409
+    assert int(cliente.cookies.get(sesion.COOKIE_ESTUDIANTE).split(".")[0]) == id_estudiante
+
+
+@necesita_bd
+def test_computador_compartido_conserva_entrada_control(db, navegador_control):
+    cliente, id_primero = navegador_control
+    html = cliente.get("/student/control").text
+    assert "/student/salir?grupo=control" in html
+    salida = cliente.post(
+        "/student/salir?grupo=control", data={"motivo": "otra_persona"}, follow_redirects=False,
+    )
+    assert salida.headers["location"] == "/student/control"
+    respuesta = cliente.post("/student/control", data={"acepto": "si"})
+    assert respuesta.status_code == 204
+    id_segundo = int(cliente.cookies.get(sesion.COOKIE_ESTUDIANTE).split(".")[0])
+    try:
+        assert id_segundo != id_primero
+        segundo = db.get(Estudiante, id_segundo)
+        assert segundo.rol == "control"
+        assert segundo.origen_registro == "otra_persona"
+        assert db.get(Estudiante, id_primero).rol == "control"
+    finally:
+        db.delete(db.get(Estudiante, id_segundo))
+        db.commit()
+
+
+@necesita_bd
+def test_registro_comun_conserva_personalizacion_e_ignora_rol_del_formulario(db):
+    from tests.identidad_web import enviar_vark
+
+    cliente = TestClient(app)
+    respuesta = enviar_vark(cliente, data={
+        "acepto": "si", "q1": "a", "rol": "control",
+    })
+    assert respuesta.status_code == 204
+    id_estudiante = int(cliente.cookies.get(sesion.COOKIE_ESTUDIANTE).split(".")[0])
+    try:
+        estudiante = db.get(Estudiante, id_estudiante)
+        assert estudiante.rol == "estudiante"
+        assert len(estudiante.diagnosticos) == 1
+        assert 'href="/student/vark"' in cliente.get("/student/profile").text
+        assert cliente.post("/student/control", data={"acepto": "si"}).status_code == 409
+        db.refresh(estudiante)
+        assert estudiante.rol == "estudiante"
+    finally:
+        db.delete(db.get(Estudiante, id_estudiante))
+        db.commit()
+
+
+@necesita_bd
+def test_control_genera_sin_diagnostico_con_audio_y_actividades(
+    db, escenario, navegador_control, cliente_falso, http_docente
+):
+    cliente, id_estudiante = navegador_control
+    objetivo = escenario["objetivo"].id_objetivo
+    respuesta = cliente.post("/api/capsulas", json={
+        "id_estudiante": id_estudiante, "id_objetivo": objetivo,
+        "rol": "estudiante", "perfil": {"v": 100, "a": 0, "r": 0, "k": 0},
+    })
+    assert respuesta.status_code == 201, respuesta.text
+    capsula = respuesta.json()
+    fila = db.get(MicrocapsulaGenerada, capsula["id_capsula"])
+    assert fila.id_config is None  # No se fabrica un diagnóstico de los 43 para esta persona.
+    assert cliente_falso.llamadas == 1
+    visor = cliente.get(f"/student/viewer/{objetivo}")
+    assert visor.status_code == 200
+    assert "Voz de la narración" in visor.text
+    assert "generate-audio" in visor.text
+    assert "Ver perfil general" in visor.text
+    assert cliente_falso.llamadas == 1  # El visor también utiliza el caché genérico.
+    quiz = cliente.post(f"/api/capsulas/{capsula['id_capsula']}/quiz", json={
+        "id_estudiante": id_estudiante, "alternativa_seleccionada": 0,
+    })
+    assert quiz.status_code == 201, quiz.text
+    assert quiz.json()["es_correcta"] is True
+    assert "Control" in http_docente.get("/teacher/analytics").text
+
+
+@necesita_bd
+def test_cache_control_se_comparte_solo_entre_controles(
+    db, escenario, navegador_control, cliente_falso, http_docente
+):
+    from studify.vark.perfiles import PERFIL_CONTROL
+
+    cliente, id_control = navegador_control
+    objetivo = escenario["objetivo"].id_objetivo
+    # Un estudiante personalizado con el mismo vector no presta su caché al control.
+    comun = pruebas_capsulas._estudiante_con_perfil(db, PERFIL_CONTROL)
+    normal = http_docente.post("/api/capsulas", json={
+        "id_estudiante": comun.id_estudiante, "id_objetivo": objetivo,
+    })
+    assert normal.status_code == 201
+    primera = cliente.post("/api/capsulas", json={
+        "id_estudiante": id_control, "id_objetivo": objetivo,
+    })
+    assert primera.status_code == 201
+    assert primera.json()["origen"] == "generada"
+    assert cliente_falso.llamadas == 2
+    otro = Estudiante(rol="control")
+    db.add(otro)
+    db.commit()
+    try:
+        segunda = http_docente.post("/api/capsulas", json={
+            "id_estudiante": otro.id_estudiante, "id_objetivo": objetivo,
+        })
+        assert segunda.status_code == 201
+        assert segunda.json()["origen"] == "cache_compartido"
+        assert segunda.json()["id_estudiante"] == otro.id_estudiante
+        assert cliente_falso.llamadas == 2
+    finally:
+        db.delete(otro)
+        db.commit()
+
+
+@necesita_bd
+def test_diagnostico_individual_no_cambia_generacion_control(
+    db, escenario, navegador_control, cliente_falso, monkeypatch
+):
+    from studify.api.routers import capsules
+    from studify.vark.perfiles import PERFIL_CONTROL
+    from studify.vark.rules import aplicar_reglas
+
+    cliente, id_estudiante = navegador_control
+    # Incluso un diagnóstico agregado por un proceso externo no habilita personalización.
+    diagnostico = DiagnosticoVark(
+        id_estudiante=id_estudiante, puntaje_v=16, puntaje_a=0, puntaje_r=0, puntaje_k=0,
+        porcentaje_v=100, porcentaje_a=0, porcentaje_r=0, porcentaje_k=0,
+    )
+    db.add(diagnostico)
+    db.commit()
+    assert cliente.get(f"/api/diagnosticos/{diagnostico.id_diagnostico}").status_code == 403
+    construir = capsules.orchestrator.construir
+    configuraciones = []
+
+    def capturar(**kwargs):
+        configuraciones.append(kwargs["config"])
+        return construir(**kwargs)
+
+    monkeypatch.setattr(capsules.orchestrator, "construir", capturar)
+    for regenerar in (False, True):
+        respuesta = cliente.post("/api/capsulas", params={"regenerar": regenerar}, json={
+            "id_estudiante": id_estudiante,
+            "id_objetivo": escenario["objetivo"].id_objetivo,
+        })
+        assert respuesta.status_code == 201
+    assert configuraciones == [aplicar_reglas(PERFIL_CONTROL)] * 2
+    assert cliente_falso.llamadas == 2
+
+
+@necesita_bd
+def test_migracion_rol_es_reversible_y_preserva_estudiantes():
+    import runpy
+    from uuid import uuid4
+
+    from alembic.migration import MigrationContext
+    from alembic.operations import Operations
+    from sqlalchemy.exc import IntegrityError
+
+    from studify.db.session import engine
+
+    migracion = runpy.run_path(str(
+        Path(__file__).resolve().parents[1]
+        / "alembic/versions/f6b2c8d40e53_grupo_control.py"
+    ))
+    # DDL transaccional en un esquema propio; no requiere CREATEDB ni toca la cohorte.
+    with engine.connect() as conn:
+        transaccion = conn.begin()
+        try:
+            esquema = "test_rol_" + uuid4().hex
+            conn.exec_driver_sql(f'CREATE SCHEMA "{esquema}"')
+            conn.exec_driver_sql(f'SET LOCAL search_path TO "{esquema}"')
+            conn.exec_driver_sql("CREATE TABLE estudiante (id integer PRIMARY KEY)")
+            conn.exec_driver_sql("INSERT INTO estudiante VALUES (1)")
+            with Operations.context(MigrationContext.configure(conn)):
+                migracion["upgrade"]()
+                assert conn.exec_driver_sql("SELECT rol FROM estudiante").scalar() == "estudiante"
+                conn.exec_driver_sql("INSERT INTO estudiante VALUES (2, 'control')")
+                with pytest.raises(IntegrityError), conn.begin_nested():
+                    conn.exec_driver_sql("INSERT INTO estudiante VALUES (3, 'otro')")
+                migracion["downgrade"]()
+                assert conn.exec_driver_sql("SELECT count(*) FROM estudiante").scalar() == 2
+                migracion["upgrade"]()
+                assert conn.exec_driver_sql(
+                    "SELECT count(*) FROM estudiante WHERE rol = 'estudiante'"
+                ).scalar() == 2
+        finally:
+            transaccion.rollback()

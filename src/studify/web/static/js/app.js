@@ -123,7 +123,7 @@
     // marcadas, y en un computador compartido serían las de otra persona (R2).
     const NO_SE_GUARDAN = ["acepto", "consiento_genero"];
     function save() {
-      const data = { paso: current, marcadas: [] };
+      const data = { contexto: form.dataset.contextoBorrador, paso: current, marcadas: [] };
       form.querySelectorAll('input[type="checkbox"]:checked').forEach((b) => {
         if (!NO_SE_GUARDAN.includes(b.name)) data.marcadas.push(b.name + "=" + b.value);
       });
@@ -141,6 +141,12 @@
         data = JSON.parse(sessionStorage.getItem(VARK_KEY) || "null");
       } catch (e) { data = null; }
       if (!data) return 0;
+      // Un cambio de cuenta no puede restaurar respuestas ni datos del anterior.
+      if (data.contexto !== form.dataset.contextoBorrador &&
+          (!form.dataset.contextoAnterior || data.contexto !== form.dataset.contextoAnterior)) {
+        try { sessionStorage.removeItem(VARK_KEY); } catch (e) { /* nada */ }
+        return 0;
+      }
       (data.marcadas || []).forEach((pair) => {
         const [name, value] = pair.split("=");
         const box = form.querySelector(`input[name="${name}"][value="${value}"]`);
@@ -163,7 +169,8 @@
       else nextBtn.removeAttribute("aria-describedby");
       requiereAcepto.forEach((b) => { b.disabled = !ok; });
 
-      if (current === 0) nextLabel.textContent = "Comenzar";
+      if (current === 0) nextLabel.textContent = form.dataset.contextoAnterior && n > 0
+        ? "Revisar mis respuestas" : "Comenzar";
       else if (current === total) nextLabel.textContent = "Revisar";
       else nextLabel.textContent = isAnswered(current) ? "Siguiente" : "Saltar";
 
@@ -223,7 +230,10 @@
     }
 
     prevBtn.addEventListener("click", () => current > 0 && show(current - 1));
-    nextBtn.addEventListener("click", () => current < last && show(current + 1));
+    nextBtn.addEventListener("click", () => {
+      if (current === 0 && form.dataset.contextoAnterior && answeredCount() > 0) show(last);
+      else if (current < last) show(current + 1);
+    });
     mapa.forEach((btn) => btn.addEventListener("click", () => show(Number(btn.dataset.goto))));
 
     form.addEventListener("change", (e) => {

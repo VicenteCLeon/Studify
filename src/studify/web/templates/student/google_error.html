@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% import "components/ui.html" as ui %}
+{% block title %}Acceso con Google · RepasAi{% endblock %}
+{% block content %}
+<div class="sesion-compartida">
+    {% call ui.empty_state("circle-user", "No se completó el acceso con Google", heading="h1") %}
+    <p>{{ mensaje }}</p>
+    <a href="/student/login{{ '?continuar=vark' if continuar_vark else '' }}" class="btn btn-primary">Volver a intentar</a>
+    <a href="/" class="btn btn-ghost">Ir al inicio</a>
+    {% endcall %}
+</div>
+{% endblock %}

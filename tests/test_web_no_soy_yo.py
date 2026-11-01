@@ -6,8 +6,8 @@ perfil vigente de la primera, su aceptación legal quedaba a nombre de la otra y
 podía ver, exportar o eliminar sus datos en `/mis-datos`. Estos tests fijan lo
 que lo impide:
 
-- el servidor solo agrega un diagnóstico al estudiante de la cookie cuando el
-  formulario dice `modo=actualizar`; cualquier otro envío crea un estudiante;
+- el servidor exige Google y un formulario ligado a esa cuenta para guardar;
+  un envío antiguo sin esa firma nunca escribe en el perfil de otra persona;
 - «Salir» olvida la cookie sin borrar datos;
 - la sesión vence según `SESION_ESTUDIANTE_HORAS` y la firma incluye la
   `fecha_registro`, así que una cookie de una base recreada no vale;
@@ -18,6 +18,7 @@ que lo impide:
 import re
 import time
 from datetime import timedelta
+from uuid import uuid4
 from zoneinfo import ZoneInfo
 
 import pytest
@@ -29,12 +30,24 @@ from studify.db.models import AceptacionLegal, DiagnosticoVark, Estudiante
 from studify.main import app
 from studify.web import legal, sesion, textos
 from tests.conftest import necesita_bd
+from tests.identidad_web import enviar_vark
+from tests.test_google_login import (
+    _iniciar,
+    _volver,
+    google_configurado,  # noqa: F401
+)
+from tests.test_google_login import cuentas as cuentas_google  # noqa: F401
 
 pytestmark = necesita_bd
 
 RESPUESTAS = {"q1": ["a"], "q2": ["b"], "q3": ["c"]}
 ACEPTA = {"acepto": "si"}
 TREINTA_DIAS = 60 * 60 * 24 * 30
+
+
+@pytest.fixture(name="cuentas")
+def cuentas_para_r2(request):
+    return request.getfixturevalue("cuentas_google")
 
 
 @pytest.fixture
@@ -60,9 +73,13 @@ def _id_de_la_cookie(cliente: TestClient) -> int | None:
     return int(crudo.split(".")[0]) if crudo else None
 
 
-def _responder(cliente: TestClient, creados: list[int], **extra) -> int:
-    """Envía el cuestionario y devuelve el estudiante que quedó en la cookie."""
-    respuesta = cliente.post("/student/vark", data=RESPUESTAS | ACEPTA | extra)
+def _responder(cliente: TestClient, creados: list[int], *, cuentas, **extra) -> int:
+    """Entra con una cuenta Google de prueba y confirma el cuestionario real."""
+    cookie = cliente.cookies.get(sesion.COOKIE_ESTUDIANTE)
+    if not cookie or int(cookie.split(".")[2]) <= time.time():
+        cuentas.identidad["sub"] = "google-r2-" + uuid4().hex
+        assert _volver(cliente, cuentas, _iniciar(cliente, cuentas)).status_code == 303
+    respuesta = enviar_vark(cliente, data=RESPUESTAS | ACEPTA | extra)
     assert respuesta.status_code == 204, respuesta.text
     id_estudiante = _id_de_la_cookie(cliente)
     assert id_estudiante is not None
@@ -100,62 +117,59 @@ def _vigentes() -> set[tuple[str, str]]:
     return {(d.clave, d.version) for d in legal.DOCUMENTOS}
 
 
-# --- 1. El servidor nunca reutiliza la sesión sin `modo=actualizar` -----------
+# --- 1. Solo Google y un formulario ligado a su cuenta permiten guardar ------
 
 
-def test_otra_persona_crea_un_estudiante_nuevo_con_su_propia_aceptacion(
-    navegador, db, creados
-):
-    """B responde en el navegador de A: B es otra persona y A queda intacto."""
-    a = _responder(navegador, creados)
+def test_otro_formulario_no_modifica_el_perfil_ni_su_aceptacion(
+    navegador, db, creados, cuentas):
+    """B envía un formulario anterior en el navegador de A: A queda intacto."""
+    a = _responder(navegador, creados, cuentas=cuentas)
     diagnosticos_a = _diagnosticos(db, a)
     aceptaciones_a = _aceptaciones(db, a)
 
-    b = _responder(navegador, creados, modo="nuevo")
-
-    assert b != a
+    respuesta = navegador.post("/student/vark", data=RESPUESTAS | ACEPTA | {"modo": "nuevo"})
+    assert respuesta.status_code == 403
     assert _diagnosticos(db, a) == diagnosticos_a
-    assert _diagnosticos(db, b) == 1
-    # La aceptación queda a nombre de B, y A no recibe filas nuevas.
-    assert _vigentes() <= _aceptaciones(db, b)
     assert _aceptaciones(db, a) == aceptaciones_a
-    assert _id_de_la_cookie(navegador) == b
+    assert _id_de_la_cookie(navegador) == a
 
 
-def test_un_envio_sin_modo_no_toca_al_estudiante_de_la_cookie(navegador, db, creados):
+def test_un_envio_sin_modo_no_toca_al_estudiante_de_la_cookie(navegador, db, creados, cuentas):
     """Un formulario viejo (o un POST armado a mano) no escribe en el perfil de otro."""
-    a = _responder(navegador, creados)
+    a = _responder(navegador, creados, cuentas=cuentas)
     diagnosticos_a = _diagnosticos(db, a)
 
-    b = _responder(navegador, creados)
-
-    assert b != a
+    respuesta = navegador.post("/student/vark", data=RESPUESTAS | ACEPTA)
+    assert respuesta.status_code == 403
+    assert _id_de_la_cookie(navegador) == a
     assert _diagnosticos(db, a) == diagnosticos_a
 
 
-def test_actualizar_agrega_el_diagnostico_al_mismo_estudiante(navegador, db, creados):
-    a = _responder(navegador, creados)
+def test_actualizar_agrega_el_diagnostico_al_mismo_estudiante(navegador, db, creados, cuentas):
+    a = _responder(navegador, creados, cuentas=cuentas)
 
-    de_nuevo = _responder(navegador, creados, modo="actualizar")
+    de_nuevo = _responder(navegador, creados, cuentas=cuentas, modo="actualizar")
 
     assert de_nuevo == a
     assert _diagnosticos(db, a) == 2
     assert _origen(db, a) == "nuevo"
 
 
-def test_actualizar_sin_sesion_crea_un_estudiante(navegador, db, creados):
+def test_actualizar_sin_sesion_exige_google(navegador, db, creados):
     """`modo=actualizar` no es una credencial: sin cookie válida no hay a quién actualizar."""
-    nuevo = _responder(navegador, creados, modo="actualizar")
-
-    assert _diagnosticos(db, nuevo) == 1
-    assert _origen(db, nuevo) == "nuevo"
+    antes = db.scalar(select(func.count()).select_from(Estudiante))
+    respuesta = navegador.post("/student/vark", data=RESPUESTAS | ACEPTA | {"modo": "actualizar"})
+    assert respuesta.status_code == 200
+    assert "Continuar con Google" in respuesta.text
+    assert _id_de_la_cookie(navegador) is None
+    assert db.scalar(select(func.count()).select_from(Estudiante)) == antes
 
 
 # --- 2. «Salir» ---------------------------------------------------------------
 
 
-def test_salir_olvida_la_cookie_y_no_borra_datos(navegador, db, creados):
-    a = _responder(navegador, creados)
+def test_salir_olvida_la_cookie_y_no_borra_datos(navegador, db, creados, cuentas):
+    a = _responder(navegador, creados, cuentas=cuentas)
 
     respuesta = navegador.post("/student/salir", follow_redirects=False)
 
@@ -167,8 +181,8 @@ def test_salir_olvida_la_cookie_y_no_borra_datos(navegador, db, creados):
     assert _diagnosticos(db, a) == 1
 
 
-def test_salir_conserva_la_sesion_del_docente(http_docente, creados):
-    _responder(http_docente, creados)
+def test_salir_conserva_la_sesion_del_docente(http_docente, creados, cuentas):
+    _responder(http_docente, creados, cuentas=cuentas)
     assert http_docente.cookies.get(sesion.COOKIE_DOCENTE) is not None
 
     http_docente.post("/student/salir", follow_redirects=False)
@@ -177,14 +191,14 @@ def test_salir_conserva_la_sesion_del_docente(http_docente, creados):
     assert http_docente.cookies.get(sesion.COOKIE_DOCENTE) is not None
 
 
-def test_la_confirmacion_de_salir(navegador, creados):
-    _responder(navegador, creados)
+def test_la_confirmacion_de_salir(navegador, creados, cuentas):
+    _responder(navegador, creados, cuentas=cuentas)
 
     respuesta = navegador.get("/student/salir")
 
     assert respuesta.status_code == 200
     assert re.search(r'<form[^>]*method="post"[^>]*action="/student/salir"', respuesta.text)
-    assert "responder el cuestionario de nuevo" in respuesta.text
+    assert "cuenta de Google" in respuesta.text
 
 
 def test_salir_sin_sesion_vuelve_a_la_portada(navegador):
@@ -217,8 +231,8 @@ def test_la_portada_avisa_que_saliste(navegador):
 # --- 3. «¿Eres tú?» -----------------------------------------------------------
 
 
-def test_el_cuestionario_con_sesion_pregunta_si_eres_tu(navegador, db, creados):
-    a = _responder(navegador, creados)
+def test_el_cuestionario_con_sesion_pregunta_si_eres_tu(navegador, db, creados, cuentas):
+    a = _responder(navegador, creados, cuentas=cuentas)
     db.expire_all()
     fecha = db.scalars(
         select(DiagnosticoVark.fecha_diagnostico).where(DiagnosticoVark.id_estudiante == a)
@@ -247,9 +261,9 @@ def test_el_cuestionario_sin_sesion_es_para_alguien_nuevo(navegador):
     assert "Soy otra persona" not in html
 
 
-def test_soy_yo_muestra_el_cuestionario_sin_los_datos_opcionales(navegador, creados):
+def test_soy_yo_muestra_el_cuestionario_sin_los_datos_opcionales(navegador, creados, cuentas):
     """Al actualizar, los datos sociodemográficos se descartan: no se piden."""
-    _responder(navegador, creados)
+    _responder(navegador, creados, cuentas=cuentas)
 
     html = navegador.get("/student/vark?modo=actualizar").text
 
@@ -259,8 +273,10 @@ def test_soy_yo_muestra_el_cuestionario_sin_los_datos_opcionales(navegador, crea
     assert 'name="acepto"' in html
 
 
-def test_soy_otra_persona_cierra_la_sesion_y_vuelve_al_cuestionario(navegador, db, creados):
-    a = _responder(navegador, creados)
+def test_soy_otra_persona_cierra_la_sesion_y_vuelve_al_cuestionario(
+    navegador, db, creados, cuentas,
+):
+    a = _responder(navegador, creados, cuentas=cuentas)
 
     respuesta = navegador.post(
         "/student/salir", data={"motivo": "otra_persona"}, follow_redirects=False
@@ -270,7 +286,7 @@ def test_soy_otra_persona_cierra_la_sesion_y_vuelve_al_cuestionario(navegador, d
     assert respuesta.headers["location"] == "/student/vark"
     assert navegador.cookies.get(sesion.COOKIE_ESTUDIANTE) is None
 
-    b = _responder(navegador, creados, modo="nuevo")
+    b = _responder(navegador, creados, cuentas=cuentas, modo="nuevo")
     assert b != a
     assert _origen(db, b) == "otra_persona"
 
@@ -278,41 +294,41 @@ def test_soy_otra_persona_cierra_la_sesion_y_vuelve_al_cuestionario(navegador, d
 # --- 4. Origen del estudiante -------------------------------------------------
 
 
-def test_origen_nuevo(navegador, db, creados):
-    assert _origen(db, _responder(navegador, creados, modo="nuevo")) == "nuevo"
+def test_origen_nuevo(navegador, db, creados, cuentas):
+    assert _origen(db, _responder(navegador, creados, cuentas=cuentas, modo="nuevo")) == "nuevo"
 
 
-def test_el_origen_aparece_en_la_exportacion_de_mis_datos(navegador, creados):
+def test_el_origen_aparece_en_la_exportacion_de_mis_datos(navegador, creados, cuentas):
     """Es un dato del estudiante: el derecho de acceso lo incluye (Política §2)."""
-    _responder(navegador, creados, modo="nuevo")
+    _responder(navegador, creados, cuentas=cuentas, modo="nuevo")
 
     datos = navegador.get("/mis-datos/exportar").json()
 
     assert datos["estudiante"]["origen_registro"] == "nuevo"
 
 
-def test_origen_tras_salir(navegador, db, creados):
-    _responder(navegador, creados)
+def test_origen_tras_salir(navegador, db, creados, cuentas):
+    _responder(navegador, creados, cuentas=cuentas)
     navegador.post("/student/salir")
 
-    b = _responder(navegador, creados, modo="nuevo")
+    b = _responder(navegador, creados, cuentas=cuentas, modo="nuevo")
 
     assert _origen(db, b) == "tras_salir"
     # La marca se usa una vez: el siguiente registro ya no la hereda.
     assert navegador.cookies.get(sesion.COOKIE_ORIGEN) is None
 
 
-def test_origen_con_la_sesion_de_otro_abierta(navegador, db, creados):
+def test_origen_con_la_sesion_de_otro_abierta(navegador, db, creados, cuentas):
     """Una pestaña cargada antes de que el otro abriera sesión: es otra persona."""
-    _responder(navegador, creados)
+    a = _responder(navegador, creados, cuentas=cuentas)
+    respuesta = navegador.post("/student/vark", data=RESPUESTAS | ACEPTA | {"modo": "nuevo"})
+    assert respuesta.status_code == 403
+    assert _origen(db, a) == "nuevo"
+    assert _diagnosticos(db, a) == 1
 
-    b = _responder(navegador, creados, modo="nuevo")
 
-    assert _origen(db, b) == "otra_persona"
-
-
-def test_origen_tras_una_sesion_vencida(navegador, db, creados):
-    a = _responder(navegador, creados)
+def test_origen_tras_una_sesion_vencida(navegador, db, creados, cuentas):
+    a = _responder(navegador, creados, cuentas=cuentas)
     db.expire_all()
     estudiante = db.get(Estudiante, a)
     # Se reemplaza la cookie que dejó el servidor por la misma, ya vencida. Con
@@ -324,7 +340,7 @@ def test_origen_tras_una_sesion_vencida(navegador, db, creados):
         domain="testserver.local",
     )
 
-    b = _responder(navegador, creados, modo="nuevo")
+    b = _responder(navegador, creados, cuentas=cuentas, modo="nuevo")
 
     assert b != a
     assert _origen(db, b) == "sesion_vencida"
@@ -334,11 +350,11 @@ def test_origen_tras_una_sesion_vencida(navegador, db, creados):
 # --- 5. Vencimiento configurable ----------------------------------------------
 
 
-def test_la_sesion_vence_segun_la_configuracion(navegador, monkeypatch, creados):
+def test_la_sesion_vence_segun_la_configuracion(navegador, monkeypatch, creados, cuentas):
     monkeypatch.setattr(get_settings(), "sesion_estudiante_horas", 1)
 
-    respuesta = navegador.post("/student/vark", data=RESPUESTAS | ACEPTA)
-    creados.append(_id_de_la_cookie(navegador))
+    _responder(navegador, creados, cuentas=cuentas)
+    respuesta = enviar_vark(navegador, data=RESPUESTAS | ACEPTA)
 
     expira = int(navegador.cookies.get(sesion.COOKIE_ESTUDIANTE).split(".")[2])
     assert abs(expira - (time.time() + 3600)) < 60
@@ -347,8 +363,8 @@ def test_la_sesion_vence_segun_la_configuracion(navegador, monkeypatch, creados)
     assert f"Max-Age={TREINTA_DIAS}" in respuesta.headers["set-cookie"]
 
 
-def test_una_sesion_vencida_no_da_acceso(navegador, db, creados):
-    a = _responder(navegador, creados)
+def test_una_sesion_vencida_no_da_acceso(navegador, db, creados, cuentas):
+    a = _responder(navegador, creados, cuentas=cuentas)
     db.expire_all()
     estudiante = db.get(Estudiante, a)
     # Se reemplaza la cookie que dejó el servidor por la misma, ya vencida. Con
@@ -369,12 +385,12 @@ def test_una_sesion_vencida_no_da_acceso(navegador, db, creados):
 # --- 6. Cookie de una base recreada -------------------------------------------
 
 
-def test_la_cookie_no_vale_si_cambia_la_fecha_de_registro(navegador, db, creados):
+def test_la_cookie_no_vale_si_cambia_la_fecha_de_registro(navegador, db, creados, cuentas):
     """Tras `reset_db.py` los ids vuelven a 1: la cookie vieja no puede abrir otro perfil.
 
     Basta un microsegundo de diferencia en `fecha_registro` para que deje de valer.
     """
-    a = _responder(navegador, creados)
+    a = _responder(navegador, creados, cuentas=cuentas)
     assert navegador.get("/student/profile", follow_redirects=False).status_code == 200
 
     db.expire_all()
@@ -389,16 +405,16 @@ def test_la_cookie_no_vale_si_cambia_la_fecha_de_registro(navegador, db, creados
 # --- 7. Pistas «¿No eres tú? Salir» -------------------------------------------
 
 
-def test_la_cabecera_ofrece_salir_solo_con_sesion(navegador, creados):
+def test_la_cabecera_ofrece_salir_solo_con_sesion(navegador, creados, cuentas):
     assert 'href="/student/salir"' not in navegador.get("/").text
 
-    _responder(navegador, creados)
+    _responder(navegador, creados, cuentas=cuentas)
 
     assert 'href="/student/salir"' in navegador.get("/student/catalog").text
 
 
-def test_la_portada_con_sesion_pregunta_si_no_eres_tu(navegador, creados):
-    _responder(navegador, creados)
+def test_la_portada_con_sesion_pregunta_si_no_eres_tu(navegador, creados, cuentas):
+    _responder(navegador, creados, cuentas=cuentas)
 
     html = navegador.get("/").text
 

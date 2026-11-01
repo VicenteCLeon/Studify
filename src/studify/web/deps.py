@@ -4,6 +4,7 @@ from typing import Any
 from fastapi import Request
 from fastapi.templating import Jinja2Templates
 
+from studify.config import get_settings
 from studify.web import sesion, textos
 
 # Obtener ruta absoluta para evitar problemas al ejecutar desde distintos directorios
@@ -27,6 +28,11 @@ def _contexto_global(request: Request) -> dict[str, Any]:
     return {
         "es_docente": sesion.es_docente(request),
         "con_sesion_estudiante": sesion.tiene_sesion(request),
+        "es_control": getattr(request.state, "es_control", False),
+        "google_vinculado": getattr(request.state, "google_vinculado", False),
+        "google_disponible": bool(
+            get_settings().google_client_id and get_settings().google_client_secret
+        ),
     }
 
 

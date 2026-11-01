@@ -35,6 +35,10 @@ def datos_de(db: Session, estudiante: Estudiante) -> dict:
     return {
         "estudiante": {
             "id_estudiante": estudiante.id_estudiante,
+            "rol": estudiante.rol,
+            "google_sub": estudiante.google_sub,
+            "google_email": estudiante.google_email,
+            "google_nombre": estudiante.google_nombre,
             "fecha_registro": estudiante.fecha_registro,
             "rango_etario": estudiante.rango_etario,
             "genero": estudiante.genero,

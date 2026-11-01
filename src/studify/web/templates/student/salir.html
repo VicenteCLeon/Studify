@@ -14,9 +14,17 @@
 <div class="sesion-compartida">
     {% call ui.empty_state("log-out", "¿Salir de RepasAi en este navegador?", heading="h1") %}
     <p>
+        {% if google_vinculado %}
+        Tu perfil y tus cápsulas quedan guardados. Puedes recuperarlos entrando con la misma
+        cuenta de Google. Salir de RepasAi no cierra tu cuenta de Google en este navegador.
+        {% else %}
         Tu perfil y tus cápsulas quedan guardados, pero como no hay cuenta, este navegador olvidará
         quién eres. Para volver a usar RepasAi tendrás que responder el cuestionario de nuevo.
+        {% endif %}
     </p>
+    {% if google_disponible and not google_vinculado %}
+    <p><a href="/student/login">Vincula tu perfil a Google antes de salir</a> para poder recuperarlo.</p>
+    {% endif %}
     <div class="cluster">
         <form method="post" action="/student/salir" data-olvidar-borrador>
             <input type="hidden" name="motivo" value="salir">

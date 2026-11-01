@@ -201,6 +201,7 @@
                         <th scope="col">ID</th>
                         <th scope="col">Fecha</th>
                         <th scope="col">Estudiante</th>
+                        <th scope="col">Grupo de estudio</th>
                         <th scope="col">Tema generado</th>
                         <th scope="col">Modelo LLM</th>
                     </tr>
@@ -211,11 +212,12 @@
                         <td data-label="ID" class="tabular">#{{ cap.id_capsula }}</td>
                         <td data-label="Fecha" class="tabular nowrap">{{ cap.fecha_generacion.strftime('%d-%m-%Y %H:%M') }}</td>
                         <td data-label="Estudiante">Estudiante #{{ cap.id_estudiante }}</td>
+                        <td data-label="Grupo de estudio">{{ "Control" if cap.estudiante.rol == "control" else "Personalizado" }}</td>
                         <td data-label="Tema generado">{{ cap.titulo }}</td>
                         <td data-label="Modelo LLM"><code>{{ cap.modelo_llm or 'Desconocido' }}</code></td>
                     </tr>
                     {% else %}
-                    <tr><td colspan="5" class="text-muted">No se han generado cápsulas.</td></tr>
+                    <tr><td colspan="6" class="text-muted">No se han generado cápsulas.</td></tr>
                     {% endfor %}
                 </tbody>
             </table>

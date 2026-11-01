@@ -56,6 +56,12 @@ def solo_su_diagnostico(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"no existe el diagnóstico {id_diagnostico}",
         )
+    estudiante = db.get(Estudiante, solicitante)
+    if estudiante is not None and estudiante.rol == "control":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="El grupo control solo tiene acceso al perfil general.",
+        )
 
 
 def _armar_respuesta(
@@ -119,6 +125,17 @@ def crear_diagnostico(payload: DiagnosticoIn, db: Session = Depends(get_db)) -> 
     individuales se guardan (tabla 17.3) para poder recalcular los perfiles si
     cambia la matriz de puntuación, sin volver a aplicar el cuestionario.
     """
+    if payload.id_estudiante is not None:
+        existente = db.get(Estudiante, payload.id_estudiante)
+        if existente is not None and existente.rol == "control":
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=(
+                    "El grupo control utiliza el perfil general "
+                    "y no admite personalización VARK."
+                ),
+            )
+
     # Las letras se traducen a canales acá y no en el cliente: la matriz de
     # puntuación es del servidor (ver studify.vark.instrumento).
     selecciones: list[Seleccion] = []

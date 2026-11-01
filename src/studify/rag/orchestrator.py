@@ -189,6 +189,7 @@ def huella(
     objetivo: ObjetivoAprendizaje,
     modelo: str,
     palabras_objetivo: int,
+    variante: str = "",
 ) -> str:
     """Clave de caché: todo lo que entra al prompt, salvo los pesos `C_*`.
 
@@ -229,6 +230,10 @@ def huella(
         f"fragmentos={_sha(material)}",
         f"plantillas={_huella_plantillas()}",
     ]
+    if variante:
+        # El material del grupo control no se mezcla con el caché personalizado,
+        # aunque un perfil individual caiga en el mismo tramo de las reglas.
+        partes.append(f"variante={variante}")
     return _sha("|".join(partes))
 
 
@@ -238,6 +243,7 @@ def construir(
     fragmentos: Sequence[FragmentoRecuperado],
     config: ConfiguracionGenerada,
     modelo: str,
+    variante: str = "",
 ) -> PromptMaestro:
     """Arma el prompt maestro completo para un objetivo y un perfil."""
     ajustes = get_settings()
@@ -274,5 +280,6 @@ def construir(
             objetivo=objetivo,
             modelo=modelo,
             palabras_objetivo=palabras_objetivo,
+            variante=variante,
         ),
     )

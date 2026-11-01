@@ -63,7 +63,7 @@
                     {{ ui.icon("layers") }}<span>Temas</span>
                 </a>
                 <a href="/student/profile" {% if ruta.startswith('/student/profile') or ruta.startswith('/student/vark') %}aria-current="page"{% endif %}>
-                    {{ ui.icon("circle-user") }}<span>Mi perfil</span>
+                    {{ ui.icon("circle-user") }}<span>{{ "Perfil general" if es_control else "Mi perfil" }}</span>
                 </a>
             </nav>
 
@@ -97,6 +97,11 @@
                 {% if con_sesion_estudiante %}
                 <a href="/student/salir" class="btn btn-ghost btn-sm">
                     {{ ui.icon("log-out") }}<span>Salir</span>
+                </a>
+                {% endif %}
+                {% if google_disponible %}
+                <a href="/student/login" class="btn btn-ghost btn-sm">
+                    {{ ui.icon("circle-user") }}<span>{{ "Mi cuenta" if google_vinculado else "Entrar con Google" }}</span>
                 </a>
                 {% endif %}
                 {% if es_docente %}
@@ -175,7 +180,7 @@
             {{ ui.icon("layers") }}<span>Temas</span>
         </a>
         <a href="/student/profile" {% if ruta.startswith('/student/profile') or ruta.startswith('/student/vark') %}aria-current="page"{% endif %}>
-            {{ ui.icon("circle-user") }}<span>Perfil</span>
+            {{ ui.icon("circle-user") }}<span>{{ "Perfil general" if es_control else "Perfil" }}</span>
         </a>
     </nav>
 

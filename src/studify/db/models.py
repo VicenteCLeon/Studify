@@ -69,6 +69,9 @@ class Estudiante(Base):
     __tablename__ = "estudiante"
     __table_args__ = (
         CheckConstraint(
+            "rol IN ('estudiante', 'control')", name="ck_estudiante_rol",
+        ),
+        CheckConstraint(
             "voz_genero IS NULL OR voz_genero IN ('femenina', 'masculina')",
             name="ck_estudiante_voz_genero",
         ),
@@ -84,6 +87,16 @@ class Estudiante(Base):
     )
 
     id_estudiante: Mapped[int] = mapped_column(primary_key=True)
+    # Brazo del piloto, independiente del estilo VARK. Los registros anteriores
+    # y las altas habituales conservan la personalización individual.
+    rol: Mapped[str] = mapped_column(
+        String(20), default="estudiante", server_default="estudiante", nullable=False
+    )
+    # `sub` es la identidad estable de Google; el correo puede cambiar. NULL
+    # conserva los registros previos y permite vincularlos desde su sesión.
+    google_sub: Mapped[str | None] = mapped_column(String(255), unique=True)
+    google_email: Mapped[str | None] = mapped_column(String(320))
+    google_nombre: Mapped[str | None] = mapped_column(String(200))
     rango_etario: Mapped[str | None] = mapped_column(String(20))
     # La tabla 17.1 declara VARCHAR(20), pero el propio instrumento ofrece la
     # alternativa "No Binario / otra identidad" (27 caracteres), que no cabe.
@@ -132,6 +145,24 @@ class Estudiante(Base):
     )
     aceptaciones: Mapped[list["AceptacionLegal"]] = relationship(
         back_populates="estudiante", cascade="all, delete-orphan"
+    )
+
+
+class IntentoGoogle(Base):
+    """Transacción OAuth de diez minutos y un solo uso, compartida entre workers."""
+
+    __tablename__ = "intento_google"
+    __table_args__ = (
+        CheckConstraint("rol IN ('estudiante', 'control')", name="ck_intento_google_rol"),
+    )
+
+    estado_hash: Mapped[str] = mapped_column(String(64), primary_key=True)
+    nonce: Mapped[str] = mapped_column(String(128))
+    verificador: Mapped[str] = mapped_column(String(128))
+    expira: Mapped[datetime] = mapped_column(TS, index=True)
+    rol: Mapped[str] = mapped_column(String(20))
+    id_estudiante: Mapped[int | None] = mapped_column(
+        ForeignKey("estudiante.id_estudiante", ondelete="CASCADE")
     )
 
 

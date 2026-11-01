@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% import "components/ui.html" as ui %}
+{% block title %}Entrar con Google · RepasAi{% endblock %}
+{% block content %}
+<div class="sesion-compartida">
+    <section class="card stack">
+        <h1>{{ "Vincular mi perfil a Google" if estudiante and not estudiante.google_sub else "Entrar con Google" }}</h1>
+        {% if not google_configurado %}
+        {% call ui.alert("info", "Google no está configurado") %}
+            El equipo debe habilitar el acceso con Google en esta instalación.
+        {% endcall %}
+        {% elif estudiante and estudiante.google_sub %}
+        <p>Tu perfil está vinculado a <strong>{{ estudiante.google_email }}</strong>.
+            Después de salir puedes volver a entrar con esa misma cuenta y recuperar tus datos.</p>
+        <a href="/student/profile" class="btn btn-primary">Ver mi perfil</a>
+        {% else %}
+        {% if estudiante %}
+        <p>Confirma que este es tu perfil antes de vincularlo. Tus cápsulas, diagnósticos,
+            consentimientos y grupo de estudio seguirán asociados al mismo registro.</p>
+        <p>Si esta sesión pertenece a otra persona, <a href="/student/salir">sal primero</a>.</p>
+        {% else %}
+        {% if continuar_vark %}
+        <p>Ya completaste el cuestionario. Entra con Google para guardar tu perfil.
+            Conservaremos tus respuestas en este navegador. Al volver, revisa los datos
+            y confirma su guardado; no tendrás que responder las preguntas nuevamente.</p>
+        {% else %}
+        <p>Recupera tu perfil con la misma cuenta de Google, incluso desde otro navegador.
+            Si es tu primera visita, después de entrar te pediremos tu rango de edad,
+            género y carrera como datos opcionales para el análisis de resultados.</p>
+        {% endif %}
+        {% endif %}
+        <p>Google compartirá tu identificador, nombre y correo verificado.
+            Revisa la <a href="/privacidad#google">Política de Privacidad</a> antes de continuar.</p>
+        <form method="post" action="/student/google/iniciar" class="stack" {% if not continuar_vark %}data-olvidar-borrador{% endif %}>
+            <input type="hidden" name="csrf" value="{{ csrf }}">
+            {% if continuar_vark %}<input type="hidden" name="continuar" value="vark">{% endif %}
+            <input type="hidden" name="accion" value="{{ 'vincular' if estudiante else 'entrar' }}">
+            {% if estudiante %}
+            <p>Tu grupo de estudio se conserva al vincular la cuenta.</p>
+            {% elif not continuar_vark %}
+            <div class="form-group">
+                <label class="form-label" for="google-grupo">Grupo asignado para tu primer registro</label>
+                <select id="google-grupo" name="rol" class="form-control">
+                    <option value="estudiante" {% if rol_registro == 'estudiante' %}selected{% endif %}>Personalizado</option>
+                    <option value="control" {% if rol_registro == 'control' %}selected{% endif %}>Control (perfil general)</option>
+                </select>
+                <p class="form-hint">Si ya tienes una cuenta, se recuperará tu grupo original.</p>
+            </div>
+            {% endif %}
+            <button class="btn btn-primary btn-lg" type="submit">{{ 'Vincular mi perfil con Google' if estudiante else 'Continuar con Google' }}</button>
+        </form>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

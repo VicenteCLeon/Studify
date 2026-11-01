@@ -9,7 +9,7 @@
 
 <div class="catalogo">
     {{ ui.page_header("¿Qué quieres repasar hoy?",
-        "Elige un tema y RepasAi arma una microcápsula adaptada a tu perfil. Solo aparecen temas con material institucional ya revisado por un docente.",
+        "Elige un tema y RepasAi arma una microcápsula con el perfil general del grupo control. Solo aparecen temas con material institucional ya revisado por un docente." if es_control else "Elige un tema y RepasAi arma una microcápsula adaptada a tu perfil. Solo aparecen temas con material institucional ya revisado por un docente.",
         "Temas", "layers") }}
 
     {% if asignaturas %}
@@ -96,7 +96,7 @@
             {% if es_docente %}
             <a href="/teacher/curation" class="btn btn-primary">{{ ui.icon("folder-check") }}Ir al panel de curación</a>
             {% endif %}
-            <a href="/student/profile" class="btn btn-secondary">{{ ui.icon("circle-user") }}Ver mi perfil</a>
+            <a href="/student/profile" class="btn btn-secondary">{{ ui.icon("circle-user") }}{{ "Ver perfil general" if es_control else "Ver mi perfil" }}</a>
         </div>
         {% endcall %}
     </div>

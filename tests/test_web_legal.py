@@ -31,6 +31,7 @@ from studify.main import app
 from studify.media import audio
 from studify.web import consentimiento, legal, narracion, sesion
 from tests.conftest import cookie_de, necesita_bd
+from tests.identidad_web import enviar_vark
 from tests.test_web_auth import rutas_montadas
 
 AVISO_IA = (
@@ -197,7 +198,7 @@ def test_sin_aceptar_no_se_crea_el_estudiante(http, db):
 def test_la_aceptacion_queda_registrada_con_version_y_hora_utc(http, db, creados):
     antes = datetime.now(UTC)
 
-    respuesta = http.post("/student/vark", data=RESPUESTAS | {"acepto": "si"})
+    respuesta = enviar_vark(http, data=RESPUESTAS | {"acepto": "si"})
 
     assert respuesta.status_code == 204
     id_estudiante = _id_de_la_cookie(http)
@@ -221,7 +222,7 @@ def test_el_genero_exige_su_propio_consentimiento(http, db, creados):
     assert "alerta-error" in sin_consentimiento.text
     assert _id_de_la_cookie(http) is None
 
-    con_consentimiento = http.post("/student/vark", data=datos | {"consiento_genero": "si"})
+    con_consentimiento = enviar_vark(http, data=datos | {"consiento_genero": "si"})
     assert con_consentimiento.status_code == 204
     id_estudiante = _id_de_la_cookie(http)
     creados.append(id_estudiante)
@@ -234,7 +235,7 @@ def test_el_genero_exige_su_propio_consentimiento(http, db, creados):
 
 @necesita_bd
 def test_sin_genero_no_se_registra_consentimiento_de_genero(http, db, creados):
-    http.post("/student/vark", data=RESPUESTAS | {"acepto": "si", "consiento_genero": "si"})
+    enviar_vark(http, data=RESPUESTAS | {"acepto": "si", "consiento_genero": "si"})
     id_estudiante = _id_de_la_cookie(http)
     creados.append(id_estudiante)
 
@@ -268,7 +269,7 @@ def test_un_estudiante_sin_aceptacion_va_primero_a_aceptar(http, db, creados):
 def test_una_version_nueva_se_vuelve_a_pedir_y_conserva_el_historial(
     http, db, creados, monkeypatch
 ):
-    http.post("/student/vark", data=RESPUESTAS | {"acepto": "si"})
+    enviar_vark(http, data=RESPUESTAS | {"acepto": "si"})
     id_estudiante = _id_de_la_cookie(http)
     creados.append(id_estudiante)
     assert http.get("/student/catalog", follow_redirects=False).status_code == 200
@@ -303,7 +304,7 @@ def test_una_version_nueva_se_vuelve_a_pedir_y_conserva_el_historial(
 
 @necesita_bd
 def test_aceptar_no_sirve_de_redirector_a_otro_sitio(http, db, creados, monkeypatch):
-    http.post("/student/vark", data=RESPUESTAS | {"acepto": "si"})
+    enviar_vark(http, data=RESPUESTAS | {"acepto": "si"})
     creados.append(_id_de_la_cookie(http))
     _nueva_version_de_terminos(monkeypatch)
 
@@ -341,7 +342,7 @@ def test_todas_las_vistas_del_estudiante_exigen_la_aceptacion():
 
 
 def _conectado(http, creados) -> int:
-    http.post("/student/vark", data=RESPUESTAS | {"acepto": "si", "carrera": "Carrera de prueba"})
+    enviar_vark(http, data=RESPUESTAS | {"acepto": "si", "carrera": "Carrera de prueba"})
     id_estudiante = _id_de_la_cookie(http)
     creados.append(id_estudiante)
     return id_estudiante

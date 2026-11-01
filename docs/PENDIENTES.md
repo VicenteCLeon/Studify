@@ -10,7 +10,7 @@
 > `AVANCE.md` con su commit. Las listas de origen quedan como registro de su
 > fecha y no se vuelven a actualizar.
 >
-> Última revisión: 27-oct-2026. Las ubicaciones de código van por función; los
+> Última revisión: 01-nov-2026. Las ubicaciones de código van por función; los
 > números de línea son aproximados.
 
 ---
@@ -46,6 +46,23 @@ todos previos; O1 suma los 16 tests de `test_config_seguridad.py`):
 |---|---|---|---|
 | Puerto cerrado | 381 pasan, 224 omitidos, 4 fallan | 397 pasan, 224 omitidos, 4 fallan | Los mismos 4 de `test_web_auth.py` sin `@necesita_bd` (R10) |
 | Con Postgres | 607 pasan, 2 omitidos, 0 fallan | 623 pasan, 2 omitidos, 0 fallan | Ninguno: los 2 de `test_interaccion_quiz.py` pasan porque la tabla estaba vacía (R10) |
+
+**Verificación local del grupo control, 01-nov-2026:** 20 pruebas nuevas pasan.
+Suite con Postgres en un esquema temporal: 619 pasan, 24 omitidas, 2 fallan
+por falta del permiso `CREATEDB` en pruebas anteriores de migraciones. Sin
+base: 397 pasan, 244 omitidas, los mismos 4 fallos de `test_web_auth.py` (R10).
+No se cambió la suite anterior ni se concedieron permisos adicionales.
+
+**Google Identity, 01-nov-2026:** 35 pruebas nuevas pasan. Suite con Postgres
+en esquema temporal: 654 pasan, 24 omitidas y 2 fallan por `CREATEDB`.
+Sin base: 412 pasan, 264 omitidas y los 4 fallos conocidos de R10.
+Implementación y migración: AVANCE §5 octtricies. La activación real está en O6.
+
+**VARK requiere Google para guardar, 01-nov-2026:** 155 pruebas focalizadas
+pasan. Suite con Postgres: 666 pasan, 24 omitidas y los 2 fallos anteriores por
+`CREATEDB`. Sin base: 412 pasan, 276 omitidas y los 4 fallos conocidos de R10.
+El borrador se conserva durante el acceso; falta verificarlo con Google real
+y en el navegador junto con O6. Detalle en AVANCE §5 octtricies.
 
 ---
 
@@ -225,6 +242,11 @@ El horizonte del plan terminaba el 09-oct-2026. Origen: `PLAN_DESARROLLO.md` §4
 - **E1. A/B pedagógico:** definir cómo se registran las calificaciones de los
   dos grupos (es dato externo, la base no lo captura) y qué material exacto
   estudia el grupo de control para que sea comparable en cobertura y tiempo.
+  - El **rol control ya está implementado** (01-nov, AVANCE §5 septtricies):
+    usa el mismo catálogo y motor con el perfil promedio fijo de los 43
+    encuestados. El rol habitual conserva el perfil individual. El equipo
+    distribuye `/student/control`; no hay asignación aleatoria. Esto no
+    reemplaza el diseño experimental, los instrumentos ni las calificaciones.
 - **E2. Batería técnica:** 20 a 30 consultas controladas con rúbrica 1–5 y
   doble evaluador (fidelidad, exactitud factual, relevancia, trazabilidad).
   `scripts/eval_runner.py` hoy cubre un objetivo y perfiles puros.
@@ -286,6 +308,9 @@ Origen: `AVANCE.md` §5 tervicies «Riesgos legales que siguen abiertos» y
   y fijar `LLM_MODEL=deepseek-flash` en el `.env` (desde el 11-oct). Los datos
   VARK de la máquina 2 siguen sin auditar: puede tener el mismo ruido de tests
   que tuvo la máquina 1. Origen: AVANCE §9 y §5 quatertricies.
+  - **Máquina 2, 01-nov:** esquema actualizado a `f6b2c8d40e53` (grupo control),
+    previo respaldo. Conserva los 49 estudiantes anteriores; sus datos VARK
+    siguen sin auditar. Falta comprobar modelo y credenciales locales (O1).
 - **O3. `scripts/reset_db.py` no pide confirmación** antes de `drop_all`.
   Origen: AVANCE §6 n.º 12.
 - **O4. Los `codigo_objetivo` siguen el patrón `PREFIJO-Ux-NN`, pero la API no
@@ -293,6 +318,14 @@ Origen: `AVANCE.md` §5 tervicies «Riesgos legales que siguen abiertos» y
   materia. Origen: AVANCE §5 undetricies.
 - **O5. Kokoro tiene episodios de ~0,6 × la duración del audio** que no se
   explicaron (la mediana es ~0,19). Origen: AVANCE §5 duotricies.
+- **O6. Activar y probar Google Identity.** El código de D6 está implementado
+  (01-nov, AVANCE §5 octtricies) y la migración `a7c3d9e51f64` está aplicada en
+  la máquina 2. Falta crear/configurar en Google Cloud un cliente OAuth 2.0 de
+  tipo Aplicación web, su pantalla de consentimiento y los usuarios de prueba;
+  fijar `GOOGLE_CLIENT_ID` y `GOOGLE_CLIENT_SECRET` en `.env`, y registrar la
+  URI exacta `http://127.0.0.1:8000/student/google/callback`. Reiniciar y probar
+  entrar, vincular y recuperar el perfil con una cuenta real. Las claves se
+  agregaron vacías y no se reemplazaron otros valores locales. Pasos en README.
 
 ## D. Decisiones con la profesora guía
 
@@ -315,15 +348,12 @@ Origen: `AVANCE.md` §5 tervicies «Riesgos legales que siguen abiertos» y
 - **D5. H13 — los pesos C_* llegan al prompt con el nombre de su canal.** Se
   mantuvo como decisión de diseño; si el cap. 17.2 se lee de forma estricta,
   hay que decidirlo aparte. Origen: H13.
-- **D6. Identidad del estudiante:** hoy es solo la cookie firmada; una fase
-  posterior agregaría Google Identity, con el consentimiento y los derechos
-  colgando de `id_estudiante`. Origen: AVANCE §6 n.º 18.
-  - **Recuperar el perfil** (aceptado como limitación el 24-oct, con R2): sin
-    cuenta, quien pulsa «Salir», cambia de computador o deja vencer la sesión
-    no puede volver a su perfil y, si responde de nuevo, queda duplicado. Los
-    duplicados posibles quedan marcados en `estudiante.origen_registro`
-    (`tras_salir`, `otra_persona`, `sesion_vencida`). Un código de
-    recuperación sería una credencial: se decide junto con D6.
+- **D6. Perfiles históricos sin vinculación y sin sesión válida.** El acceso
+  y la recuperación mediante Google ya están implementados (AVANCE §5
+  octtricies; activación pendiente O6). Los registros del CSV y los perfiles
+  locales cuya cookie se perdió no contienen una identidad verificable para
+  vincularlos a una cuenta. Acordar cómo tratar esos históricos en el piloto;
+  no se emparejan por correo, nombre o sociodemográficos ni se fusionan solos.
 
 ## X. Extensiones planificadas
 

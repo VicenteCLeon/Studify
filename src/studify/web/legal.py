@@ -42,8 +42,10 @@ TERMINOS = Documento(
     template="legal/terminos.html",
     # 0.2: motores de voz, componentes de terceros y licencias, licencia del
     # código y declaración de prototipo académico. Fecha = día en que se publique.
-    version="0.2",
-    actualizado=date(2026, 10, 5),
+    # 0.3: acceso opcional con Google y recuperación del perfil vinculado.
+    # 0.4: Google obligatorio antes de guardar el perfil VARK en la web.
+    version="0.4",
+    actualizado=date(2026, 11, 1),
 )
 
 PRIVACIDAD = Documento(
@@ -56,8 +58,11 @@ PRIVACIDAD = Documento(
     # 0.3: «Salir» y la sesión compartida (R2): `origen_registro` como dato
     # nuevo, la cookie del mismo nombre y el vencimiento de la sesión.
     # Fecha = día en que se publique.
-    version="0.3",
-    actualizado=date(2026, 10, 24),
+    # 0.4: rol del piloto y perfil general fijo para el grupo control.
+    # 0.5: identidad Google y cookies/transacciones temporales de autenticación.
+    # 0.6: continuidad del borrador al autenticar y Google para guardar VARK.
+    version="0.6",
+    actualizado=date(2026, 11, 1),
 )
 
 DOCUMENTOS = (TERMINOS, PRIVACIDAD)

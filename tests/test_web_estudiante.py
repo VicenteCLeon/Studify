@@ -31,6 +31,7 @@ from studify.main import app
 from studify.vark import instrumento
 from studify.web import sesion
 from tests.conftest import cliente_con_proveedor_caido, necesita_bd
+from tests.identidad_web import enviar_vark
 
 
 @pytest.fixture
@@ -137,7 +138,7 @@ def test_portada_con_sesion_lleva_al_catalogo(cliente, limpiar_estudiantes):
     Necesita la base desde R2: la sesión vale solo si el estudiante existe con
     la misma `fecha_registro` que firmó la cookie.
     """
-    cliente.post("/student/vark", data={"q1": ["a"]} | ACEPTA)
+    enviar_vark(cliente, data={"q1": ["a"]} | ACEPTA)
     limpiar_estudiantes.append(_id_de_la_cookie(cliente))
 
     respuesta = cliente.get("/")
@@ -175,7 +176,7 @@ def test_cookie_manipulada_se_ignora(cliente, valor):
 
 @necesita_bd
 def test_la_cookie_no_es_legible_por_scripts(cliente, limpiar_estudiantes):
-    respuesta = cliente.post("/student/vark", data={"q1": ["a"]} | ACEPTA)
+    respuesta = enviar_vark(cliente, data={"q1": ["a"]} | ACEPTA)
     limpiar_estudiantes.append(_id_de_la_cookie(cliente))
 
     cabecera = respuesta.headers.get("set-cookie", "")
@@ -201,7 +202,7 @@ def test_el_cuestionario_persiste_el_diagnostico_completo(
     datos["q3"] = ["d", "c"]
     datos["carrera"] = "Ingeniería Civil Informática"
 
-    respuesta = cliente.post("/student/vark", data=datos | ACEPTA)
+    respuesta = enviar_vark(cliente, data=datos | ACEPTA)
 
     assert respuesta.status_code == 204
     assert respuesta.headers["HX-Redirect"] == "/student/profile"
@@ -242,7 +243,7 @@ def test_el_perfil_muestra_el_vector_y_la_configuracion_guardados(
     cliente, db, limpiar_estudiantes
 ):
     """La pantalla tiene que decir lo mismo que la base, no un valor de ejemplo."""
-    cliente.post("/student/vark", data={f"q{n}": ["c"] for n in range(1, 17)} | ACEPTA)
+    enviar_vark(cliente, data={f"q{n}": ["c"] for n in range(1, 17)} | ACEPTA)
     id_estudiante = _id_de_la_cookie(cliente)
     limpiar_estudiantes.append(id_estudiante)
 
@@ -270,15 +271,15 @@ def test_responder_de_nuevo_agrega_un_diagnostico_al_mismo_estudiante(
 
     Si lo hiciera, la cohorte del A/B de la Fase 5 quedaría inflada con
     duplicados y las cápsulas de un mismo estudiante repartidas entre varios
-    identificadores. Desde R2 hace falta `modo=actualizar`: sin él, el envío es
-    de otra persona (ver `tests/test_web_no_soy_yo.py`).
+    identificadores. Desde Google el formulario debe ir ligado a esa cuenta;
+    un envío anterior sin su token no la modifica (test_web_no_soy_yo.py).
     """
-    cliente.post("/student/vark", data={f"q{n}": ["a"] for n in range(1, 17)} | ACEPTA)
+    enviar_vark(cliente, data={f"q{n}": ["a"] for n in range(1, 17)} | ACEPTA)
     id_estudiante = _id_de_la_cookie(cliente)
     limpiar_estudiantes.append(id_estudiante)
 
-    cliente.post(
-        "/student/vark",
+    enviar_vark(
+        cliente,
         data={f"q{n}": ["c"] for n in range(1, 17)} | ACEPTA | {"modo": "actualizar"},
     )
 
@@ -523,8 +524,8 @@ def material(db):
 @pytest.fixture
 def estudiante_conectado(cliente, limpiar_estudiantes):
     """Un estudiante con perfil kinestésico, creado por el propio cuestionario."""
-    cliente.post(
-        "/student/vark",
+    enviar_vark(
+        cliente,
         data={f"q{n}": ["d"] for n in range(1, 17)} | {"carrera": CARRERA_PRUEBA} | ACEPTA,
     )
     id_estudiante = _id_de_la_cookie(cliente)

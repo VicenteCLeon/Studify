@@ -16,7 +16,7 @@ from studify.config import get_settings, verificar_configuracion
 from studify.db.session import engine, get_db
 from studify.web import sesion
 from studify.web.deps import templates
-from studify.web.routers import auth, legal, student, teacher
+from studify.web.routers import auth, google_login, legal, student, teacher
 
 settings = get_settings()
 # Antes de montar nada: fuera de `APP_ENV=dev`, sin un SESSION_SECRET fuerte o
@@ -40,6 +40,7 @@ app.include_router(capsules.router)
 app.include_router(knowledge.router_docente)
 app.include_router(capsules.router_docente)
 app.include_router(student.router)
+app.include_router(google_login.router)
 # Antes que `teacher.router`: `/teacher/login` tiene que resolverse por el
 # router abierto y no quedar detrás del guardián del panel.
 app.include_router(auth.router)
