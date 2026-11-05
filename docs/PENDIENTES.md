@@ -108,6 +108,16 @@ descripción de cada commit.
   Postgres responde antes de correr la suite con base.
   Origen: AVANCE §5 duodetricies («H11: `test_api_diagnosticos` se cuelga sin
   Postgres») y R10.
+- **R14. `scripts/eval_runner.py` puede enviar la clave de DeepSeek a otros
+  proveedores.** En la línea 104, `api_key = os.environ.get(env_key) or
+  os.environ.get("LLM_API_KEY")`: si faltan `QWEN_API_KEY` o `GLM_API_KEY`, usa
+  `LLM_API_KEY` (la de DeepSeek) y la manda a `dashscope-intl.aliyuncs.com` y a
+  `open.bigmodel.cn`. El respaldo solo debería valer para el modelo cuyo
+  proveedor es el de `LLM_API_KEY`; para los demás, sin su clave propia, saltar.
+  Además, por defecto sobrescribe `data/resultados_evaluacion.csv`. **No usar
+  `eval_runner.py` hasta arreglarlo**; para verificar perfiles K está
+  `scripts/verificar_1c_k.py`. Va en su propio punto. Origen: revisión del
+  punto 1c, 05-nov-2026.
 
 ### Prioridad media
 
