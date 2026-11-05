@@ -72,4 +72,20 @@ continuacion.save();
 assert.equal(JSON.parse(memoria.get("draft")).contexto, "cuenta-google");
 assert.deepEqual(JSON.parse(memoria.get("draft")).marcadas, ["q1=a"]);
 assert.equal(formulario("cuenta-google").restore(), 3);
-console.log("6 comprobaciones correctas: sintaxis, borrador propio, aislamiento, legado, continuidad Google y migración de contexto.");
+// Punto 2a: elegir Control en el acceso descarta el borrador del cuestionario.
+const inicioGrupo = source.indexOf("  function olvidarBorradorSiControl(");
+const finGrupo = source.indexOf("  function initGrupoBorrador(", inicioGrupo);
+assert.ok(inicioGrupo >= 0 && finGrupo > inicioGrupo, "No se encontró olvidarBorradorSiControl");
+const olvidar = new Function("VARK_KEY", source.slice(inicioGrupo, finGrupo) +
+  "; return olvidarBorradorSiControl;")("draft");
+function acceso(rol) {
+  return { querySelector: () => (rol ? { value: rol } : null) };
+}
+memoria.set("draft", guardado);
+assert.equal(olvidar(acceso("estudiante"), storage), false);
+assert.equal(memoria.has("draft"), true);
+assert.equal(olvidar(acceso(null), storage), false);
+assert.equal(memoria.has("draft"), true);
+assert.equal(olvidar(acceso("control"), storage), true);
+assert.equal(memoria.has("draft"), false);
+console.log("7 comprobaciones correctas: sintaxis, borrador propio, aislamiento, legado, continuidad Google, migración de contexto y descarte al elegir Control.");

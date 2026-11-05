@@ -31,21 +31,30 @@
         {% endif %}
         <p>Google compartirá tu identificador, nombre y correo verificado.
             Revisa la <a href="/privacidad#google">Política de Privacidad</a> antes de continuar.</p>
-        <form method="post" action="/student/google/iniciar" class="stack" {% if not continuar_vark %}data-olvidar-borrador{% endif %}>
+        <form method="post" action="/student/google/iniciar" class="stack" {% if not continuar_vark %}data-olvidar-borrador{% endif %} {% if not estudiante %}data-borrador-segun-grupo{% endif %}>
             <input type="hidden" name="csrf" value="{{ csrf }}">
             {% if continuar_vark %}<input type="hidden" name="continuar" value="vark">{% endif %}
             <input type="hidden" name="accion" value="{{ 'vincular' if estudiante else 'entrar' }}">
             {% if estudiante %}
             <p>Tu grupo de estudio se conserva al vincular la cuenta.</p>
-            {% elif not continuar_vark %}
-            <div class="form-group">
-                <label class="form-label" for="google-grupo">Grupo asignado para tu primer registro</label>
-                <select id="google-grupo" name="rol" class="form-control">
-                    <option value="estudiante" {% if rol_registro == 'estudiante' %}selected{% endif %}>Personalizado</option>
-                    <option value="control" {% if rol_registro == 'control' %}selected{% endif %}>Control (perfil general)</option>
-                </select>
+            {% else %}
+            {# Punto 2a: elegir grupo es obligatorio y ninguno viene marcado, salvo
+               que se llegue desde la entrada del control. Control va primero y las
+               descripciones son neutras, por decisión del equipo. #}
+            <fieldset class="form-group">
+                <legend class="form-label">Selecciona tu grupo</legend>
+                <div class="choice-group">
+                    <label class="choice">
+                        <input type="radio" name="rol" value="control" required {% if rol_registro == 'control' %}checked{% endif %}>
+                        <span><strong>Control</strong><br><span class="form-hint">El contenido es un resumen estándar, igual para todos.</span></span>
+                    </label>
+                    <label class="choice">
+                        <input type="radio" name="rol" value="estudiante" required>
+                        <span><strong>Experimental</strong><br><span class="form-hint">El contenido se adapta a tu estilo de aprendizaje.</span></span>
+                    </label>
+                </div>
                 <p class="form-hint">Si ya tienes una cuenta, se recuperará tu grupo original.</p>
-            </div>
+            </fieldset>
             {% endif %}
             <button class="btn btn-primary btn-lg" type="submit">{{ 'Vincular mi perfil con Google' if estudiante else 'Continuar con Google' }}</button>
         </form>

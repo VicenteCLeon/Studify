@@ -312,24 +312,6 @@ def post_vark(
     return respuesta
 
 
-def _origen_del_registro(request: Request, db: Session, id_actual: int | None) -> str:
-    """Por qué este navegador registra a alguien nuevo (`estudiante.origen_registro`).
-
-    Con una sesión vigente de otro estudiante abierta, es otra persona: eligió
-    «Soy otra persona» o mandó un formulario cargado antes de que el otro
-    entrara. Si no, manda la marca que dejó «Salir», y después una sesión que
-    venció. Sin nada de eso, es un navegador sin historia.
-    """
-    if id_actual is not None:
-        return "otra_persona"
-    marcado = sesion.origen_marcado(request)
-    if marcado is not None:
-        return marcado
-    if sesion.sesion_vencida(request, db):
-        return "sesion_vencida"
-    return "nuevo"
-
-
 def _respuestas_desde_formulario(marcadas: tuple[list[str], ...]) -> list[RespuestaItemIn]:
     """Las casillas de cada ítem → el contrato que espera la API.
 
@@ -391,24 +373,30 @@ def _error(mensaje: str) -> HTMLResponse:
 
 @router.get("/control", response_class=HTMLResponse)
 def get_control(request: Request, db: Session = Depends(get_db)):
-    """Entrada del piloto para quienes fueron asignados al grupo control."""
+    """Entrada del piloto para quienes fueron asignados al grupo control.
+
+    Desde el punto 2a los dos grupos entran solo con Google: sin sesión, esta
+    entrada lleva al acceso con Control preseleccionado. El formulario se
+    muestra solo a una cuenta control recién creada por Google, para completar
+    sus datos opcionales y su aceptación.
+    """
     id_actual = sesion.estudiante_actual(request, db)
-    if id_actual is not None:
-        estudiante = db.get(Estudiante, id_actual)
-        if estudiante.rol == "control" and estudiante.google_sub and not estudiante.aceptaciones:
-            return templates.TemplateResponse(
-                request=request, name="student/control.html",
-                context={"token_sesion": sesion.token_formulario(request, "control")},
-            )
+    if id_actual is None:
+        return RedirectResponse(url="/student/login?rol=control", status_code=303)
+    estudiante = db.get(Estudiante, id_actual)
+    if estudiante.rol == "control" and estudiante.google_sub and not estudiante.aceptaciones:
         return templates.TemplateResponse(
-            request=request,
-            name="student/eres_tu.html",
-            context={
-                "cuando": textos.fecha_hora_chile(estudiante.fecha_registro),
-                "registro_control": True,
-            },
+            request=request, name="student/control.html",
+            context={"token_sesion": sesion.token_formulario(request, "control")},
         )
-    return templates.TemplateResponse(request=request, name="student/control.html")
+    return templates.TemplateResponse(
+        request=request,
+        name="student/eres_tu.html",
+        context={
+            "cuando": textos.fecha_hora_chile(estudiante.fecha_registro),
+            "registro_control": True,
+        },
+    )
 
 
 @router.post("/control")
@@ -422,19 +410,29 @@ def post_control(
     token_sesion: str = Form(default=""),
     db: Session = Depends(get_db),
 ):
-    """Alta sin diagnóstico individual: el rol y el perfil los fija el servidor."""
+    """Completa el registro de una cuenta control creada por Google.
+
+    No crea estudiantes: desde el punto 2a no hay alta local. Sin sesión
+    responde 403; con la sesión de otra cuenta ya registrada, 409.
+    """
     id_actual = sesion.estudiante_actual(request, db)
     actual = db.get(Estudiante, id_actual) if id_actual is not None else None
     primer_control_google = bool(
         actual is not None and actual.rol == "control" and actual.google_sub
         and not actual.aceptaciones
     )
-    if id_actual is not None and not primer_control_google:
+    if id_actual is None:
+        return HTMLResponse(
+            '<div class="alerta alerta-error" role="alert">Para entrar al grupo control '
+            'inicia sesión con Google.</div>', status_code=403,
+            headers={"HX-Redirect": "/student/login?rol=control"},
+        )
+    if not primer_control_google:
         return HTMLResponse(
             '<div class="alerta alerta-error" role="alert">Ya hay una sesión abierta. '
             'Sal antes de registrar a otra persona.</div>', status_code=409,
         )
-    if primer_control_google and not sesion.formulario_vigente(request, "control", token_sesion):
+    if not sesion.formulario_vigente(request, "control", token_sesion):
         return HTMLResponse(
             '<div class="alerta alerta-error" role="alert">La cuenta cambió. '
             'Abre el formulario del grupo control nuevamente.</div>', status_code=403,
@@ -452,16 +450,9 @@ def post_control(
         )
     except ValidationError:
         return _error("Alguno de los datos opcionales excede el largo permitido.")
-    if primer_control_google:
-        estudiante = actual
-        for campo, valor in datos.model_dump().items():
-            setattr(estudiante, campo, valor)
-    else:
-        estudiante = Estudiante(
-            **datos.model_dump(), rol="control",
-            origen_registro=_origen_del_registro(request, db, id_actual),
-        )
-        db.add(estudiante)
+    estudiante = actual
+    for campo, valor in datos.model_dump().items():
+        setattr(estudiante, campo, valor)
     db.flush()
     # `registrar` confirma también el alta, junto con su aceptación legal.
     consentimiento.registrar(db, estudiante.id_estudiante, genero=datos.genero is not None)

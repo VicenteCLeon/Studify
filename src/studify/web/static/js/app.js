@@ -310,6 +310,22 @@
   }
 
   // ------------------------------------------------------------------------
+  // Acceso con Google (punto 2a): quien elige el grupo Control no responde el
+  // cuestionario, así que el borrador de «Descubre tu estilo» se descarta. El
+  // servidor tampoco guarda la continuación; esto limpia el navegador.
+  // ------------------------------------------------------------------------
+  function olvidarBorradorSiControl(form, storage) {
+    const elegido = form.querySelector('input[name="rol"]:checked');
+    if (!elegido || elegido.value !== "control") return false;
+    try { storage.removeItem(VARK_KEY); } catch (err) { /* nada */ }
+    return true;
+  }
+
+  function initGrupoBorrador(form) {
+    form.addEventListener("submit", () => olvidarBorradorSiControl(form, sessionStorage));
+  }
+
+  // ------------------------------------------------------------------------
   // Catálogo: filtro de temas en el cliente
   // ------------------------------------------------------------------------
   const normalize = (t) =>
@@ -532,6 +548,7 @@
     ["[data-vark-stepper]", initVarkStepper],
     ["[data-aceptacion]", initAceptacion],
     ["[data-olvidar-borrador]", initOlvidarBorrador],
+    ["[data-borrador-segun-grupo]", initGrupoBorrador],
     ["[data-catalog-filter]", initCatalogFilter],
     ["[data-study-link]", initStudyLink],
     ["[data-flashcards]", initFlashcards],

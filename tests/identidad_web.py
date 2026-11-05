@@ -47,3 +47,45 @@ def perfil_local_anterior(cliente):
             domain="testserver.local",
         )
         return estudiante.id_estudiante
+
+
+def _sesion(cliente, estudiante):
+    cliente.cookies.set(
+        sesion.COOKIE_ESTUDIANTE,
+        sesion.valor_cookie(estudiante.id_estudiante, estudiante.fecha_registro),
+        domain="testserver.local",
+    )
+
+
+def control_google_sin_registro(cliente):
+    """Cuenta control recién creada por Google, antes de completar su registro.
+
+    Es el estado que deja `google_login.callback` con `rol=control`: la sesión
+    abierta y el formulario de `/student/control` pendiente (datos opcionales y
+    aceptación). Desde el punto 2a es la única forma de entrar al grupo control.
+    """
+    with SessionLocal() as db:
+        estudiante = Estudiante(
+            rol="control", google_sub="control-test-" + uuid4().hex, origen_registro="nuevo",
+        )
+        db.add(estudiante)
+        db.commit()
+        _sesion(cliente, estudiante)
+        return estudiante.id_estudiante
+
+
+def control_local_anterior(cliente):
+    """Registro de control local hecho antes del punto 2a, sin Google.
+
+    Ya no se pueden crear, pero los que existen siguen entrando con su cookie y
+    pueden vincular una cuenta Google.
+    """
+    from studify.web import consentimiento
+
+    with SessionLocal() as db:
+        estudiante = Estudiante(rol="control", origen_registro="nuevo")
+        db.add(estudiante)
+        db.commit()
+        consentimiento.registrar(db, estudiante.id_estudiante)
+        _sesion(cliente, estudiante)
+        return estudiante.id_estudiante

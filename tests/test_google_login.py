@@ -21,7 +21,7 @@ from studify.web import sesion
 from studify.web.routers import google_login
 from tests import test_api_capsulas as pruebas_capsulas
 from tests.conftest import necesita_bd
-from tests.identidad_web import perfil_local_anterior
+from tests.identidad_web import control_local_anterior, perfil_local_anterior
 
 escenario = pruebas_capsulas.escenario
 cliente_falso = pruebas_capsulas.cliente_falso
@@ -63,7 +63,8 @@ def test_inicio_exige_csrf_y_envia_nonce_pkce(db, google_configurado):
     cliente = TestClient(app)
     assert cliente.post("/student/google/iniciar", data={"csrf": "inventado"}).status_code == 403
     respuesta = cliente.post(
-        "/student/google/iniciar", data={"csrf": _csrf(cliente)}, follow_redirects=False,
+        "/student/google/iniciar", data={"csrf": _csrf(cliente), "rol": "estudiante"},
+        follow_redirects=False,
     )
     assert respuesta.status_code == 303
     destino = urlsplit(respuesta.headers["location"])
@@ -114,6 +115,10 @@ def cuentas(db, google_configurado, monkeypatch):
 
 
 def _iniciar(cliente, cuentas, **datos):
+    # Desde el punto 2a elegir grupo es obligatorio al entrar: los tests que no
+    # prueban la elección eligen el experimental, como lo haría el usuario.
+    if datos.get("accion", "entrar") == "entrar":
+        datos.setdefault("rol", "estudiante")
     respuesta = cliente.post(
         "/student/google/iniciar", data={"csrf": _csrf(cliente)} | datos,
         follow_redirects=False,
@@ -200,7 +205,7 @@ def test_continuar_cuestionario_google_recupera_borrador_sin_guardarlo(db, cuent
     assert 'data-olvidar-borrador' not in login.text
     csrf = re.search(r'name="csrf" value="([^"]+)"', login.text).group(1)
     inicio = cliente.post("/student/google/iniciar", data={
-        "csrf": csrf, "continuar": "vark", "rol": "control",
+        "csrf": csrf, "continuar": "vark", "rol": "estudiante",
     }, follow_redirects=False)
     state = parse_qs(urlsplit(inicio.headers["location"]).query)["state"][0]
     cuentas.estados.append(sha256(state.encode()).hexdigest())
@@ -431,8 +436,7 @@ def test_no_se_fusionan_dos_perfiles_por_correo_ni_por_sub(db, cuentas):
     db.commit()
     cuentas.estudiantes.append(propietario.id_estudiante)
     cliente = TestClient(app)
-    cliente.post("/student/control", data={"acepto": "si"})
-    local = _id(cliente)
+    local = control_local_anterior(cliente)
     cuentas.estudiantes.append(local)
     respuesta = _volver(cliente, cuentas, _iniciar(cliente, cuentas, accion="vincular"))
     assert respuesta.status_code == 409
@@ -490,8 +494,7 @@ def test_cancelacion_y_caida_del_proveedor_no_crean_cuenta(db, cuentas, monkeypa
 @necesita_bd
 def test_sesion_cambiada_durante_vinculacion_se_rechaza(cuentas):
     cliente = TestClient(app)
-    cliente.post("/student/control", data={"acepto": "si"})
-    cuentas.estudiantes.append(_id(cliente))
+    cuentas.estudiantes.append(control_local_anterior(cliente))
     state = _iniciar(cliente, cuentas, accion="vincular")
     cliente.post("/student/salir")
     cliente.cookies.set(google_login.COOKIE_OAUTH, state, path="/student")
@@ -747,3 +750,105 @@ def test_migracion_google_preserva_rol_unicidad_y_es_reversible():
                 assert conn.exec_driver_sql("SELECT rol FROM estudiante").scalar() == "control"
         finally:
             transaccion.rollback()
+
+
+# --- Selección de grupo (punto 2a) --------------------------------------------
+
+
+def _radio(html: str, valor: str) -> str:
+    return re.search(rf'<input[^>]*name="rol"[^>]*value="{valor}"[^>]*>', html).group(0)
+
+
+@pytest.mark.parametrize("ruta", ["/student/login", "/student/login?continuar=vark"])
+def test_login_pide_elegir_grupo_sin_preseleccion(google_configurado, ruta):
+    html = TestClient(app).get(ruta).text
+
+    assert "Selecciona tu grupo" in html
+    assert "<select" not in html
+    control, experimental = _radio(html, "control"), _radio(html, "estudiante")
+    assert html.index(control) < html.index(experimental)  # Control primero (equipo)
+    for radio in (control, experimental):
+        assert 'type="radio"' in radio and "required" in radio
+        assert "checked" not in radio
+    assert "El contenido es un resumen estándar, igual para todos." in html
+    assert "El contenido se adapta a tu estilo de aprendizaje." in html
+    assert "data-borrador-segun-grupo" in html
+
+
+def test_login_preselecciona_control_desde_su_entrada(google_configurado):
+    html = TestClient(app).get("/student/login?rol=control").text
+
+    assert "checked" in _radio(html, "control")
+    assert "checked" not in _radio(html, "estudiante")
+
+
+@necesita_bd
+def test_iniciar_sin_grupo_no_va_a_google(db, google_configurado):
+    cliente = TestClient(app)
+    antes = db.scalar(select(func.count()).select_from(IntentoGoogle))
+    for datos in ({}, {"rol": ""}, {"rol": "otro"}):
+        respuesta = cliente.post(
+            "/student/google/iniciar", data={"csrf": _csrf(cliente)} | datos,
+            follow_redirects=False,
+        )
+        assert respuesta.status_code in (400, 422)
+        assert "accounts.google.com" not in respuesta.headers.get("location", "")
+    assert db.scalar(select(func.count()).select_from(IntentoGoogle)) == antes
+
+
+@necesita_bd
+@pytest.mark.parametrize(("rol", "destino"), [
+    ("control", "/student/control"), ("estudiante", "/student/vark"),
+])
+def test_el_grupo_elegido_queda_en_la_cuenta_nueva(db, cuentas, rol, destino):
+    cliente = TestClient(app)
+    respuesta = _volver(cliente, cuentas, _iniciar(cliente, cuentas, rol=rol))
+
+    assert respuesta.headers["location"] == destino
+    db.expire_all()
+    estudiante = db.get(Estudiante, _id(cliente))
+    assert estudiante.rol == rol
+    assert not estudiante.diagnosticos
+
+
+@necesita_bd
+def test_elegir_control_descarta_el_borrador_vark(db, cuentas):
+    """Si responde «Descubre tu estilo» y elige Control, no se guarda nada del VARK."""
+    cliente = TestClient(app)
+    cliente.post("/student/vark", data={"acepto": "si", "q1": "a", "carrera": "Informática"})
+    state = _iniciar(cliente, cuentas, continuar="vark", rol="control")
+    assert not cliente.cookies.get(google_login.COOKIE_VARK)
+
+    vuelta = _volver(cliente, cuentas, state)
+
+    assert vuelta.headers["location"] == "/student/control"
+    assert not cliente.cookies.get(google_login.COOKIE_VARK)
+    estudiante = db.get(Estudiante, _id(cliente))
+    assert estudiante.rol == "control"
+    assert estudiante.carrera is None
+    assert not estudiante.diagnosticos
+    assert cliente.get("/student/vark", follow_redirects=False).headers["location"] == (
+        "/student/profile"
+    )
+    assert cliente.post("/student/vark", data={"acepto": "si", "q1": "a"}).status_code == 403
+    assert db.scalar(select(func.count()).select_from(DiagnosticoVark).where(
+        DiagnosticoVark.id_estudiante == estudiante.id_estudiante
+    )) == 0
+
+
+@necesita_bd
+def test_cuenta_existente_que_elige_control_con_borrador_no_lo_recupera(db, cuentas):
+    """La cuenta conserva su grupo; el borrador se descarta igual al elegir Control."""
+    cliente = TestClient(app)
+    _volver(cliente, cuentas, _iniciar(cliente, cuentas, rol="estudiante"))
+    original = _id(cliente)
+    cliente.post("/student/salir")
+
+    vuelta = _volver(cliente, cuentas, _iniciar(cliente, cuentas, continuar="vark", rol="control"))
+
+    assert _id(cliente) == original
+    assert vuelta.headers["location"] == "/student/vark"
+    assert not cliente.cookies.get(google_login.COOKIE_VARK)
+    db.expire_all()
+    assert db.get(Estudiante, original).rol == "estudiante"
+    assert 'data-contexto-anterior=""' in cliente.get("/student/vark").text

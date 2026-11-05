@@ -97,6 +97,10 @@ def _leer_continuacion(request: Request, enlace: str) -> str:
     return partes[0]
 
 
+# Los grupos que se pueden elegir al entrar con Google (punto 2a).
+GRUPOS = ("estudiante", "control")
+
+
 def _enlace_estudiante(estudiante: Estudiante) -> str:
     return f"{estudiante.id_estudiante}:{sesion._microsegundos(estudiante.fecha_registro)}"
 
@@ -136,7 +140,7 @@ def _error(request: Request, mensaje: str, estado: int) -> Response:
 
 @router.get("/login", response_class=HTMLResponse)
 def login(
-    request: Request, rol: str = "estudiante", continuar: str = "",
+    request: Request, rol: str = "", continuar: str = "",
     db: Session = Depends(get_db),
 ):
     actual = sesion.estudiante_actual(request, db)
@@ -145,7 +149,9 @@ def login(
     respuesta = templates.TemplateResponse(
         request=request, name="student/login.html", context={
             "google_configurado": configurado(), "csrf": csrf,
-            "rol_registro": "control" if rol == "control" else "estudiante",
+            # Solo la entrada del control preselecciona su grupo; si no, el
+            # estudiante elige (punto 2a).
+            "rol_registro": "control" if rol == "control" else "",
             "estudiante": db.get(Estudiante, actual) if actual else None,
             "continuar_vark": continuar == "vark",
         },
@@ -158,7 +164,7 @@ def login(
 def iniciar(
     request: Request, csrf: str = Form(default=""),
     accion: Literal["entrar", "vincular"] = Form(default="entrar"),
-    rol: Literal["estudiante", "control"] = Form(default="estudiante"),
+    rol: str = Form(default=""),
     continuar: str = Form(default=""),
     db: Session = Depends(get_db),
 ):
@@ -184,8 +190,13 @@ def iniciar(
         rol = estudiante.rol
     elif actual is not None:
         return _error(request, "Cierra la sesión actual antes de entrar con otra cuenta.", 409)
-    if continuar == "vark" and accion == "entrar":
-        rol = "estudiante"
+    elif rol not in GRUPOS:
+        # Punto 2a: elegir grupo es obligatorio para entrar. Una cuenta que ya
+        # existe conserva el suyo en el callback, elija lo que elija aquí.
+        return _error(request, "Selecciona tu grupo antes de continuar con Google.", 400)
+    # Elegir Control descarta el borrador de «Descubre tu estilo»: el grupo
+    # control no responde el cuestionario y no se guarda nada de él.
+    continuar_vark = continuar == "vark" and rol == "estudiante"
     estado, nonce, verificador = (secrets.token_urlsafe(32) for _ in range(3))
     ahora = datetime.now(UTC)
     db.execute(delete(IntentoGoogle).where(IntentoGoogle.expira <= ahora))
@@ -205,7 +216,7 @@ def iniciar(
     }
     respuesta = RedirectResponse(AUTH_URL + "?" + urlencode(parametros), status_code=303)
     _cookie(respuesta, COOKIE_OAUTH, estado)
-    if continuar == "vark":
+    if continuar_vark:
         _guardar_continuacion(
             respuesta, sesion.token_formulario(request, "borrador-vark"), estado,
         )

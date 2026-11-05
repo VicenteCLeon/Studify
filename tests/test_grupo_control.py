@@ -5,6 +5,7 @@ resumen del material y un `quiz_mc` (ver tests/test_control_neutro.py).
 """
 
 import csv
+import re
 from decimal import Decimal
 from pathlib import Path
 from types import SimpleNamespace
@@ -55,13 +56,31 @@ def test_estudiante_comun_conserva_su_perfil_individual():
     assert perfil_de_contenido(comun, None) is None
 
 
+@necesita_bd
 def test_entrada_control_reutiliza_aceptacion_y_no_ofrece_cuestionario():
-    html = TestClient(app).get("/student/control").text
-    assert "43 encuestados" in html
-    assert "data-aceptacion" in html
-    assert "data-requiere-acepto" in html
-    assert 'name="acepto"' in html
-    assert 'name="q1"' not in html
+    from tests.identidad_web import control_google_sin_registro
+
+    cliente = TestClient(app)
+    id_control = control_google_sin_registro(cliente)
+    try:
+        html = cliente.get("/student/control").text
+        assert "data-aceptacion" in html
+        assert "data-requiere-acepto" in html
+        assert 'name="acepto"' in html
+        assert 'name="q1"' not in html
+        assert 'href="/student/vark"' not in html
+    finally:
+        _borrar_estudiante(id_control)
+
+
+def _borrar_estudiante(id_estudiante: int) -> None:
+    from studify.db.session import SessionLocal
+
+    with SessionLocal() as db:
+        estudiante = db.get(Estudiante, id_estudiante)
+        if estudiante is not None:
+            db.delete(estudiante)
+            db.commit()
 
 
 def test_perfil_control_reproduce_promedio_de_los_43():
@@ -87,13 +106,27 @@ def test_perfil_control_reproduce_promedio_de_los_43():
     assert normalizar_a_porcentajes(PuntajesVark(*sumas)) == PERFIL_CONTROL
 
 
+def _token_control(cliente) -> str:
+    html = cliente.get("/student/control").text
+    return re.search(r'name="token_sesion" value="([^"]+)"', html).group(1)
+
+
 @pytest.fixture
 def navegador_control(db):
-    """Registra por HTTP y limpia solo el id creado por este test."""
+    """Cuenta control de Google que completa su registro por HTTP.
+
+    Desde el punto 2a no hay alta local: la cuenta la crea Google
+    (`control_google_sin_registro`) y el formulario real de `/student/control`
+    registra los datos opcionales y la aceptación. Limpia solo su id.
+    """
+    from tests.identidad_web import control_google_sin_registro
+
     cliente = TestClient(app)
-    respuesta = cliente.post("/student/control", data={"acepto": "si"})
+    id_estudiante = control_google_sin_registro(cliente)
+    respuesta = cliente.post("/student/control", data={
+        "acepto": "si", "token_sesion": _token_control(cliente),
+    })
     assert respuesta.status_code == 204, respuesta.text
-    id_estudiante = int(cliente.cookies.get(sesion.COOKIE_ESTUDIANTE).split(".")[0])
     try:
         yield cliente, id_estudiante
     finally:
@@ -175,15 +208,41 @@ def test_perfil_control_explica_origen_y_no_ofrece_personalizar(navegador_contro
 
 @necesita_bd
 def test_registro_control_exige_aceptacion_y_consentimiento_de_genero(db):
+    from tests.identidad_web import control_google_sin_registro
+
+    cliente = TestClient(app)
+    id_control = control_google_sin_registro(cliente)
+    try:
+        antes = db.scalar(select(func.count()).select_from(Estudiante))
+        for datos in (
+            {}, {"acepto": "si", "genero": "Femenino"},
+            {"acepto": "si", "carrera": "x" * 81},
+        ):
+            respuesta = cliente.post(
+                "/student/control", data=datos | {"token_sesion": _token_control(cliente)},
+            )
+            assert respuesta.status_code == 200
+            assert "alerta-error" in respuesta.text
+        assert db.scalar(select(func.count()).select_from(Estudiante)) == antes
+        db.expire_all()
+        assert not db.get(Estudiante, id_control).aceptaciones
+    finally:
+        _borrar_estudiante(id_control)
+
+
+@necesita_bd
+def test_sin_alta_local_del_control(db):
+    """Punto 2a: los dos grupos entran solo con Google."""
     cliente = TestClient(app)
     antes = db.scalar(select(func.count()).select_from(Estudiante))
-    for datos in (
-        {}, {"acepto": "si", "genero": "Femenino"},
-        {"acepto": "si", "carrera": "x" * 81},
-    ):
-        respuesta = cliente.post("/student/control", data=datos)
-        assert respuesta.status_code == 200
-        assert "alerta-error" in respuesta.text
+
+    entrada = cliente.get("/student/control", follow_redirects=False)
+    alta = cliente.post("/student/control", data={"acepto": "si"})
+
+    assert entrada.status_code == 303
+    assert entrada.headers["location"] == "/student/login?rol=control"
+    assert alta.status_code == 403
+    assert not cliente.cookies.get(sesion.COOKIE_ESTUDIANTE)
     assert db.scalar(select(func.count()).select_from(Estudiante)) == antes
 
 
@@ -197,6 +256,7 @@ def test_registro_control_no_cambia_rol_de_sesion_abierta(navegador_control):
 
 @necesita_bd
 def test_computador_compartido_conserva_entrada_control(db, navegador_control):
+    """«Soy otra persona» desde el control lleva al acceso Google con Control elegido."""
     cliente, id_primero = navegador_control
     html = cliente.get("/student/control").text
     assert "/student/salir?grupo=control" in html
@@ -204,18 +264,12 @@ def test_computador_compartido_conserva_entrada_control(db, navegador_control):
         "/student/salir?grupo=control", data={"motivo": "otra_persona"}, follow_redirects=False,
     )
     assert salida.headers["location"] == "/student/control"
-    respuesta = cliente.post("/student/control", data={"acepto": "si"})
-    assert respuesta.status_code == 204
-    id_segundo = int(cliente.cookies.get(sesion.COOKIE_ESTUDIANTE).split(".")[0])
-    try:
-        assert id_segundo != id_primero
-        segundo = db.get(Estudiante, id_segundo)
-        assert segundo.rol == "control"
-        assert segundo.origen_registro == "otra_persona"
-        assert db.get(Estudiante, id_primero).rol == "control"
-    finally:
-        db.delete(db.get(Estudiante, id_segundo))
-        db.commit()
+    assert not cliente.cookies.get(sesion.COOKIE_ESTUDIANTE)
+    entrada = cliente.get("/student/control", follow_redirects=False)
+    assert entrada.headers["location"] == "/student/login?rol=control"
+    login = cliente.get(entrada.headers["location"]).text
+    assert re.search(r'value="control"[^>]*checked', login)
+    assert db.get(Estudiante, id_primero).rol == "control"
 
 
 @necesita_bd
