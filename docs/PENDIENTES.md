@@ -253,6 +253,22 @@ descripción de cada commit.
     a ser obligatorias; exigirlas sin medir antes choca con el tope de 300
     palabras (como el glosario de R, G4). No verificables: definiciones
     exactas, tono oral, preguntas reflexivas (G6), orden general→particular.
+  - **Primer dato de adherencia (05-nov, `scripts/verificar_1c_k.py --live`,
+    `deepseek-flash`, BD-U3-02, `data/pruebas_vark/20261105-013904_1c_K/`):**
+    6/6 válidas, 6 a la primera, las 6 con `flashcards_y_quiz`. Veredicto de la
+    batería 4/6; los dos fallos pasan el contrato y fallan en adherencia:
+    - **A10-R40-K50**, criterio *texto*: falta el `glosario` pedido con
+      p_R ≥ 40 (entregó `lista_pasos` + `ejemplo_resuelto`). Es **H1/G4**, ahora
+      en un perfil R+K codominante con 6 directivas y 272 palabras.
+    - **V30-A10-R10-K50**, criterio *ejercicios*: 2/3 componentes prácticos,
+      falta `lista_pasos` pese a la directiva `paso_a_paso` (p_K ≥ 40). La
+      representación trae un solo bloque, la `tabla` de
+      `recurso_visual_complementario`. **No corresponde a un hallazgo
+      conocido:** G3/H4 es para 25 ≤ p_K < 40, y la batería del 03-oct (12/12
+      con `lista_pasos`) no tenía perfiles con V. Es la primera combinación
+      V ≥ 25 + K ≥ 40 medida; con n = 1 es una señal, no una conclusión.
+    - Extensión (sin fallo de criterio): desviaciones de −54 a +53 palabras
+      respecto del objetivo, en línea con **G2/H3**.
 - **G9. Simulador con perfiles reales de la cohorte.** Solo ofrece perfiles
   puros (100 % en un canal), que no tiene ninguno de los 43 diagnósticos; el
   caso multimodal, el más frecuente, no se puede simular.
