@@ -10,7 +10,7 @@
 > `AVANCE.md` con su commit. Las listas de origen quedan como registro de su
 > fecha y no se vuelven a actualizar.
 >
-> Última revisión: 01-nov-2026. Las ubicaciones de código van por función; los
+> Última revisión: 02-nov-2026. Las ubicaciones de código van por función; los
 > números de línea son aproximados.
 
 ---
@@ -83,6 +83,7 @@ de cada uno está más abajo.
    del piloto. Y cada máquina tiene que quedar al día (O2).
 5. **Instrumentos y consentimiento de la Fase 5** (E1–E4).
 6. **Riesgos legales** L1, L3 y L5.
+7. **Probar Google Identity con una cuenta real** y rotar el `client_secret` (O6); decidir el filtro de dominio (D7).
 
 ---
 
@@ -320,12 +321,29 @@ Origen: `AVANCE.md` §5 tervicies «Riesgos legales que siguen abiertos» y
   explicaron (la mediana es ~0,19). Origen: AVANCE §5 duotricies.
 - **O6. Activar y probar Google Identity.** El código de D6 está implementado
   (01-nov, AVANCE §5 octtricies) y la migración `a7c3d9e51f64` está aplicada en
-  la máquina 2. Falta crear/configurar en Google Cloud un cliente OAuth 2.0 de
-  tipo Aplicación web, su pantalla de consentimiento y los usuarios de prueba;
-  fijar `GOOGLE_CLIENT_ID` y `GOOGLE_CLIENT_SECRET` en `.env`, y registrar la
-  URI exacta `http://127.0.0.1:8000/student/google/callback`. Reiniciar y probar
-  entrar, vincular y recuperar el perfil con una cuenta real. Las claves se
-  agregaron vacías y no se reemplazaron otros valores locales. Pasos en README.
+  la máquina 2 y, desde el 02-nov, en la máquina 1.
+  - ✅ **02-nov-2026, máquina 1:** `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` y
+    `GOOGLE_REDIRECT_URI` (`http://127.0.0.1:8000/student/google/callback`)
+    quedaron en su `.env`; la app arranca y `/student/login` responde. El venv
+    no tenía `google-auth`: hizo falta `pip install -e .` (README, paso de
+    Google). Las 47 pruebas de `tests/test_google_login.py` pasan.
+  - **Falta:** probar con una cuenta real, a mano en el navegador, entrar con
+    cuenta nueva, salir y volver, vincular un perfil local y el borrador VARK
+    antes de iniciar sesión. Las pruebas automáticas simulan el intercambio y la
+    verificación del token; el camino contra Google no está cubierto. Confirmar
+    en Google Cloud que la URI exacta está registrada y que las cuentas de
+    prueba están como usuarios de prueba.
+  - **Rotar el `client_secret`:** se pegó en una conversación con el asistente
+    el 02-nov. Crear uno nuevo en Google Cloud cuando termine la prueba y
+    actualizar el `.env`.
+  - **Prueba por túnel (Cloudflare):** con la URI en `127.0.0.1` el retorno de
+    Google no vuelve al host del túnel y falla con «El acceso no corresponde a
+    este navegador». Para probar desde otro dispositivo hay que poner la URL
+    del túnel en `GOOGLE_REDIRECT_URI` y registrarla en Google Cloud; un túnel
+    rápido cambia de URL en cada arranque (conviene uno con nombre fijo). Fuera
+    de `APP_ENV=dev` la cookie lleva `Secure` y exige un `SESSION_SECRET` fuerte
+    (O1).
+  - **Abierto, decisión del equipo (D7):** ver más abajo.
 
 ## D. Decisiones con la profesora guía
 
@@ -354,6 +372,12 @@ Origen: `AVANCE.md` §5 tervicies «Riesgos legales que siguen abiertos» y
   locales cuya cookie se perdió no contienen una identidad verificable para
   vincularlos a una cuenta. Acordar cómo tratar esos históricos en el piloto;
   no se emparejan por correo, nombre o sociodemográficos ni se fusionan solos.
+
+- **D7. ¿Restringir el acceso a cuentas `@mail.pucv.cl`?** Hoy entra cualquier
+  cuenta Google con correo verificado (`google_login.py::verificar_token`).
+  Si el piloto es solo para la PUCV, falta validar el dominio del correo (o el
+  claim `hd`) en el servidor. Si es abierto, queda como está. Origen: análisis
+  del flujo, 02-nov-2026.
 
 ## X. Extensiones planificadas
 

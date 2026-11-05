@@ -1,7 +1,7 @@
 # Studify — Estado de avance
 
 > Bitácora del proyecto: qué se hizo, qué se verificó y qué se decidió en el camino.
-> Última actualización: **01-nov-2026**. Lo que falta está en [`PENDIENTES.md`](PENDIENTES.md);
+> Última actualización: **02-nov-2026**. Lo que falta está en [`PENDIENTES.md`](PENDIENTES.md);
 > el índice de toda la documentación, en [`README.md`](README.md).
 
 ---
@@ -32,7 +32,7 @@ avance ya entregado) y el plan de implementación derivado, [`PLAN_DESARROLLO.md
 | **Fase 3 — Generación** | Cerrada. Contrato de siete pasos, validador, bucle de reparación y caché por huella. Batería VARK del 03-oct (con `deepseek-chat`): 29/30 cápsulas válidas, 26 a la primera (96,7 %), 0 citas inventadas. | §5 octies, §5 terdecies, §5 quatervicies |
 | **Fase 4 — Interfaz** | Cerrada y rediseñada el 02-oct: cuestionario, perfil, catálogo, visor y panel del docente con login. | §5 nonies, §5 duovicies |
 | **Grupo control del piloto** | Rol `control`, sin cuestionario ni personalización individual. Perfil fijo: media de los porcentajes de los 43 encuestados. Registro en `/student/control`. | §5 septtricies |
-| **Acceso Google** | Implementado para ambos grupos: vincular el perfil local y recuperar el mismo estudiante. Pendiente configurar el cliente OAuth real (O6). | §5 octtricies |
+| **Acceso Google** | Implementado para ambos grupos: vincular el perfil local y recuperar el mismo estudiante. Credenciales cargadas en la máquina 1 el 02-nov; falta probarlo con una cuenta real y rotar el secret (O6). | §5 octtricies |
 | **Marco legal** | Términos 0.3 y Política 0.5, consentimiento registrado, `/mis-datos` y código bajo AGPL-3.0-or-later. | §5 tervicies, §5 tritricies, §5 octtricies |
 | **Audio (Fase 6)** | Kokoro y Piper según la preferencia de voz del estudiante, con caché por huella. | §5 duodetricies a §5 duotricies |
 | **Imagen (Fase 6)** | En pausa. El módulo Visual (SVG dibujado a partir de una especificación del LLM) está propuesto, sin integrar a la app. | §5 quatertricies |
