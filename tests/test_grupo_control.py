@@ -23,6 +23,7 @@ from tests.conftest import necesita_bd
 # Reutilizan el material curado y el doble del LLM de las pruebas del motor.
 escenario = pruebas_capsulas.escenario
 cliente_falso = pruebas_capsulas.cliente_falso
+navegador_de_estudiante = pruebas_capsulas.navegador_de
 
 
 def test_perfil_control_es_fijo_y_suma_cien():
@@ -241,7 +242,7 @@ def test_registro_comun_conserva_personalizacion_e_ignora_rol_del_formulario(db)
 
 
 @necesita_bd
-def test_control_genera_sin_diagnostico_con_audio_y_actividades(
+def test_control_genera_sin_diagnostico_sin_audio_y_con_actividades(
     db, escenario, navegador_control, cliente_falso, http_docente
 ):
     cliente, id_estudiante = navegador_control
@@ -266,8 +267,10 @@ def test_control_genera_sin_diagnostico_con_audio_y_actividades(
     assert 'id="paso-activacion"' not in visor.text
     assert 'id="paso-desarrollo"' not in visor.text
     assert 'id="paso-concepto"' in visor.text
-    assert "Voz de la narración" in visor.text
-    assert "generate-audio" in visor.text
+    # El control no tiene narración (04-nov-2026): ni widget ni selector de voz.
+    assert 'class="capsula-audio"' not in visor.text
+    assert "Voz de la narración" not in visor.text
+    assert "generate-audio" not in visor.text
     assert "Ver perfil general" in visor.text
     assert cliente_falso.llamadas == 1  # El visor también utiliza el caché genérico.
     quiz = cliente.post(f"/api/capsulas/{capsula['id_capsula']}/quiz", json={
@@ -276,6 +279,123 @@ def test_control_genera_sin_diagnostico_con_audio_y_actividades(
     assert quiz.status_code == 201, quiz.text
     assert quiz.json()["es_correcta"] is True
     assert "Control" in http_docente.get("/teacher/analytics").text
+
+
+# --- Sin audio en el grupo control (punto 1b) --------------------------------
+
+
+@pytest.fixture
+def sintesis_prohibida(monkeypatch):
+    """Falla si alguien intenta sintetizar: el control no tiene narración."""
+    from studify.media import audio
+
+    def _no(*_a, **_k):
+        pytest.fail("se intentó sintetizar la narración de una cápsula del control")
+
+    monkeypatch.setattr(audio, "generar_audio", _no)
+
+
+@necesita_bd
+def test_narracion_de_capsula_control_es_403_tambien_para_el_docente(
+    db, escenario, navegador_control, cliente_falso, http_docente, sintesis_prohibida
+):
+    cliente, id_control = navegador_control
+    capsula = cliente.post("/api/capsulas", json={
+        "id_estudiante": id_control, "id_objetivo": escenario["objetivo"].id_objetivo,
+    }).json()
+    ruta = f"/student/viewer/{capsula['id_capsula']}/generate-audio"
+
+    assert cliente.post(ruta).status_code == 403
+    assert http_docente.post(ruta).status_code == 403
+
+
+@necesita_bd
+def test_control_no_guarda_preferencia_de_voz(db, navegador_control):
+    cliente, id_control = navegador_control
+
+    for cabeceras in ({}, {"HX-Request": "true"}):
+        respuesta = cliente.post(
+            "/student/preferencias/voz", data={"voz": "masculina-rapida"},
+            headers=cabeceras, follow_redirects=False,
+        )
+        assert respuesta.status_code == 403
+    db.expire_all()
+    estudiante = db.get(Estudiante, id_control)
+    assert (estudiante.voz_genero, estudiante.voz_modo) == (None, None)
+
+
+@necesita_bd
+def test_perfil_control_sin_selector_de_voz(navegador_control):
+    cliente, _ = navegador_control
+    html = cliente.get("/student/profile").text
+
+    assert "Voz de la narración" not in html
+    assert 'id="voz-guardada"' not in html
+
+
+def _experimental_con_aceptacion(db, perfil: PerfilVark) -> Estudiante:
+    """Estudiante con diagnóstico que ya aceptó los documentos vigentes."""
+    from studify.web import consentimiento
+
+    estudiante = pruebas_capsulas._estudiante_con_perfil(db, perfil)
+    consentimiento.registrar(db, estudiante.id_estudiante)
+    return estudiante
+
+
+@necesita_bd
+@pytest.mark.parametrize(
+    ("vector", "con_audio"),
+    [((0, 0, 0, 100), False), ((20, 30, 25, 25), True), ((25, 25, 25, 25), True)],
+)
+def test_experimental_conserva_audio_segun_p_a(
+    db, escenario, cliente_falso, navegador_de_estudiante, vector, con_audio
+):
+    """La regla del experimental no cambia: narración con p_A ≥ 25 %."""
+    perfil = PerfilVark(*(Decimal(x) for x in vector))
+    estudiante = _experimental_con_aceptacion(db, perfil)
+    cliente = navegador_de_estudiante(estudiante.id_estudiante)
+
+    visor = cliente.get(f"/student/viewer/{escenario['objetivo'].id_objetivo}").text
+    perfil_html = cliente.get("/student/profile").text
+
+    assert ('class="capsula-audio"' in visor) is con_audio
+    assert ("Voz de la narración" in visor) is con_audio
+    assert ("Voz de la narración" in perfil_html) is con_audio
+
+
+@necesita_bd
+def test_experimental_puede_pedir_narracion_y_guardar_su_voz(
+    db, escenario, cliente_falso, navegador_de_estudiante, monkeypatch
+):
+    from studify.media import audio
+
+    pedidos = []
+
+    def _falsa(texto, destino, language="es", *, preferencia=None):
+        pedidos.append(destino.name)
+        raise audio.ErrorAudio("síntesis falsa del test")  # no deja WAV en public/
+
+    monkeypatch.setattr(audio, "generar_audio", _falsa)
+    estudiante = _experimental_con_aceptacion(
+        db, PerfilVark(*(Decimal(x) for x in (20, 30, 25, 25)))
+    )
+    cliente = navegador_de_estudiante(estudiante.id_estudiante)
+    capsula = cliente.post("/api/capsulas", json={
+        "id_estudiante": estudiante.id_estudiante,
+        "id_objetivo": escenario["objetivo"].id_objetivo,
+    }).json()
+
+    narracion = cliente.post(f"/student/viewer/{capsula['id_capsula']}/generate-audio")
+    voz = cliente.post(
+        "/student/preferencias/voz", data={"voz": "masculina-rapida"},
+        follow_redirects=False,
+    )
+
+    assert narracion.status_code == 200
+    assert len(pedidos) == 1
+    assert voz.status_code == 303
+    db.expire_all()
+    assert db.get(Estudiante, estudiante.id_estudiante).voz_modo == "rapida"
 
 
 @necesita_bd

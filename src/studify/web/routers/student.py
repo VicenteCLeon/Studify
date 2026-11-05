@@ -593,8 +593,9 @@ def get_profile(request: Request, db: Session = Depends(get_db)):
         "directivas": directivas,
         "id_diagnostico": diagnostico.id_diagnostico if diagnostico else None,
         # La narración solo existe con audio activo (p_A ≥ 25 %): sin ella, el
-        # selector de voz no tendría nada que cambiar.
-        "audio_activo": config.audio_activo,
+        # selector de voz no tendría nada que cambiar. El grupo control no
+        # tiene narración (04-nov-2026).
+        "audio_activo": config.audio_activo and estudiante.rol != "control",
         "voz_actual": _voz_actual(estudiante),
     }
     return templates.TemplateResponse(
@@ -707,10 +708,14 @@ def get_viewer(
             reintentable=exc.status_code in (502, 504),
         )
 
-    perfil = perfil_de_contenido(
-        db.get(Estudiante, id_estudiante), diagnostico_vigente(db, id_estudiante)
-    )
-    audio_activo = aplicar_reglas(perfil).audio_activo if perfil is not None else False
+    estudiante = db.get(Estudiante, id_estudiante)
+    es_control = estudiante.rol == "control"
+    if es_control:
+        # El grupo control no tiene narración (04-nov-2026): ni widget ni selector.
+        audio_activo = False
+    else:
+        perfil = perfil_de_contenido(estudiante, diagnostico_vigente(db, id_estudiante))
+        audio_activo = aplicar_reglas(perfil).audio_activo if perfil is not None else False
 
     return templates.TemplateResponse(
         request=request,
@@ -722,8 +727,8 @@ def get_viewer(
             "referencias": _referencias(db, capsula.fuentes),
             "audio_activo": audio_activo,
             # El selector de voz es del estudiante dueño: solo existe en su visor.
-            "mostrar_selector_voz": True,
-            "voz_actual": _voz_actual(db.get(Estudiante, id_estudiante)),
+            "mostrar_selector_voz": not es_control,
+            "voz_actual": _voz_actual(estudiante),
             # `indice_correcta` y `retroalimentacion` NO viajan al navegador: si
             # fueran al HTML, la respuesta correcta estaría en el código fuente
             # de la página y el quiz dejaría de medir nada.
@@ -765,7 +770,9 @@ def generate_capsule_audio(
       ignora, porque si no cualquiera con sesión podría hacerle decir a esa voz
       lo que quisiera;
     - la cápsula del simulador (`id_capsula == 0`) no está en la base, así que
-      su texto viene en el formulario; por eso es solo del docente.
+      su texto viene en el formulario; por eso es solo del docente;
+    - la cápsula de un estudiante del grupo control no se narra: 403, también
+      para el docente (04-nov-2026).
 
     **Con qué voz.** La que eligió el **dueño de la cápsula** (`estudiante.voz_*`),
     también cuando la pide el docente: así oye lo mismo que el estudiante. Sin
@@ -790,6 +797,12 @@ def generate_capsule_audio(
         # para encontrar estos archivos (`/mis-datos/eliminar`).
         texto = narracion.guion(fila.contenido_json)
         dueno = db.get(Estudiante, fila.id_estudiante)
+        if dueno is not None and dueno.rol == "control":
+            # El grupo control no tiene narración (04-nov-2026), tampoco a
+            # pedido del docente: oiría algo que el estudiante nunca recibe.
+            raise HTTPException(
+                status_code=403, detail="las cápsulas del grupo control no tienen narración"
+            )
         if dueno is not None:
             preferencia = audio.preferencia_guardada(dueno.voz_genero, dueno.voz_modo)
     else:
@@ -859,6 +872,11 @@ def guardar_preferencia_voz(
     estudiante = db.get(Estudiante, id_estudiante) if id_estudiante is not None else None
     if estudiante is None:
         return _sin_sesion()
+    if estudiante.rol == "control":
+        # Sin narración en el grupo control (04-nov-2026), no hay voz que elegir.
+        raise HTTPException(
+            status_code=403, detail="el grupo control no tiene narración"
+        )
     if voz not in OPCIONES_VOZ:
         raise HTTPException(status_code=422, detail="opción de voz desconocida")
 

@@ -252,6 +252,11 @@ El horizonte del plan terminaba el 09-oct-2026. Origen: `PLAN_DESARROLLO.md` §4
     encuestados. El rol habitual conserva el perfil individual. El equipo
     distribuye `/student/control`; no hay asignación aleatoria. Esto no
     reemplaza el diseño experimental, los instrumentos ni las calificaciones.
+  - **04-nov:** el control pasó a una cápsula básica sin VARK (resumen y
+    `quiz_mc`, punto 1a) y sin narración ni selector de voz (punto 1b).
+    Pendiente para el punto **2c** (Etapa 2): rotular «Resumen» en vez de
+    «Concepto central» en el visor del control, y retirar el radar y los
+    textos de «perfil general» de su perfil, que todavía usan PERFIL_CONTROL.
 - **E2. Batería técnica:** 20 a 30 consultas controladas con rúbrica 1–5 y
   doble evaluador (fidelidad, exactitud factual, relevancia, trazabilidad).
   `scripts/eval_runner.py` hoy cubre un objetivo y perfiles puros.
