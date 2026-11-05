@@ -365,15 +365,16 @@
   }
 
   // ------------------------------------------------------------------------
-  // "Generando tu cápsula…": ocupa la espera del GET al visor
+  // "Preparando la cápsula…": ocupa la espera del GET al visor
   // ------------------------------------------------------------------------
   let generandoTimer = null;
+  const CARGA_KEY = "repasai-carga-visor";
 
-  function openGenerando(link) {
+  function openGenerando(datos) {
     const layer = document.querySelector("[data-generando]");
     if (!layer) return;
-    layer.querySelector("[data-generando-codigo]").textContent = link.dataset.codigo || "OA";
-    layer.querySelector("[data-generando-tema]").textContent = link.dataset.tema || "Tema seleccionado";
+    layer.querySelector("[data-generando-codigo]").textContent = datos.codigo || "OA";
+    layer.querySelector("[data-generando-tema]").textContent = datos.tema || "Tema seleccionado";
     const pasos = Array.from(layer.querySelectorAll("[data-paso]"));
     const live = layer.querySelector("[data-generando-live]");
     let i = 0;
@@ -417,13 +418,46 @@
         e.preventDefault(); // evita el doble clic mientras ya se genera
         return;
       }
-      openGenerando(link);
+      const datos = { codigo: link.dataset.codigo, tema: link.dataset.tema };
+      // Punto 2b: el visor completa la duración mínima desde este instante.
+      try {
+        sessionStorage.setItem(CARGA_KEY, JSON.stringify({ inicio: Date.now(), ...datos }));
+      } catch (err) { /* sin almacenamiento: el visor se muestra de inmediato */ }
+      openGenerando(datos);
     });
   }
 
+  // Cuánto falta para completar la duración mínima de la capa en el visor
+  // (punto 2b). Sin marca válida (enlace directo, recarga, «atrás») o con la
+  // espera ya cumplida devuelve 0: la cápsula se muestra de inmediato.
+  function restanteDeCarga(marca, ahora, minimo) {
+    if (!marca || !(minimo > 0)) return 0;
+    let datos;
+    try { datos = JSON.parse(marca); } catch (err) { return 0; }
+    if (!datos || typeof datos.inicio !== "number") return 0;
+    const transcurrido = ahora - datos.inicio;
+    if (transcurrido < 0 || transcurrido >= minimo) return 0;
+    return minimo - transcurrido;
+  }
+
+  function initCargaVisor(layer) {
+    let marca = null;
+    try {
+      marca = sessionStorage.getItem(CARGA_KEY);
+      // Se consume al llegar: recargar o volver atrás no repite la animación.
+      sessionStorage.removeItem(CARGA_KEY);
+    } catch (err) { return; }
+    const restante = restanteDeCarga(marca, Date.now(), Number(layer.dataset.cargaMinima));
+    if (!restante) return;
+    const datos = JSON.parse(marca);
+    openGenerando(datos);
+    setTimeout(closeGenerando, restante);
+  }
+
   // Al volver con "atrás" el navegador puede restaurar la página tal cual
-  // quedó (bfcache), con la capa abierta: se cierra.
-  window.addEventListener("pageshow", closeGenerando);
+  // quedó (bfcache), con la capa abierta: se cierra. Solo en ese caso: en una
+  // carga normal la capa del visor puede estar completando su mínimo.
+  window.addEventListener("pageshow", (e) => { if (e.persisted) closeGenerando(); });
 
   // ------------------------------------------------------------------------
   // Cápsula: tarjetas de repaso (flashcards)
@@ -551,6 +585,7 @@
     ["[data-borrador-segun-grupo]", initGrupoBorrador],
     ["[data-catalog-filter]", initCatalogFilter],
     ["[data-study-link]", initStudyLink],
+    ["[data-carga-visor]", initCargaVisor],
     ["[data-flashcards]", initFlashcards],
     ["[data-multiquiz]", initMultiQuiz],
     ["[data-extracto]", initExtracto],

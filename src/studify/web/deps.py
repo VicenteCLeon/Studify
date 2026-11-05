@@ -33,6 +33,8 @@ def _contexto_global(request: Request) -> dict[str, Any]:
         "google_disponible": bool(
             get_settings().google_client_id and get_settings().google_client_secret
         ),
+        # Mínimo de la capa de carga del visor (punto 2b), lo lee app.js.
+        "carga_minima_ms": get_settings().visor_carga_minima_ms,
     }
 
 

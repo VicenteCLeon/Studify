@@ -98,6 +98,13 @@ class Settings(BaseSettings):
     capsula_max_palabras: int = 300
     capsula_max_palabras_titulo: int = 10
 
+    # Duración mínima de la capa «Preparando la cápsula…» en el visor (punto
+    # 2b). Una cápsula del caché llega en milisegundos y la del grupo control
+    # casi siempre sale de él; sin un mínimo, un grupo vería la animación y el
+    # otro no. Se aplica en el navegador (app.js), nunca con una espera en el
+    # servidor: los handlers corren en el threadpool.
+    visor_carga_minima_ms: int = 4000
+
     # Dónde se guardan los documentos oficiales ingeridos (Fase 2). Se copian
     # al almacén en vez de referenciar la ruta original para que `ruta_archivo`
     documentos_dir: str = "data/documentos"

@@ -762,3 +762,50 @@ def test_la_segunda_visita_al_mismo_tema_sale_del_cache(
         )
     ).all()
     assert len(capsulas) == 1, "el caché no debía crear una fila nueva"
+
+
+# --- Capa de carga también desde el caché (punto 2b) -------------------------
+
+PALABRAS_PERSONALIZADAS = ("vark", "perfil", "para ti", "tu forma", "tu cápsula", "adapt")
+
+
+def _capa_de_carga(html: str) -> str:
+    inicio = html.index('<div class="generando" data-generando')
+    return html[inicio:html.index("</p>\n    </div>\n</div>", inicio)]
+
+
+@necesita_bd
+def test_el_visor_trae_la_capa_de_carga_con_el_minimo_de_config(
+    cliente, estudiante_conectado, material, llm_falso, monkeypatch
+):
+    from studify.config import get_settings
+
+    monkeypatch.setattr(get_settings(), "visor_carga_minima_ms", 3500)
+    html = cliente.get(f"/student/viewer/{material['con_material'].id_objetivo}").text
+
+    capa = _capa_de_carga(html)
+    assert 'data-carga-minima="3500"' in capa
+    assert "data-carga-visor" in capa
+    assert " hidden" in capa.split(">", 1)[0]  # sin JS, la capa no se ve
+    # Sin JavaScript la cápsula se muestra directamente: ya viene en el HTML.
+    assert "Dependencias parciales y segunda forma normal" in html
+
+
+@necesita_bd
+def test_la_capa_de_carga_es_neutra(cliente, estudiante_conectado, material, llm_falso):
+    catalogo = cliente.get("/student/catalog").text
+    visor = cliente.get(f"/student/viewer/{material['con_material'].id_objetivo}").text
+
+    for html in (catalogo, visor):
+        capa = _capa_de_carga(html).lower()
+        encontradas = [p for p in PALABRAS_PERSONALIZADAS if p in capa]
+        assert not encontradas, encontradas
+        assert "data-canal" not in capa
+        assert "preparando la cápsula" in capa
+
+
+def test_el_minimo_de_carga_es_configurable():
+    from studify.config import Settings
+
+    assert Settings().visor_carga_minima_ms == 4000
+    assert Settings(visor_carga_minima_ms=3000).visor_carga_minima_ms == 3000

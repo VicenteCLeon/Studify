@@ -791,9 +791,35 @@ def test_iniciar_sin_grupo_no_va_a_google(db, google_configurado):
             "/student/google/iniciar", data={"csrf": _csrf(cliente)} | datos,
             follow_redirects=False,
         )
-        assert respuesta.status_code in (400, 422)
-        assert "accounts.google.com" not in respuesta.headers.get("location", "")
+        assert respuesta.status_code == 400
+        assert "location" not in respuesta.headers
+        # La misma página de acceso con un aviso, lista para elegir y seguir.
+        assert "Elige tu grupo para continuar" in respuesta.text
+        assert "Selecciona tu grupo" in respuesta.text
+        assert re.search(r'name="csrf" value="[^"]+"', respuesta.text)
+        assert "No se completó el acceso" not in respuesta.text
     assert db.scalar(select(func.count()).select_from(IntentoGoogle)) == antes
+
+
+@necesita_bd
+def test_aviso_sin_grupo_conserva_borrador_y_permite_seguir(db, cuentas):
+    cliente = TestClient(app)
+    csrf = re.search(
+        r'name="csrf" value="([^"]+)"', cliente.get("/student/login?continuar=vark").text
+    ).group(1)
+    aviso = cliente.post(
+        "/student/google/iniciar", data={"csrf": csrf, "continuar": "vark"},
+        follow_redirects=False,
+    )
+    assert aviso.status_code == 400
+    assert 'name="continuar" value="vark"' in aviso.text
+    nuevo = re.search(r'name="csrf" value="([^"]+)"', aviso.text).group(1)
+    seguir = cliente.post("/student/google/iniciar", data={
+        "csrf": nuevo, "continuar": "vark", "rol": "estudiante",
+    }, follow_redirects=False)
+    assert seguir.status_code == 303
+    state = parse_qs(urlsplit(seguir.headers["location"]).query)["state"][0]
+    cuentas.estados.append(sha256(state.encode()).hexdigest())
 
 
 @necesita_bd

@@ -652,3 +652,25 @@ def test_migracion_rol_es_reversible_y_preserva_estudiantes():
                 ).scalar() == 2
         finally:
             transaccion.rollback()
+
+
+@necesita_bd
+def test_la_capa_de_carga_es_la_misma_para_los_dos_grupos(
+    db, escenario, navegador_control, cliente_falso, navegador_de_estudiante
+):
+    """Punto 2b: misma animación y mismo texto en el visor de ambos grupos."""
+    from tests.test_web_estudiante import _capa_de_carga
+
+    cliente_control, _ = navegador_control
+    estudiante = _experimental_con_aceptacion(
+        db, PerfilVark(*(Decimal(x) for x in (20, 30, 25, 25)))
+    )
+    cliente_experimental = navegador_de_estudiante(estudiante.id_estudiante)
+    objetivo = escenario["objetivo"].id_objetivo
+
+    capa_control = _capa_de_carga(cliente_control.get(f"/student/viewer/{objetivo}").text)
+    capa_experimental = _capa_de_carga(
+        cliente_experimental.get(f"/student/viewer/{objetivo}").text
+    )
+
+    assert capa_control == capa_experimental

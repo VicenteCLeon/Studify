@@ -3170,7 +3170,8 @@ body.is-generando {
   width: 0.75rem;
   height: 0.75rem;
   border-radius: 50%;
-  background: var(--canal);
+  /* Neutros (punto 2b): la capa es igual para los dos grupos del piloto. */
+  background: var(--primary);
   box-shadow: 0 0 0 3px var(--surface);
 }
 

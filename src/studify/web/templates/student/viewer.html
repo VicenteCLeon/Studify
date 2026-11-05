@@ -9,6 +9,9 @@
     <a href="/student/catalog" class="back-link">{{ ui.icon("arrow-left") }}Volver a los temas</a>
 
     {% include "student/_capsula.html" %}
+    {# Punto 2b: la capa se abre aquí si la cápsula llegó antes del mínimo. #}
+    {% set carga_visor = true %}
+    {% include "components/_generando.html" %}
 
     <div class="visor-pie">
         <p class="text-muted">¿Terminaste? Sigue con otro tema o revisa cómo se adapta RepasAi a ti.</p>

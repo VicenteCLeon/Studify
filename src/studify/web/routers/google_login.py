@@ -143,6 +143,18 @@ def login(
     request: Request, rol: str = "", continuar: str = "",
     db: Session = Depends(get_db),
 ):
+    return _pagina_login(request, db, rol=rol, continuar=continuar)
+
+
+def _pagina_login(
+    request: Request, db: Session, *, rol: str, continuar: str,
+    aviso: str | None = None, estado: int = 200,
+) -> Response:
+    """La página de acceso, con un formulario y un CSRF nuevos.
+
+    `aviso` la devuelve con un mensaje cuando el envío anterior no se pudo
+    iniciar (por ejemplo, sin grupo elegido), en vez de una página de error.
+    """
     actual = sesion.estudiante_actual(request, db)
     cuerpo = f"{secrets.token_urlsafe(32)}.{int(time.time()) + SEGUNDOS}"
     csrf = f"{cuerpo}.{_firma_csrf(request, cuerpo)}"
@@ -154,7 +166,8 @@ def login(
             "rol_registro": "control" if rol == "control" else "",
             "estudiante": db.get(Estudiante, actual) if actual else None,
             "continuar_vark": continuar == "vark",
-        },
+            "aviso": aviso,
+        }, status_code=estado,
     )
     _cookie(respuesta, COOKIE_CSRF, csrf)
     return _privada(respuesta)
@@ -192,8 +205,13 @@ def iniciar(
         return _error(request, "Cierra la sesión actual antes de entrar con otra cuenta.", 409)
     elif rol not in GRUPOS:
         # Punto 2a: elegir grupo es obligatorio para entrar. Una cuenta que ya
-        # existe conserva el suyo en el callback, elija lo que elija aquí.
-        return _error(request, "Selecciona tu grupo antes de continuar con Google.", 400)
+        # existe conserva el suyo en el callback, elija lo que elija aquí. Se
+        # vuelve a la misma página de acceso con un aviso, conservando la
+        # continuación de «Descubre tu estilo».
+        return _pagina_login(
+            request, db, rol="", continuar=continuar,
+            aviso="Elige tu grupo para continuar.", estado=400,
+        )
     # Elegir Control descarta el borrador de «Descubre tu estilo»: el grupo
     # control no responde el cuestionario y no se guarda nada de él.
     continuar_vark = continuar == "vark" and rol == "estudiante"
