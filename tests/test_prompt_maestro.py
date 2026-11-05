@@ -466,8 +466,13 @@ def test_el_prompt_prohibe_citar_identificadores_no_entregados():
 # dejarlas idénticas. Se fijan también el prompt completo (sistema + usuario),
 # para que el texto que ve el modelo no cambie aunque la huella coincidiera.
 HUELLAS_EXPERIMENTALES = {
+    # Actualizada a propósito el 05-nov-2026 (punto 1c): la huella de los
+    # perfiles con `actividad_aplicada` incluye la actividad exigida, para que
+    # sus cápsulas guardadas que no cumplen se regeneren. Antes era
+    # 5f7581c309ccd02c23a1e49c23c548dc4498de4286c911546312c37546a0c169. El
+    # prompt (segunda cifra) no cambió.
     (0, 0, 0, 100): (
-        "5f7581c309ccd02c23a1e49c23c548dc4498de4286c911546312c37546a0c169",
+        "e110421a949c7d17f197edf01f3f06502d82f68167d416f43f9f036d7f04f094",
         "f5c000e8fba52ccf382bd8914ea286f4e1d7c2dd57cd5fc159155798aa35c987",
     ),
     (30, 30, 20, 20): (
@@ -492,3 +497,88 @@ def test_huella_y_prompt_experimentales_no_cambian(vector):
     assert maestro.huella == huella
     completo = f"{maestro.sistema}\x1f{maestro.usuario}"
     assert hashlib.sha256(completo.encode()).hexdigest() == texto
+
+
+# --- Actividad exigida por directiva (punto 1c, 05-nov-2026) ------------------
+
+# Resúmenes del barrido del símplex (pasos de 10, 286 perfiles) calculados sobre
+# `a75a798`, ANTES del punto 1c. Los perfiles sin `actividad_aplicada` (202) y
+# el control neutro conservan la huella; ningún prompt cambia; los 84 perfiles
+# con la directiva cambian de huella a propósito.
+DIGEST_HUELLAS_SIN_ACTIVIDAD = "7418ae82205afa1619e061da8b09c85caa83590613f9b3b81754d467ab6b8171"
+DIGEST_HUELLAS_CON_ACTIVIDAD_ANTES = (
+    "9d12690f204d91a63423491385817b9f4fb7c4fb5f21e3a8f756a24a42103dcb"
+)
+DIGEST_PROMPTS = "414150ced3006e6f7c793f1d7a8c6eabf26a2e116b1ab1db214e2020dc66bdb0"
+
+
+def _barrido_del_simplex():
+    for v, a, r in product(range(0, 101, 10), repeat=3):
+        if v + a + r <= 100:
+            yield (v, a, r, 100 - v - a - r)
+
+
+def test_barrido_huellas_y_prompts_solo_cambian_los_perfiles_con_actividad():
+    import hashlib
+
+    from studify.config import get_settings
+    from studify.vark.perfiles import VARIANTE_CONTROL
+
+    ajustes = get_settings()
+    assert (ajustes.capsula_min_palabras, ajustes.capsula_max_palabras) == (150, 300)
+
+    def sha(texto: str) -> str:
+        return hashlib.sha256(texto.encode()).hexdigest()
+
+    sin, con, textos = [], [], []
+    for vector in _barrido_del_simplex():
+        config = aplicar_reglas(perfil(*vector))
+        maestro = construir(perfil(*vector))
+        textos.append(f"{vector}:{sha(maestro.sistema + chr(31) + maestro.usuario)}")
+        destino = con if "actividad_aplicada" in config.directivas else sin
+        destino.append(f"{vector}:{maestro.huella}")
+    control = orchestrator.construir(
+        objetivo=OBJETIVO, fragmentos=FRAGMENTOS, config=None,
+        modelo="deepseek-chat", variante=VARIANTE_CONTROL,
+    )
+    sin.append(f"control:{control.huella}")
+    textos.append(f"control:{sha(control.sistema + chr(31) + control.usuario)}")
+
+    assert (len(sin), len(con)) == (203, 84)
+    assert sha("\n".join(sin)) == DIGEST_HUELLAS_SIN_ACTIVIDAD
+    assert sha("\n".join(textos)) == DIGEST_PROMPTS
+    assert sha("\n".join(con)) != DIGEST_HUELLAS_CON_ACTIVIDAD_ANTES
+
+
+def test_actividad_requerida_exactamente_con_la_directiva_actividad_aplicada():
+    """Lo que el prompt exige es lo que el validador exige.
+
+    En la grilla de 10 en 10 coincide con p_K ≥ 40. Fuera de ella, la regla de
+    respaldo de `rules._directivas` también la da a perfiles sin ningún canal
+    sobre 40 y con K como primario: (0, 23, 38, 39) es uno.
+    """
+    for vector in [*_barrido_del_simplex(), (0, 23, 38, 39)]:
+        config = aplicar_reglas(perfil(*vector))
+        maestro = construir(perfil(*vector))
+        if "actividad_aplicada" in config.directivas:
+            assert maestro.actividad_requerida == "flashcards_y_quiz", vector
+            assert "DEBE SER `flashcards_y_quiz`" in maestro.usuario
+        else:
+            assert maestro.actividad_requerida is None, vector
+        if vector != (0, 23, 38, 39):
+            assert (maestro.actividad_requerida is not None) == (vector[3] >= 40), vector
+
+
+def test_la_directiva_de_respaldo_tambien_exige_la_actividad():
+    config = aplicar_reglas(perfil(0, 23, 38, 39))
+    assert "actividad_aplicada" in config.directivas  # regla de respaldo, p_K < 40
+    assert construir(perfil(0, 23, 38, 39)).actividad_requerida == "flashcards_y_quiz"
+
+
+def test_toda_actividad_por_directiva_es_un_tipo_del_contrato():
+    from typing import get_args
+
+    from studify.generation.schemas import TipoActividad
+
+    assert set(orchestrator.ACTIVIDAD_POR_DIRECTIVA.values()) <= set(get_args(TipoActividad))
+    assert set(orchestrator.ACTIVIDAD_POR_DIRECTIVA) <= set(prompts.INSTRUCCION_POR_DIRECTIVA)

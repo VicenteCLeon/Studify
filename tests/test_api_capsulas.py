@@ -43,6 +43,7 @@ from tests.conftest import (
     cookie_de,
     necesita_bd,
 )
+from tests.material import actividad_flashcards_y_quiz, exige_flashcards_y_quiz
 
 pytestmark = necesita_bd
 
@@ -116,17 +117,13 @@ class ClienteObediente:
                     "tipo": "ejemplo_resuelto",
                     "cuerpo": "En matrículas, el nombre del ramo depende solo de id_ramo.",
                 },
-                "actividad": {
-                    "tipo": "quiz_mc",
-                    "pregunta": "¿Cuándo una tabla incumple la segunda forma normal?",
-                    "alternativas": [
-                        "Cuando un atributo no clave depende de parte de la clave",
-                        "Cuando la tabla tiene más de cinco columnas",
-                        "Cuando la clave primaria es un número entero",
-                    ],
-                    "indice_correcta": 0,
-                    "retroalimentacion": "Debe depender de la clave completa.",
-                },
+                # La actividad que exige el prompt (punto 1c): flashcards_y_quiz
+                # con la directiva `actividad_aplicada`; si no, quiz_mc.
+                "actividad": (
+                    actividad_flashcards_y_quiz()
+                    if exige_flashcards_y_quiz(mensajes[1].contenido)
+                    else ACTIVIDAD_QUIZ_MC
+                ),
                 "fuentes": [{"id_fragmento": ids[0], "documento": "x", "pagina": 1}],
             },
             ensure_ascii=False,
@@ -361,7 +358,8 @@ def test_genera_una_capsula_completa(http, escenario, cliente_falso):
     assert cuerpo["origen"] == "generada"
     assert cuerpo["intentos"] == 1
     assert cuerpo["modelo_llm"] == "modelo-de-prueba"
-    assert cuerpo["actividad"]["tipo"] == "quiz_mc"
+    # El estudiante del escenario es K puro: su directiva exige flashcards_y_quiz (1c).
+    assert cuerpo["actividad"]["tipo"] == "flashcards_y_quiz"
     assert cuerpo["fuentes"], "la cápsula tiene que citar el material que la fundamentó"
     assert cliente_falso.llamadas == 1
 
@@ -373,7 +371,7 @@ def test_la_actividad_se_guarda_en_mini_quiz_json(http, db, escenario, cliente_f
     fila = db.get(MicrocapsulaGenerada, id_capsula)
     db.refresh(fila)
 
-    assert fila.mini_quiz_json["tipo"] == "quiz_mc"
+    assert fila.mini_quiz_json["tipo"] == "flashcards_y_quiz"  # perfil K puro (1c)
     assert "actividad" not in fila.contenido_json
     assert fila.contenido_json["titulo"].startswith("Segunda forma normal")
 

@@ -228,6 +228,21 @@ descripción de cada commit.
 - **G8. El validador no comprueba las directivas del perfil** (tabla para
   V ≥ 40 %, glosario para R, tipo de actividad para K). La adaptación VARK no
   se verifica, solo se pide. Origen: revisión del 16-oct.
+  - **Actividad de K cerrada (punto 1c, 05-nov):** con la directiva
+    `actividad_aplicada` el validador exige `flashcards_y_quiz` y la huella de
+    esos perfiles la incluye, así que sus cápsulas guardadas que no cumplían
+    se regeneran. Ojo: la directiva no sale solo con p_K ≥ 40; la regla de
+    respaldo de `rules._directivas` también la da a perfiles sin canal sobre
+    40 y con K primario (6 de los 43; p. ej. A23-R38-K39).
+  - **Punto 1d (después de la Etapa 2, evidencia para E3):** métricas de
+    adherencia **sin rechazo** en `metricas` del validador para las
+    directivas verificables en el JSON (bloque `tabla` ≥ 2×3, `esquema`,
+    `glosario`, `lista_pasos`, `ejemplo_resuelto`, `analogia`, cantidad de
+    recursos visuales, encabezados no vacíos) y una auditoría de solo lectura
+    de las cápsulas guardadas. Con esos números se decide qué directivas pasan
+    a ser obligatorias; exigirlas sin medir antes choca con el tope de 300
+    palabras (como el glosario de R, G4). No verificables: definiciones
+    exactas, tono oral, preguntas reflexivas (G6), orden general→particular.
 - **G9. Simulador con perfiles reales de la cohorte.** Solo ofrece perfiles
   puros (100 % en un canal), que no tiene ninguno de los 43 diagnósticos; el
   caso multimodal, el más frecuente, no se puede simular.

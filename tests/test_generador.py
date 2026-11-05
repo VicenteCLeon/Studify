@@ -22,7 +22,12 @@ from studify.generation.generator import (
 from studify.rag import orchestrator
 from studify.vark.rules import aplicar_reglas
 from studify.vark.scoring import PerfilVark
-from tests.material import FRAGMENTOS, OBJETIVO, capsula_valida
+from tests.material import (
+    FRAGMENTOS,
+    OBJETIVO,
+    actividad_flashcards_y_quiz,
+    capsula_valida,
+)
 
 
 class ClienteFalso:
@@ -66,11 +71,20 @@ def json_de(datos: dict) -> str:
     return json.dumps(datos, ensure_ascii=False)
 
 
-VALIDA = json_de(capsula_valida())
+def capsula_valida_k() -> dict:
+    """La cápsula de referencia con la actividad que exige el perfil K puro.
+
+    `prompt_maestro()` usa el perfil K puro, cuya directiva `actividad_aplicada`
+    exige `flashcards_y_quiz` desde el punto 1c (05-nov-2026).
+    """
+    return capsula_valida() | {"actividad": actividad_flashcards_y_quiz()}
+
+
+VALIDA = json_de(capsula_valida_k())
 
 
 def con_defecto(**cambios) -> str:
-    datos = capsula_valida()
+    datos = capsula_valida_k()
     datos.update(cambios)
     return json_de(datos)
 
@@ -415,3 +429,31 @@ def test_llm_thinking_vacio_no_envia_el_parametro(monkeypatch):
     cliente = ClienteOpenAILike(api_key="clave-de-prueba")
 
     assert "extra_body" not in cliente._llm.additional_kwargs
+
+
+# --- Actividad exigida por el perfil K (punto 1c) ----------------------------
+
+
+def test_un_quiz_mc_en_un_perfil_k_se_repara_a_flashcards_y_quiz():
+    cliente = ClienteFalso(json_de(capsula_valida()), VALIDA)
+
+    resultado = generar(prompt_maestro(), cliente=cliente)
+
+    assert resultado.intentos == 2
+    assert resultado.capsula.actividad.tipo == "flashcards_y_quiz"
+    assert resultado.metricas["actividad_ok"] is True
+    realimentacion = cliente.conversaciones[1][-1].contenido
+    assert "flashcards_y_quiz" in realimentacion and "quiz_mc" in realimentacion
+
+
+def test_un_perfil_sin_la_directiva_acepta_cualquier_actividad():
+    perfil = PerfilVark(v=Decimal(0), a=Decimal(0), r=Decimal(100), k=Decimal(0))
+    maestro = orchestrator.construir(
+        objetivo=OBJETIVO, fragmentos=FRAGMENTOS,
+        config=aplicar_reglas(perfil), modelo="modelo-de-prueba",
+    )
+    resultado = generar(maestro, cliente=ClienteFalso(json_de(capsula_valida())))
+
+    assert maestro.actividad_requerida is None
+    assert resultado.intentos == 1
+    assert resultado.metricas["actividad_ok"] is None

@@ -117,3 +117,37 @@ def capsula_valida() -> dict:
         },
         "fuentes": [{"id_fragmento": 161, "documento": DOCUMENTO, "pagina": 12}],
     }
+
+
+def actividad_flashcards_y_quiz() -> dict:
+    """La actividad que exige la directiva `actividad_aplicada` (perfiles K)."""
+    return {
+        "tipo": "flashcards_y_quiz",
+        "tarjetas": [
+            {"anverso": "Dependencia parcial", "reverso": "Depende de parte de la clave"},
+            {"anverso": "Clave compuesta", "reverso": "Clave formada por varios atributos"},
+            {"anverso": "Normalización", "reverso": "Proceso que reduce la redundancia"},
+        ],
+        "preguntas": [
+            {
+                "enunciado": f"Pregunta {i}: ¿qué indica una dependencia parcial?",
+                "alternativas": [
+                    "Un atributo depende de parte de la clave compuesta",
+                    "La tabla tiene demasiadas columnas",
+                    "La clave primaria es numérica",
+                ],
+                "indice_correcta": 0,
+                "explicacion": "Es la definición de dependencia parcial del material.",
+            }
+            for i in (1, 2, 3)
+        ],
+    }
+
+
+def exige_flashcards_y_quiz(prompt_usuario: str) -> bool:
+    """Si el prompt pide `flashcards_y_quiz` (directiva `actividad_aplicada`).
+
+    Los dobles del LLM lo leen del prompt, como lo haría el modelo, para
+    responder la actividad que el validador exige desde el punto 1c.
+    """
+    return "DEBE SER `flashcards_y_quiz`" in prompt_usuario

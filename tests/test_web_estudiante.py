@@ -32,6 +32,7 @@ from studify.vark import instrumento
 from studify.web import sesion
 from tests.conftest import cliente_con_proveedor_caido, necesita_bd
 from tests.identidad_web import enviar_vark
+from tests.material import actividad_flashcards_y_quiz, exige_flashcards_y_quiz
 
 
 @pytest.fixture
@@ -430,13 +431,18 @@ class ClienteFalso:
                 "concepto_central": CONCEPTO_DE_PRUEBA,
                 "representacion_adaptativa": BLOQUES_DE_PRUEBA,
                 "ejemplo": EJEMPLO_DE_PRUEBA,
-                "actividad": {
-                    "tipo": "quiz_mc",
-                    "pregunta": PREGUNTA,
-                    "alternativas": ALTERNATIVAS,
-                    "indice_correcta": INDICE_CORRECTA,
-                    "retroalimentacion": RETROALIMENTACION,
-                },
+                # La actividad que exige el prompt (punto 1c).
+                "actividad": (
+                    actividad_flashcards_y_quiz()
+                    if exige_flashcards_y_quiz(mensajes[1].contenido)
+                    else {
+                        "tipo": "quiz_mc",
+                        "pregunta": PREGUNTA,
+                        "alternativas": ALTERNATIVAS,
+                        "indice_correcta": INDICE_CORRECTA,
+                        "retroalimentacion": RETROALIMENTACION,
+                    }
+                ),
                 "fuentes": [{"id_fragmento": ids[0], "documento": "x", "pagina": 1}],
             },
             ensure_ascii=False,
@@ -533,6 +539,24 @@ def estudiante_conectado(cliente, limpiar_estudiantes):
     return id_estudiante
 
 
+@pytest.fixture
+def estudiante_lector(cliente, limpiar_estudiantes):
+    """Un estudiante lector-escritor puro, creado por el propio cuestionario.
+
+    Su perfil no fija la actividad de cierre, así que el doble del LLM le
+    responde `quiz_mc`. Lo usan los tests del flujo de selección única: desde
+    el punto 1c el perfil kinestésico recibe siempre `flashcards_y_quiz`.
+    """
+    def letra_r(numero: int) -> str:
+        return next(x for x in "abcd" if instrumento.canal_por_posicion(numero, x) == "R")
+
+    lector = {f"q{n}": [letra_r(n)] for n in range(1, 17)}
+    enviar_vark(cliente, data=lector | {"carrera": CARRERA_PRUEBA} | ACEPTA)
+    id_estudiante = _id_de_la_cookie(cliente)
+    limpiar_estudiantes.append(id_estudiante)
+    return id_estudiante
+
+
 @necesita_bd
 def test_el_catalogo_oculta_los_temas_sin_material_validado(
     cliente, estudiante_conectado, material
@@ -589,7 +613,7 @@ def test_el_visor_renderiza_los_bloques_del_contrato(
 
 @necesita_bd
 def test_el_visor_no_filtra_la_respuesta_correcta(
-    cliente, estudiante_conectado, material, llm_falso
+    cliente, estudiante_lector, material, llm_falso
 ):
     """Ni `indice_correcta` ni la retroalimentación pueden viajar al navegador.
 
@@ -607,7 +631,7 @@ def test_el_visor_no_filtra_la_respuesta_correcta(
 
 @necesita_bd
 def test_el_quiz_se_corrige_contra_el_json_guardado(
-    cliente, db, estudiante_conectado, material, llm_falso
+    cliente, db, estudiante_lector, material, llm_falso
 ):
     id_objetivo = material["con_material"].id_objetivo
     cliente.get(f"/student/viewer/{id_objetivo}")

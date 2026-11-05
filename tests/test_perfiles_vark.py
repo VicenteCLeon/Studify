@@ -18,7 +18,14 @@ from pathlib import Path
 import pytest
 
 from studify.vark.rules import aplicar_reglas
-from tests.material import EXPLICACION, FRAGMENTOS, OBJETIVO, PARRAFO, capsula_valida
+from tests.material import (
+    EXPLICACION,
+    FRAGMENTOS,
+    OBJETIVO,
+    PARRAFO,
+    actividad_flashcards_y_quiz,
+    capsula_valida,
+)
 
 _RUTA = Path(__file__).resolve().parent.parent / "scripts" / "probar_perfiles_vark.py"
 _spec = importlib.util.spec_from_file_location("probar_perfiles_vark", _RUTA)
@@ -282,11 +289,32 @@ def test_timeout_del_llm_queda_como_error_operativo(tmp_path):
 
 
 def test_proporcion_falla_si_el_dominante_no_deja_marcas(tmp_path):
-    # Un K puro que recibe la cápsula genérica: quiz_mc y sin lista de pasos.
-    r = correr(tmp_path, K_PURO, json_de(capsula_valida()))
+    # Un K puro que recibe la cápsula genérica: sin lista de pasos ni ejemplo
+    # resuelto. Lleva la actividad que su perfil exige, porque desde el punto 1c
+    # un quiz_mc ni siquiera pasa el contrato (ver el test siguiente); esa es
+    # su única marca K, y no alcanza para que K domine.
+    generica = capsula_valida() | {
+        "actividad": actividad_flashcards_y_quiz(),
+        "ejemplo": {
+            "tipo": "parrafo",
+            "encabezado": "Caso aplicado",
+            "cuerpo": "En una tabla de matrículas el nombre del ramo depende solo de id_ramo.",
+        },
+    }
+    r = correr(tmp_path, K_PURO, json_de(generica))
 
     assert r["criterios"]["proporcion"]["estado"] == "falla"
     assert r["criterios"]["ejercicios"]["estado"] == "falla"
+    assert r["veredicto"] == "falla"
+
+
+def test_un_quiz_mc_en_un_k_puro_falla_el_contrato(tmp_path):
+    """Punto 1c: el validador exige la actividad de la directiva `actividad_aplicada`."""
+    quiz_mc = json_de(capsula_valida())
+    r = correr(tmp_path, K_PURO, quiz_mc, quiz_mc, quiz_mc)
+
+    assert r["criterios"]["contrato"]["estado"] == "falla"
+    assert "flashcards_y_quiz" in r["criterios"]["contrato"]["detalle"]
     assert r["veredicto"] == "falla"
 
 

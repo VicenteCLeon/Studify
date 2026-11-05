@@ -62,6 +62,14 @@ MARGEN_PALABRAS_OBJETIVO = 30
 # típico (en los 43 perfiles reales, 180–250 con mediana 220).
 PALABRAS_CONTROL = 220
 
+# Directivas de `vark/rules.py` que fijan el tipo de la actividad de cierre
+# (punto 1c, 05-nov-2026). El prompt ya lo pedía (`INSTRUCCION_POR_DIRECTIVA`),
+# pero el validador no lo exigía y el modelo podía entregar otro tipo (hallazgo
+# 8 del análisis del 04-nov). Ahora el validador exige lo mismo que el prompt.
+ACTIVIDAD_POR_DIRECTIVA = {
+    "actividad_aplicada": "flashcards_y_quiz",
+}
+
 
 class ErrorPrompt(Exception):
     """No se puede construir un prompt maestro con los datos entregados."""
@@ -80,6 +88,21 @@ class PromptMaestro:
     # actividad tiene que ser de este tipo. El validador lo exige.
     actividad_requerida: str | None = None
     basica: bool = False
+
+
+def actividad_exigida(config: ConfiguracionGenerada) -> str | None:
+    """El tipo de actividad que el perfil obliga, o None si queda a criterio del modelo.
+
+    Se deriva de las directivas y no de p_K: la directiva `actividad_aplicada`
+    sale con p_K ≥ 40, pero también de la regla de respaldo de
+    `rules._directivas` (ningún canal sobre 40, sin multimodalidad y K como
+    primario). En los dos casos el prompt pide `flashcards_y_quiz`, así que el
+    validador tiene que exigir lo mismo.
+    """
+    for directiva in config.directivas:
+        if directiva in ACTIVIDAD_POR_DIRECTIVA:
+            return ACTIVIDAD_POR_DIRECTIVA[directiva]
+    return None
 
 
 def _redondear_palabras(palabras: int) -> int:
@@ -317,6 +340,12 @@ def huella(
         f"fragmentos={_sha(material)}",
         f"plantillas={_huella_plantillas()}",
     ]
+    actividad = actividad_exigida(config)
+    if actividad is not None:
+        # Solo en los perfiles cuya directiva fija la actividad (punto 1c): así
+        # sus cápsulas guardadas antes, validadas sin esa exigencia, no se
+        # reutilizan, y la huella de los demás perfiles queda idéntica.
+        partes.append(f"actividad={actividad}")
     if variante:
         # El material del grupo control no se mezcla con el caché personalizado,
         # aunque un perfil individual caiga en el mismo tramo de las reglas.
@@ -379,6 +408,7 @@ def construir(
             palabras_objetivo=palabras_objetivo,
             variante=variante,
         ),
+        actividad_requerida=actividad_exigida(config),
     )
 
 
