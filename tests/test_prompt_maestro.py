@@ -456,3 +456,39 @@ def test_el_prompt_exige_espanol_en_sistema_y_en_formato():
 def test_el_prompt_prohibe_citar_identificadores_no_entregados():
     """Es la contraparte de la regla 5 del validador."""
     assert "Inventar un identificador" in construir(perfil(25, 25, 25, 25)).sistema
+
+
+# --- Huella experimental fija (grupo control neutro, 04-nov-2026) -------------
+
+# Calculadas sobre el código de `0808a35`, ANTES de agregar las plantillas del
+# grupo control. Si cambian, todas las cápsulas experimentales ya guardadas
+# dejan de reutilizarse del caché: cualquier cambio del control tiene que
+# dejarlas idénticas. Se fijan también el prompt completo (sistema + usuario),
+# para que el texto que ve el modelo no cambie aunque la huella coincidiera.
+HUELLAS_EXPERIMENTALES = {
+    (0, 0, 0, 100): (
+        "5f7581c309ccd02c23a1e49c23c548dc4498de4286c911546312c37546a0c169",
+        "f5c000e8fba52ccf382bd8914ea286f4e1d7c2dd57cd5fc159155798aa35c987",
+    ),
+    (30, 30, 20, 20): (
+        "bb374eb9ebfb82b0c7b637f56693a6bf7158904f5a2efca1ae52bd5ec7c7831c",
+        "33249036c61eb70b237ea57d1c08dcbdfd75ef70c3019c98730ac65be96bb1cf",
+    ),
+}
+
+
+@pytest.mark.parametrize("vector", sorted(HUELLAS_EXPERIMENTALES))
+def test_huella_y_prompt_experimentales_no_cambian(vector):
+    import hashlib
+
+    from studify.config import get_settings
+
+    # Las cifras de arriba se calcularon con el rango 150–300 de `.env.example`.
+    ajustes = get_settings()
+    assert (ajustes.capsula_min_palabras, ajustes.capsula_max_palabras) == (150, 300)
+
+    maestro = construir(perfil(*vector))
+    huella, texto = HUELLAS_EXPERIMENTALES[vector]
+    assert maestro.huella == huella
+    completo = f"{maestro.sistema}\x1f{maestro.usuario}"
+    assert hashlib.sha256(completo.encode()).hexdigest() == texto

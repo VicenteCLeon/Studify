@@ -5,6 +5,12 @@ La referencia es la media de los 43 vectores porcentuales del CSV original
 a centésimas por resto mayor, igual que en `scoring.py`. No se consulta la
 cohorte viva: nuevos registros y reintentos no deben cambiar el grupo control.
 No representa un diagnóstico individual ni se guarda como tal.
+
+**Desde el 04-nov-2026 el control ya no genera con este perfil.** Recibe una
+cápsula básica sin adaptación VARK (`orchestrator.construir(config=None)`), en
+la variante de caché `VARIANTE_CONTROL`. `PERFIL_CONTROL` sigue en uso solo en
+la pantalla de perfil del control (radar de referencia, pendiente de la Etapa
+2) y en los tests que reproducen el promedio desde el CSV.
 """
 
 from decimal import Decimal
@@ -12,6 +18,12 @@ from decimal import Decimal
 from studify.db.models import DiagnosticoVark, Estudiante
 from studify.vark.scoring import PerfilVark
 
+# Variante de caché de la cápsula básica del grupo control.
+VARIANTE_CONTROL = "control-neutro-v1"
+
+# Variante anterior (01-nov-2026), cuando el control generaba con PERFIL_CONTROL.
+# Ya no se usa para generar; queda para identificar esas cápsulas antiguas, que
+# siguen en la base pero no se reutilizan porque su huella es otra.
 VERSION_PERFIL_CONTROL = "control-cohorte43-v1"
 PERFIL_CONTROL = PerfilVark(
     v=Decimal("19.12"), a=Decimal("27.11"),

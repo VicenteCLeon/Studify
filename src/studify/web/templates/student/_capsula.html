@@ -170,9 +170,9 @@
 
     <nav class="capsula-indice" aria-label="Partes de la cápsula">
         <ol role="list">
-            <li><a href="#paso-activacion">{{ ui.icon("lightbulb", cls="icon-sm") }}Para partir</a></li>
+            {% if capsula.activacion %}<li><a href="#paso-activacion">{{ ui.icon("lightbulb", cls="icon-sm") }}Para partir</a></li>{% endif %}
             <li><a href="#paso-concepto">{{ ui.icon("file-text", cls="icon-sm") }}Concepto</a></li>
-            <li><a href="#paso-desarrollo">{{ ui.icon("layers", cls="icon-sm") }}Desarrollo</a></li>
+            {% if bloques %}<li><a href="#paso-desarrollo">{{ ui.icon("layers", cls="icon-sm") }}Desarrollo</a></li>{% endif %}
             <li><a href="#paso-actividad">{{ ui.icon("clipboard-check", cls="icon-sm") }}Actividad</a></li>
             <li><a href="#paso-fuentes">{{ ui.icon("quote", cls="icon-sm") }}Fuentes</a></li>
         </ol>
@@ -180,12 +180,15 @@
 
     {# --- Paso 2: activación. Fuera del bucle de bloques porque no es un
        bloque tipado: es un campo propio del contrato, y que aparezca siempre
-       antes del concepto es parte del diseño pedagógico. --------------------- #}
+       antes del concepto es parte del diseño pedagógico. La cápsula básica
+       del grupo control no la trae. ------------------------------------------ #}
+    {% if capsula.activacion %}
     <section id="paso-activacion" class="capsula-activacion" aria-labelledby="activacion-titulo">
         <p id="activacion-titulo" class="paso-rotulo">{{ ui.icon("lightbulb", cls="icon-sm") }}Para partir</p>
         <p class="pregunta-activacion">{{ capsula.activacion }}</p>
         <p class="capsula-activacion-pista">Piensa tu respuesta un momento antes de seguir leyendo.</p>
     </section>
+    {% endif %}
 
     {# --- Narración para el perfil auditivo ------------------------------- #}
     {% set es_auditivo = (capsula and capsula.configuracion and capsula.configuracion.audio_activo) or (perfil_simulado == 'Auditivo') or (audio_activo) %}
@@ -207,7 +210,8 @@
         <p class="capsula-concepto">{{ capsula.concepto_central }}</p>
     </section>
 
-    {# --- Pasos 4 y 5: representación adaptativa y ejemplo --------------- #}
+    {# --- Pasos 4 y 5: representación adaptativa y ejemplo (no en la básica) #}
+    {% if bloques %}
     <section id="paso-desarrollo" class="capsula-seccion capsula-bloques" aria-label="Desarrollo">
         {% for bloque in bloques %}
         <div class="bloque bloque-{{ bloque.tipo }}">
@@ -263,6 +267,7 @@
         </div>
         {% endfor %}
     </section>
+    {% endif %}
 
     {# --- Pasos 6 y 7: actividad de cierre y retroalimentación ------------ #}
     <section id="paso-actividad" class="capsula-actividad" aria-labelledby="actividad-titulo">

@@ -60,7 +60,7 @@ from studify.generation.schemas import Microcapsula
 from studify.rag import orchestrator
 from studify.rag.orchestrator import ErrorPrompt
 from studify.rag.retriever import recuperar
-from studify.vark.perfiles import VERSION_PERFIL_CONTROL, perfil_de_contenido
+from studify.vark.perfiles import VARIANTE_CONTROL, perfil_de_contenido
 from studify.vark.rules import aplicar_reglas
 from studify.web.routers import auth
 
@@ -275,32 +275,42 @@ def crear_capsula(
             detail=f"no existe el objetivo de aprendizaje {payload.id_objetivo}",
         )
 
-    diagnostico = diagnostico_vigente(db, payload.id_estudiante)
-    perfil = perfil_de_contenido(estudiante, diagnostico)
-    if perfil is None:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-            detail=(
-                f"el estudiante {payload.id_estudiante} no tiene diagnóstico "
-                f"VARK. Sin perfil no hay nada que adaptar: primero hay que "
-                f"responder el cuestionario en POST /api/diagnosticos"
-            ),
+    es_control = estudiante.rol == "control"
+    if es_control:
+        # Grupo control (04-nov-2026): cápsula básica sin adaptación VARK. No
+        # pasa por las reglas ni mira diagnósticos, aunque alguno existiera, y
+        # los fragmentos salen en orden neutro (documento y número).
+        config = None
+        id_config = None
+        canal_primario = None
+    else:
+        diagnostico = diagnostico_vigente(db, payload.id_estudiante)
+        perfil = perfil_de_contenido(estudiante, diagnostico)
+        if perfil is None:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail=(
+                    f"el estudiante {payload.id_estudiante} no tiene diagnóstico "
+                    f"VARK. Sin perfil no hay nada que adaptar: primero hay que "
+                    f"responder el cuestionario en POST /api/diagnosticos"
+                ),
+            )
+
+        config = aplicar_reglas(perfil)
+        id_config = (
+            diagnostico.configuracion.id_config
+            if diagnostico and diagnostico.configuracion
+            else None
         )
+        # El canal primario reordena los fragmentos por tipo, no los filtra: un
+        # perfil visual ve primero las tablas disponibles, pero si el apunte no
+        # tiene ninguna recibe igual el texto (ver rag/retriever.py).
+        canal_primario = config.jerarquia.canal_primario
 
-    config = aplicar_reglas(perfil)
-    id_config = (
-        diagnostico.configuracion.id_config
-        if estudiante.rol != "control" and diagnostico and diagnostico.configuracion
-        else None
-    )
-
-    # El canal primario reordena los fragmentos por tipo, no los filtra: un
-    # perfil visual ve primero las tablas disponibles, pero si el apunte no
-    # tiene ninguna recibe igual el texto (ver rag/retriever.py).
     fragmentos = recuperar(
         db,
         id_objetivo=payload.id_objetivo,
-        canal_primario=config.jerarquia.canal_primario,
+        canal_primario=canal_primario,
     )
 
     ajustes = get_settings()
@@ -310,7 +320,7 @@ def crear_capsula(
             fragmentos=fragmentos,
             config=config,
             modelo=ajustes.llm_model,
-            variante=VERSION_PERFIL_CONTROL if estudiante.rol == "control" else "",
+            variante=VARIANTE_CONTROL if es_control else "",
         )
     except ErrorPrompt as exc:
         # El caso típico es un objetivo sin material validado. Es un 422 y no un

@@ -38,12 +38,15 @@ class CapsulaOut(BaseModel):
     estado_validacion: str
 
     # Los siete pasos pedagógicos, en orden (ver `generation/schemas.py`).
+    # En la cápsula básica del grupo control (`CapsulaBasica`) la activación, la
+    # representación adaptativa y el ejemplo vienen vacíos; en la del grupo
+    # experimental siempre traen contenido.
     titulo: str
     objetivo_aprendizaje: str
-    activacion: str
+    activacion: str = ""
     concepto_central: str
-    representacion_adaptativa: list[BloqueContenido]
-    ejemplo: BloqueContenido
+    representacion_adaptativa: list[BloqueContenido] = Field(default_factory=list)
+    ejemplo: BloqueContenido | None = None
     actividad: Actividad
     fuentes: list[Fuente]
 
@@ -67,7 +70,10 @@ class CapsulaOut(BaseModel):
         del simulador del docente, que no persiste nada), y ambas tienen que
         responder lo mismo o la plantilla dejaría de servir para las dos.
         """
-        return [*self.representacion_adaptativa, self.ejemplo]
+        bloques = [*self.representacion_adaptativa]
+        if self.ejemplo is not None:
+            bloques.append(self.ejemplo)
+        return bloques
 
 
 class ResumenCapsulaOut(BaseModel):

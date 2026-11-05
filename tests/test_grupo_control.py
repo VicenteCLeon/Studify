@@ -1,4 +1,8 @@
-"""El grupo control recibe siempre el perfil agregado, sin personalización."""
+"""El grupo control: registro propio y cápsula básica, sin personalización VARK.
+
+Desde el 04-nov-2026 el control no usa PERFIL_CONTROL para generar: recibe un
+resumen del material y un `quiz_mc` (ver tests/test_control_neutro.py).
+"""
 
 import csv
 from decimal import Decimal
@@ -162,6 +166,10 @@ def test_perfil_control_explica_origen_y_no_ofrece_personalizar(navegador_contro
     assert "Perfil general" in respuesta.text
     assert 'href="/student/vark"' not in respuesta.text
     assert 'href="/student/vark"' not in cliente.get("/mis-datos").text
+    # La cápsula del control ya no sigue una configuración VARK: no se muestra.
+    assert "Cómo se construirán tus microcápsulas" not in respuesta.text
+    assert "Lo que incluirá cada cápsula" not in respuesta.text
+    assert "recursos visuales" not in respuesta.text
 
 
 @necesita_bd
@@ -247,8 +255,17 @@ def test_control_genera_sin_diagnostico_con_audio_y_actividades(
     fila = db.get(MicrocapsulaGenerada, capsula["id_capsula"])
     assert fila.id_config is None  # No se fabrica un diagnóstico de los 43 para esta persona.
     assert cliente_falso.llamadas == 1
+    # Cápsula básica: título, objetivo, resumen, quiz_mc y fuentes.
+    assert capsula["activacion"] == ""
+    assert capsula["representacion_adaptativa"] == []
+    assert capsula["ejemplo"] is None
+    assert capsula["actividad"]["tipo"] == "quiz_mc"
+    assert fila.contenido_json["representacion_adaptativa"] == []
     visor = cliente.get(f"/student/viewer/{objetivo}")
     assert visor.status_code == 200
+    assert 'id="paso-activacion"' not in visor.text
+    assert 'id="paso-desarrollo"' not in visor.text
+    assert 'id="paso-concepto"' in visor.text
     assert "Voz de la narración" in visor.text
     assert "generate-audio" in visor.text
     assert "Ver perfil general" in visor.text
@@ -302,8 +319,7 @@ def test_diagnostico_individual_no_cambia_generacion_control(
     db, escenario, navegador_control, cliente_falso, monkeypatch
 ):
     from studify.api.routers import capsules
-    from studify.vark.perfiles import PERFIL_CONTROL
-    from studify.vark.rules import aplicar_reglas
+    from studify.vark.perfiles import VARIANTE_CONTROL
 
     cliente, id_estudiante = navegador_control
     # Incluso un diagnóstico agregado por un proceso externo no habilita personalización.
@@ -315,21 +331,113 @@ def test_diagnostico_individual_no_cambia_generacion_control(
     db.commit()
     assert cliente.get(f"/api/diagnosticos/{diagnostico.id_diagnostico}").status_code == 403
     construir = capsules.orchestrator.construir
-    configuraciones = []
+    recuperar = capsules.recuperar
+    configuraciones, variantes, canales = [], [], []
 
     def capturar(**kwargs):
         configuraciones.append(kwargs["config"])
+        variantes.append(kwargs["variante"])
         return construir(**kwargs)
 
+    def recuperar_espiado(db, **kwargs):
+        canales.append(kwargs.get("canal_primario"))
+        return recuperar(db, **kwargs)
+
     monkeypatch.setattr(capsules.orchestrator, "construir", capturar)
+    monkeypatch.setattr(capsules, "recuperar", recuperar_espiado)
+    monkeypatch.setattr(
+        capsules, "aplicar_reglas",
+        lambda *_: pytest.fail("el control no pasa por las reglas VARK"),
+    )
     for regenerar in (False, True):
         respuesta = cliente.post("/api/capsulas", params={"regenerar": regenerar}, json={
             "id_estudiante": id_estudiante,
             "id_objetivo": escenario["objetivo"].id_objetivo,
         })
         assert respuesta.status_code == 201
-    assert configuraciones == [aplicar_reglas(PERFIL_CONTROL)] * 2
+    # Sin configuración VARK, sin canal para ordenar fragmentos y en su variante.
+    assert configuraciones == [None, None]
+    assert canales == [None, None]
+    assert variantes == [VARIANTE_CONTROL] * 2
     assert cliente_falso.llamadas == 2
+
+
+@necesita_bd
+def test_capsula_del_control_anterior_no_se_reutiliza(
+    db, escenario, navegador_control, cliente_falso
+):
+    """Las cápsulas `control-cohorte43-v1` quedan en la base, pero no se sirven."""
+    from studify.rag import orchestrator
+    from studify.rag.retriever import recuperar
+    from studify.vark.perfiles import PERFIL_CONTROL, VERSION_PERFIL_CONTROL
+    from studify.vark.rules import aplicar_reglas
+    from tests.material import capsula_valida
+
+    cliente, id_control = navegador_control
+    objetivo = escenario["objetivo"]
+    config = aplicar_reglas(PERFIL_CONTROL)
+    anterior = orchestrator.construir(
+        objetivo=objetivo,
+        fragmentos=recuperar(
+            db, id_objetivo=objetivo.id_objetivo,
+            canal_primario=config.jerarquia.canal_primario,
+        ),
+        config=config, modelo="modelo-de-prueba", variante=VERSION_PERFIL_CONTROL,
+    )
+    completa = capsula_valida()
+    otro = Estudiante(rol="control")
+    db.add(otro)
+    db.flush()
+    db.add(MicrocapsulaGenerada(
+        id_estudiante=otro.id_estudiante, id_objetivo=objetivo.id_objetivo,
+        titulo=completa["titulo"],
+        contenido_json={k: v for k, v in completa.items() if k != "actividad"},
+        mini_quiz_json=completa["actividad"], huella_generacion=anterior.huella,
+        modelo_llm="modelo-de-prueba",
+    ))
+    db.commit()
+    try:
+        respuesta = cliente.post("/api/capsulas", json={
+            "id_estudiante": id_control, "id_objetivo": objetivo.id_objetivo,
+        })
+        assert respuesta.status_code == 201, respuesta.text
+        assert respuesta.json()["origen"] == "generada"
+        assert respuesta.json()["representacion_adaptativa"] == []
+        assert cliente_falso.llamadas == 1
+    finally:
+        db.query(MicrocapsulaGenerada).filter(
+            MicrocapsulaGenerada.id_estudiante == otro.id_estudiante
+        ).delete()
+        db.delete(otro)
+        db.commit()
+
+
+@necesita_bd
+def test_capsula_basica_en_historial_docente_mis_datos_y_exportacion(
+    db, escenario, navegador_control, cliente_falso, http_docente
+):
+    cliente, id_control = navegador_control
+    objetivo = escenario["objetivo"].id_objetivo
+    capsula = cliente.post("/api/capsulas", json={
+        "id_estudiante": id_control, "id_objetivo": objetivo,
+    }).json()
+    assert capsula["representacion_adaptativa"] == []
+
+    panel = http_docente.get("/teacher/analytics")
+    assert panel.status_code == 200
+    assert f"#{capsula['id_capsula']}" in panel.text
+    historial = http_docente.get("/api/capsulas", params={"id_estudiante": id_control})
+    assert historial.status_code == 200
+    assert [c["id_capsula"] for c in historial.json()] == [capsula["id_capsula"]]
+    leida = http_docente.get(f"/api/capsulas/{capsula['id_capsula']}")
+    assert leida.status_code == 200
+    assert leida.json()["ejemplo"] is None
+
+    assert cliente.get("/mis-datos").status_code == 200
+    exportada = cliente.get("/mis-datos/exportar").json()["capsulas"]
+    assert exportada[0]["contenido"]["representacion_adaptativa"] == []
+    assert exportada[0]["contenido"]["ejemplo"] is None
+    assert exportada[0]["actividad"]["tipo"] == "quiz_mc"
 
 
 @necesita_bd

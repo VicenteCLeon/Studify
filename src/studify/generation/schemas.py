@@ -453,3 +453,56 @@ class Microcapsula(BaseModel):
         partes.extend(self.actividad.alternativas)
         partes.append(self.actividad.retroalimentacion)
         return "\n".join(partes)
+
+
+class CapsulaBasica(Microcapsula):
+    """Cápsula del grupo control: título, OA, resumen, actividad y fuentes.
+
+    Decisión del equipo (04-nov-2026): el control recibe un resumen en texto del
+    objetivo, basado solo en los fragmentos, y la actividad de cierre fija, sin
+    ninguna adaptación VARK. El resumen va en `concepto_central`; activación,
+    representación adaptativa y ejemplo quedan vacíos y se guardan con las
+    mismas claves que una cápsula completa, de modo que el visor, el historial
+    y la exportación leen las dos con el mismo código.
+
+    Es una subclase para no tocar `Microcapsula`: la validación del grupo
+    experimental sigue exigiendo sus siete pasos. Los tres campos se rechazan
+    si vienen con contenido, en vez de descartarse, para que el bucle de
+    reparación corrija al modelo y el control nunca reciba un elemento
+    adaptativo. El tipo de actividad lo exige el validador
+    (`actividad_requerida`), no el esquema.
+    """
+
+    activacion: str = ""
+    representacion_adaptativa: list[BloqueContenido] = Field(default_factory=list)
+    ejemplo: BloqueContenido | None = None
+
+    @model_validator(mode="after")
+    def activacion_es_una_pregunta(self) -> "CapsulaBasica":
+        """Reemplaza la regla del padre: en la cápsula básica no hay activación."""
+        return self
+
+    @model_validator(mode="after")
+    def sin_elementos_adaptativos(self) -> "CapsulaBasica":
+        presentes = [
+            campo
+            for campo, valor in (
+                ("activacion", self.activacion.strip()),
+                ("representacion_adaptativa", self.representacion_adaptativa),
+                ("ejemplo", self.ejemplo),
+            )
+            if valor
+        ]
+        if presentes:
+            raise ValueError(
+                f"la cápsula lleva solo título, objetivo, resumen (`concepto_central`), "
+                f"actividad y fuentes; quita estos campos: {', '.join(presentes)}"
+            )
+        return self
+
+    def palabras_contenido(self) -> int:
+        """La extensión del cap. 11.1 se cuenta solo sobre el resumen."""
+        return contar_palabras(self.concepto_central)
+
+    def bloques_legibles(self) -> list[BloqueContenido]:
+        return []

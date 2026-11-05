@@ -125,6 +125,9 @@ como un punto en el centro. #}
     {% endif %}
 
     <section class="perfil-config" aria-labelledby="config-titulo">
+        {# El control recibe una cápsula básica sin configuración VARK (04-nov-2026):
+           no se le muestran parámetros ni directivas. #}
+        {% if not es_control %}
         <header class="section-header">
             <span class="eyebrow">{{ ui.icon("sparkles", cls="icon-sm") }}Tus microcápsulas</span>
             <h2 id="config-titulo">Cómo se construirán tus microcápsulas</h2>
@@ -162,6 +165,7 @@ como un punto en el centro. #}
                 <span class="stat-label">registro de redacción</span>
             </div>
         </div>
+        {% endif %}
 
         {% if audio_activo %}
         <div class="card mt-4">

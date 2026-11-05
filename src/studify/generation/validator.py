@@ -33,7 +33,7 @@ from pydantic import ValidationError
 
 from studify.config import get_settings
 from studify.generation import idioma
-from studify.generation.schemas import Microcapsula, contar_palabras
+from studify.generation.schemas import CapsulaBasica, Microcapsula, contar_palabras
 from studify.rag.retriever import FragmentoRecuperado
 
 # Cercas de bloque Markdown: los modelos envuelven el JSON en ```json … ``` con
@@ -249,6 +249,14 @@ def _error_falta_de_palabras(
     instrucción genérica induce al modelo a agregarlo donde no corresponde.
     """
     faltan = minimo - palabras
+    if isinstance(capsula, CapsulaBasica):
+        # Cápsula básica del grupo control: el único texto que cuenta es el resumen.
+        return (
+            f"el resumen tiene {palabras} palabras y el mínimo es {minimo}: faltan "
+            f"{faltan}. Debes agregar al menos {faltan + MARGEN_REPARACION} palabras "
+            f"a `concepto_central`, sin que pase de {maximo}, con información de los "
+            f"fragmentos entregados. No cambies lo que ya está bien."
+        )
     representacion = sum(b.palabras() for b in capsula.representacion_adaptativa)
     return (
         f"el contenido tiene {palabras} palabras y el mínimo es {minimo}: faltan "
@@ -273,6 +281,13 @@ def _error_exceso_de_palabras(capsula: Microcapsula, palabras: int, maximo: int)
     un blanco concreto en vez de una cifra abstracta.
     """
     exceso = palabras - maximo
+    if isinstance(capsula, CapsulaBasica):
+        return (
+            f"el resumen tiene {palabras} palabras y el máximo es {maximo}: sobran "
+            f"{exceso}. Debes recortar al menos {exceso + MARGEN_REPARACION} palabras "
+            f"de `concepto_central` para que quede estrictamente por debajo de "
+            f"{maximo}. No agregues contenido nuevo: solo acorta y resume lo que sobra."
+        )
     partes = [
         ("la activación", contar_palabras(capsula.activacion)),
         ("el concepto central", contar_palabras(capsula.concepto_central)),
@@ -302,6 +317,9 @@ def validar(
     crudo: str | dict,
     fragmentos: Sequence[FragmentoRecuperado],
     palabras_objetivo: int | None = None,
+    *,
+    actividad_requerida: str | None = None,
+    esquema: type[Microcapsula] = Microcapsula,
 ) -> ResultadoValidacion:
     """Aplica las seis reglas del plan §3 a la respuesta del modelo.
 
@@ -309,6 +327,11 @@ def validar(
     que se contrastan las citas (regla 5), así que tienen que ser exactamente
     los mismos que vio el modelo. `palabras_objetivo` es el `palabras_texto` del
     perfil; se usa para medir la adherencia, no para rechazar.
+
+    El grupo control (04-nov-2026) valida con `esquema=CapsulaBasica` y
+    `actividad_requerida="quiz_mc"`: una actividad de otro tipo se rechaza con
+    realimentación para el bucle de reparación. Sin esos argumentos, la
+    validación del grupo experimental es la de siempre.
     """
     ajustes = get_settings()
 
@@ -322,7 +345,7 @@ def validar(
         datos = crudo
 
     try:
-        capsula = Microcapsula.model_validate(datos)
+        capsula = esquema.model_validate(datos)
     except ValidationError as exc:
         return ResultadoValidacion(
             errores=_formatear_errores_pydantic(exc),
@@ -341,6 +364,15 @@ def validar(
         )
     elif palabras > ajustes.capsula_max_palabras:
         errores.append(_error_exceso_de_palabras(capsula, palabras, ajustes.capsula_max_palabras))
+
+    # --- Actividad exigida (grupo control) -----------------------------------
+    if actividad_requerida is not None and capsula.actividad.tipo != actividad_requerida:
+        errores.append(
+            f"la actividad de cierre debe ser de tipo '{actividad_requerida}' y llegó "
+            f"'{capsula.actividad.tipo}'. Rehaz `actividad` como '{actividad_requerida}': "
+            f"una `pregunta`, entre 3 y 5 `alternativas` distintas, `indice_correcta` "
+            f"y `retroalimentacion`"
+        )
 
     # --- Regla 5: citas verificables -----------------------------------------
     disponibles = {f.id_fragmento: f for f in fragmentos}
@@ -391,6 +423,11 @@ def validar(
             "citas_inventadas": len(inventados),
             "citas_corregidas": citas_corregidas,
             "idioma_ok": analisis.es_espanol,
+            "actividad_ok": (
+                None
+                if actividad_requerida is None
+                else capsula.actividad.tipo == actividad_requerida
+            ),
             "ratio_espanol": round(analisis.ratio_espanol, 4),
         },
     )

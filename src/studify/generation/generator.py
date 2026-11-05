@@ -28,7 +28,7 @@ from dataclasses import dataclass, field
 from typing import Literal, Protocol
 
 from studify.config import get_settings
-from studify.generation.schemas import Microcapsula
+from studify.generation.schemas import CapsulaBasica, Microcapsula
 from studify.generation.validator import validar
 from studify.rag.orchestrator import PromptMaestro
 
@@ -216,6 +216,8 @@ def generar(
             crudo,
             fragmentos=prompt.fragmentos,
             palabras_objetivo=prompt.palabras_objetivo,
+            actividad_requerida=prompt.actividad_requerida,
+            esquema=CapsulaBasica if prompt.basica else Microcapsula,
         )
 
         if resultado.es_valida:

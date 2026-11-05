@@ -68,6 +68,19 @@ TEXTO_LARGO = (
 )
 
 
+ACTIVIDAD_QUIZ_MC = {
+    "tipo": "quiz_mc",
+    "pregunta": "¿Cuándo una tabla incumple la segunda forma normal?",
+    "alternativas": [
+        "Cuando un atributo no clave depende de parte de la clave",
+        "Cuando la tabla tiene más de cinco columnas",
+        "Cuando la clave primaria es un número entero",
+    ],
+    "indice_correcta": 0,
+    "retroalimentacion": "Debe depender de la clave completa.",
+}
+
+
 class ClienteObediente:
     """Modelo falso que se porta bien: responde en español y cita lo recibido."""
 
@@ -78,6 +91,18 @@ class ClienteObediente:
     def responder(self, mensajes) -> str:
         self.llamadas += 1
         ids = [int(n) for n in re.findall(r"id_fragmento: (\d+)", mensajes[1].contenido)]
+        if "`representacion_adaptativa`" not in mensajes[1].contenido:
+            # Prompt del grupo control: cápsula básica, solo resumen y quiz_mc.
+            return json.dumps(
+                {
+                    "titulo": "Segunda forma normal y dependencias parciales",
+                    "objetivo_aprendizaje": "Identificar y corregir dependencias parciales.",
+                    "concepto_central": TEXTO_LARGO,
+                    "actividad": ACTIVIDAD_QUIZ_MC,
+                    "fuentes": [{"id_fragmento": ids[0], "documento": "x", "pagina": 1}],
+                },
+                ensure_ascii=False,
+            )
         return json.dumps(
             {
                 "titulo": "Segunda forma normal y dependencias parciales",

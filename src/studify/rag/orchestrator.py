@@ -56,6 +56,12 @@ TRAMO_PALABRAS = 10
 # modelo en el prompt.
 MARGEN_PALABRAS_OBJETIVO = 30
 
+# Extensión que se le pide al resumen del grupo control (04-nov-2026). Es la
+# del perfil promedio que usaba antes el control y queda en el centro del
+# rango 150–300: así el control no lee ni más ni menos que el experimental
+# típico (en los 43 perfiles reales, 180–250 con mediana 220).
+PALABRAS_CONTROL = 220
+
 
 class ErrorPrompt(Exception):
     """No se puede construir un prompt maestro con los datos entregados."""
@@ -70,6 +76,10 @@ class PromptMaestro:
     fragmentos: tuple[FragmentoRecuperado, ...]
     palabras_objetivo: int
     huella: str
+    # Solo en el grupo control: la cápsula es básica (`CapsulaBasica`) y su
+    # actividad tiene que ser de este tipo. El validador lo exige.
+    actividad_requerida: str | None = None
+    basica: bool = False
 
 
 def _redondear_palabras(palabras: int) -> int:
@@ -135,6 +145,25 @@ def bloque_perfil(config: ConfiguracionGenerada, *, palabras_objetivo: int) -> s
     )
 
 
+def bloque_neutro(*, palabras_objetivo: int) -> str:
+    """Extensión y actividad del grupo control, sin nada que dependa de un perfil."""
+    ajustes = get_settings()
+    return prompts.NEUTRO.format(
+        palabras_texto=palabras_objetivo,
+        palabras_min=ajustes.capsula_min_palabras,
+        palabras_max=ajustes.capsula_max_palabras,
+    )
+
+
+def bloque_formato_neutro() -> str:
+    ajustes = get_settings()
+    return prompts.FORMATO_NEUTRO.format(
+        esquema_json=prompts.ESQUEMA_JSON_BASICO,
+        palabras_min=ajustes.capsula_min_palabras,
+        palabras_max=ajustes.capsula_max_palabras,
+    )
+
+
 def bloque_formato() -> str:
     """Esquema JSON, extensión y obligación de responder en español."""
     ajustes = get_settings()
@@ -182,8 +211,57 @@ def _huella_plantillas() -> str:
     return _sha("\x1f".join(partes))
 
 
+def _huella_plantillas_neutras() -> str:
+    """El texto fijo del prompt del grupo control.
+
+    Va aparte de `_huella_plantillas` a propósito: si las plantillas del
+    control entraran ahí, cualquier ajuste del control cambiaría la huella de
+    todas las cápsulas experimentales y se volverían a generar.
+    """
+    ajustes = get_settings()
+    partes = [
+        prompts.SISTEMA,
+        prompts.CONTEXTO.template,
+        prompts.FRAGMENTO.template,
+        prompts.TAREA.template,
+        prompts.SECUENCIA_NEUTRA,
+        prompts.NEUTRO.template,
+        prompts.ESQUEMA_JSON_BASICO,
+        prompts.FORMATO_NEUTRO.template,
+        f"actividad={prompts.ACTIVIDAD_CONTROL}",
+        f"rango={ajustes.capsula_min_palabras}-{ajustes.capsula_max_palabras}",
+    ]
+    return _sha("\x1f".join(partes))
+
+
+def _huella_neutra(
+    fragmentos: Sequence[FragmentoRecuperado],
+    *,
+    objetivo: ObjetivoAprendizaje,
+    modelo: str,
+    palabras_objetivo: int,
+    variante: str,
+) -> str:
+    """Clave de caché de la cápsula básica: material, objetivo, modelo y plantillas."""
+    material = "\x1e".join(
+        f"{f.id_fragmento}\x1f{f.tipo}\x1f{f.cita}\x1f{_sha(f.texto.strip())}"
+        for f in sorted(fragmentos, key=lambda f: f.id_fragmento)
+    )
+    partes = [
+        "formato=basica",
+        f"objetivo={objetivo.id_objetivo}",
+        f"tarea={_sha(bloque_tarea(objetivo))}",
+        f"modelo={modelo}",
+        f"palabras={palabras_objetivo}",
+        f"fragmentos={_sha(material)}",
+        f"plantillas={_huella_plantillas_neutras()}",
+        f"variante={variante}",
+    ]
+    return _sha("|".join(partes))
+
+
 def huella(
-    config: ConfiguracionGenerada,
+    config: ConfiguracionGenerada | None,
     fragmentos: Sequence[FragmentoRecuperado],
     *,
     objetivo: ObjetivoAprendizaje,
@@ -213,7 +291,16 @@ def huella(
     huella casi cada estudiante tendría la suya y el caché compartido por tramo
     dejaría de servir. Dos perfiles con la misma huella reciben el mismo prompt
     salvo esas cuatro cifras (`test_misma_huella_es_el_mismo_prompt_salvo_los_pesos`).
+
+    Con `config=None` (grupo control, cápsula básica) la huella se calcula en
+    `_huella_neutra`; la de un perfil queda exactamente como estaba
+    (`test_huella_y_prompt_experimentales_no_cambian`).
     """
+    if config is None:
+        return _huella_neutra(
+            fragmentos, objetivo=objetivo, modelo=modelo,
+            palabras_objetivo=palabras_objetivo, variante=variante,
+        )
     material = "\x1e".join(
         f"{f.id_fragmento}\x1f{f.tipo}\x1f{f.cita}\x1f{_sha(f.texto.strip())}"
         for f in sorted(fragmentos, key=lambda f: f.id_fragmento)
@@ -241,12 +328,22 @@ def construir(
     *,
     objetivo: ObjetivoAprendizaje,
     fragmentos: Sequence[FragmentoRecuperado],
-    config: ConfiguracionGenerada,
+    config: ConfiguracionGenerada | None,
     modelo: str,
     variante: str = "",
 ) -> PromptMaestro:
-    """Arma el prompt maestro completo para un objetivo y un perfil."""
+    """Arma el prompt maestro completo para un objetivo y un perfil.
+
+    Con `config=None` arma la cápsula básica del grupo control: mismos
+    fragmentos, mismas reglas de sistema y mismo modelo, pero sin bloque de
+    perfil, con un resumen de unas `PALABRAS_CONTROL` palabras y la actividad
+    fija `prompts.ACTIVIDAD_CONTROL`.
+    """
     ajustes = get_settings()
+    if config is None:
+        return _construir_neutro(
+            objetivo=objetivo, fragmentos=fragmentos, modelo=modelo, variante=variante,
+        )
     palabras_objetivo = max(
         ajustes.capsula_min_palabras,
         min(
@@ -282,4 +379,39 @@ def construir(
             palabras_objetivo=palabras_objetivo,
             variante=variante,
         ),
+    )
+
+
+def _construir_neutro(
+    *,
+    objetivo: ObjetivoAprendizaje,
+    fragmentos: Sequence[FragmentoRecuperado],
+    modelo: str,
+    variante: str,
+) -> PromptMaestro:
+    ajustes = get_settings()
+    palabras_objetivo = max(
+        ajustes.capsula_min_palabras,
+        min(PALABRAS_CONTROL, ajustes.capsula_max_palabras - MARGEN_PALABRAS_OBJETIVO),
+    )
+    usuario = "\n\n".join(
+        [
+            bloque_tarea(objetivo),
+            bloque_contexto(fragmentos),
+            prompts.SECUENCIA_NEUTRA,
+            bloque_neutro(palabras_objetivo=palabras_objetivo),
+            bloque_formato_neutro(),
+        ]
+    )
+    return PromptMaestro(
+        sistema=prompts.SISTEMA,
+        usuario=usuario,
+        fragmentos=tuple(fragmentos),
+        palabras_objetivo=palabras_objetivo,
+        huella=_huella_neutra(
+            fragmentos, objetivo=objetivo, modelo=modelo,
+            palabras_objetivo=palabras_objetivo, variante=variante,
+        ),
+        actividad_requerida=prompts.ACTIVIDAD_CONTROL,
+        basica=True,
     )

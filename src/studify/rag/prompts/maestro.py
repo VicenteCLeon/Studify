@@ -267,3 +267,79 @@ TAREA = PromptTemplate(
     "Tema: {tema}\n"
     "{descripcion}"
 )
+
+
+# --- Grupo control: cápsula básica sin adaptación (04-nov-2026) ---------------
+#
+# Plantillas propias del grupo control, en vez de variantes de las de arriba:
+# las de arriba entran a la huella de las cápsulas experimentales
+# (`orchestrator._huella_plantillas`), y editarlas haría que todas se
+# regeneraran. Estas solo entran a la huella del control
+# (`orchestrator._huella_plantillas_neutras`).
+#
+# Por decisión del equipo el control recibe un resumen del material y una
+# actividad fija, sin nada que dependa de un estudiante: por eso no nombran
+# preferencias, registros de redacción ni tipos de bloque. `SISTEMA`,
+# `CONTEXTO`, `FRAGMENTO` y `TAREA` se reutilizan tal cual: las reglas de solo
+# afirmar lo que está en los fragmentos, citar ids entregados, escribir en
+# español y responder en JSON son las mismas para los dos grupos.
+
+# La actividad fija del control: un ítem de selección única que el servidor
+# corrige y que el panel ya cuenta aparte (`_rendimiento_actividades`).
+ACTIVIDAD_CONTROL = "quiz_mc"
+
+SECUENCIA_NEUTRA = (
+    "## Estructura obligatoria\n\n"
+    "La cápsula tiene estas partes, en este orden:\n"
+    "1. **Objetivo de aprendizaje** (`objetivo_aprendizaje`): qué se va a "
+    "aprender, en una oración.\n"
+    "2. **Resumen** (`concepto_central`): un resumen en prosa clara del "
+    "material entregado, en párrafos continuos. Sin listas, tablas, esquemas, "
+    "comparaciones con situaciones cotidianas, glosarios ni casos desarrollados "
+    "aparte.\n"
+    "3. **Actividad de cierre** (`actividad`): una pregunta de selección única "
+    "que comprueba la comprensión del resumen.\n"
+    "4. **Retroalimentación** (`actividad.retroalimentacion`): explica por qué "
+    "la alternativa correcta lo es, con lo que dice el material.\n"
+)
+
+NEUTRO = PromptTemplate(
+    "## Extensión y actividad\n\n"
+    "Extensión del resumen: aproximadamente {palabras_texto} palabras "
+    "(mínimo {palabras_min}, máximo {palabras_max}).\n"
+    "La actividad de cierre es siempre de tipo `quiz_mc`: una pregunta, entre "
+    "3 y 5 alternativas distintas, `indice_correcta` y `retroalimentacion`. No "
+    "uses otro tipo de actividad."
+)
+
+ESQUEMA_JSON_BASICO = """{
+  "titulo": "string, máximo 10 palabras",
+  "objetivo_aprendizaje": "string, una sola oración: el OA que cubre la cápsula",
+  "concepto_central": "string: el resumen en prosa del material entregado",
+  "actividad": {
+    "tipo": "quiz_mc",
+    "pregunta": "string: la pregunta de comprobación",
+    "alternativas": ["4 alternativas distintas"],
+    "indice_correcta": "entero, la primera es 0",
+    "retroalimentacion": "string: por qué la alternativa correcta lo es"
+  },
+  "fuentes": [
+    { "id_fragmento": 0, "documento": "string", "pagina": 0 }
+  ]
+}"""
+
+FORMATO_NEUTRO = PromptTemplate(
+    "## Formato de la respuesta\n\n"
+    "Devuelve exactamente esta estructura JSON, sin campos adicionales:\n\n"
+    "{esquema_json}\n\n"
+    "Antes de responder, verifica:\n"
+    "- El JSON parsea y no lleva comas colgantes ni texto fuera del objeto.\n"
+    "- Están los cinco campos y ninguno va vacío.\n"
+    "- `titulo` tiene 10 palabras o menos.\n"
+    "- `concepto_central` tiene entre {palabras_min} y {palabras_max} palabras "
+    "(máximo estricto: {palabras_max}).\n"
+    "- `actividad` es de tipo `quiz_mc` y lleva `pregunta`, entre 3 y 5 "
+    "`alternativas` distintas, `indice_correcta` y `retroalimentacion`.\n"
+    "- Cada `id_fragmento` de `fuentes` es uno de los entregados arriba.\n"
+    "- Todo el texto está en español."
+)

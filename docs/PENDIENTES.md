@@ -180,7 +180,11 @@ descripción de cada commit.
 - **Peticiones largas:** el tagger hace hasta 60 llamadas seguidas en un
   request; `/simulator/compare`, 4 generaciones en serie.
 - **Retriever:** con más de 8 fragmentos validados por objetivo, los que
-  quedan después de los primeros 8 nunca llegan al prompt.
+  quedan después de los primeros 8 nunca llegan al prompt. En el grupo control
+  (cápsula básica, `canal_primario=None`, 04-nov-2026) entran los 8 primeros
+  por documento y número de fragmento; en el experimental, los 8 primeros
+  según el canal primario. Con más de 8, los dos grupos pueden recibir
+  material distinto del mismo objetivo.
 - **Coste sin tope:** un estudiante puede llamar `POST /api/capsulas?regenerar=true`
   sobre sí mismo sin límite.
 

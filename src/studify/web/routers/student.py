@@ -556,6 +556,13 @@ def get_profile(request: Request, db: Session = Depends(get_db)):
     # vector, así que sus valores coinciden, pero se muestra la guardada para
     # que la pantalla no pueda diferir de lo que el motor va a usar.
     fila = diagnostico.configuracion if diagnostico and estudiante.rol != "control" else None
+    # El control recibe una cápsula básica sin adaptación (04-nov-2026): su
+    # perfil ya no describe cómo se construyen sus cápsulas, así que no se le
+    # muestran directivas (la plantilla tampoco muestra los parámetros).
+    directivas = (
+        [] if estudiante.rol == "control"
+        else [textos.glosa_directiva(d) for d in config.directivas]
+    )
 
     explicacion = textos.EXPLICACION_CANAL[jerarquia.canal_primario]
     if jerarquia.es_multimodal:
@@ -583,7 +590,7 @@ def get_profile(request: Request, db: Session = Depends(get_db)):
                 "practico": config.pesos.practico,
             },
         },
-        "directivas": [textos.glosa_directiva(d) for d in config.directivas],
+        "directivas": directivas,
         "id_diagnostico": diagnostico.id_diagnostico if diagnostico else None,
         # La narración solo existe con audio activo (p_A ≥ 25 %): sin ella, el
         # selector de voz no tendría nada que cambiar.
