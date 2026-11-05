@@ -383,6 +383,19 @@ Origen: `AVANCE.md` §5 tervicies «Riesgos legales que siguen abiertos» y
     verificación del token; el camino contra Google no está cubierto. Confirmar
     en Google Cloud que la URI exacta está registrada y que las cuentas de
     prueba están como usuarios de prueba.
+  - **Animación de carga del visor (punto 2b), en el mismo recorrido manual:**
+    no se verificó en un navegador real (05-nov; la extensión de Chrome no
+    estaba conectada). Las pruebas cubren el cálculo
+    (`tests/test_carga_visor.cjs`) y el HTML, no la apertura y el cierre de la
+    capa. Comprobar, con una cuenta control y una experimental:
+    1. **Cápsula desde el caché:** al hacer clic en un tema la capa aparece y
+       se cierra cerca de los 4 s (`VISOR_CARGA_MINIMA_MS`) en los dos grupos.
+    2. **Generación real** (cápsula no cacheada): la capa se ve durante la
+       generación y se cierra al llegar la cápsula, sin quedarse pegada ni
+       cerrarse antes.
+    3. **Recarga, botón «atrás» y enlace directo al visor:** la cápsula se ve
+       de inmediato, sin capa.
+    4. **bfcache (atrás y adelante):** la capa no queda abierta.
   - **Rotar el `client_secret`:** se pegó en una conversación con el asistente
     el 02-nov. Crear uno nuevo en Google Cloud cuando termine la prueba y
     actualizar el `.env`.
