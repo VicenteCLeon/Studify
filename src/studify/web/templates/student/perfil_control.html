@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% import "components/ui.html" as ui %}
+
+{# Perfil del grupo control (punto 2c, 05-nov-2026): este grupo no responde el
+   cuestionario ni recibe adaptación, así que no hay radar, canales ni
+   configuración que mostrar. Solo el grupo y los accesos habituales. #}
+{% block title %}Mi perfil · RepasAi{% endblock %}
+
+{% block content %}
+<div class="perfil">
+    <header class="perfil-head reveal">
+        <span class="eyebrow">{{ ui.icon("users", cls="icon-sm") }}Grupo de estudio</span>
+        <h1>Grupo: Control</h1>
+        <p class="perfil-bajada">En este grupo cada tema se presenta como un resumen estándar del
+            material del curso, igual para todos, con una actividad de cierre.</p>
+    </header>
+
+    <div class="perfil-acciones">
+        {% if google_disponible %}
+        <a href="/student/login" class="btn btn-secondary btn-lg">{{ "Mi cuenta Google" if google_vinculado else
+            "Vincular mi perfil a Google" }}</a>
+        {% endif %}
+        <a href="/student/catalog" class="btn btn-primary btn-lg">
+            {{ ui.icon("layers") }}Explorar temas
+        </a>
+        <a href="/mis-datos" class="btn btn-ghost btn-lg">
+            {{ ui.icon("shield-check") }}Mis datos
+        </a>
+    </div>
+</div>
+{% endblock %}

@@ -44,8 +44,10 @@ TERMINOS = Documento(
     # código y declaración de prototipo académico. Fecha = día en que se publique.
     # 0.3: acceso opcional con Google y recuperación del perfil vinculado.
     # 0.4: Google obligatorio antes de guardar el perfil VARK en la web.
-    version="0.4",
-    actualizado=date(2026, 11, 1),
+    # 0.5: los dos grupos entran solo con Google y eligen su grupo; el control
+    # recibe un resumen estándar y no responde el cuestionario (punto 2c).
+    version="0.5",
+    actualizado=date(2026, 11, 5),
 )
 
 PRIVACIDAD = Documento(
@@ -61,8 +63,10 @@ PRIVACIDAD = Documento(
     # 0.4: rol del piloto y perfil general fijo para el grupo control.
     # 0.5: identidad Google y cookies/transacciones temporales de autenticación.
     # 0.6: continuidad del borrador al autenticar y Google para guardar VARK.
-    version="0.6",
-    actualizado=date(2026, 11, 1),
+    # 0.7: grupo control con resumen estándar, sin cuestionario ni narración;
+    # Google y elección de grupo para los dos grupos (punto 2c).
+    version="0.7",
+    actualizado=date(2026, 11, 5),
 )
 
 DOCUMENTOS = (TERMINOS, PRIVACIDAD)

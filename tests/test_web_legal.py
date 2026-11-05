@@ -541,3 +541,61 @@ def test_eliminar_conserva_el_audio_que_tambien_usa_otro_estudiante(
     http.post("/mis-datos/eliminar", data={"confirmo": "si"})
 
     assert narraciones[0].exists()
+
+
+# --- Versiones del punto 2c (grupo control neutro y elección de grupo) ---------
+
+
+def test_versiones_vigentes_del_punto_2c():
+    assert legal.TERMINOS.version == "0.5"
+    assert legal.PRIVACIDAD.version == "0.7"
+
+
+def test_la_politica_describe_los_dos_grupos_del_piloto(http):
+    texto = http.get("/privacidad").text
+    plano = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", texto)).lower()
+    assert "resumen estándar" in plano
+    assert "no responde el cuestionario" in plano
+    assert "sin narración" in plano
+    assert "eligen su grupo" in plano
+    for ausente in ("43 encuestados", "registro local del grupo control",
+                    "conserva su registro local", "perfil promedio fijo"):
+        assert ausente not in plano, ausente
+
+
+def test_los_terminos_ya_no_mencionan_el_registro_local_del_control(http):
+    plano = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", http.get("/terminos").text)).lower()
+    assert "registro local del grupo control" not in plano
+    assert "eligen su grupo" in plano
+
+
+@necesita_bd
+def test_aceptacion_anterior_al_2c_vuelve_a_pedirse_y_regresa_a_donde_iba(
+    http, db, creados
+):
+    """Quien aceptó Términos 0.4 y Política 0.6 debe aceptar 0.5 y 0.7."""
+    enviar_vark(http, data=RESPUESTAS | {"acepto": "si"})
+    id_estudiante = _id_de_la_cookie(http)
+    creados.append(id_estudiante)
+    db.query(AceptacionLegal).filter(AceptacionLegal.id_estudiante == id_estudiante).delete()
+    db.add_all([
+        AceptacionLegal(id_estudiante=id_estudiante, documento="terminos", version="0.4"),
+        AceptacionLegal(id_estudiante=id_estudiante, documento="privacidad", version="0.6"),
+    ])
+    db.commit()
+
+    bloqueado = http.get("/student/catalog", follow_redirects=False)
+    assert bloqueado.status_code == 303
+    assert bloqueado.headers["location"] == "/aceptar?next=/student/catalog"
+    lista = http.get("/aceptar?next=/student/catalog").text.split(
+        'class="aceptar-docs"')[1].split("</ul>")[0]
+    assert "Versión 0.5" in lista and "Versión 0.7" in lista
+
+    aceptada = http.post(
+        "/aceptar", data={"acepto": "si", "next": "/student/catalog"}, follow_redirects=False
+    )
+    assert aceptada.status_code == 303
+    assert aceptada.headers["location"] == "/student/catalog"
+    assert http.get("/student/catalog", follow_redirects=False).status_code == 200
+    versiones = {(f.documento, f.version) for f in _aceptaciones(db, id_estudiante)}
+    assert {("terminos", "0.5"), ("privacidad", "0.7")} <= versiones

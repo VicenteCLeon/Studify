@@ -4,15 +4,13 @@
 {% block title %}Grupo control · RepasAi{% endblock %}
 {% block content %}
 <div class="panel">
-    {{ ui.page_header("Grupo control", "Ingresa aquí si el equipo del piloto te asignó a este grupo.", "Fase de evaluación", "users") }}
+    {{ ui.page_header("Grupo control", "Completa tu registro para empezar a estudiar.", "Fase de evaluación", "users") }}
     <section class="card">
-        <h2 class="card-title">Un perfil general para todo el grupo</h2>
-        <p class="mb-4">Estudiarás con el perfil promedio de los 43 encuestados previos.
-            Tendrás los mismos temas, cápsulas, actividades y narración de la plataforma.
-            En este grupo no se aplica el cuestionario ni la personalización VARK individual.</p>
-        {% if google_disponible and not con_sesion_estudiante %}
-        <p><a class="btn btn-secondary" href="/student/login?rol=control">Entrar al grupo control con Google</a></p>
-        {% endif %}
+        {# Punto 2c: solo lo ve una cuenta control recién creada con Google. #}
+        <h2 class="card-title">Un resumen estándar, igual para todos</h2>
+        <p class="mb-4">En este grupo cada tema se presenta como un resumen estándar del material
+            del curso, igual para todas las personas, con una actividad de cierre.
+            No se aplica el cuestionario de estilos de aprendizaje.</p>
         <form method="post" action="/student/control" hx-post="/student/control" hx-target="#control-error" hx-swap="innerHTML" class="stack" data-aceptacion>
             <input type="hidden" name="token_sesion" value="{{ token_sesion }}">
             <fieldset class="vark-datos">

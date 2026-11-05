@@ -30,7 +30,7 @@
 <div class="legal-resumen">
     {% call ui.alert("info", "En pocas palabras") %}
     <ul>
-        <li>Puedes responder VARK sin una cuenta; para guardar el perfil debes <strong>entrar con Google</strong>. Guardamos su identificador, nombre y correo verificado para recuperar tu perfil. El grupo control conserva su registro local sin nombre ni correo. No pedimos RUT ni tu contraseña de Google.</li>
+        <li>Los dos grupos del piloto <strong>entran con Google</strong> y sus participantes eligen su grupo al registrarse. El grupo personalizado recibe cápsulas adaptadas a su perfil VARK; el <strong>grupo control</strong> recibe un resumen estándar del material, igual para todos, no responde el cuestionario VARK y estudia sin narración. Guardamos el identificador, nombre y correo verificado de Google para recuperar tu perfil. No pedimos RUT ni tu contraseña de Google.</li>
         <li>Guardamos tus respuestas al cuestionario VARK, tu perfil, las cápsulas que abres y tus intentos en las actividades. La edad, el género y la carrera son <strong>opcionales</strong>.</li>
         <li>Al proveedor de IA <strong>no le enviamos ningún dato tuyo</strong>: solo el material del curso y los parámetros de formato que salen de tu perfil, sin nada que te identifique.</li>
         <li>Puedes ver, descargar, corregir o eliminar tus datos en <a href="/mis-datos">Mis datos</a> (sección 9).</li>
@@ -77,7 +77,7 @@
             <tbody>
                 <tr>
                     <td data-label="Dato"><strong>Número de estudiante</strong> (identificador interno) y fecha de registro</td>
-                    <td data-label="De dónde sale">Se crea al enviar el cuestionario o registrarte en el grupo control</td>
+                    <td data-label="De dónde sale">Se crea al entrar con Google por primera vez</td>
                     <td data-label="¿Obligatorio?">Sí</td>
                 </tr>
                 <!-- BORRADOR TÉCNICO (24-oct-2026): fila nueva por estudiante.origen_registro (R2). No constituye asesoría legal; revisar antes de publicar. -->
@@ -98,13 +98,13 @@
                 </tr>
                 <tr>
                     <td data-label="Dato"><strong>Grupo de estudio</strong>: personalizado o control</td>
-                    <td data-label="De dónde sale">La entrada de registro utilizada en el piloto. El grupo control usa el promedio fijo de los 43 encuestados previos, sin diagnóstico individual</td>
+                    <td data-label="De dónde sale">Tú, al elegir tu grupo cuando entras con Google por primera vez. Una cuenta existente conserva su grupo. El grupo control recibe un resumen estándar sin adaptación y no tiene diagnóstico individual</td>
                     <td data-label="¿Obligatorio?">Sí, para distinguir los grupos en la evaluación</td>
                 </tr>
                 <tr>
                     <td data-label="Dato"><strong>Identidad de Google</strong>: identificador estable, nombre y correo verificado</td>
                     <td data-label="De dónde sale">Google, cuando eliges entrar o vincular tu perfil. Permite recuperar el mismo estudiante, con su grupo y sus datos</td>
-                    <td data-label="¿Obligatorio?">Para guardar el perfil VARK en la web. Opcional para el registro local del grupo control</td>
+                    <td data-label="¿Obligatorio?">Sí, para entrar en cualquiera de los dos grupos. Los registros sin Google creados antes se conservan</td>
                 </tr>
                 <tr>
                     <td data-label="Dato"><strong>Rango de edad y carrera</strong></td>
@@ -119,7 +119,7 @@
                 <!-- BORRADOR TÉCNICO (05-oct-2026): fila nueva por voz_genero y voz_modo. No constituye asesoría legal; revisar antes de publicar. -->
                 <tr>
                     <td data-label="Dato"><strong>Preferencia de voz de la narración</strong>: voz femenina o masculina, en modo calidad o rápido. Es una preferencia de audio, independiente del género con que te identificas, y nunca se deduce de él</td>
-                    <td data-label="De dónde sale">Tú, al elegirla en el visor o en tu perfil</td>
+                    <td data-label="De dónde sale">Tú, al elegirla en el visor o en tu perfil. Solo en el grupo personalizado: el grupo control no tiene narración</td>
                     <td data-label="¿Obligatorio?">No (si no eliges, se usa la voz por defecto)</td>
                 </tr>
                 <tr>
@@ -200,10 +200,11 @@
 
 <section id="perfilamiento" aria-labelledby="perfilamiento-t">
     <h2 id="perfilamiento-t">4. Perfil de aprendizaje y decisiones automatizadas</h2>
-    <p>En el <strong>grupo control</strong> no se aplica un diagnóstico VARK individual:
-        todas las personas reciben el perfil promedio fijo de los 43 encuestados previos.
-        Guardamos tu grupo para evaluar los resultados y no puedes activar la personalización
-        desde ese registro. En el grupo personalizado se mantiene el siguiente funcionamiento.</p>
+    <p>En el <strong>grupo control</strong> no se elabora un perfil de aprendizaje: no responde el
+        cuestionario VARK y cada tema se presenta como un resumen estándar del material, igual para
+        todas las personas, con una actividad de cierre fija y sin narración. Guardamos tu grupo para
+        evaluar los resultados y no se puede cambiar desde tu cuenta. En el grupo personalizado se
+        mantiene el siguiente funcionamiento.</p>
     <p>
         RepasAi elabora un <strong>perfil de aprendizaje</strong> con tus respuestas y lo usa, de forma
         automatizada, para decidir el formato de tus cápsulas: cuánto texto, cuántas tablas o esquemas, si
@@ -255,9 +256,11 @@
         IP al abrir RepasAi.
     </p>
     <h3 id="google">Acceso con Google</h3>
-    <p>Para guardar tu perfil VARK es necesario entrar con Google. Puedes completar el
-        cuestionario primero: el borrador permanece en esta pestaña hasta que vuelvas
-        del acceso y confirmes su guardado. Los consentimientos se piden nuevamente.</p>
+    <p>Los dos grupos del piloto entran con Google y eligen su grupo al registrarse.
+        En el grupo personalizado puedes completar el cuestionario primero: el borrador
+        permanece en esta pestaña hasta que vuelvas del acceso y confirmes su guardado.
+        Los consentimientos se piden nuevamente. Si al entrar eliges el grupo control, el
+        borrador se descarta y no se guarda nada de él.</p>
     <p>Solo cuando pulsas el botón de acceso te redirigimos a Google, que recibe tu IP
         y la solicitud de autenticación y aplica sus propias cookies y políticas.
         Google devuelve a nuestro servidor tu identificador, nombre y correo verificado.

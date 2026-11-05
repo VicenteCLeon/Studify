@@ -63,7 +63,7 @@
                     {{ ui.icon("layers") }}<span>Temas</span>
                 </a>
                 <a href="/student/profile" {% if ruta.startswith('/student/profile') or ruta.startswith('/student/vark') %}aria-current="page"{% endif %}>
-                    {{ ui.icon("circle-user") }}<span>{{ "Perfil general" if es_control else "Mi perfil" }}</span>
+                    {{ ui.icon("circle-user") }}<span>Mi perfil</span>
                 </a>
             </nav>
 
@@ -180,7 +180,7 @@
             {{ ui.icon("layers") }}<span>Temas</span>
         </a>
         <a href="/student/profile" {% if ruta.startswith('/student/profile') or ruta.startswith('/student/vark') %}aria-current="page"{% endif %}>
-            {{ ui.icon("circle-user") }}<span>{{ "Perfil general" if es_control else "Perfil" }}</span>
+            {{ ui.icon("circle-user") }}<span>Perfil</span>
         </a>
     </nav>
 

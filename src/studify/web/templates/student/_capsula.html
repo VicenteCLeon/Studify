@@ -171,7 +171,7 @@
     <nav class="capsula-indice" aria-label="Partes de la cápsula">
         <ol role="list">
             {% if capsula.activacion %}<li><a href="#paso-activacion">{{ ui.icon("lightbulb", cls="icon-sm") }}Para partir</a></li>{% endif %}
-            <li><a href="#paso-concepto">{{ ui.icon("file-text", cls="icon-sm") }}Concepto</a></li>
+            <li><a href="#paso-concepto">{{ ui.icon("file-text", cls="icon-sm") }}{{ "Resumen" if capsula_basica else "Concepto" }}</a></li>
             {% if bloques %}<li><a href="#paso-desarrollo">{{ ui.icon("layers", cls="icon-sm") }}Desarrollo</a></li>{% endif %}
             <li><a href="#paso-actividad">{{ ui.icon("clipboard-check", cls="icon-sm") }}Actividad</a></li>
             <li><a href="#paso-fuentes">{{ ui.icon("quote", cls="icon-sm") }}Fuentes</a></li>
@@ -206,7 +206,8 @@
 
     {# --- Paso 3: concepto central ---------------------------------------- #}
     <section id="paso-concepto" class="capsula-seccion" aria-labelledby="concepto-titulo">
-        <h2 id="concepto-titulo" class="capsula-h2">Concepto central</h2>
+        {# La cápsula básica del grupo control trae solo un resumen (punto 2c). #}
+        <h2 id="concepto-titulo" class="capsula-h2">{{ "Resumen" if capsula_basica else "Concepto central" }}</h2>
         <p class="capsula-concepto">{{ capsula.concepto_central }}</p>
     </section>
 

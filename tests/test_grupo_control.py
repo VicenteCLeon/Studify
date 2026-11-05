@@ -35,9 +35,11 @@ def test_perfil_control_es_fijo_y_suma_cien():
         Decimal("19.12"), Decimal("27.11"), Decimal("25.56"), Decimal("28.21")
     ) == PERFIL_CONTROL
     assert PERFIL_CONTROL.total == 100
-    # Ni la falta de diagnóstico ni un perfil individual extremo lo alteran.
-    assert perfil_de_contenido(control, None) == PERFIL_CONTROL
-    assert perfil_de_contenido(control, _diagnostico(100, 0, 0, 0)) == PERFIL_CONTROL
+    # Desde el punto 2c el control no tiene perfil de contenido: ni sin
+    # diagnóstico ni con uno individual extremo (PERFIL_CONTROL queda solo como
+    # referencia de los tests del promedio).
+    assert perfil_de_contenido(control, None) is None
+    assert perfil_de_contenido(control, _diagnostico(100, 0, 0, 0)) is None
 
 
 def _diagnostico(v, a, r, k):
@@ -193,12 +195,17 @@ def test_control_tampoco_admite_diagnostico_por_api(db, navegador_control, http_
 
 @necesita_bd
 def test_perfil_control_explica_origen_y_no_ofrece_personalizar(navegador_control):
+    """Punto 2c: el perfil del control dice su grupo, sin radar ni «perfil general»."""
     cliente, _ = navegador_control
     respuesta = cliente.get("/student/profile")
     assert respuesta.status_code == 200
-    assert "43" in respuesta.text
-    assert "Perfil general" in respuesta.text
+    assert "Grupo: Control" in respuesta.text
+    # Solo el contenido de la página: la meta description del sitio es global.
+    texto = respuesta.text.split('<main id="contenido"')[1].split("</main>")[0].lower()
+    for ausente in ("perfil general", "43", "vark", 'class="radar"', "jerarquía", "multimodal"):
+        assert ausente not in texto, ausente
     assert 'href="/student/vark"' not in respuesta.text
+    assert 'href="/student/catalog"' in respuesta.text
     assert 'href="/student/vark"' not in cliente.get("/mis-datos").text
     # La cápsula del control ya no sigue una configuración VARK: no se muestra.
     assert "Cómo se construirán tus microcápsulas" not in respuesta.text
@@ -325,7 +332,7 @@ def test_control_genera_sin_diagnostico_sin_audio_y_con_actividades(
     assert 'class="capsula-audio"' not in visor.text
     assert "Voz de la narración" not in visor.text
     assert "generate-audio" not in visor.text
-    assert "Ver perfil general" in visor.text
+    assert "Ver mi perfil" in visor.text  # sin «perfil general» desde el punto 2c
     assert cliente_falso.llamadas == 1  # El visor también utiliza el caché genérico.
     quiz = cliente.post(f"/api/capsulas/{capsula['id_capsula']}/quiz", json={
         "id_estudiante": id_estudiante, "alternativa_seleccionada": 0,
@@ -674,3 +681,97 @@ def test_la_capa_de_carga_es_la_misma_para_los_dos_grupos(
     )
 
     assert capa_control == capa_experimental
+
+
+# --- Textos de interfaz del control (punto 2c) -------------------------------
+
+
+@necesita_bd
+def test_visor_rotula_resumen_en_el_control_y_concepto_en_el_experimental(
+    db, escenario, navegador_control, cliente_falso, navegador_de_estudiante
+):
+    cliente_control, _ = navegador_control
+    estudiante = _experimental_con_aceptacion(
+        db, PerfilVark(*(Decimal(x) for x in (20, 30, 25, 25)))
+    )
+    objetivo = escenario["objetivo"].id_objetivo
+
+    control = cliente_control.get(f"/student/viewer/{objetivo}").text
+    experimental = navegador_de_estudiante(estudiante.id_estudiante).get(
+        f"/student/viewer/{objetivo}"
+    ).text
+
+    assert '<h2 id="concepto-titulo" class="capsula-h2">Resumen</h2>' in control
+    assert "Concepto central" not in control
+    assert '<h2 id="concepto-titulo" class="capsula-h2">Concepto central</h2>' in experimental
+
+
+@necesita_bd
+def test_ninguna_pantalla_del_control_habla_de_perfil_general(
+    db, escenario, navegador_control, cliente_falso
+):
+    cliente, _ = navegador_control
+    objetivo = escenario["objetivo"].id_objetivo
+    for ruta in ("/", "/student/profile", "/student/catalog",
+                 f"/student/viewer/{objetivo}", "/mis-datos"):
+        respuesta = cliente.get(ruta)
+        assert respuesta.status_code == 200, ruta
+        texto = respuesta.text.lower()
+        for ausente in ("perfil general", "43 encuestados", "perfil promedio"):
+            assert ausente not in texto, (ruta, ausente)
+    assert "Grupo de estudio</dt><dd>Control</dd>" in cliente.get("/mis-datos").text
+
+
+@necesita_bd
+def test_registro_del_control_describe_el_resumen_estandar():
+    from tests.identidad_web import control_google_sin_registro
+
+    cliente = TestClient(app)
+    id_control = control_google_sin_registro(cliente)
+    try:
+        texto = cliente.get("/student/control").text.lower()
+        assert "resumen estándar" in texto
+        for ausente in ("perfil general", "43", "narración", "perfil promedio"):
+            assert ausente not in texto, ausente
+    finally:
+        _borrar_estudiante(id_control)
+
+
+@necesita_bd
+def test_el_control_recorre_pantallas_y_endpoints_sin_perfil(
+    db, escenario, navegador_control, cliente_falso, http_docente
+):
+    """perfil_de_contenido devuelve None para el control: nada puede fallar por eso."""
+    from studify.vark.perfiles import perfil_de_contenido
+
+    cliente, id_control = navegador_control
+    objetivo = escenario["objetivo"].id_objetivo
+    assert perfil_de_contenido(db.get(Estudiante, id_control), None) is None
+
+    capsula = cliente.post("/api/capsulas", json={
+        "id_estudiante": id_control, "id_objetivo": objetivo,
+    })
+    assert capsula.status_code == 201, capsula.text
+    id_capsula = capsula.json()["id_capsula"]
+    esperado = {
+        ("get", "/"): 200,
+        ("get", "/student/profile"): 200,
+        ("get", "/student/catalog"): 200,
+        ("get", f"/student/viewer/{objetivo}"): 200,
+        ("get", f"/api/capsulas/{id_capsula}"): 200,
+        ("get", "/mis-datos"): 200,
+        ("get", "/mis-datos/exportar"): 200,
+        ("get", "/student/vark"): 303,
+        ("get", "/student/control"): 200,
+        ("post", f"/student/viewer/{id_capsula}/generate-audio"): 403,
+        ("post", "/student/preferencias/voz"): 403,
+    }
+    for (metodo, ruta), codigo in esperado.items():
+        datos = {"voz": "femenina-calidad"} if "preferencias" in ruta else None
+        respuesta = getattr(cliente, metodo)(ruta, data=datos, follow_redirects=False) \
+            if metodo == "post" else cliente.get(ruta, follow_redirects=False)
+        assert respuesta.status_code == codigo, (ruta, respuesta.status_code)
+    quiz = cliente.post(f"/student/viewer/{id_capsula}/submit", data={"answer": "0"})
+    assert quiz.status_code == 200
+    for ruta in ("/teacher/analytics", f"/api/capsulas?id_estudiante={id_control}"):
+        assert http_docente.get(ruta).status_code == 200, ruta

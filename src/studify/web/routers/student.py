@@ -534,6 +534,13 @@ def get_profile(request: Request, db: Session = Depends(get_db)):
         sesion.cerrar(respuesta)
         return respuesta
 
+    if estudiante.rol == "control":
+        # Punto 2c: el control no tiene perfil de aprendizaje ni configuración
+        # VARK; su perfil solo dice a qué grupo pertenece.
+        return templates.TemplateResponse(
+            request=request, name="student/perfil_control.html", context={},
+        )
+
     diagnostico = diagnostico_vigente(db, id_estudiante)
     perfil = perfil_de_contenido(estudiante, diagnostico)
     if perfil is None:
@@ -546,21 +553,13 @@ def get_profile(request: Request, db: Session = Depends(get_db)):
     # (`microcapsula_generada.id_config`); las reglas son función pura del
     # vector, así que sus valores coinciden, pero se muestra la guardada para
     # que la pantalla no pueda diferir de lo que el motor va a usar.
-    fila = diagnostico.configuracion if diagnostico and estudiante.rol != "control" else None
-    # El control recibe una cápsula básica sin adaptación (04-nov-2026): su
-    # perfil ya no describe cómo se construyen sus cápsulas, así que no se le
-    # muestran directivas (la plantilla tampoco muestra los parámetros).
-    directivas = (
-        [] if estudiante.rol == "control"
-        else [textos.glosa_directiva(d) for d in config.directivas]
-    )
+    fila = diagnostico.configuracion if diagnostico else None
 
     explicacion = textos.EXPLICACION_CANAL[jerarquia.canal_primario]
     if jerarquia.es_multimodal:
         explicacion = f"{explicacion} {textos.EXPLICACION_MULTIMODAL}"
 
     contexto = {
-        "es_control": estudiante.rol == "control",
         "canales": _barras(perfil),
         "canal_principal": textos.NOMBRE_CANAL[jerarquia.canal_primario],
         "jerarquia": jerarquia,
@@ -581,12 +580,11 @@ def get_profile(request: Request, db: Session = Depends(get_db)):
                 "practico": config.pesos.practico,
             },
         },
-        "directivas": directivas,
+        "directivas": [textos.glosa_directiva(d) for d in config.directivas],
         "id_diagnostico": diagnostico.id_diagnostico if diagnostico else None,
         # La narración solo existe con audio activo (p_A ≥ 25 %): sin ella, el
-        # selector de voz no tendría nada que cambiar. El grupo control no
-        # tiene narración (04-nov-2026).
-        "audio_activo": config.audio_activo and estudiante.rol != "control",
+        # selector de voz no tendría nada que cambiar.
+        "audio_activo": config.audio_activo,
         "voz_actual": _voz_actual(estudiante),
     }
     return templates.TemplateResponse(
@@ -719,6 +717,9 @@ def get_viewer(
             "audio_activo": audio_activo,
             # El selector de voz es del estudiante dueño: solo existe en su visor.
             "mostrar_selector_voz": not es_control,
+            # Cápsula básica del grupo control: sin activación, bloques ni
+            # ejemplo. El visor rotula «Resumen» en vez de «Concepto central».
+            "capsula_basica": not capsula.activacion and not capsula.bloques_legibles(),
             "voz_actual": _voz_actual(estudiante),
             # `indice_correcta` y `retroalimentacion` NO viajan al navegador: si
             # fueran al HTML, la respuesta correcta estaría en el código fuente

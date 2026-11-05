@@ -1,7 +1,8 @@
 {% extends "base.html" %}
 {% import "components/ui.html" as ui %}
 
-{% block title %}{{ "Perfil general" if es_control else "Tu perfil de aprendizaje" }} · RepasAi{% endblock %}
+{# Solo el grupo experimental: el control tiene student/perfil_control.html (punto 2c). #}
+{% block title %}Tu perfil de aprendizaje · RepasAi{% endblock %}
 
 {% block content %}
 {%- set primario = jerarquia.canal_primario -%}
@@ -21,36 +22,26 @@ como un punto en el centro. #}
     px={ "V" : (c0, c0 - radio * valor.V / escala), "A" : (c0 + radio * valor.A / escala, c0), "R" : (c0, c0 + radio *
     valor.R / escala), "K" : (c0 - radio * valor.K / escala, c0), } -%} <div class="perfil">
     <header class="perfil-head reveal">
-        {% if es_control %}
-        <span class="eyebrow">{{ ui.icon("users", cls="icon-sm") }}Grupo control</span>
-        <h1>Perfil general</h1>
-        <p class="perfil-bajada">Todas las personas del grupo control reciben esta misma configuración.
-            Es el promedio de la muestra previa; no describe tu estilo individual y no se puede personalizar.</p>
-        {% else %}
         <span class="eyebrow">{{ ui.icon("circle-user", cls="icon-sm") }}Tu perfil de aprendizaje</span>
         <h1>
             Tu canal principal es
             <span class="perfil-canal" data-canal="{{ primario }}">{{ canal_principal }}</span>
         </h1>
         <p class="perfil-bajada">Así es como procesas mejor la información.</p>
-        {% endif %}
         <div class="cluster cluster-sm">
             <span class="badge badge-primary">{{ ui.icon("layers") }}{{ modalidad }}</span>
             <span class="badge badge-neutral">Jerarquía {{ jerarquia.jerarquia }}</span>
-            {% if not es_control %}<span class="badge badge-neutral">{{ ui.icon("hash") }}Diagnóstico #{{ id_diagnostico
-                }}</span>{% endif %}
+            <span class="badge badge-neutral">{{ ui.icon("hash") }}Diagnóstico #{{ id_diagnostico }}</span>
         </div>
     </header>
 
     <div class="perfil-grid">
         <section class="card perfil-radar-card reveal" style="--i: 1" aria-labelledby="radar-titulo">
-            <h2 id="radar-titulo" class="card-title">{{ "Mezcla VARK de referencia" if es_control else "Tu mezcla VARK"
-                }}</h2>
-            <p class="card-subtitle mb-4">{{ "Promedio fijo de los 43 perfiles previos." if es_control else "Mientras
-                más se estira hacia un canal, más lo aprovechas." }}</p>
+            <h2 id="radar-titulo" class="card-title">Tu mezcla VARK</h2>
+            <p class="card-subtitle mb-4">Mientras más se estira hacia un canal, más lo aprovechas.</p>
 
             <svg class="radar" viewBox="0 0 320 320" role="img"
-                aria-label="Gráfico radar del perfil {{ 'general' if es_control else 'individual' }}: {% for c in canales %}{{ c.nombre }} {{ c.texto }}%{% if not loop.last %}, {% endif %}{% endfor %}.">
+                aria-label="Gráfico radar del perfil individual: {% for c in canales %}{{ c.nombre }} {{ c.texto }}%{% if not loop.last %}, {% endif %}{% endfor %}.">
                 {# Rejilla: cuatro rombos concéntricos y los dos ejes. #}
                 <g class="radar-grid">
                     {% for f in [0.25, 0.5, 0.75, 1] %}
@@ -89,8 +80,7 @@ como un punto en el centro. #}
         </section>
 
         <section class="card perfil-barras-card reveal" style="--i: 2" aria-labelledby="barras-titulo">
-            <h2 id="barras-titulo" class="card-title mb-4">{{ "Porcentajes de referencia" if es_control else "Tus
-                porcentajes" }}</h2>
+            <h2 id="barras-titulo" class="card-title mb-4">Tus porcentajes</h2>
             <ul class="perfil-barras" role="list">
                 {% for canal in canales %}
                 <li class="perfil-barra {% if canal.canal == primario %}is-primario{% endif %}"
@@ -113,7 +103,6 @@ como un punto en el centro. #}
         </section>
     </div>
 
-    {% if not es_control %}
     <section class="perfil-significado reveal" data-canal="{{ primario }}" style="--i: 3"
         aria-labelledby="significado-titulo">
         {{ ui.vark_tile(primario, size="lg") }}
@@ -122,24 +111,15 @@ como un punto en el centro. #}
             <p>{{ explicacion }}</p>
         </div>
     </section>
-    {% endif %}
 
     <section class="perfil-config" aria-labelledby="config-titulo">
-        {# El control recibe una cápsula básica sin configuración VARK (04-nov-2026):
-           no se le muestran parámetros ni directivas. #}
-        {% if not es_control %}
         <header class="section-header">
             <span class="eyebrow">{{ ui.icon("sparkles", cls="icon-sm") }}Tus microcápsulas</span>
             <h2 id="config-titulo">Cómo se construirán tus microcápsulas</h2>
             <p>
-                {% if es_control %}
-                Estos parámetros proceden del perfil general de la muestra previa y son iguales
-                para todo el grupo control. No dependen de tus preferencias individuales.
-                {% else %}
                 Estos parámetros los derivó el sistema desde tu vector y son los que
                 recibe el generador. No son una descripción de tu personalidad: son
                 instrucciones de armado.
-                {% endif %}
             </p>
         </header>
 
@@ -165,7 +145,6 @@ como un punto en el centro. #}
                 <span class="stat-label">registro de redacción</span>
             </div>
         </div>
-        {% endif %}
 
         {% if audio_activo %}
         <div class="card mt-4">
@@ -193,9 +172,9 @@ como un punto en el centro. #}
         <a href="/student/catalog" class="btn btn-primary btn-lg">
             {{ ui.icon("layers") }}Explorar temas
         </a>
-        {% if not es_control %}<a href="/student/vark" class="btn btn-secondary btn-lg">
+        <a href="/student/vark" class="btn btn-secondary btn-lg">
             {{ ui.icon("refresh-cw") }}Volver a responder
-        </a>{% endif %}
+        </a>
         <a href="/mis-datos" class="btn btn-ghost btn-lg">
             {{ ui.icon("shield-check") }}Mis datos
         </a>

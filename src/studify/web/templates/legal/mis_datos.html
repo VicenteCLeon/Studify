@@ -55,7 +55,7 @@
         <dl class="md-lista">
             <div><dt>Cuenta Google</dt><dd>{{ estudiante.google_email or "Sin vincular" }}</dd></div>
             {% if estudiante.google_nombre %}<div><dt>Nombre de Google</dt><dd>{{ estudiante.google_nombre }}</dd></div>{% endif %}
-            <div><dt>Grupo de estudio</dt><dd>{{ "Control (perfil general)" if estudiante.rol == "control" else "Personalizado" }}</dd></div>
+            <div><dt>Grupo de estudio</dt><dd>{{ "Control" if estudiante.rol == "control" else "Personalizado" }}</dd></div>
             <div><dt>Diagnósticos VARK</dt><dd>{{ datos.diagnosticos_vark | length }}, con tus respuestas a cada pregunta</dd></div>
             <div><dt>Cápsulas generadas</dt><dd>{{ datos.capsulas | length }}</dd></div>
             <div><dt>Intentos en actividades</dt><dd>{{ datos.intentos_en_actividades | length }}</dd></div>
@@ -86,7 +86,7 @@
         <p class="text-sm text-muted mb-4">
             Deja un campo en blanco para borrarlo. Borrar el género retira tu autorización para usarlo.
             {% if estudiante.rol == "control" %}
-            En el grupo control se utiliza el perfil general fijo de los 43 encuestados.
+            En el grupo control no se aplica el cuestionario de estilos de aprendizaje.
             {% else %}
             Tu perfil VARK se corrige <a href="/student/vark">respondiendo de nuevo el cuestionario</a>.
             {% endif %}
