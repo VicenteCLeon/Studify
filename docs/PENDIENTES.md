@@ -150,6 +150,25 @@ descripción de cada commit.
   - `hay_base_de_datos()` sin `connect_timeout`: es H11, ahora en prioridad alta.
   - Propuesta: base de pruebas separada (`studify_test`) o transacción con
     rollback por test.
+- **R16. Test intermitente:
+  `test_grupo_control.py::test_registro_del_control_describe_el_resumen_estandar`.**
+  Comprueba que la cadena `"43"` no aparezca en el HTML **completo** de
+  `/student/control`. Pero la página trae tokens hexadecimales aleatorios en
+  atributos (CSRF y firma del formulario de Google), que a veces contienen
+  «43»: `…32be9d769c43972ea230e7a3c9">` en una corrida y `…e3146712314…` en
+  otra. **Causa: azar del token.** No es R10, ni el orden de los tests, ni el
+  tiempo, ni la zona horaria.
+  - Visto el 08-nov: 1 vez en 4 corridas tras el punto de «Personalizado», y
+    luego en las corridas 2 y 5 de 5 seguidas con Postgres y `-rf`. La salida
+    está en `data/suite_intermitente/20261108_corrida{1..5}.txt` (ignorada
+    por Git).
+  - Entró con el 2c (`470e4fa`). Es el único test con ese patrón (un número
+    corto buscado en el HTML entero).
+  - Arreglo propuesto, en su propio punto: buscar en el texto visible (sin
+    etiquetas ni atributos) o una frase completa como «43 encuestados», que es
+    lo que se quería excluir.
+  - Mientras tanto, correr la suite con `-rf`. Si este es el único fallo, es
+    R16 y no una regresión.
 - **R11. `scripts/import_vark_csv.py --reset`** hace `db.query(Estudiante).delete()`:
   borra también a los estudiantes del piloto, sin confirmación.
 - **R12. Rutas relativas al directorio de trabajo**: `config.py` lee `.env`
