@@ -22,11 +22,14 @@ una cápsula. `curation.validar` lo bloquea; acá se hace además imposible de
 intentar.
 """
 
+import csv
+import io
+from datetime import date, datetime, time, timedelta
 from decimal import Decimal
 from urllib.parse import parse_qs, urlsplit
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, Response
 from pydantic import ValidationError
 from sqlalchemy import Float, cast, func, select
 from sqlalchemy.orm import Session, selectinload
@@ -44,6 +47,7 @@ from studify.config import get_settings
 from studify.db.models import (
     DiagnosticoVark,
     DocumentoFuente,
+    Estudiante,
     Fragmento,
     InteraccionQuiz,
     MicrocapsulaGenerada,
@@ -249,6 +253,165 @@ def get_analytics(request: Request, db: Session = Depends(get_db)):
             "vark_total": vark.total if vark else 0,
             "vark_barras": _barras_cohorte(vark),
         }
+    )
+
+
+# Columnas de la exportación de intentos, en orden. Ninguna identifica a la
+# persona: `id_estudiante` es el seudónimo interno del sistema y no hay nombre,
+# correo, `google_sub` ni datos sociodemográficos (Política de Privacidad).
+COLUMNAS_INTENTOS = (
+    "id_estudiante",
+    "rol",
+    "codigo_objetivo",
+    "tema",
+    "id_capsula",
+    "tipo_actividad",
+    "numero_intento",
+    "es_primer_intento",
+    "es_correcta",
+    "aciertos",
+    "total_preguntas",
+    "fecha",
+)
+
+# Primeros caracteres con los que Excel, LibreOffice o Sheets interpretan una
+# celda como fórmula (OWASP, «CSV Injection»). El tema y el código los escribe
+# el docente, y un `=HIPERVINCULO(…)` en un tema se ejecutaría al abrir el
+# archivo; con un apóstrofo delante la planilla lo muestra como texto.
+_INICIO_DE_FORMULA = ("=", "+", "-", "@", "\t", "\r")
+
+
+def _celda_segura(valor):
+    if isinstance(valor, str) and valor.startswith(_INICIO_DE_FORMULA):
+        return "'" + valor
+    return valor
+
+
+def _bool_csv(valor: bool | None) -> str:
+    return "" if valor is None else ("1" if valor else "0")
+
+
+def _fecha_del_filtro(valor: str | None, nombre: str) -> date | None:
+    """`AAAA-MM-DD` o nada. Cualquier otra cosa es un 400 que dice qué se espera.
+
+    Se valida a mano y no con un parámetro `date` de FastAPI porque ese
+    respondería 422 con un detalle en inglés, y porque `date.fromisoformat`
+    acepta también `20261108` y semanas ISO: quien escribe la URL a mano tiene
+    que saber exactamente qué día quedó en el filtro.
+    """
+    if valor is None or valor == "":
+        return None
+    try:
+        if len(valor) != 10:
+            raise ValueError
+        return datetime.strptime(valor, "%Y-%m-%d").date()
+    except ValueError:
+        raise HTTPException(
+            status_code=400,
+            detail=f"«{nombre}» debe ser una fecha AAAA-MM-DD, por ejemplo 2026-11-08.",
+        ) from None
+
+
+@router.get("/exportar/intentos.csv")
+def exportar_intentos(
+    desde: str | None = None,
+    hasta: str | None = None,
+    db: Session = Depends(get_db),
+) -> Response:
+    """Todos los intentos en las actividades de cierre, uno por fila, para el
+    análisis del estudio A/B (punto 2d).
+
+    El panel resume; esto deja los datos crudos para comparar a los grupos con
+    las pruebas que correspondan. Por eso trae **todos** los intentos, también
+    los reintentos, con `es_primer_intento` para filtrar: la métrica del panel
+    (acierto al primer intento) se reconstruye desde aquí.
+
+    - `es_correcta` solo en `quiz_mc`; `aciertos` y `total_preguntas` solo en
+      los cuestionarios. En el resto quedan vacíos, igual que en el panel: en
+      un cuestionario `es_correcta` significa «todas correctas», que no es la
+      métrica que se usa.
+    - `desde`/`hasta` (opcionales, ambos inclusive) acotan por el día de
+      `fecha_respuesta` en hora de Chile, para exportar solo el periodo del
+      piloto. `fecha` también sale en hora de Chile, con su desfase.
+    - UTF-8 con BOM: sin él, Excel abre el archivo como Latin-1 y rompe los
+      acentos de los temas.
+    """
+    dia_desde = _fecha_del_filtro(desde, "desde")
+    dia_hasta = _fecha_del_filtro(hasta, "hasta")
+    if dia_desde and dia_hasta and dia_desde > dia_hasta:
+        raise HTTPException(
+            status_code=400,
+            detail="«desde» es posterior a «hasta»: el periodo quedaría vacío.",
+        )
+
+    tipo = MicrocapsulaGenerada.mini_quiz_json["tipo"].astext
+    stmt = (
+        select(
+            MicrocapsulaGenerada.id_estudiante,
+            Estudiante.rol,
+            ObjetivoAprendizaje.codigo_objetivo,
+            ObjetivoAprendizaje.tema,
+            InteraccionQuiz.id_capsula,
+            tipo.label("tipo"),
+            InteraccionQuiz.numero_intento,
+            InteraccionQuiz.es_correcta,
+            InteraccionQuiz.aciertos,
+            InteraccionQuiz.total_preguntas,
+            InteraccionQuiz.fecha_respuesta,
+        )
+        .select_from(InteraccionQuiz)
+        .join(
+            MicrocapsulaGenerada,
+            InteraccionQuiz.id_capsula == MicrocapsulaGenerada.id_capsula,
+        )
+        .join(Estudiante, MicrocapsulaGenerada.id_estudiante == Estudiante.id_estudiante)
+        .join(
+            ObjetivoAprendizaje,
+            MicrocapsulaGenerada.id_objetivo == ObjetivoAprendizaje.id_objetivo,
+        )
+        .order_by(InteraccionQuiz.fecha_respuesta, InteraccionQuiz.id_interaccion)
+    )
+    if dia_desde:
+        inicio = datetime.combine(dia_desde, time.min, tzinfo=textos.ZONA_CHILE)
+        stmt = stmt.where(InteraccionQuiz.fecha_respuesta >= inicio)
+    if dia_hasta:
+        fin = datetime.combine(
+            dia_hasta + timedelta(days=1), time.min, tzinfo=textos.ZONA_CHILE
+        )
+        stmt = stmt.where(InteraccionQuiz.fecha_respuesta < fin)
+
+    salida = io.StringIO()
+    escritor = csv.writer(salida, lineterminator="\n")
+    escritor.writerow(COLUMNAS_INTENTOS)
+    for fila in db.execute(stmt):
+        es_quiz_mc = fila.tipo == "quiz_mc"
+        es_cuestionario = fila.tipo in TIPOS_CUESTIONARIO
+        escritor.writerow(
+            _celda_segura(valor)
+            for valor in (
+                fila.id_estudiante,
+                fila.rol,
+                fila.codigo_objetivo,
+                fila.tema,
+                fila.id_capsula,
+                fila.tipo,
+                fila.numero_intento,
+                _bool_csv(fila.numero_intento == 1),
+                _bool_csv(fila.es_correcta) if es_quiz_mc else "",
+                fila.aciertos if es_cuestionario and fila.aciertos is not None else "",
+                (
+                    fila.total_preguntas
+                    if es_cuestionario and fila.total_preguntas is not None
+                    else ""
+                ),
+                fila.fecha_respuesta.astimezone(textos.ZONA_CHILE).isoformat(),
+            )
+        )
+
+    return Response(
+        content="﻿" + salida.getvalue(),
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": 'attachment; filename="intentos.csv"'},
     )
 
 
@@ -670,6 +833,14 @@ def _rendimiento_actividades(db: Session) -> list[dict]:
     `abiertas`: sin eso, un objetivo trabajado solo con ellas se vería idéntico
     a uno que nadie abrió nunca.
 
+    **Una fila por objetivo y grupo del estudio** (punto 2d, 08-nov-2026). El
+    piloto compara al grupo control (cápsula básica) con el experimental
+    (cápsula adaptada); una sola cifra por tema mezclaría los dos brazos y no
+    diría nada sobre la diferencia que se quiere medir. El grupo sale del
+    dueño de la cápsula: el caché compartido del control copia la cápsula en
+    una fila propia por estudiante, así que cada intento queda con su rol.
+    Dentro de un tema va primero el control, en el mismo orden que el login.
+
     Va en una función y no dentro del endpoint para poder comprobar la métrica
     contra la base sin levantar una plantilla de por medio.
     """
@@ -686,6 +857,7 @@ def _rendimiento_actividades(db: Session) -> list[dict]:
     stmt = (
         select(
             ObjetivoAprendizaje.tema,
+            Estudiante.rol,
             func.count(func.distinct(MicrocapsulaGenerada.id_estudiante)).label(
                 "alumnos"
             ),
@@ -707,14 +879,20 @@ def _rendimiento_actividades(db: Session) -> list[dict]:
             ObjetivoAprendizaje,
             MicrocapsulaGenerada.id_objetivo == ObjetivoAprendizaje.id_objetivo,
         )
-        .group_by(ObjetivoAprendizaje.id_objetivo)
-        .order_by(ObjetivoAprendizaje.codigo_objetivo)
+        .join(Estudiante, MicrocapsulaGenerada.id_estudiante == Estudiante.id_estudiante)
+        .group_by(ObjetivoAprendizaje.id_objetivo, Estudiante.rol)
+        .order_by(
+            ObjetivoAprendizaje.codigo_objetivo,
+            # «control» < «estudiante»: el control primero, como en el login.
+            Estudiante.rol,
+        )
     )
     # None y 0 no son lo mismo: sin respuestas corregibles no hay porcentaje
     # que mostrar, y un 0 % diría que todos fallaron.
     return [
         {
             "tema": row.tema,
+            "rol": row.rol,
             "alumnos": row.alumnos,
             "unica": {
                 "primeras": row.unica_primeras,

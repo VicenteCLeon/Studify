@@ -7,6 +7,9 @@
 {%- set temas_con_material = cobertura | rejectattr("estado", "equalto", "sin_material") | list | length -%}
 {%- set respuestas = (quizzes | sum(attribute="unica.primeras")) + (quizzes | sum(attribute="cuestionario.primeras")) -%}
 
+{# Nombre del grupo del estudio, el mismo que se elige en /student/login. #}
+{% macro grupo(rol) -%}{{ "Control" if rol == "control" else "Experimental" }}{%- endmacro %}
+
 {# Celda con barra para un porcentaje del primer intento, o el motivo de que no haya. #}
 {% macro celda_porcentaje(valor, primeras, etiqueta) -%}
 {% if valor is none %}
@@ -139,8 +142,11 @@
         <div class="card-header">
             <div>
                 <h2 id="quiz-titulo" class="card-title">Rendimiento en las actividades</h2>
-                <p class="card-subtitle">Resultado al primer intento, por tema y por tipo de actividad.</p>
+                <p class="card-subtitle">Resultado al primer intento, por tema, grupo del estudio y tipo de actividad.</p>
             </div>
+            <a class="btn btn-secondary btn-sm" href="/teacher/exportar/intentos.csv" download>
+                {{ ui.icon("download", cls="icon-sm") }}Descargar intentos (CSV)
+            </a>
         </div>
         <p class="text-sm text-muted mb-4">
             Se cuenta <strong>solo el primer intento</strong>: el estudiante puede reenviar la
@@ -150,13 +156,17 @@
             los cuestionarios de varias preguntas (3 de 4 cuenta 75 %), que reciben sobre todo los
             perfiles kinestésicos. Son instrumentos distintos: compáralos por separado.
             Las actividades <strong>sin corrección</strong> (inténtalo tú y tarjetas de repaso)
-            solo se cuentan.
+            solo se cuentan. Cada tema tiene una fila por <strong>grupo del estudio</strong>
+            (Control: cápsula básica; Experimental: cápsula adaptada a su perfil), para
+            comparar los dos grupos sin mezclarlos. La descarga trae un intento por fila, sin
+            nombre ni correo; admite <code>?desde=AAAA-MM-DD</code> y <code>?hasta=AAAA-MM-DD</code>.
         </p>
         <div class="table-container">
             <table class="table table-stack">
                 <thead>
                     <tr>
                         <th scope="col">Tema</th>
+                        <th scope="col">Grupo</th>
                         <th scope="col">Alumnos</th>
                         <th scope="col">Selección única</th>
                         <th scope="col">Cuestionario</th>
@@ -168,6 +178,7 @@
                     {% for row in quizzes %}
                     <tr>
                         <td data-label="Tema" class="font-semibold">{{ row.tema }}</td>
+                        <td data-label="Grupo">{{ grupo(row.rol) }}</td>
                         <td data-label="Alumnos" class="tabular">{{ row.alumnos }}</td>
                         <td data-label="Selección única">
                             {{ celda_porcentaje(row.unica.porcentaje, row.unica.primeras, "Acierto al primer intento en selección única, " ~ row.tema) }}
@@ -179,7 +190,7 @@
                         <td data-label="Reintentos" class="tabular">{{ row.reintentos }}</td>
                     </tr>
                     {% else %}
-                    <tr><td colspan="6" class="text-muted">Aún no hay respuestas de los alumnos.</td></tr>
+                    <tr><td colspan="7" class="text-muted">Aún no hay respuestas de los alumnos.</td></tr>
                     {% endfor %}
                 </tbody>
             </table>
@@ -212,7 +223,7 @@
                         <td data-label="ID" class="tabular">#{{ cap.id_capsula }}</td>
                         <td data-label="Fecha" class="tabular nowrap">{{ cap.fecha_generacion.strftime('%d-%m-%Y %H:%M') }}</td>
                         <td data-label="Estudiante">Estudiante #{{ cap.id_estudiante }}</td>
-                        <td data-label="Grupo de estudio">{{ "Control" if cap.estudiante.rol == "control" else "Personalizado" }}</td>
+                        <td data-label="Grupo de estudio">{{ grupo(cap.estudiante.rol) }}</td>
                         <td data-label="Tema generado">{{ cap.titulo }}</td>
                         <td data-label="Modelo LLM"><code>{{ cap.modelo_llm or 'Desconocido' }}</code></td>
                     </tr>

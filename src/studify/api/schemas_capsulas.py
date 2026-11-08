@@ -9,7 +9,7 @@ comprobó.
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import AliasPath, BaseModel, ConfigDict, Field
 
 from studify.generation.schemas import Actividad, BloqueContenido, Fuente
 
@@ -88,6 +88,10 @@ class ResumenCapsulaOut(BaseModel):
     estado_validacion: str
     modelo_llm: str | None = None
     fecha_generacion: datetime
+    # Grupo del estudio del dueño (`control` | `estudiante`), para separar las
+    # cápsulas de cada brazo del piloto sin una consulta aparte por estudiante.
+    # Se lee de `estudiante.rol`; el listado lo carga con `selectinload`.
+    rol: str = Field(validation_alias=AliasPath("estudiante", "rol"))
 
 
 class InteraccionQuizIn(BaseModel):

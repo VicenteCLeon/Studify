@@ -30,7 +30,7 @@ from dataclasses import dataclass
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from studify.api.schemas_capsulas import (
     CapsulaIn,
@@ -417,9 +417,13 @@ def listar_capsulas(
     db: Session = Depends(get_db),
 ) -> list[MicrocapsulaGenerada]:
     """Las versiones quedan todas: es lo que permite comparar entre modelos."""
-    stmt = select(MicrocapsulaGenerada).order_by(
-        MicrocapsulaGenerada.fecha_generacion.desc(),
-        MicrocapsulaGenerada.id_capsula.desc(),
+    stmt = (
+        select(MicrocapsulaGenerada)
+        .options(selectinload(MicrocapsulaGenerada.estudiante))
+        .order_by(
+            MicrocapsulaGenerada.fecha_generacion.desc(),
+            MicrocapsulaGenerada.id_capsula.desc(),
+        )
     )
     if id_estudiante is not None:
         stmt = stmt.where(MicrocapsulaGenerada.id_estudiante == id_estudiante)
