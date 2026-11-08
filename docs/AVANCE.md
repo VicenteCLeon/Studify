@@ -1,7 +1,7 @@
 # Studify — Estado de avance
 
 > Bitácora del proyecto: qué se hizo, qué se verificó y qué se decidió en el camino.
-> Última actualización: **02-nov-2026**. Lo que falta está en [`PENDIENTES.md`](PENDIENTES.md);
+> Última actualización: **08-nov-2026**. Lo que falta está en [`PENDIENTES.md`](PENDIENTES.md);
 > el índice de toda la documentación, en [`README.md`](README.md).
 
 ---
@@ -23,7 +23,7 @@ avance ya entregado) y el plan de implementación derivado, [`PLAN_DESARROLLO.md
 
 ---
 
-## 1. Estado actual (01-nov-2026)
+## 1. Estado actual (08-nov-2026)
 
 | Área | Estado | Dónde |
 |---|---|---|
@@ -31,14 +31,14 @@ avance ya entregado) y el plan de implementación derivado, [`PLAN_DESARROLLO.md
 | **Fase 2 — Base de conocimiento** | Cerrada. Ingesta de PDF/PPTX con página, curación humana, retriever SQL sin embeddings, etiquetado asistido por LLM y borrado de documentos desde el panel. | §5 septies, §5 septendecies, §5 quatertricies |
 | **Fase 3 — Generación** | Cerrada. Contrato de siete pasos, validador, bucle de reparación y caché por huella. Batería VARK del 03-oct (con `deepseek-chat`): 29/30 cápsulas válidas, 26 a la primera (96,7 %), 0 citas inventadas. | §5 octies, §5 terdecies, §5 quatervicies |
 | **Fase 4 — Interfaz** | Cerrada y rediseñada el 02-oct: cuestionario, perfil, catálogo, visor y panel del docente con login. | §5 nonies, §5 duovicies |
-| **Grupo control del piloto** | Rol `control`, sin cuestionario ni personalización individual. Perfil fijo: media de los porcentajes de los 43 encuestados. Registro en `/student/control`. | §5 septtricies |
-| **Acceso Google** | Implementado para ambos grupos: vincular el perfil local y recuperar el mismo estudiante. Credenciales cargadas en la máquina 1 el 02-nov; falta probarlo con una cuenta real y rotar el secret (O6). | §5 octtricies |
-| **Marco legal** | Términos 0.3 y Política 0.5, consentimiento registrado, `/mis-datos` y código bajo AGPL-3.0-or-later. | §5 tervicies, §5 tritricies, §5 octtricies |
+| **Grupos del estudio A/B** | Experimental (rol `estudiante`): cuestionario VARK, cápsula adaptada y narración con p_A ≥ 25 %. Control (rol `control`): sin cuestionario, cápsula básica sin adaptación (resumen y `quiz_mc`, caché `control-neutro-v1`) y sin audio. Los dos eligen su grupo al entrar con Google. Métricas del panel y exportación CSV de intentos separadas por grupo. | §5 septtricies, §5 undequadragies |
+| **Acceso Google** | Única forma de entrar para los dos grupos, con elección obligatoria de grupo; vincula el perfil local y recupera el mismo estudiante. Credenciales cargadas en la máquina 1 el 02-nov; falta probarlo con una cuenta real de cada grupo y rotar el secret (O6). | §5 octtricies, §5 undequadragies |
+| **Marco legal** | Términos 0.5 y Política 0.7, consentimiento registrado, `/mis-datos` y código bajo AGPL-3.0-or-later. | §5 tervicies, §5 tritricies, §5 undequadragies |
 | **Audio (Fase 6)** | Kokoro y Piper según la preferencia de voz del estudiante, con caché por huella. | §5 duodetricies a §5 duotricies |
 | **Imagen (Fase 6)** | En pausa. El módulo Visual (SVG dibujado a partir de una especificación del LLM) está propuesto, sin integrar a la app. | §5 quatertricies |
-| **Fase 5 — Evaluación** | Sin empezar: A/B, batería técnica, validación docente, TAM. | `PENDIENTES.md` E |
+| **Fase 5 — Evaluación** | Los dos grupos del A/B y sus datos están listos en la app. Faltan la prueba pre/post común, la batería técnica, la validación docente y la TAM. | `PENDIENTES.md` E |
 | **Modelo** | `deepseek-flash` con el razonamiento apagado (`LLM_THINKING=disabled`) desde el 11-oct. | §5 quatertricies |
-| **Suite local** | Con Postgres: 654 pasan, 24 omitidas y 2 fallan (falta `CREATEDB`); sin base: 412 pasan, 264 omitidas y 4 fallan (R10). | §5 octtricies |
+| **Suite local** | Con Postgres (Docker del autor): 769 pasan, 2 omitidas, 0 fallan; sin base: 452 pasan, 315 omitidas y 4 fallan (R10). Tests node: 7 + 5 comprobaciones. | §5 undequadragies |
 
 Lo primero que falta antes del piloto con estudiantes está al inicio de
 [`PENDIENTES.md`](PENDIENTES.md).
@@ -46,7 +46,7 @@ Lo primero que falta antes del piloto con estudiantes está al inicio de
 **Cómo leer el resto de este archivo:**
 
 - §2 y §3 son las decisiones de stack y la instalación **tal como quedaron en agosto**. §4 es
-  la estructura del repositorio, al día al 24-oct-2026.
+  la estructura del repositorio, al día al 08-nov-2026.
 - §5 es la bitácora, en orden: cada sección cuenta qué se hizo, qué se encontró y cómo se
   verificó. El código cita estas secciones por su nombre («AVANCE.md sección 5 sedecies»), así
   que no se renumeran.
@@ -91,6 +91,7 @@ Lo primero que falta antes del piloto con estudiantes está al inicio de
 | 5 sextricies | 24-oct | R2: dos estudiantes en el mismo computador («Salir», «¿Eres tú?») |
 | 5 septtricies | 01-nov | Grupo control con perfil general fijo de los 43 encuestados |
 | 5 octtricies | 01-nov | Google OpenID Connect, vinculación y recuperación del perfil (D6) |
+| 5 undequadragies | 04–08-nov | Estudio A/B, Etapas 1 y 2: cápsula básica del control, grupo en el login y datos por grupo |
 
 ---
 
@@ -218,7 +219,7 @@ quedado de una corrida end-to-end fallida durante la verificación de la Fase 2.
 
 ## 4. Estructura del repositorio (estado real, no aspiracional)
 
-Al día al 24-oct-2026. Las cantidades de tests por archivo se sacaron a propósito: cambiaban
+Al día al 08-nov-2026. Las cantidades de tests por archivo se sacaron a propósito: cambiaban
 con cada sección del §5 y quedaban desfasadas; la suite completa está en el §1.
 
 ```
@@ -241,7 +242,9 @@ Studify/
 │     ├─ aaf2d3de8b4e_*.py  # tabla aceptacion_legal (02-oct, §5 tervicies)
 │     ├─ c3a91f5e7d20_*.py  # estudiante.voz_genero / voz_modo (05-oct, §5 undetricies)
 │     ├─ d7e2b9c41a58_*.py  # corrección en el servidor y detalle de cuestionarios (17-oct)
-│     └─ e5c1a7b39d42_*.py  # estudiante.origen_registro (24-oct, §5 sextricies)
+│     ├─ e5c1a7b39d42_*.py  # estudiante.origen_registro (24-oct, §5 sextricies)
+│     ├─ f6b2c8d40e53_*.py  # estudiante.rol: estudiante | control (01-nov, §5 septtricies)
+│     └─ a7c3d9e51f64_*.py  # identidad Google + tabla intento_google (01-nov, §5 octtricies)
 │                           # ⚠️ en todas, autogenerate quiere borrar el índice GIN
 │                           #   ix_fragmento_contenido_fts: se quita a mano (PENDIENTES.md)
 ├─ src/studify/
@@ -255,6 +258,7 @@ Studify/
 │  │  ├─ scoring.py      # 16 ítems → puntajes crudos → vector porcentual
 │  │  ├─ weighting.py    # fórmulas C_* del cap. 11.2 + rangos alcanzables
 │  │  ├─ hierarchy.py    # canal primario/secundario/multimodalidad (derivado)
+│  │  ├─ perfiles.py     # perfil_de_contenido (None para el control) y VARIANTE_CONTROL
 │  │  └─ rules.py        # tabla 11.1 → configuracion_contenido + directivas de prompt
 │  ├─ knowledge/
 │  │  ├─ extract.py      # PDF/PPTX → bloques con página y detección de encabezados
@@ -269,7 +273,7 @@ Studify/
 │  │     ├─ maestro.py   # plantillas + directiva VARK → instrucción estructural
 │  │     └─ visual.py    # prompt del módulo Visual; la app todavía no lo usa (PENDIENTES.md X1)
 │  ├─ generation/
-│  │  ├─ schemas.py      # contrato de la microcápsula: 7 pasos pedagógicos
+│  │  ├─ schemas.py      # contrato: Microcapsula (7 pasos) y CapsulaBasica del control
 │  │  ├─ idioma.py       # detección de deriva de idioma (regla 6)
 │  │  ├─ validator.py    # parser tolerante + reglas 2, 5 y 6 + realimentación
 │  │  └─ generator.py    # cliente LLM (inyectable) + bucle de reparación + ErrorProveedorLLM
@@ -293,8 +297,9 @@ Studify/
 │     ├─ legal.py · consentimiento.py · exportacion.py  # versión legal, aceptación, /mis-datos
 │     ├─ routers/
 │     │  ├─ auth.py      # login/logout del docente + guardián de /teacher/*
+│     │  ├─ google_login.py  # acceso OpenID Connect, elección de grupo y vinculación
 │     │  ├─ student.py   # cuestionario, perfil, catálogo, visor, narración, quiz e intentos
-│     │  ├─ teacher.py   # curación, objetivos, analíticas y simulador
+│     │  ├─ teacher.py   # curación, objetivos, analíticas por grupo, CSV de intentos y simulador
 │     │  └─ legal.py     # Términos, Privacidad, /aceptar, /mis-datos y su supresión
 │     ├─ templates/      # base, landing, components/, student/, teacher/, legal/
 │     └─ static/         # app.css, app.js, HTMX local, fuentes, íconos, styleguide (DESIGN_SYSTEM.md)
@@ -313,6 +318,11 @@ Studify/
 │  ├─ test_web_estudiante.py · test_web_docente.py · test_web_simulador.py · test_web_auth.py
 │  ├─ test_web_legal.py · test_web_codigo_fuente.py               # marco legal y enlace AGPL
 │  ├─ test_web_no_soy_yo.py                                       # sesión compartida (R2)
+│  ├─ test_config_seguridad.py                                    # arranque con credenciales débiles (O1)
+│  ├─ test_grupo_control.py · test_control_neutro.py              # grupo control y cápsula básica
+│  ├─ test_google_login.py · identidad_web.py                     # acceso Google; helper de cuentas
+│  ├─ test_datos_analisis.py                                      # métricas por grupo y CSV de intentos
+│  ├─ test_borrador_vark.cjs · test_carga_visor.cjs               # JS del navegador, con `node`
 │  ├─ test_health.py
 │  ├─ test_visual.py · test_voz.py   # ⚠️ cargan SDXL y XTTS al importarse: se ignoran (H8)
 │  └─ referencia.wav · prueba_*.wav  # voz de referencia de XTTS y audios de prueba (licencia: L7)
@@ -320,8 +330,9 @@ Studify/
 │  ├─ import_vark_csv.py       # carga los 43 diagnósticos reales (--dry-run, --reset ⚠️ R11)
 │  ├─ cargar_objetivos.py      # catálogo curricular desde CSV (--dry-run)
 │  ├─ descargar_voces.py       # modelos de Kokoro y Piper, fijados por SHA-256
-│  ├─ eval_runner.py           # batería de evaluación técnica / bake-off
+│  ├─ eval_runner.py           # batería de evaluación técnica / bake-off (⚠️ no usar: R15)
 │  ├─ probar_perfiles_vark.py  # batería VARK de punta a punta (PRUEBAS_VARK.md)
+│  ├─ verificar_1c_k.py        # actividad de los perfiles K contra el modelo real (punto 1c)
 │  ├─ h1h3/                    # rondas de H1 + H3: variantes, parches y métricas
 │  ├─ ingestar_documentos_prueba.py · validar_fragmentos_prueba.py · convertir_md_a_pdf.py
 │  ├─ probar_generacion_capsulas.py · probar_audio_1fn.py  # pruebas manuales contra el modelo
@@ -2638,6 +2649,149 @@ aislamiento entre cuentas. Suite completa en esquema temporal de Postgres:
 anteriores. Sin Postgres: **412 pasan, 276 omitidas, 4 fallan**, los casos
 conocidos de R10. `LLM_API_KEY` vacía; sin llamadas reales a Google ni al LLM.
 No se verificó el recorrido visual en un navegador ni con una cuenta Google real.
+
+---
+
+## 5 undequadragies. Estudio A/B: Etapas 1 y 2 (04–08-nov-2026)
+
+El equipo decidió el 04-nov cómo se diferencian los dos grupos del piloto, y
+esa decisión reemplaza el «perfil general fijo» del §5 septtricies:
+
+- **Experimental** (rol `estudiante`): responde el cuestionario VARK y recibe
+  cápsulas adaptadas a su perfil individual, con narración si p_A ≥ 25 %.
+- **Control** (rol `control`): no responde VARK. Recibe una **cápsula básica
+  sin adaptación** y sin audio. `perfil_de_contenido` devuelve `None` para él.
+- Los dos grupos entran **solo con Google** y eligen su grupo en
+  `/student/login`.
+
+La Etapa 1 cambió el motor (qué recibe cada grupo) y la Etapa 2 la interfaz,
+los textos legales y los datos del análisis. Cada punto fue un commit propio,
+con el test que fallaba escrito antes del código. No hay migraciones nuevas:
+el rol ya existía desde `f6b2c8d40e53`.
+
+### Etapa 1 — qué recibe cada grupo
+
+- **1a. Cápsula básica del control** (`d322afb`).
+  `generation/schemas.py::CapsulaBasica` es una subclase de `Microcapsula`.
+  Lleva título, objetivo, un resumen en prosa del material (≈ 220 palabras,
+  dentro de 150–300) en `concepto_central`, un `quiz_mc` obligatorio y las
+  fuentes. Activación, representación adaptativa y ejemplo quedan vacíos y se
+  rechazan si llegan con contenido. Usa los mismos fragmentos validados,
+  modelo, reglas de sistema, citas, regla de idioma, validador y bucle de
+  reparación que el experimental, que no cambió.
+  - Tiene plantillas propias en `rag/prompts/maestro.py` (`SECUENCIA_NEUTRA`,
+    `NEUTRO`, `ESQUEMA_JSON_BASICO`, `FORMATO_NEUTRO`). Las existentes no se
+    editaron, y un test fija la huella y el SHA del prompt experimental de
+    antes del cambio.
+  - El control no pasa por `aplicar_reglas`, recupera con
+    `canal_primario=None` (orden neutro por documento y número) y usa la
+    variante de caché **`control-neutro-v1`**: una cápsula por objetivo para
+    todo el grupo, copiada en una fila propia por estudiante. No reutiliza
+    las de `control-cohorte43-v1`.
+  - El validador acepta `actividad_requerida` y `esquema`: otro tipo de
+    actividad se rechaza con realimentación para el bucle de reparación.
+- **1b. Sin audio para el control** (`a75a798`). El control no tiene widget de
+  narración ni selector de voz. `generate-audio` y la preferencia de voz
+  responden 403 para sus cápsulas, también si las pide el docente.
+- **1c. Actividad de los perfiles K** (`666f587`). Con la directiva
+  `actividad_aplicada`, el validador exige `flashcards_y_quiz` (antes solo se
+  pedía en el prompt; cierra la parte de actividad de G8).
+  - Se deriva de la directiva y no de p_K, porque la regla de respaldo de
+    `rules._directivas` también la da a perfiles sin canal sobre 40 y con K
+    primario (6 de los 43).
+  - La huella incluye la actividad exigida solo cuando la hay. Por eso solo
+    se regeneran las cápsulas guardadas de esos perfiles; las demás huellas
+    y la del control quedan idénticas (comprobado barriendo el símplex).
+- **Verificación de 1c contra el modelo real** (`4844512`;
+  `scripts/verificar_1c_k.py --live`, 05-nov, `deepseek-flash`, BD-U3-02):
+  6/6 válidas, 6 a la primera, las 6 con `flashcards_y_quiz`. El veredicto de
+  la batería fue 4/6. Los dos fallos cumplen el contrato y fallan en
+  adherencia (glosario de R; `lista_pasos` en V30-A10-R10-K50), anotados en G8
+  como primer dato del **punto 1d** (`eb49f35`). Ese commit de script aparece
+  dos veces en el historial (`d980d77` y `4844512`): el segundo corrige el
+  número del aviso sobre `eval_runner.py`, de R14 a **R15**.
+
+### Etapa 2 — acceso, interfaz, textos y datos
+
+- **2a. Elección obligatoria de grupo** (`f742994`). `/student/login` muestra
+  «Selecciona tu grupo», con Control primero y sin preselección
+  (`?rol=control` preselecciona Control).
+  - `google_login.iniciar` no inicia el acceso sin un grupo válido.
+  - Elegir Control descarta el borrador VARK, en el servidor (cookie
+    `google_vark`) y en el navegador (`olvidarBorradorSiControl`).
+  - Una cuenta existente conserva su rol.
+  - Se cerró el alta local del control: `/student/control` sin sesión manda
+    al login y su POST responde 403.
+- **2b. Animación de carga** (`31f9293`). La capa «Preparando la cápsula…»
+  dura al menos `VISOR_CARGA_MINIMA_MS` (4000 ms), también cuando la cápsula
+  sale del caché, como casi siempre en el control.
+  - Se resuelve en el navegador: el catálogo guarda el instante del clic en
+    `sessionStorage` y el visor lo consume. Sin marca (recarga, «atrás» o
+    enlace directo) o sin JavaScript, la cápsula se ve de inmediato.
+  - Es neutra e igual para los dos grupos.
+  - Corrige además el 2a: sin grupo, el acceso ya no cae en la página de error
+    genérica, sino que vuelve al login con «Elige tu grupo para continuar.».
+- **2c. Textos de interfaz y legales** (`470e4fa`). `perfil_de_contenido`
+  devuelve `None` para un control, y un test recorre sus pantallas y
+  endpoints sin que ninguno falle. `PERFIL_CONTROL` queda solo en tests.
+  - El control tiene su perfil propio (`perfil_control.html`, «Grupo:
+    Control», sin radar).
+  - Su visor rotula «Resumen» en lugar de «Concepto central».
+  - Desaparece «perfil general» de la interfaz.
+  - Política **0.7** y Términos **0.5** describen el diseño nuevo: quien
+    aceptó las anteriores vuelve a `/aceptar` y regresa a donde iba.
+- **2d. Datos para el análisis** (`c28df6a`).
+  - `_rendimiento_actividades` agrupa por objetivo **y grupo**, y el panel
+    muestra una fila por grupo (Control primero).
+  - El historial y el panel nombran los grupos como el login: «Control» y
+    «Experimental».
+  - `/api/capsulas` (`ResumenCapsulaOut`) trae `rol`.
+  - Nueva exportación **`GET /teacher/exportar/intentos.csv`**, solo con
+    sesión docente: un intento por fila con `id_estudiante`, `rol`,
+    `codigo_objetivo`, `tema`, `id_capsula`, `tipo_actividad`,
+    `numero_intento`, `es_primer_intento`, `es_correcta` (solo `quiz_mc`),
+    `aciertos` y `total_preguntas` (solo cuestionarios) y `fecha`.
+  - El archivo no lleva nombre, correo, `google_sub` ni datos
+    sociodemográficos.
+  - Formato: booleanos 1/0, UTF-8 con BOM y un apóstrofo delante de los
+    textos que empiezan con `= + - @` (inyección de fórmulas).
+  - Filtro opcional `?desde=`/`?hasta=` (AAAA-MM-DD, ambos inclusive, en hora
+    de Chile). Una fecha inválida o un rango invertido dan 400.
+
+### Verificación
+
+Suite al cerrar cada punto, con `LLM_API_KEY` vacía e ignorando
+`test_visual.py` y `test_voz.py`:
+
+| Punto | Con Postgres (pasan / omitidas) | Sin base (pasan / omitidas / fallan) | node |
+|---|---|---|---|
+| Antes de 1a | 690 / 2 | 416 / 272 / 4 | — |
+| 1a | 716 / 2 | 439 / 275 / 4 | — |
+| 1b | 723 / 2 | 439 / 282 / 4 | — |
+| 1c | 730 / 2 | 446 / 282 / 4 | — |
+| 2a | 739 / 2 | 448 / 289 / 4 | 7 |
+| 2b | 744 / 2 | 449 / 293 / 4 | 7 + 5 |
+| 2c | 752 / 2 | 452 / 298 / 4 | 7 + 5 |
+| 2d | **769 / 2, 0 fallan** | **452 / 315 / 4** | 7 + 5 |
+
+Los 4 fallos sin base son siempre los mismos de `test_web_auth.py` (R10).
+`ruff check .` conserva los 40 avisos previos en todo el tramo. Archivos de
+tests nuevos: `test_control_neutro.py`, `test_datos_analisis.py` y
+`tests/test_carga_visor.cjs`. Los demás casos se sumaron a
+`test_grupo_control.py`, `test_google_login.py`, `test_prompt_maestro.py`,
+`test_generador.py`, `test_api_capsulas.py`, `test_perfiles_vark.py`,
+`test_web_estudiante.py`, `test_web_legal.py` y `tests/test_borrador_vark.cjs`.
+El helper `tests/identidad_web.py` prepara cuentas Google verificadas para las
+vistas, sin desactivar guardianes.
+
+**Lo que no se verificó:**
+
+- No se probó el recorrido con Google real ni la animación en un navegador:
+  la extensión de Chrome no estaba conectada. El 2d tampoco se miró en
+  pantalla. Las cuatro comprobaciones de la animación y el recorrido con una
+  cuenta de cada grupo quedan en `PENDIENTES.md` O6.
+- La única llamada al modelo real fue la del 1c. Las cápsulas básicas del
+  control solo se probaron con el cliente falso.
 
 ---
 

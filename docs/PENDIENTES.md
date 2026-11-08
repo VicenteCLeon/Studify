@@ -10,7 +10,7 @@
 > `AVANCE.md` con su commit. Las listas de origen quedan como registro de su
 > fecha y no se vuelven a actualizar.
 >
-> Última revisión: 02-nov-2026. Las ubicaciones de código van por función; los
+> Última revisión: 08-nov-2026. Las ubicaciones de código van por función; los
 > números de línea son aproximados.
 
 ---
@@ -39,51 +39,54 @@
   o avisar; meterlo en el mismo commit solo si sin eso el punto no queda
   correcto, y decirlo.
 
-**Estado de la suite al 27-oct-2026**, antes y después de O1 (los fallos son
-todos previos; O1 suma los 16 tests de `test_config_seguridad.py`):
+**Estado de la suite al 08-nov-2026**, al cerrar la Etapa 2 del estudio A/B
+(`c28df6a`). El tramo completo, punto por punto, está en AVANCE §5
+undequadragies, y los estados anteriores en las secciones de su fecha.
 
-| Forma | Antes de O1 (`f5f0490`) | Después de O1 | Fallos |
+| Forma | Pasan | Omitidos | Fallan |
 |---|---|---|---|
-| Puerto cerrado | 381 pasan, 224 omitidos, 4 fallan | 397 pasan, 224 omitidos, 4 fallan | Los mismos 4 de `test_web_auth.py` sin `@necesita_bd` (R10) |
-| Con Postgres | 607 pasan, 2 omitidos, 0 fallan | 623 pasan, 2 omitidos, 0 fallan | Ninguno: los 2 de `test_interaccion_quiz.py` pasan porque la tabla estaba vacía (R10) |
+| Puerto cerrado | 452 | 315 | 4: los de `test_web_auth.py` sin `@necesita_bd` (R10) |
+| Con Postgres (Docker del autor) | 769 | 2 | 0 |
+| `node tests/*.cjs` | 7 + 5 comprobaciones | — | 0 |
 
-**Verificación local del grupo control, 01-nov-2026:** 20 pruebas nuevas pasan.
-Suite con Postgres en un esquema temporal: 619 pasan, 24 omitidas, 2 fallan
-por falta del permiso `CREATEDB` en pruebas anteriores de migraciones. Sin
-base: 397 pasan, 244 omitidas, los mismos 4 fallos de `test_web_auth.py` (R10).
-No se cambió la suite anterior ni se concedieron permisos adicionales.
-
-**Google Identity, 01-nov-2026:** 35 pruebas nuevas pasan. Suite con Postgres
-en esquema temporal: 654 pasan, 24 omitidas y 2 fallan por `CREATEDB`.
-Sin base: 412 pasan, 264 omitidas y los 4 fallos conocidos de R10.
-Implementación y migración: AVANCE §5 octtricies. La activación real está en O6.
-
-**VARK requiere Google para guardar, 01-nov-2026:** 155 pruebas focalizadas
-pasan. Suite con Postgres: 666 pasan, 24 omitidas y los 2 fallos anteriores por
-`CREATEDB`. Sin base: 412 pasan, 276 omitidas y los 4 fallos conocidos de R10.
-El borrador se conserva durante el acceso; falta verificarlo con Google real
-y en el navegador junto con O6. Detalle en AVANCE §5 octtricies.
+Antes de lanzar la forma «con Postgres», comprobar que el contenedor
+`studify-db` esté *healthy*: sin base la corrida no falla, se cuelga (H11).
 
 ---
 
 ## Antes del piloto con estudiantes
 
 Lo que conviene cerrar antes de que la app la usen personas reales. El detalle
-de cada uno está más abajo.
+de cada uno está más abajo. Los seis primeros quedaron abiertos al cerrar las
+Etapas 1 y 2 del estudio A/B (08-nov, AVANCE §5 undequadragies).
 
-1. **Sesión en computadores compartidos:** fijar `SESION_ESTUDIANTE_HORAS` según
-   dónde se use (1–4 en un laboratorio) y aplicar la migración `e5c1a7b39d42` en
-   cada máquina (O2). R2 ya está corregido (`75c14fa`, AVANCE §5 sextricies).
-2. **Credenciales en la máquina 2** (O1): la parte de código está hecha el
+1. **Recorrido manual con Google real, con una cuenta de cada grupo** (O6):
+   elegir grupo, entrar, salir y volver, cápsula, actividad y «Mis datos».
+   Incluye las **4 comprobaciones de la animación de carga** del punto 2b.
+2. **Rotar el `client_secret` de Google** cuando termine esa prueba (O6).
+3. **Prueba pre/post común a los dos grupos** (E1): el instrumento que mide
+   el aprendizaje en el A/B, igual para Control y Experimental.
+4. **R15:** arreglar `scripts/eval_runner.py`, que puede mandar la clave de
+   DeepSeek a otros proveedores. No usarlo antes.
+5. **D7:** decidir si se restringe el acceso a cuentas `@mail.pucv.cl`.
+6. **Punto 1d** (G8): métricas de adherencia sin rechazo y auditoría de las
+   cápsulas guardadas, como evidencia para E3.
+7. **Sesión en computadores compartidos:** fijar `SESION_ESTUDIANTE_HORAS` según
+   dónde se use (1–4 en un laboratorio) y dejar cada máquina en la última
+   migración (`a7c3d9e51f64`, O2). R2 ya está corregido (`75c14fa`, AVANCE §5
+   sextricies).
+8. **Credenciales en la máquina 2** (O1): la parte de código está hecha el
    27-oct (sin `admin123` de fábrica; fuera de `APP_ENV=dev` no arranca sin un
    `SESSION_SECRET` fuerte). Falta fijar los valores a mano.
-3. **Repetir la batería VARK con `deepseek-flash`**, incluido el perfil V (G1).
-4. **Desplegar ya los cambios del 17-oct**: el cambio de la huella del caché
-   (`ce30e6d`) regenera cada cápsula una vez, y no conviene que eso pase a mitad
-   del piloto. Y cada máquina tiene que quedar al día (O2).
-5. **Instrumentos y consentimiento de la Fase 5** (E1–E4).
-6. **Riesgos legales** L1, L3 y L5.
-7. **Probar Google Identity con una cuenta real** y rotar el `client_secret` (O6); decidir el filtro de dominio (D7).
+9. **Repetir la batería VARK con `deepseek-flash`**, incluido el perfil V (G1).
+10. **Desplegar los cambios antes del piloto, no durante:** el cambio de huella
+    del 17-oct (`ce30e6d`) y el del punto 1c (`666f587`, perfiles con
+    `actividad_aplicada`) regeneran las cápsulas afectadas una vez, y el control
+    estrena la variante `control-neutro-v1`. Conviene que esas generaciones
+    ocurran antes del piloto y no a mitad de él. Cada máquina tiene que quedar
+    al día (O2).
+11. **Instrumentos y consentimiento de la Fase 5** (E1–E4).
+12. **Riesgos legales** L1, L3 y L5.
 
 ---
 
@@ -161,6 +164,13 @@ descripción de cada commit.
   `estudiante.origen_registro` (NULL para los del CSV, la API y los anteriores):
   agregarle `importado` permitiría separar el CSV del piloto y, de paso,
   excluir los posibles duplicados.
+  - **Diagnósticos de estudiantes del grupo control (08-nov, revisión del
+    2d):** el promedio tampoco filtra por rol. Hoy no cambia nada, porque el
+    control no responde VARK (2a/2c). Pero si un estudiante con rol `control`
+    tuviera un diagnóstico (guardado antes de quedar en ese grupo, o agregado
+    por un proceso externo, caso que `perfil_de_contenido` ya ignora), entraría
+    al promedio de la cohorte. Al arreglar R13, tomar solo diagnósticos de
+    estudiantes con rol `estudiante`. No se tocó en el 2d.
 - **R14. La fila 7 de la tabla 11.1 como regla de contenido no existe** →
   decisión del equipo (ver D4).
 
@@ -195,6 +205,12 @@ descripción de cada commit.
   por documento y número de fragmento; en el experimental, los 8 primeros
   según el canal primario. Con más de 8, los dos grupos pueden recibir
   material distinto del mismo objetivo.
+- **Nombre del grupo fuera del panel:** desde el 2d el panel y el login dicen
+  «Control» y «Experimental», pero «Mis datos»
+  (`legal/mis_datos.html`, «Grupo de estudio») sigue diciendo «Personalizado»
+  y la Política (`legal/privacidad.html`) habla de «personalizado o control».
+  Cambiar la Política exige subir su versión y pedir de nuevo la aceptación.
+  Visto el 08-nov.
 - **Coste sin tope:** un estudiante puede llamar `POST /api/capsulas?regenerar=true`
   sobre sí mismo sin límite.
 
@@ -244,7 +260,8 @@ descripción de cada commit.
     se regeneran. Ojo: la directiva no sale solo con p_K ≥ 40; la regla de
     respaldo de `rules._directivas` también la da a perfiles sin canal sobre
     40 y con K primario (6 de los 43; p. ej. A23-R38-K39).
-  - **Punto 1d (después de la Etapa 2, evidencia para E3):** métricas de
+  - **Punto 1d (sigue ahora que la Etapa 2 cerró el 08-nov; evidencia para
+    E3, en «Antes del piloto»):** métricas de
     adherencia **sin rechazo** en `metricas` del validador para las
     directivas verificables en el JSON (bloque `tabla` ≥ 2×3, `esquema`,
     `glosario`, `lista_pasos`, `ejemplo_resuelto`, `analogia`, cantidad de
@@ -281,23 +298,26 @@ descripción de cada commit.
   «generada» y el caché compartido no filtraría las rechazadas. La Fase 5 lo
   necesita (E3). Origen: revisión del 16-oct.
 
-## E. Evaluación (Fase 5) — sin empezar
+## E. Evaluación (Fase 5)
 
 El horizonte del plan terminaba el 09-oct-2026. Origen: `PLAN_DESARROLLO.md` §4, Fase 5.
 
-- **E1. A/B pedagógico:** definir cómo se registran las calificaciones de los
-  dos grupos (es dato externo, la base no lo captura) y qué material exacto
-  estudia el grupo de control para que sea comparable en cobertura y tiempo.
-  - El **rol control ya está implementado** (01-nov, AVANCE §5 septtricies):
-    usa el mismo catálogo y motor con el perfil promedio fijo de los 43
-    encuestados. El rol habitual conserva el perfil individual. El equipo
-    distribuye `/student/control`; no hay asignación aleatoria. Esto no
-    reemplaza el diseño experimental, los instrumentos ni las calificaciones.
-  - **04-nov:** el control pasó a una cápsula básica sin VARK (resumen y
-    `quiz_mc`, punto 1a) y sin narración ni selector de voz (punto 1b).
-    Pendiente para el punto **2c** (Etapa 2): rotular «Resumen» en vez de
-    «Concepto central» en el visor del control, y retirar el radar y los
-    textos de «perfil general» de su perfil, que todavía usan PERFIL_CONTROL.
+- **E1. A/B pedagógico.**
+  - ✅ **En la app (Etapas 1 y 2, 04–08-nov, AVANCE §5 undequadragies):** el
+    experimental recibe la cápsula adaptada a su perfil y el control una
+    cápsula básica sin VARK (resumen y `quiz_mc`), sin narración. Los dos
+    entran con Google y eligen su grupo en `/student/login`. El panel separa
+    las métricas por grupo y `/teacher/exportar/intentos.csv` entrega los
+    intentos con su rol, sin datos personales.
+  - **Falta la prueba pre/post común a los dos grupos:** qué instrumento mide
+    el aprendizaje, igual para Control y Experimental, cuándo se aplica y cómo
+    se registra (la base no lo captura; se cruzaría por `id_estudiante` con el
+    CSV de intentos). También definir las calificaciones y comprobar que el
+    material de los dos grupos sea comparable en cobertura y tiempo (ver la
+    limitación del retriever con más de 8 fragmentos, en «Prioridad baja»).
+  - **Asignación:** cada estudiante elige su grupo en el login; la app no
+    sortea. El equipo decide cómo asigna y comunica qué grupo elige cada
+    participante. Esto no reemplaza el diseño experimental.
 - **E2. Batería técnica:** 20 a 30 consultas controladas con rúbrica 1–5 y
   doble evaluador (fidelidad, exactitud factual, relevancia, trazabilidad).
   `scripts/eval_runner.py` hoy cubre un objetivo y perfiles puros.
@@ -377,9 +397,12 @@ Origen: `AVANCE.md` §5 tervicies «Riesgos legales que siguen abiertos» y
     quedaron en su `.env`; la app arranca y `/student/login` responde. El venv
     no tenía `google-auth`: hizo falta `pip install -e .` (README, paso de
     Google). Las 47 pruebas de `tests/test_google_login.py` pasan.
-  - **Falta:** probar con una cuenta real, a mano en el navegador, entrar con
-    cuenta nueva, salir y volver, vincular un perfil local y el borrador VARK
-    antes de iniciar sesión. Las pruebas automáticas simulan el intercambio y la
+  - **Falta:** probar con una cuenta real **de cada grupo** (Control y
+    Experimental), a mano en el navegador: elegir el grupo en
+    `/student/login` (2a), entrar con cuenta nueva, salir y volver, vincular
+    un perfil local, el borrador VARK antes de iniciar sesión (y que se
+    descarte al elegir Control), cápsula, actividad, «Mis datos» y la descarga
+    del CSV desde el panel (2d). Las pruebas automáticas simulan el intercambio y la
     verificación del token; el camino contra Google no está cubierto. Confirmar
     en Google Cloud que la URI exacta está registrada y que las cuentas de
     prueba están como usuarios de prueba.
@@ -464,4 +487,4 @@ está en [`CORRECCIONES_INFORME.md`](CORRECCIONES_INFORME.md).
 
 ---
 
-**Orden sugerido:** O1 → H11 → R10 → G1 → R7, R8, R9 → E1–E4 → el resto.
+**Orden sugerido:** «Antes del piloto» (arriba) → H11 → R10 → R7, R8, R9 → E2–E5 → el resto.
