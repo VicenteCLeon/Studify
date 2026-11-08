@@ -19,8 +19,9 @@ completo y deja de ser auditable en la práctica.
 import hashlib
 import re
 import unicodedata
+from collections import defaultdict
 from contextlib import suppress
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 
 # Un encabezado en PDF se detecta por tamaño de fuente relativo al cuerpo. Un
@@ -31,6 +32,12 @@ FACTOR_TITULO = 1.15
 # Un encabezado además es corto. Un párrafo en negrita grande puede superar el
 # factor de tamaño, pero no suele caber en una línea de título.
 MAX_PALABRAS_TITULO = 15
+
+# Encabezado o pie corrido: el mismo texto repetido en al menos esta fracción de
+# las páginas (p. ej. "Profesora X – correo" en cada diapositiva). Con menos de
+# MIN_PAGINAS_REPETIDO páginas no hay base para distinguirlo de contenido.
+FRACCION_REPETIDO = 0.5
+MIN_PAGINAS_REPETIDO = 3
 
 FORMATOS_SOPORTADOS = (".pdf", ".pptx")
 
@@ -47,12 +54,17 @@ class BloqueTexto:
     encabezado marca el inicio de un tema nuevo y unir dos secciones en un mismo
     fragmento es exactamente lo que rompe la correspondencia
     «un fragmento ↔ un objetivo de aprendizaje» del cap. 12.
+
+    `repetido` marca un encabezado/pie corrido (ver `marcar_repetidos`). Su
+    texto se conserva, pero no aporta procedencia: el chunker no lo usa para
+    calcular el rango de páginas de un fragmento.
     """
 
     texto: str
     pagina: int
     es_titulo: bool = False
     tipo: str = "texto"
+    repetido: bool = False
 
 
 def normalizar(texto: str) -> str:
@@ -238,13 +250,41 @@ def extraer_pptx(ruta: Path) -> list[BloqueTexto]:
     return bloques
 
 
+def marcar_repetidos(bloques: list[BloqueTexto]) -> list[BloqueTexto]:
+    """Marca como `repetido` el texto corrido que aparece en casi todas las páginas.
+
+    En las presentaciones exportadas a PDF la firma de la docente se repite en
+    cada diapositiva y, por orden de lectura, cae al comienzo de la página
+    siguiente: sin esta marca, estira `pagina_fin` del fragmento anterior una
+    página de más. Los títulos no se marcan: aunque se repitan, son la
+    etiqueta temática del fragmento.
+    """
+    total_paginas = len({b.pagina for b in bloques})
+    if total_paginas < MIN_PAGINAS_REPETIDO:
+        return bloques
+
+    paginas_por_texto: dict[str, set[int]] = defaultdict(set)
+    for b in bloques:
+        if not b.es_titulo:
+            paginas_por_texto[b.texto].add(b.pagina)
+
+    umbral = total_paginas * FRACCION_REPETIDO
+    repetidos = {t for t, paginas in paginas_por_texto.items() if len(paginas) >= umbral}
+    if not repetidos:
+        return bloques
+    return [
+        replace(b, repetido=True) if not b.es_titulo and b.texto in repetidos else b
+        for b in bloques
+    ]
+
+
 def extraer(ruta: Path) -> list[BloqueTexto]:
     """Despacha al extractor según la extensión del archivo."""
     sufijo = ruta.suffix.lower()
     if sufijo == ".pdf":
-        return extraer_pdf(ruta)
+        return marcar_repetidos(extraer_pdf(ruta))
     if sufijo == ".pptx":
-        return extraer_pptx(ruta)
+        return marcar_repetidos(extraer_pptx(ruta))
     raise FormatoNoSoportado(
         f"'{ruta.name}': formato {sufijo or '(sin extensión)'} no soportado. "
         f"Formatos válidos: {', '.join(FORMATOS_SOPORTADOS)}"

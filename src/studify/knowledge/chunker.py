@@ -27,7 +27,7 @@ mezclarla con prosa la vuelve irrecuperable.
 """
 
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from studify.knowledge.extract import BloqueTexto
 
@@ -124,16 +124,33 @@ def fragmentar(
     fragmentos: list[FragmentoCrudo] = []
     acumulado: list[BloqueTexto] = []
     titulo_vigente: str | None = None
+    # Página del título vigente, y si ya recibió contenido propio. Un título
+    # todavía sin contenido seguido de otro "título" en la misma página no es
+    # una sección nueva: son filas de tabla o rótulos en letra grande, y antes
+    # se descartaban en silencio.
+    pagina_titulo_vigente: int | None = None
+    titulo_con_contenido = False
+    # Página del título que el próximo fragmento debe cubrir: el encabezado es
+    # parte de la procedencia del primer fragmento que abre, no de los siguientes.
+    pagina_titulo_pendiente: int | None = None
 
     def cerrar() -> None:
         """Emite lo acumulado como fragmento (o fragmentos, si excede el máximo)."""
-        nonlocal acumulado
+        nonlocal acumulado, pagina_titulo_pendiente
         if not acumulado:
             return
 
         cuerpo = " ".join(b.texto for b in acumulado)
-        pagina_inicio = min(b.pagina for b in acumulado)
-        pagina_fin = max(b.pagina for b in acumulado)
+        # Un encabezado/pie corrido no es procedencia: si cuenta, estira el
+        # rango hasta la página siguiente, donde suele quedar por orden de lectura.
+        paginas = [b.pagina for b in acumulado if not b.repetido]
+        if pagina_titulo_pendiente is not None:
+            paginas.append(pagina_titulo_pendiente)
+            pagina_titulo_pendiente = None
+        if not paginas:
+            paginas = [b.pagina for b in acumulado]
+        pagina_inicio = min(paginas)
+        pagina_fin = max(paginas)
 
         for trozo in _dividir_por_oraciones(cuerpo, max_palabras):
             fragmentos.append(
@@ -150,21 +167,44 @@ def fragmentar(
         acumulado = []
 
     for bloque in bloques:
+        degradado = False
         if bloque.es_titulo:
-            # Frontera dura: el encabezado cierra el tema anterior y pasa a ser
-            # la etiqueta del siguiente.
-            cerrar()
-            titulo_vigente = bloque.texto
-            continue
+            if (
+                titulo_vigente is not None
+                and not titulo_con_contenido
+                and bloque.pagina == pagina_titulo_vigente
+            ):
+                # Título consecutivo en la misma página: se conserva como
+                # contenido del título vigente en vez de reemplazarlo. Toda la
+                # racha se une al mismo título (p. ej. todas las filas de una
+                # tabla), hasta que aparece cuerpo real.
+                bloque = replace(bloque, es_titulo=False)
+                degradado = True
+            else:
+                # Frontera dura: el encabezado cierra el tema anterior y pasa a
+                # ser la etiqueta del siguiente.
+                cerrar()
+                titulo_vigente = bloque.texto
+                pagina_titulo_vigente = bloque.pagina
+                pagina_titulo_pendiente = bloque.pagina
+                titulo_con_contenido = False
+                continue
+
+        if not bloque.repetido and not degradado:
+            titulo_con_contenido = True
 
         if bloque.tipo != "texto":
             # Tablas y recursos estructurados van solos (ver docstring).
             cerrar()
+            pagina_inicio = bloque.pagina
+            if pagina_titulo_pendiente is not None:
+                pagina_inicio = min(pagina_inicio, pagina_titulo_pendiente)
+                pagina_titulo_pendiente = None
             fragmentos.append(
                 FragmentoCrudo(
                     numero=len(fragmentos) + 1,
                     texto=_componer(titulo_vigente, bloque.texto),
-                    pagina_inicio=bloque.pagina,
+                    pagina_inicio=pagina_inicio,
                     pagina_fin=bloque.pagina,
                     tipo=bloque.tipo,
                     etiqueta_tematica=(
