@@ -546,9 +546,30 @@ def test_eliminar_conserva_el_audio_que_tambien_usa_otro_estudiante(
 # --- Versiones del punto 2c (grupo control neutro y elección de grupo) ---------
 
 
-def test_versiones_vigentes_del_punto_2c():
-    assert legal.TERMINOS.version == "0.5"
-    assert legal.PRIVACIDAD.version == "0.7"
+def test_versiones_vigentes():
+    """0.5/0.7 del punto 2c; 0.6/0.8 nombran los grupos como el login (08-nov)."""
+    assert legal.TERMINOS.version == "0.6"
+    assert legal.PRIVACIDAD.version == "0.8"
+
+
+@pytest.mark.parametrize("ruta", ["/privacidad", "/terminos"])
+def test_los_textos_legales_nombran_los_grupos_como_el_login(http, ruta):
+    """«Control» y «Experimental», igual que /student/login y el panel."""
+    plano = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", http.get(ruta).text)).lower()
+    assert "personalizado" not in plano
+    assert "grupo con personalización" not in plano
+    assert "grupo experimental" in plano
+    assert "grupo control" in plano
+
+
+@necesita_bd
+def test_mis_datos_nombra_el_grupo_experimental_como_el_login(http, creados):
+    _conectado(http, creados)
+
+    texto = http.get("/mis-datos").text
+
+    assert "Grupo de estudio</dt><dd>Experimental</dd>" in texto
+    assert "Personalizado" not in texto
 
 
 def test_la_politica_describe_los_dos_grupos_del_piloto(http):
@@ -570,17 +591,26 @@ def test_los_terminos_ya_no_mencionan_el_registro_local_del_control(http):
 
 
 @necesita_bd
-def test_aceptacion_anterior_al_2c_vuelve_a_pedirse_y_regresa_a_donde_iba(
-    http, db, creados
+@pytest.mark.parametrize(
+    ("terminos_previos", "privacidad_previa"),
+    [("0.4", "0.6"), ("0.5", "0.7")],
+)
+def test_aceptacion_anterior_vuelve_a_pedirse_y_regresa_a_donde_iba(
+    http, db, creados, terminos_previos, privacidad_previa
 ):
-    """Quien aceptó Términos 0.4 y Política 0.6 debe aceptar 0.5 y 0.7."""
+    """Quien aceptó una versión anterior (antes del 2c, o la del 2c) debe
+    aceptar la vigente y, al hacerlo, vuelve a donde iba."""
     enviar_vark(http, data=RESPUESTAS | {"acepto": "si"})
     id_estudiante = _id_de_la_cookie(http)
     creados.append(id_estudiante)
     db.query(AceptacionLegal).filter(AceptacionLegal.id_estudiante == id_estudiante).delete()
     db.add_all([
-        AceptacionLegal(id_estudiante=id_estudiante, documento="terminos", version="0.4"),
-        AceptacionLegal(id_estudiante=id_estudiante, documento="privacidad", version="0.6"),
+        AceptacionLegal(
+            id_estudiante=id_estudiante, documento="terminos", version=terminos_previos
+        ),
+        AceptacionLegal(
+            id_estudiante=id_estudiante, documento="privacidad", version=privacidad_previa
+        ),
     ])
     db.commit()
 
@@ -589,7 +619,7 @@ def test_aceptacion_anterior_al_2c_vuelve_a_pedirse_y_regresa_a_donde_iba(
     assert bloqueado.headers["location"] == "/aceptar?next=/student/catalog"
     lista = http.get("/aceptar?next=/student/catalog").text.split(
         'class="aceptar-docs"')[1].split("</ul>")[0]
-    assert "Versión 0.5" in lista and "Versión 0.7" in lista
+    assert "Versión 0.6" in lista and "Versión 0.8" in lista
 
     aceptada = http.post(
         "/aceptar", data={"acepto": "si", "next": "/student/catalog"}, follow_redirects=False
@@ -598,4 +628,4 @@ def test_aceptacion_anterior_al_2c_vuelve_a_pedirse_y_regresa_a_donde_iba(
     assert aceptada.headers["location"] == "/student/catalog"
     assert http.get("/student/catalog", follow_redirects=False).status_code == 200
     versiones = {(f.documento, f.version) for f in _aceptaciones(db, id_estudiante)}
-    assert {("terminos", "0.5"), ("privacidad", "0.7")} <= versiones
+    assert {("terminos", "0.6"), ("privacidad", "0.8")} <= versiones

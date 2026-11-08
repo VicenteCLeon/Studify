@@ -30,7 +30,7 @@
 <div class="legal-resumen">
     {% call ui.alert("info", "En pocas palabras") %}
     <ul>
-        <li>Los dos grupos del piloto <strong>entran con Google</strong> y sus participantes eligen su grupo al registrarse. El grupo personalizado recibe cápsulas adaptadas a su perfil VARK; el <strong>grupo control</strong> recibe un resumen estándar del material, igual para todos, no responde el cuestionario VARK y estudia sin narración. Guardamos el identificador, nombre y correo verificado de Google para recuperar tu perfil. No pedimos RUT ni tu contraseña de Google.</li>
+        <li>Los dos grupos del piloto <strong>entran con Google</strong> y sus participantes eligen su grupo al registrarse. El <strong>grupo experimental</strong> recibe cápsulas adaptadas a su perfil VARK; el <strong>grupo control</strong> recibe un resumen estándar del material, igual para todos, no responde el cuestionario VARK y estudia sin narración. Guardamos el identificador, nombre y correo verificado de Google para recuperar tu perfil. No pedimos RUT ni tu contraseña de Google.</li>
         <li>Guardamos tus respuestas al cuestionario VARK, tu perfil, las cápsulas que abres y tus intentos en las actividades. La edad, el género y la carrera son <strong>opcionales</strong>.</li>
         <li>Al proveedor de IA <strong>no le enviamos ningún dato tuyo</strong>: solo el material del curso y los parámetros de formato que salen de tu perfil, sin nada que te identifique.</li>
         <li>Puedes ver, descargar, corregir o eliminar tus datos en <a href="/mis-datos">Mis datos</a> (sección 9).</li>
@@ -89,15 +89,15 @@
                 <tr>
                     <td data-label="Dato"><strong>Respuestas al cuestionario VARK</strong>: cada alternativa que marcaste en las 16 preguntas</td>
                     <td data-label="De dónde sale">Tú, en el cuestionario</td>
-                    <td data-label="¿Obligatorio?">Solo en el grupo con personalización (al menos una)</td>
+                    <td data-label="¿Obligatorio?">Solo en el grupo experimental (al menos una)</td>
                 </tr>
                 <tr>
                     <td data-label="Dato"><strong>Perfil de aprendizaje</strong>: puntajes y porcentaje de cada dimensión V, A, R y K, y la configuración de contenido que se deriva de él</td>
                     <td data-label="De dónde sale">Se calcula con tus respuestas</td>
-                    <td data-label="¿Obligatorio?">Solo en el grupo con personalización</td>
+                    <td data-label="¿Obligatorio?">Solo en el grupo experimental</td>
                 </tr>
                 <tr>
-                    <td data-label="Dato"><strong>Grupo de estudio</strong>: personalizado o control</td>
+                    <td data-label="Dato"><strong>Grupo de estudio</strong>: experimental o control</td>
                     <td data-label="De dónde sale">Tú, al elegir tu grupo cuando entras con Google por primera vez. Una cuenta existente conserva su grupo. El grupo control recibe un resumen estándar sin adaptación y no tiene diagnóstico individual</td>
                     <td data-label="¿Obligatorio?">Sí, para distinguir los grupos en la evaluación</td>
                 </tr>
@@ -119,7 +119,7 @@
                 <!-- BORRADOR TÉCNICO (05-oct-2026): fila nueva por voz_genero y voz_modo. No constituye asesoría legal; revisar antes de publicar. -->
                 <tr>
                     <td data-label="Dato"><strong>Preferencia de voz de la narración</strong>: voz femenina o masculina, en modo calidad o rápido. Es una preferencia de audio, independiente del género con que te identificas, y nunca se deduce de él</td>
-                    <td data-label="De dónde sale">Tú, al elegirla en el visor o en tu perfil. Solo en el grupo personalizado: el grupo control no tiene narración</td>
+                    <td data-label="De dónde sale">Tú, al elegirla en el visor o en tu perfil. Solo en el grupo experimental: el grupo control no tiene narración</td>
                     <td data-label="¿Obligatorio?">No (si no eliges, se usa la voz por defecto)</td>
                 </tr>
                 <tr>
@@ -203,7 +203,7 @@
     <p>En el <strong>grupo control</strong> no se elabora un perfil de aprendizaje: no responde el
         cuestionario VARK y cada tema se presenta como un resumen estándar del material, igual para
         todas las personas, con una actividad de cierre fija y sin narración. Guardamos tu grupo para
-        evaluar los resultados y no se puede cambiar desde tu cuenta. En el grupo personalizado se
+        evaluar los resultados y no se puede cambiar desde tu cuenta. En el grupo experimental se
         mantiene el siguiente funcionamiento.</p>
     <p>
         RepasAi elabora un <strong>perfil de aprendizaje</strong> con tus respuestas y lo usa, de forma
@@ -257,7 +257,7 @@
     </p>
     <h3 id="google">Acceso con Google</h3>
     <p>Los dos grupos del piloto entran con Google y eligen su grupo al registrarse.
-        En el grupo personalizado puedes completar el cuestionario primero: el borrador
+        En el grupo experimental puedes completar el cuestionario primero: el borrador
         permanece en esta pestaña hasta que vuelvas del acceso y confirmes su guardado.
         Los consentimientos se piden nuevamente. Si al entrar eliges el grupo control, el
         borrador se descarta y no se guarda nada de él.</p>

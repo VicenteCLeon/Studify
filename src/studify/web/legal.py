@@ -46,8 +46,9 @@ TERMINOS = Documento(
     # 0.4: Google obligatorio antes de guardar el perfil VARK en la web.
     # 0.5: los dos grupos entran solo con Google y eligen su grupo; el control
     # recibe un resumen estándar y no responde el cuestionario (punto 2c).
-    version="0.5",
-    actualizado=date(2026, 11, 5),
+    # 0.6: los grupos se llaman «Experimental» y «Control», como en el login.
+    version="0.6",
+    actualizado=date(2026, 11, 8),
 )
 
 PRIVACIDAD = Documento(
@@ -65,8 +66,10 @@ PRIVACIDAD = Documento(
     # 0.6: continuidad del borrador al autenticar y Google para guardar VARK.
     # 0.7: grupo control con resumen estándar, sin cuestionario ni narración;
     # Google y elección de grupo para los dos grupos (punto 2c).
-    version="0.7",
-    actualizado=date(2026, 11, 5),
+    # 0.8: los grupos se llaman «Experimental» y «Control», como en el login,
+    # también en el dato «Grupo de estudio».
+    version="0.8",
+    actualizado=date(2026, 11, 8),
 )
 
 DOCUMENTOS = (TERMINOS, PRIVACIDAD)

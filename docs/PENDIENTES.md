@@ -205,12 +205,6 @@ descripción de cada commit.
   por documento y número de fragmento; en el experimental, los 8 primeros
   según el canal primario. Con más de 8, los dos grupos pueden recibir
   material distinto del mismo objetivo.
-- **Nombre del grupo fuera del panel:** desde el 2d el panel y el login dicen
-  «Control» y «Experimental», pero «Mis datos»
-  (`legal/mis_datos.html`, «Grupo de estudio») sigue diciendo «Personalizado»
-  y la Política (`legal/privacidad.html`) habla de «personalizado o control».
-  Cambiar la Política exige subir su versión y pedir de nuevo la aceptación.
-  Visto el 08-nov.
 - **Coste sin tope:** un estudiante puede llamar `POST /api/capsulas?regenerar=true`
   sobre sí mismo sin límite.
 
