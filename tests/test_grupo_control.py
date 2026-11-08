@@ -19,7 +19,7 @@ from studify.main import app
 from studify.vark.scoring import PerfilVark
 from studify.web import sesion
 from tests import test_api_capsulas as pruebas_capsulas
-from tests.conftest import necesita_bd
+from tests.conftest import necesita_bd, texto_visible
 
 # Reutilizan el material curado y el doble del LLM de las pruebas del motor.
 escenario = pruebas_capsulas.escenario
@@ -201,9 +201,12 @@ def test_perfil_control_explica_origen_y_no_ofrece_personalizar(navegador_contro
     assert respuesta.status_code == 200
     assert "Grupo: Control" in respuesta.text
     # Solo el contenido de la página: la meta description del sitio es global.
-    texto = respuesta.text.split('<main id="contenido"')[1].split("</main>")[0].lower()
-    for ausente in ("perfil general", "43", "vark", 'class="radar"', "jerarquía", "multimodal"):
+    principal = respuesta.text.split('<main id="contenido"')[1].split("</main>")[0]
+    # Los textos cortos se buscan en lo visible, no en atributos ni íconos (R16).
+    texto = texto_visible(principal).lower()
+    for ausente in ("perfil general", "43", "vark", "jerarquía", "multimodal"):
         assert ausente not in texto, ausente
+    assert 'class="radar"' not in principal
     assert 'href="/student/vark"' not in respuesta.text
     assert 'href="/student/catalog"' in respuesta.text
     assert 'href="/student/vark"' not in cliente.get("/mis-datos").text
@@ -722,6 +725,26 @@ def test_ninguna_pantalla_del_control_habla_de_perfil_general(
     assert "Grupo de estudio</dt><dd>Control</dd>" in cliente.get("/mis-datos").text
 
 
+def test_texto_visible_ignora_atributos_scripts_y_svg():
+    """R16: los tokens de los formularios no cuentan como texto de la página.
+
+    `/student/control` lleva un token hexadecimal aleatorio en un campo oculto;
+    buscar «43» en el HTML entero fallaba cuando el token lo contenía.
+    """
+    html = (
+        '<main><p>Resumen&nbsp;est&aacute;ndar</p>'
+        '<input type="hidden" name="token_sesion" value="32be9d769c43972ea2">'
+        '<script>var x = "43";</script><style>.a{width:43px}</style>'
+        '<svg><path d="M4 3h43"/><title>43</title></svg>'
+        '<a href="/x?id=43">Explorar temas</a></main>'
+    )
+
+    visible = texto_visible(html)
+
+    assert visible == "Resumen estándar Explorar temas"
+    assert "43" not in visible
+
+
 @necesita_bd
 def test_registro_del_control_describe_el_resumen_estandar():
     from tests.identidad_web import control_google_sin_registro
@@ -729,7 +752,8 @@ def test_registro_del_control_describe_el_resumen_estandar():
     cliente = TestClient(app)
     id_control = control_google_sin_registro(cliente)
     try:
-        texto = cliente.get("/student/control").text.lower()
+        # Solo el texto visible: el formulario lleva un token aleatorio (R16).
+        texto = texto_visible(cliente.get("/student/control").text).lower()
         assert "resumen estándar" in texto
         for ausente in ("perfil general", "43", "narración", "perfil promedio"):
             assert ausente not in texto, ausente

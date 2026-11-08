@@ -8,6 +8,7 @@ la base, y una suite roja significa siempre un problema real.
 
 import os
 from collections.abc import Iterator
+from html.parser import HTMLParser
 
 # Antes de importar `studify`: la suite corre en modo desarrollo aunque el `.env`
 # local diga otra cosa, para que importar `studify.main` no dependa de que esa
@@ -41,6 +42,41 @@ def hay_base_de_datos() -> bool:
 necesita_bd = pytest.mark.skipif(
     not hay_base_de_datos(), reason="requiere Postgres levantado"
 )
+
+
+class _TextoVisible(HTMLParser):
+    _OCULTOS = frozenset({"script", "style", "svg", "template", "noscript"})
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.partes: list[str] = []
+        self._profundidad_oculta = 0
+
+    def handle_starttag(self, tag, attrs):
+        if tag in self._OCULTOS:
+            self._profundidad_oculta += 1
+
+    def handle_endtag(self, tag):
+        if tag in self._OCULTOS and self._profundidad_oculta:
+            self._profundidad_oculta -= 1
+
+    def handle_data(self, data):
+        if not self._profundidad_oculta:
+            self.partes.append(data)
+
+
+def texto_visible(html: str) -> str:
+    """El texto que lee la persona: sin etiquetas, atributos, scripts, estilos
+    ni SVG, con las entidades resueltas y los espacios colapsados.
+
+    Para las aserciones negativas con textos cortos («43», «vark»): en el HTML
+    entero pueden aparecer por azar dentro de un token de formulario (CSRF,
+    firma, `token_sesion`), que es hexadecimal o base64url. Así fallaba R16.
+    """
+    lector = _TextoVisible()
+    lector.feed(html)
+    lector.close()
+    return " ".join(" ".join(lector.partes).split())
 
 
 def cookie_de(id_estudiante: int) -> str:
