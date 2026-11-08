@@ -501,15 +501,28 @@ def test_huella_y_prompt_experimentales_no_cambian(vector):
 
 # --- Actividad exigida por directiva (punto 1c, 05-nov-2026) ------------------
 
-# Resúmenes del barrido del símplex (pasos de 10, 286 perfiles) calculados sobre
-# `a75a798`, ANTES del punto 1c. Los perfiles sin `actividad_aplicada` (202) y
-# el control neutro conservan la huella; ningún prompt cambia; los 84 perfiles
-# con la directiva cambian de huella a propósito.
-DIGEST_HUELLAS_SIN_ACTIVIDAD = "7418ae82205afa1619e061da8b09c85caa83590613f9b3b81754d467ab6b8171"
+# Resúmenes del barrido del símplex (pasos de 10, 286 perfiles) del grupo
+# experimental, calculados ANTES del punto 1c (`a75a798`). Los perfiles sin
+# `actividad_aplicada` (202) conservan la huella; ningún prompt cambia; los 84
+# perfiles con la directiva cambian de huella a propósito.
+#
+# Hasta el 08-nov la huella y el prompt del control iban dentro de estos mismos
+# resúmenes. Se separaron al unificar las alternativas del esquema básico
+# («entre 3 y 5»), que cambia solo el control: los resúmenes del experimental se
+# recalcularon sin el control antes y después de ese cambio, y son idénticos.
+DIGEST_HUELLAS_SIN_ACTIVIDAD = "f967251a796bc77755e65f05c5fbc14eaff0aff062a89a384e575196a350dbda"
 DIGEST_HUELLAS_CON_ACTIVIDAD_ANTES = (
     "9d12690f204d91a63423491385817b9f4fb7c4fb5f21e3a8f756a24a42103dcb"
 )
-DIGEST_PROMPTS = "414150ced3006e6f7c793f1d7a8c6eabf26a2e116b1ab1db214e2020dc66bdb0"
+DIGEST_PROMPTS = "427ef914c0c4db21dd94a4e193a5776a4b7a97bb6c59564ca9f7c7964cb1ae10"
+
+# Huella y SHA del prompt del control neutro con el material de prueba. Un
+# cambio en sus plantillas cambia estos valores y regenera sus cápsulas una vez:
+# hay que actualizarlos a propósito. Antes del 08-nov la huella era
+# b4bdca8f9208e8b226c6433aba4ff5a0442054bc8b667532bb34e2c12d044826 («4
+# alternativas distintas» en el esquema básico).
+HUELLA_CONTROL = "67ed3d5c48e55df791fc61f803f27aeba4159b4a1874aab7e12aed39d1d302e2"
+SHA_PROMPT_CONTROL = "a1e014fbba7bb42de01bf8bc4c683a71dbcc591d9cd9c2834dee0af5d421fc6a"
 
 
 def _barrido_del_simplex():
@@ -541,10 +554,10 @@ def test_barrido_huellas_y_prompts_solo_cambian_los_perfiles_con_actividad():
         objetivo=OBJETIVO, fragmentos=FRAGMENTOS, config=None,
         modelo="deepseek-chat", variante=VARIANTE_CONTROL,
     )
-    sin.append(f"control:{control.huella}")
-    textos.append(f"control:{sha(control.sistema + chr(31) + control.usuario)}")
+    assert control.huella == HUELLA_CONTROL
+    assert sha(control.sistema + chr(31) + control.usuario) == SHA_PROMPT_CONTROL
 
-    assert (len(sin), len(con)) == (203, 84)
+    assert (len(sin), len(con)) == (202, 84)
     assert sha("\n".join(sin)) == DIGEST_HUELLAS_SIN_ACTIVIDAD
     assert sha("\n".join(textos)) == DIGEST_PROMPTS
     assert sha("\n".join(con)) != DIGEST_HUELLAS_CON_ACTIVIDAD_ANTES

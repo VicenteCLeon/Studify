@@ -82,7 +82,9 @@ Etapas 1 y 2 del estudio A/B (08-nov, AVANCE §5 undequadragies).
 10. **Desplegar los cambios antes del piloto, no durante:** el cambio de huella
     del 17-oct (`ce30e6d`) y el del punto 1c (`666f587`, perfiles con
     `actividad_aplicada`) regeneran las cápsulas afectadas una vez, y el control
-    estrena la variante `control-neutro-v1`. Conviene que esas generaciones
+    estrena la variante `control-neutro-v1`. El 08-nov cambió además la huella
+    del control (esquema básico con «entre 3 y 5 alternativas»), así que sus
+    cápsulas guardadas también se regeneran una vez. Conviene que esas generaciones
     ocurran antes del piloto y no a mitad de él. Cada máquina tiene que quedar
     al día (O2).
 11. **Instrumentos y consentimiento de la Fase 5** (E1–E4).
@@ -208,6 +210,14 @@ descripción de cada commit.
   por documento y número de fragmento; en el experimental, los 8 primeros
   según el canal primario. Con más de 8, los dos grupos pueden recibir
   material distinto del mismo objetivo.
+- **Alternativas de los cuestionarios:** `generation/schemas.py::Pregunta`
+  acepta de 2 a 5 alternativas por pregunta (`min_length=2`), mientras `quiz_mc`
+  exige de 3 a 5 (`MIN_ALTERNATIVAS`), y el código explica que con 2 se acierta
+  la mitad de las veces por azar. El prompt del experimental no se contradice:
+  pide 4 alternativas en `quiz_mc` y muestra 4 en cada pregunta del esquema
+  (`ESQUEMA_JSON`), y el validador tolera de 3 a 5 a propósito. Lo distinto es
+  solo el mínimo del validador en los cuestionarios. Visto el 08-nov al
+  unificar el esquema del control; no se tocó.
 - **Coste sin tope:** un estudiante puede llamar `POST /api/capsulas?regenerar=true`
   sobre sí mismo sin límite.
 

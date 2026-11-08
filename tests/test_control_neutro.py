@@ -180,6 +180,21 @@ def test_el_esquema_basico_nombra_solo_los_campos_del_control():
         assert f'"{campo}"' not in esquema
 
 
+def test_el_prompt_del_control_pide_lo_mismo_en_todas_sus_secciones():
+    """«Extensión y actividad», el esquema y la verificación final piden entre 3 y
+    5 alternativas, que es lo que acepta el validador (`MIN/MAX_ALTERNATIVAS`).
+    Antes el esquema decía «4 alternativas distintas» y contradecía al resto.
+    """
+    from studify.generation.schemas import MAX_ALTERNATIVAS, MIN_ALTERNATIVAS
+
+    assert (MIN_ALTERNATIVAS, MAX_ALTERNATIVAS) == (3, 5)
+    assert '"alternativas": ["entre 3 y 5 alternativas distintas"]' in prompts.ESQUEMA_JSON_BASICO
+    usuario = re.sub(r"\s+", " ", prompt_control().usuario)
+    assert "4 alternativas" not in usuario
+    assert "entre 3 y 5 alternativas distintas" in usuario
+    assert "entre 3 y 5 `alternativas` distintas" in usuario
+
+
 def test_el_prompt_experimental_no_cambia_de_forma():
     """El experimental sigue sin actividad exigida y con su contrato completo."""
     maestro = orchestrator.construir(

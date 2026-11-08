@@ -319,7 +319,7 @@ ESQUEMA_JSON_BASICO = """{
   "actividad": {
     "tipo": "quiz_mc",
     "pregunta": "string: la pregunta de comprobación",
-    "alternativas": ["4 alternativas distintas"],
+    "alternativas": ["entre 3 y 5 alternativas distintas"],
     "indice_correcta": "entero, la primera es 0",
     "retroalimentacion": "string: por qué la alternativa correcta lo es"
   },
