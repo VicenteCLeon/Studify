@@ -23,6 +23,29 @@ from sqlalchemy.orm import Session  # noqa: E402
 
 from studify.db.session import SessionLocal, engine  # noqa: E402
 
+# La suite crea y borra filas (estudiantes, objetivos, cápsulas, intentos...).
+# Contra la base real eso pone en riesgo los datos del piloto: un fixture de
+# `test_api_diagnosticos.py`, por ejemplo, borra todo estudiante registrado
+# mientras corre. Por eso solo se acepta una base cuyo nombre termine en
+# `_test`. `pytest_configure` es un hook «histórico»: pytest lo llama aunque este
+# conftest se cargue tarde, y siempre antes de importar cualquier test.
+SUFIJO_BASE_DE_PRUEBAS = "_test"
+
+
+def pytest_configure(config: pytest.Config) -> None:
+    if (engine.url.database or "").endswith(SUFIJO_BASE_DE_PRUEBAS):
+        return
+    pytest.exit(
+        f"La suite se negó a correr contra la base '{engine.url.database}': solo "
+        f"acepta una base cuyo nombre termine en '{SUFIJO_BASE_DE_PRUEBAS}', para no "
+        "tocar datos reales. Define DATABASE_URL apuntando a la base de pruebas, "
+        "por ejemplo:\n"
+        "  DATABASE_URL=postgresql+psycopg://studify:studify@localhost:5432/studify_test\n"
+        "Cómo crearla y migrarla: README.md, sección «Testing y calidad».",
+        returncode=2,
+    )
+
+
 # Credenciales del panel del docente durante los tests. No se leen del `.env` a
 # propósito: la suite tiene que dar el mismo resultado en una máquina sin
 # `TEACHER_PASSWORD` (panel cerrado) y en una que la fijó, con cualquier valor.

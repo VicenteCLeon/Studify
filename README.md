@@ -198,18 +198,39 @@ Referencia: [OpenID Connect de Google](https://developers.google.com/identity/op
 
 ## 🧪 Testing y calidad
 
+La suite **corre contra una base aparte**: crea y borra estudiantes, objetivos, cápsulas e
+intentos, y contra la base real pondría en riesgo los datos del piloto. `tests/conftest.py` se
+niega a empezar si el nombre de la base de `DATABASE_URL` no termina en `_test`.
+
+Una sola vez, crear y migrar la base de pruebas (no toca `studify`):
+
 ```powershell
+docker exec studify-db createdb -U studify studify_test
+$env:DATABASE_URL="postgresql+psycopg://studify:studify@localhost:5432/studify_test"
+.\.venv\Scripts\alembic upgrade head
+```
+
+Cada vez que se corren los tests (en la misma terminal, con `DATABASE_URL` todavía apuntando a
+`studify_test`):
+
+```powershell
+$env:DATABASE_URL="postgresql+psycopg://studify:studify@localhost:5432/studify_test"
 $env:LLM_API_KEY=""   # para no gastar en el proveedor
 .\.venv\Scripts\python -m pytest -q --ignore=tests/test_visual.py --ignore=tests/test_voz.py
 node tests/test_borrador_vark.cjs  # aislamiento del borrador entre cuentas (sin npm)
 ruff check .
 ```
 
+- La variable de entorno manda sobre el `.env`, así que la app sigue usando `studify` y solo esa
+  terminal apunta a la base de pruebas.
+- Después de una migración nueva, repetir `alembic upgrade head` con `DATABASE_URL` apuntando a
+  `studify_test`.
 - Sin Postgres, los tests que necesitan la base se omiten (`@necesita_bd`). Para correrlos todos,
   la base de `DATABASE_URL` tiene que estar levantada.
 - `test_visual.py` y `test_voz.py` se ignoran: cargan SDXL y XTTS al importarse.
-- Los tests que usan la base escriben en la de desarrollo. Hay fallos conocidos que dependen de
-  eso: 4 sin Postgres y 2 con él (`docs/PENDIENTES.md`, R10).
+- Sin Postgres hay 4 fallos conocidos (`docs/PENDIENTES.md`, R10). Los 2 de
+  `test_interaccion_quiz.py` que fallaban con Postgres dependían de que la base de desarrollo
+  tuviera intentos reales; en `studify_test`, vacía, pasan.
 
 ---
 
