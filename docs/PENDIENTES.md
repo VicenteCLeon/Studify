@@ -24,31 +24,35 @@
 - **Correr la suite de dos formas** al cerrar cada punto:
 
   ```powershell
-  # Sin base: DATABASE_URL a un puerto cerrado
-  $env:DATABASE_URL="postgresql+psycopg://nadie:nada@127.0.0.1:1/nada?connect_timeout=2"; $env:LLM_API_KEY=""
+  # Sin base: DATABASE_URL a un puerto cerrado (el nombre igual termina en _test)
+  $env:DATABASE_URL="postgresql+psycopg://nadie:nada@127.0.0.1:1/nada_test?connect_timeout=2"; $env:LLM_API_KEY=""
   .\.venv\Scripts\python -m pytest -q --ignore=tests/test_visual.py --ignore=tests/test_voz.py
 
-  # Con el Docker del autor levantado (sin DATABASE_URL en el entorno)
-  $env:LLM_API_KEY=""
+  # Con el Docker del autor levantado, contra la base de pruebas (nunca `studify`)
+  $env:DATABASE_URL="postgresql+psycopg://studify:studify@localhost:5432/studify_test"; $env:LLM_API_KEY=""
   .\.venv\Scripts\python -m pytest -q --ignore=tests/test_visual.py --ignore=tests/test_voz.py
   ```
 
   `LLM_API_KEY` vacía para no gastar en el proveedor. `test_visual.py` y
   `test_voz.py` cargan SDXL y XTTS al importarse (H8): siempre se ignoran.
+  Desde el 08-nov (R10) `tests/conftest.py` no arranca si el nombre de la base
+  no termina en `_test`. Crear y migrar `studify_test`: README, «Testing y
+  calidad».
 - **No tocar nada fuera del punto en curso.** Si aparece algo más, anotarlo acá
   o avisar; meterlo en el mismo commit solo si sin eso el punto no queda
   correcto, y decirlo.
 
-**Estado de la suite al 08-nov-2026**, después del esquema básico del control
-con 3 a 5 alternativas. El cierre de la Etapa 2 (`c28df6a`: 769/2/0 y
+**Estado de la suite al 08-nov-2026**, en `main` después de unir el chunker
+(`3929c0f`), la base de pruebas y el retriever (`eb1d75a`, `396616d`) y los
+logs a archivo (`2f33ca7`). El cierre de la Etapa 2 (`c28df6a`: 769/2/0 y
 452/315/4) está en AVANCE §5 undequadragies, y los estados anteriores en las
 secciones de su fecha.
 
 | Forma | Pasan | Omitidos | Fallan |
 |---|---|---|---|
-| Puerto cerrado | 456 | 317 | 4: los de `test_web_auth.py` sin `@necesita_bd` (R10) |
-| Con Postgres (Docker del autor) | 775 con la tabla de intentos vacía | 2 | 0, o los 2 de `test_interaccion_quiz.py` que exigen esa tabla vacía si se usó la app (R10). El 08-nov: 773 pasan y fallan esos 2 |
-| `node tests/*.cjs` | 7 + 5 comprobaciones | — | 0 |
+| Puerto cerrado | 482 | 326 | 4: los de `test_web_auth.py` sin `@necesita_bd` |
+| Con Postgres (`studify_test`) | 810 | 2 | 0 |
+| `node tests/*.cjs` | 7 + 5 comprobaciones | — | 0 (no se volvió a correr el 08-nov) |
 
 Antes de lanzar la forma «con Postgres», comprobar que el contenedor
 `studify-db` esté *healthy*: sin base la corrida no falla, se cuelga (H11).
@@ -73,11 +77,11 @@ se sumó ese mismo día.
 5. **D7:** decidir si se restringe el acceso a cuentas `@mail.pucv.cl`.
 6. **Punto 1d** (G8): métricas de adherencia sin rechazo y auditoría de las
    cápsulas guardadas, como evidencia para E3.
-7. **R10: que la suite no use la base de desarrollo.** Hoy `pytest` corre
-   contra la misma base que la app. En la máquina del piloto, correr la suite
-   podría borrar participantes (`test_api_diagnosticos.py` borra todo
-   estudiante con `id > max(antes)`), y sus datos de prueba se mezclarían con
-   los reales. Propuesta en R10 (prioridad alta).
+7. ✅ **R10: que la suite no use la base de desarrollo** (resuelto el 08-nov,
+   `eb1d75a`). La suite corre contra `studify_test` y `tests/conftest.py` se
+   niega a arrancar contra una base cuyo nombre no termine en `_test`. En la
+   máquina del piloto falta crear y migrar su `studify_test` (README); queda
+   lo menor anotado en R10.
 8. **Sesión en computadores compartidos:** fijar `SESION_ESTUDIANTE_HORAS` según
    dónde se use (1–4 en un laboratorio) y dejar cada máquina en la última
    migración (`a7c3d9e51f64`, O2). R2 ya está corregido (`75c14fa`, AVANCE §5
@@ -111,99 +115,59 @@ descripción de cada commit.
 
 ### Prioridad alta
 
-- **R10. Los tests usan la base de desarrollo** (antes del piloto, punto 7).
-  `tests/conftest.py` importa el `engine` de `db/session.py`, que se conecta al
-  `DATABASE_URL` del `.env`: la misma base que usa la app. Problemas:
-  - **Riesgo para el piloto:** `test_api_diagnosticos.py::limpiar_lo_que_cree_el_test`
-    borra todo estudiante con `id > max(antes)`. Un registro real hecho
-    mientras corre `pytest` se perdería, con sus diagnósticos, cápsulas e
-    intentos (por cascada).
-  - **Resultados que dependen de la base:** los 2 tests de
-    `test_interaccion_quiz.py` que exigen la tabla `interaccion_quiz` entera
-    vacía (`test_no_se_puede_responder_la_capsula_de_otro` y
-    `test_el_visor_no_registra_intentos_de_una_capsula_ajena`). Fallaron el
-    08-nov con 7 intentos del uso local de la app.
-  - **Basura:** los datos que los tests no limpian ensucian las métricas del
-    panel (R13).
+- ✅ **R10. Los tests usaban la base de desarrollo** (resuelto el 08-nov,
+  `eb1d75a`; antes del piloto, punto 7). `tests/conftest.py` importa el
+  `engine` de `db/session.py`, que se conecta al `DATABASE_URL` efectivo. Con
+  el `.env` eso era la misma base que la app: `test_api_diagnosticos.py`
+  borraba todo estudiante con `id > max(antes)` (un registro real hecho
+  mientras corría `pytest` se perdía con sus diagnósticos, cápsulas e
+  intentos), y los 2 tests de `test_interaccion_quiz.py` que exigen la tabla
+  `interaccion_quiz` vacía fallaban con los intentos del uso local de la app.
+
+  **Cómo se resolvió: una base `studify_test` fija y una protección**, en vez
+  del esquema temporal por corrida que se había propuesto ese mismo día.
+
+  - **Base de pruebas:** `studify_test`, creada una vez con
+    `docker exec studify-db createdb -U studify studify_test` y migrada con
+    `alembic upgrade head` (con `DATABASE_URL` apuntando a ella). Para correr la
+    suite se fija `DATABASE_URL` a esa base en la terminal: la variable de
+    entorno manda sobre el `.env`, así que la app sigue usando `studify`.
+    Instrucciones en el README («Testing y calidad»).
+  - **Protección en `tests/conftest.py`:** `pytest_configure` detiene la suite
+    (código 2, antes de importar cualquier test) si el nombre de la base no
+    termina en `_test`, con un mensaje que dice cómo apuntar a `studify_test`.
+    Se comprobó con `pytest` solo y con una ruta explícita.
+  - **Verificación (08-nov):** filas de `documento_fuente`, `fragmento`,
+    `objetivo_aprendizaje`, `estudiante`, `interaccion_quiz` y
+    `microcapsula_generada` de `studify` iguales antes y después de cada
+    corrida (2/107/11/1/6/5). Los 2 tests de la tabla vacía pasan en
+    `studify_test`. `main`: 810 pasan, 2 omitidos, 0 fallan.
+  - **Por qué base y no esquema:** es más simple de inspeccionar y no cambia
+    `db/session.py` ni la forma de conectarse. El costo es que hay que crearla
+    (pide `CREATEDB` o superusuario; el rol `studify` del Docker lo es) y que
+    no se vacía sola entre corridas.
+
+  **Queda abierto (prioridad baja salvo donde se indica):**
+
+  - **Máquina del piloto:** crear y migrar su `studify_test`, y repetir
+    `alembic upgrade head` sobre ella después de cada migración nueva.
+  - **`studify_test` acumula lo que un test interrumpido no limpie.** Los dos
+    `== []` de `test_interaccion_quiz.py` volverían a fallar si quedaran
+    intentos sueltos. Conviene filtrarlos por las cápsulas del escenario,
+    para que no dependan de que la base esté vacía ni del orden de los tests.
+    Si la base se ensucia: `dropdb` y `createdb` de `studify_test` y migrar
+    de nuevo (nunca sobre `studify`).
+  - **Los 2 tests que hacen `CREATE DATABASE`**
+    (`test_interaccion_quiz.py::test_la_migracion_recalcula_los_intentos_ya_guardados`
+    y `test_preferencia_voz.py::test_la_migracion_sube_baja_y_vuelve_a_subir`)
+    siguen fallando con un rol sin `CREATEDB`. Propuesta sin cambios: que
+    usen su propio esquema `test_mig_<uuid>`, como
+    `test_grupo_control.py::test_migracion_rol_es_reversible_y_preserva_estudiantes`.
+  - `test_api_diagnosticos.py` conserva el borrado por `id > max(antes)`; ya
+    solo alcanza a `studify_test`.
   - Aparte, sin relación con el aislamiento: 4 tests de `test_web_auth.py`
     sin `@necesita_bd` **solo fallan sin base** (forma «puerto cerrado»).
-  - `hay_base_de_datos()` sin `connect_timeout` es H11 (arriba).
-
-  **Propuesta (08-nov, sin implementar): un esquema temporal por corrida**,
-  como en las verificaciones del 01-nov (AVANCE §5 septtricies y octtricies).
-
-  - **Por qué esquema y no una base `studify_test`.** Las dos aíslan. El
-    esquema no pide `CREATEDB`: basta con el permiso `CREATE` sobre la base,
-    que tiene su dueño (el rol `studify` del Docker lo es). En la máquina 2
-    falta comprobar qué permisos tiene su rol. Cada corrida parte
-    de cero, así que los 2 tests de la tabla vacía dejan de depender del uso
-    de la app, sin `TRUNCATE`. Una base `studify_test` fija pide crearla una
-    vez (con `CREATEDB` o como superusuario) y vaciarla al empezar cada
-    corrida. Es más simple de inspeccionar, pero no sirve en una máquina
-    cuyo rol no pueda crear bases. Las migraciones no usan extensiones ni
-    nombres con `public.` (revisado el 08-nov), así que pueden correr dentro
-    de un esquema.
-  - **`tests/conftest.py`** (el cambio principal), antes de importar
-    `studify.db.session`, igual que ya fija `APP_ENV`:
-    1. Lee el `DATABASE_URL` efectivo (`get_settings()`). Le agrega
-       `options=-csearch_path=test_<uuid>` y lo deja en
-       `os.environ["DATABASE_URL"]`, con `get_settings.cache_clear()`. El
-       `search_path` apunta **solo** al esquema de prueba, sin `public`, así
-       que una tabla que faltara da error en vez de caer en las tablas de
-       desarrollo.
-    2. Si hay base: `CREATE SCHEMA`, y después `alembic upgrade head` con un
-       `Config()` sin `alembic.ini`, como ya hacen los tests de migración.
-       `alembic/env.py` toma la URL de `get_settings()`, así que migra dentro
-       del esquema, incluida su tabla `alembic_version`.
-    3. Al terminar (`pytest_sessionfinish`), `DROP SCHEMA … CASCADE`. Con
-       `STUDIFY_TEST_CONSERVAR_ESQUEMA=1` se conserva para inspeccionarlo.
-       Al empezar se borran los `test_*` de más de un día que haya dejado una
-       corrida interrumpida.
-    4. Una protección: si la URL final no trae un `search_path` `test_*`,
-       la suite no arranca.
-  - **`db/session.py`:** sin cambios, porque el `engine` ya se crea con
-    `get_settings().database_url`. En el mismo punto convendría agregarle
-    `connect_args={"connect_timeout": …}` (H11), ya que se toca la conexión.
-  - **`config.py`:** sin cambios. No hace falta una variable
-    `TEST_DATABASE_URL`: la URL de prueba se deriva de la de siempre, y la
-    forma «puerto cerrado» sigue igual.
-  - **Tests que cambian:**
-    - `test_api_diagnosticos.py` deja de necesitar el borrado por
-      `id > max(antes)`. Se puede quitar, o dejarlo, porque ya no alcanza
-      datos reales.
-    - Los dos `== []` de `test_interaccion_quiz.py` quedan bien en un esquema
-      nuevo, pero conviene filtrarlos por las cápsulas del escenario, para
-      que no dependan del orden de los tests.
-    - Los tests que se conectan por su cuenta (`engine` o `SessionLocal` en
-      `test_grupo_control.py`, `test_google_login.py`, `identidad_web.py`,
-      `test_api_diagnosticos.py`) heredan el `search_path`, porque importan
-      el mismo `engine`.
-  - **Los 2 fallos por `CREATEDB`** (01-nov) son
-    `test_interaccion_quiz.py::test_la_migracion_recalcula_los_intentos_ya_guardados`
-    y `test_preferencia_voz.py::test_la_migracion_sube_baja_y_vuelve_a_subir`.
-    Crean una base temporal con `CREATE DATABASE`: con el Docker pasan (el
-    rol `studify` es superusuario) y fallan con un rol sin `CREATEDB`.
-    Propuesta: que hagan lo mismo que `test_grupo_control.py::test_migracion_rol_es_reversible_y_preserva_estudiantes`,
-    con su propio esquema `test_mig_<uuid>` (en la URL, con
-    `options=-csearch_path=…`) en vez de una base nueva, y `DROP SCHEMA` al
-    final. Ya ningún test necesitaría `CREATEDB`. Ojo: al derivar su URL
-    deben reemplazar el `options` de la suite, no sumarle otro.
-  - **Cómo se correría la suite después:** con los mismos dos comandos de
-    «Cómo se trabaja».
-    - **Puerto cerrado:** no hay conexión, así que no se crea esquema y los
-      tests de base se saltan, como hoy.
-    - **Con Postgres:** la suite crea `test_<uuid>` en la base del `.env`,
-      migra, corre y lo borra. Las tablas de `public` (la app, el piloto) no
-      se leen ni se escriben, y la app puede seguir corriendo mientras tanto.
-    - Se mantiene `-rf` (R16).
-    - Lo que cuesta: un `alembic upgrade head` desde cero por corrida, unos
-      segundos con las 11 migraciones.
-  - **Verificación propuesta:**
-    - contar las filas de cada tabla de `public` antes y después de una
-      corrida completa: tienen que ser iguales;
-    - correr la suite con la app abierta y un intento registrado a mano: los
-      2 tests de la tabla vacía pasan;
-    - correr la suite con un rol sin `CREATEDB` y comprobar 0 fallos.
+  - `hay_base_de_datos()` sin `connect_timeout` es H11 (abajo).
 
 - **H11. La suite se cuelga si Postgres no responde.** `tests/conftest.py::hay_base_de_datos()`
   se conecta sin `connect_timeout`, así que cuando no hay base los tests no se
@@ -582,4 +546,4 @@ está en [`CORRECCIONES_INFORME.md`](CORRECCIONES_INFORME.md).
 
 ---
 
-**Orden sugerido:** «Antes del piloto» (arriba, incluido R10) → H11 → R7, R8, R9 → E2–E5 → el resto.
+**Orden sugerido:** «Antes del piloto» (arriba) → H11 → R7, R8, R9 → E2–E5 → el resto.
