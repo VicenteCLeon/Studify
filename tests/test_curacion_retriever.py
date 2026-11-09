@@ -276,3 +276,109 @@ def test_el_limite_se_respeta(db, documento, objetivo):
         curation.validar(db, f.id_fragmento, id_objetivo=objetivo.id_objetivo)
 
     assert len(recuperar(db, id_objetivo=objetivo.id_objetivo, limite=2)) == 2
+
+
+# --- Consulta libre: OR, relevancia y siglas ----------------------------------
+
+
+def _validar_todos(db, documento, objetivo) -> list[Fragmento]:
+    fragmentos = _fragmentos(db, documento)
+    for f in fragmentos:
+        curation.validar(db, f.id_fragmento, id_objetivo=objetivo.id_objetivo)
+    return fragmentos
+
+
+def test_basta_que_calce_una_palabra_de_la_consulta(db, documento, objetivo):
+    """Con AND esta consulta daba cero: ningún fragmento tiene ambas palabras."""
+    fragmentos = _validar_todos(db, documento, objetivo)
+
+    resultados = recuperar(
+        db, id_objetivo=objetivo.id_objetivo, consulta="redundancia transitivas"
+    )
+
+    assert {r.id_fragmento for r in resultados} == {
+        fragmentos[0].id_fragmento,
+        fragmentos[3].id_fragmento,
+    }
+
+
+def test_el_fragmento_que_reune_mas_terminos_sale_primero(db, documento, objetivo):
+    """`ts_rank_cd` ordena antes que el número de fragmento."""
+    fragmentos = _validar_todos(db, documento, objetivo)
+
+    resultados = recuperar(
+        db, id_objetivo=objetivo.id_objetivo, consulta="dependencia funcional"
+    )
+
+    assert resultados[0].id_fragmento == fragmentos[1].id_fragmento
+    assert len(resultados) > 1, "con OR entran también los que calzan una sola palabra"
+
+
+def test_la_consulta_con_relevancia_es_reproducible(db, documento, objetivo):
+    _validar_todos(db, documento, objetivo)
+
+    corridas = [
+        [
+            r.id_fragmento
+            for r in recuperar(
+                db, id_objetivo=objetivo.id_objetivo, consulta="dependencias y formas normales"
+            )
+        ]
+        for _ in range(5)
+    ]
+
+    assert corridas[0] and all(c == corridas[0] for c in corridas)
+
+
+def test_una_consulta_sin_relacion_no_devuelve_nada(db, documento, objetivo):
+    """El OR no puede degenerar en «todo el objetivo»."""
+    _validar_todos(db, documento, objetivo)
+
+    assert recuperar(db, id_objetivo=objetivo.id_objetivo, consulta="recetas de cocina") == []
+
+
+def _con_sigla_y_posesivo(db, documento, objetivo) -> list[Fragmento]:
+    """Fragmento 3 con la sigla SUS; fragmento 1 con el posesivo «sus»."""
+    fragmentos = _fragmentos(db, documento)
+    fragmentos[2].contenido_texto = "El SUS tiene diez ítems con escala de cinco puntos."
+    fragmentos[0].contenido_texto = "Los usuarios registran sus datos en una sola tabla."
+    db.commit()
+    return _validar_todos(db, documento, objetivo)
+
+
+def test_la_sigla_en_mayusculas_se_busca_aunque_sea_palabra_vacia(db, documento, objetivo):
+    """«SUS» es el posesivo «sus» para la configuración española: sin la búsqueda
+    de siglas, «puntaje SUS» buscaría solo «puntaje» y no encontraría nada."""
+    fragmentos = _con_sigla_y_posesivo(db, documento, objetivo)
+
+    resultados = recuperar(db, id_objetivo=objetivo.id_objetivo, consulta="puntaje SUS")
+
+    assert [r.id_fragmento for r in resultados] == [fragmentos[2].id_fragmento]
+
+
+def test_la_sigla_no_calza_con_el_posesivo_en_el_texto(db, documento, objetivo):
+    """La sigla se busca distinguiendo mayúsculas: con un tsvector (que pasa todo a
+    minúscula) «SUS» traería también el fragmento que solo dice «sus datos»."""
+    fragmentos = _con_sigla_y_posesivo(db, documento, objetivo)
+
+    resultados = recuperar(db, id_objetivo=objetivo.id_objetivo, consulta="SUS")
+
+    assert fragmentos[0].id_fragmento not in {r.id_fragmento for r in resultados}
+    assert [r.id_fragmento for r in resultados] == [fragmentos[2].id_fragmento]
+
+
+def test_la_sigla_no_calza_dentro_de_otra_palabra(db, documento, objetivo):
+    fragmentos = _fragmentos(db, documento)
+    fragmentos[0].contenido_texto = "SUSTENTO y CONSUSTANCIAL en mayúsculas, sin la sigla."
+    db.commit()
+    _validar_todos(db, documento, objetivo)
+
+    assert recuperar(db, id_objetivo=objetivo.id_objetivo, consulta="SUS") == []
+
+
+def test_en_minuscula_no_se_trata_como_sigla(db, documento, objetivo):
+    """Solo la mayúscula distingue la sigla del posesivo: «sus» en minúscula sigue
+    siendo palabra vacía y no trae ningún fragmento."""
+    _con_sigla_y_posesivo(db, documento, objetivo)
+
+    assert recuperar(db, id_objetivo=objetivo.id_objetivo, consulta="sus") == []

@@ -20,9 +20,10 @@ un objetivo ya fijado. Nunca amplía el conjunto: no puede traer material de otr
 objetivo por parecido textual, que es justamente lo que el proyecto descarta.
 """
 
+import re
 from dataclasses import dataclass
 
-from sqlalchemy import Select, case, func, select
+from sqlalchemy import ColumnElement, Select, Text, case, func, literal, or_, select
 from sqlalchemy.orm import Session, joinedload
 
 from studify.db.models import DocumentoFuente, Fragmento
@@ -46,6 +47,67 @@ PREFERENCIA_POR_CANAL: dict[str, tuple[str, ...]] = {
 # La expresión debe coincidir **literalmente** con la del índice GIN definido en
 # db/models.py (`ix_fragmento_contenido_fts`), o el planner no lo usa.
 CONFIGURACION_FTS = "spanish"
+
+# Configuración con la que se vuelve a leer la consulta ya normalizada (ver
+# `_filtro_y_relevancia`): 'simple' no deriva ni descarta nada más.
+CONFIGURACION_RELECTURA = "simple"
+
+# Siglas escritas en mayúsculas (SUS, UEQ, NPS, UX). La configuración española
+# las pierde cuando coinciden con una palabra vacía: «SUS» es el posesivo «sus»
+# y desaparece de la consulta (UEQ, NPS y UX hoy sobreviven, pero nada garantiza
+# que toda sigla lo haga). Se buscan aparte con una expresión regular que
+# **distingue mayúsculas**: cualquier tsvector pasa todo a minúscula y entonces
+# «SUS» calzaría también con cada «sus» posesivo del material.
+_SIGLA = re.compile(r"\b[A-ZÁÉÍÓÚÑ]{2,}\b")
+# Lo que suma al puntaje cada sigla presente: del orden de lo que `ts_rank_cd`
+# da por un término encontrado, para que pese como una palabra más de la
+# consulta y no aplaste al resto.
+PESO_SIGLA = 0.1
+
+
+def _siglas(consulta: str) -> list[str]:
+    """Siglas de la consulta, tal como se escribieron, sin repetir y en orden."""
+    return list(dict.fromkeys(_SIGLA.findall(consulta)))
+
+
+def _filtro_y_relevancia(consulta: str) -> tuple[ColumnElement, ColumnElement]:
+    """Condición de búsqueda y puntaje de relevancia para una consulta libre.
+
+    **OR y no AND.** `plainto_tsquery` exige que *todas* las palabras estén en
+    el mismo fragmento: con fragmentos de ~180 palabras, una pregunta natural
+    («diferencia entre prueba con usuarios y evaluación heurística») casi nunca
+    calza entera y el retriever devolvía uno o cero resultados. Se reutiliza
+    `plainto_tsquery` para normalizar (stemming y palabras vacías) y se cambian
+    sus `&` por `|`. La consulta reescrita se vuelve a leer con 'simple' y no
+    con 'spanish': los lexemas ya vienen derivados y derivarlos otra vez podría
+    alterarlos.
+
+    **Orden por `ts_rank_cd`.** Con OR entran fragmentos que calzan una sola
+    palabra; el puntaje de densidad de cobertura sube a los que reúnen más
+    términos y más cercanos. Es una función determinista de los datos, así que
+    la recuperación sigue siendo reproducible.
+
+    El OR no relaja la restricción por objetivo: se aplica dentro del conjunto
+    que `_base_validados` ya fijó.
+    """
+    vector = func.to_tsvector(CONFIGURACION_FTS, Fragmento.contenido_texto)
+    texto_and = func.plainto_tsquery(CONFIGURACION_FTS, consulta).cast(Text)
+    pregunta = func.to_tsquery(
+        CONFIGURACION_RELECTURA, func.replace(texto_and, "&", "|")
+    )
+    filtro: ColumnElement = vector.op("@@")(pregunta)
+    relevancia: ColumnElement = func.ts_rank_cd(vector, pregunta)
+
+    for sigla in _siglas(consulta):
+        # `~` distingue mayúsculas; `\m` y `\M` son inicio y fin de palabra en
+        # las expresiones regulares de Postgres (así «SUS» no calza dentro de
+        # «SUSTENTO»). La sigla solo contiene letras (ver `_SIGLA`): no hay nada
+        # que escapar.
+        presente = Fragmento.contenido_texto.op("~")(literal(rf"\m{sigla}\M"))
+        filtro = or_(filtro, presente)
+        relevancia = relevancia + case((presente, PESO_SIGLA), else_=0.0)
+
+    return filtro, relevancia
 
 
 @dataclass(frozen=True, slots=True)
@@ -123,19 +185,20 @@ def recuperar(
     """Devuelve los fragmentos validados de un objetivo de aprendizaje.
 
     `canal_primario` reordena por tipo de recurso según el perfil VARK;
-    `consulta` restringe por full-text search en español dentro del objetivo.
-    Ninguno de los dos puede introducir material de otro objetivo.
+    `consulta` restringe por full-text search dentro del objetivo (basta con
+    que calce una de sus palabras o siglas) y ordena por relevancia antes que
+    por canal. Ninguno de los dos puede introducir material de otro objetivo.
     """
     stmt = _base_validados(id_objetivo).options(
         joinedload(Fragmento.documento)
     )
 
-    if consulta and consulta.strip():
-        vector = func.to_tsvector(CONFIGURACION_FTS, Fragmento.contenido_texto)
-        pregunta = func.plainto_tsquery(CONFIGURACION_FTS, consulta)
-        stmt = stmt.where(vector.op("@@")(pregunta))
-
     orden = []
+    if consulta and consulta.strip():
+        filtro, relevancia = _filtro_y_relevancia(consulta)
+        stmt = stmt.where(filtro)
+        orden.append(relevancia.desc())
+
     if canal_primario:
         preferidos = PREFERENCIA_POR_CANAL.get(canal_primario.upper(), ())
         if preferidos:
