@@ -13,6 +13,7 @@ que no tiene nada que ver con lo que el test quiere medir.
 """
 
 import json
+import logging
 import re
 import sys
 import types
@@ -547,6 +548,25 @@ def test_un_proveedor_caido_responde_504_y_no_500(http, escenario, falla):
 
     assert respuesta.status_code == 504
     assert "proveedor" in respuesta.json()["detail"]
+
+
+def test_el_error_del_proveedor_se_registra_con_el_codigo_del_objetivo(
+    http, escenario, caplog
+):
+    """Un fallo de generación no deja filas en la base: el log es el único rastro
+    de qué tema se pidió (prueba de usuario del 08-nov-2026)."""
+    app.dependency_overrides[get_cliente_llm] = lambda: cliente_con_proveedor_caido("timeout")
+    try:
+        with caplog.at_level(logging.ERROR, logger="studify.api.routers.capsules"):
+            respuesta = _pedir(http, escenario)
+    finally:
+        app.dependency_overrides.pop(get_cliente_llm, None)
+
+    assert respuesta.status_code == 504
+    [registro] = [r for r in caplog.records if r.name == "studify.api.routers.capsules"]
+    mensaje = registro.getMessage()
+    assert f"objetivo={escenario['objetivo'].id_objetivo} (TEST-CAP-01)" in mensaje
+    assert f"estudiante={escenario['estudiante'].id_estudiante} objetivo=" in mensaje
 
 
 # --- Quién puede pedir y leer una cápsula (auditoría de datos, 02-oct-2026) --

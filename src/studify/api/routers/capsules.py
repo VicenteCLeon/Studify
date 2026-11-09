@@ -367,9 +367,10 @@ def crear_capsula(
         # límite de uso), así que no es una tasa de fallo de la generación.
         # Antes la excepción del SDK escapaba y el cliente recibía un 500.
         logger.error(
-            "el proveedor del modelo falló para estudiante=%s objetivo=%s: %s",
+            "el proveedor del modelo falló para estudiante=%s objetivo=%s (%s): %s",
             payload.id_estudiante,
             payload.id_objetivo,
+            objetivo.codigo_objetivo,
             exc,
         )
         raise HTTPException(status_code=status.HTTP_504_GATEWAY_TIMEOUT, detail=str(exc)) from exc
@@ -377,9 +378,10 @@ def crear_capsula(
         # El plan §3: agotados los reintentos «se registra y se devuelve 502».
         # Esa tasa de fallo es un dato de resultados para el informe.
         logger.error(
-            "generación agotada para estudiante=%s objetivo=%s: %s",
+            "generación agotada para estudiante=%s objetivo=%s (%s): %s",
             payload.id_estudiante,
             payload.id_objetivo,
+            objetivo.codigo_objetivo,
             exc.errores_por_intento,
         )
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc
