@@ -15,6 +15,9 @@ from html.parser import HTMLParser
 # máquina tenga un SESSION_SECRET fuerte (O1). Los tests de
 # `test_config_seguridad.py` construyen sus propios `Settings`.
 os.environ["APP_ENV"] = "dev"
+# Los errores que los tests provocan a propósito (proveedor caído, generación
+# agotada) no deben quedar en logs/studify.log, que es para diagnosticar la app.
+os.environ["LOG_ARCHIVO"] = "false"
 
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402

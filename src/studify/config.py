@@ -24,6 +24,11 @@ class Settings(BaseSettings):
 
     database_url: str = "postgresql+psycopg://studify:studify@localhost:5432/studify"
 
+    # Copia de los logs `studify.*` en logs/studify.log (ver `studify/registro.py`).
+    # La suite la apaga para que sus errores provocados no se mezclen con los
+    # de la app en el archivo que se usa para diagnosticar.
+    log_archivo: bool = True
+
     # Clave con la que se firma la cookie de sesión de la UI (Fase 4). Fuera de
     # `APP_ENV=dev` es obligatoria (32 caracteres o más). En desarrollo, si
     # queda vacía, `web/sesion.py` genera una efímera al arrancar: la app

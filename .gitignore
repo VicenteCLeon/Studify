@@ -29,6 +29,9 @@ src/studify/public/audio/*.wav
 *.docx
 respuestas_vark*.csv
 
+# Registro de la app (src/studify/registro.py)
+logs/
+
 # Editor / SO
 # .vscode/ NO se ignora completo: settings.json y extensions.json se comparten para que
 # cualquiera que clone el repo herede el intérprete de Python, ruff y pytest ya configurados.
