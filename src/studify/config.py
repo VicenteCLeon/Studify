@@ -101,6 +101,13 @@ class Settings(BaseSettings):
     # Restricciones estructurales de la microcápsula (cap. 11.1 del informe).
     capsula_min_palabras: int = 150
     capsula_max_palabras: int = 300
+    # Tope que acepta el validador, separado del máximo que se le pide al
+    # modelo (11-nov-2026). En las pruebas con usuarios la generación fallaba
+    # por pasarse de 300 por 15–20 palabras: un LLM no cuenta palabras con
+    # exactitud. El prompt y los mensajes de reparación siguen diciendo
+    # `capsula_max_palabras`; esto es solo la tolerancia al validar, así que no
+    # entra en las plantillas ni en la huella de caché.
+    capsula_max_palabras_aceptadas: int = 350
     capsula_max_palabras_titulo: int = 10
 
     # Duración mínima de la capa «Preparando la cápsula…» en el visor (punto

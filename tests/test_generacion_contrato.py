@@ -14,7 +14,12 @@ import pytest
 from pydantic import ValidationError
 
 from studify.generation import idioma
-from studify.generation.schemas import Actividad, BloqueContenido, Microcapsula
+from studify.generation.schemas import (
+    Actividad,
+    BloqueContenido,
+    Microcapsula,
+    contar_palabras,
+)
 from studify.generation.validator import (
     MARGEN_REPARACION,
     ErrorFormatoJSON,
@@ -422,6 +427,53 @@ def test_contenido_demasiado_largo_se_rechaza():
 
     assert not resultado.es_valida
     assert any("máximo es 300" in e for e in resultado.errores)
+
+
+def capsula_de(palabras: int) -> dict:
+    """La cápsula de referencia alargada con prosa en español hasta `palabras`."""
+    datos = capsula_valida()
+    faltan = palabras - validar_capsula(datos).metricas["palabras_contenido"]
+    relleno = f"{PARRAFO} {EXPLICACION}".split()
+    assert 0 < faltan <= len(relleno)
+    datos["representacion_adaptativa"].append(
+        {"tipo": "parrafo", "cuerpo": " ".join(relleno[:faltan])}
+    )
+    return datos
+
+
+@pytest.mark.parametrize("palabras", [260, 300])
+def test_contenido_hasta_el_maximo_pedido_se_acepta(palabras):
+    resultado = validar_capsula(capsula_de(palabras))
+
+    assert resultado.es_valida, resultado.errores
+    assert resultado.metricas["palabras_contenido"] == palabras
+
+
+@pytest.mark.parametrize("palabras", [301, 320, 350])
+def test_contenido_entre_el_maximo_pedido_y_el_tope_aceptado_se_acepta(palabras):
+    """Pruebas con usuarios (nov-2026): la generación fallaba por pasarse de 300
+    por 15–20 palabras. El modelo no cuenta con exactitud, así que el validador
+    tolera hasta `capsula_max_palabras_aceptadas` (350, inclusivo)."""
+    resultado = validar_capsula(capsula_de(palabras))
+
+    assert resultado.es_valida, resultado.errores
+    assert resultado.metricas["palabras_contenido"] == palabras
+
+
+def test_sobre_el_tope_aceptado_se_rechaza_pidiendo_volver_al_maximo_pedido():
+    """Se rechaza recién sobre 350, pero el mensaje apunta a 300: pedir «menos
+    de 350» dejaría la corrección pegada otra vez al límite de rechazo."""
+    resultado = validar_capsula(capsula_de(351))
+
+    assert not resultado.es_valida
+    (mensaje,) = resultado.errores
+    assert "tiene 351 palabras y el máximo es 300: sobran 51" in mensaje
+    assert f"al menos {51 + MARGEN_REPARACION} palabras" in mensaje
+
+
+def test_el_conteo_ignora_espacios_multiples_y_saltos_de_linea():
+    assert contar_palabras("uno  dos\n\ntres\t cuatro \n") == 4
+    assert contar_palabras("   \n ") == 0
 
 
 def test_el_error_de_falta_dice_cuanto_agregar_hasta_donde_y_en_que_campos():

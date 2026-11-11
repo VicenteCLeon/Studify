@@ -5,7 +5,8 @@ separa lo que el modelo dijo de lo que el sistema publica. Implementa las seis
 reglas de rechazo de `PLAN_DESARROLLO.md` §3; las tres estructurales viven en
 `generation/schemas.py` y acá se ejecutan las tres que necesitan contexto:
 
-    2. `contar_palabras(contenido)` fuera de 150–300 (cap. 11.1).
+    2. `contar_palabras(contenido)` fuera de 150–300 (cap. 11.1), con una
+       tolerancia por arriba hasta `capsula_max_palabras_aceptadas`.
     5. algún `id_fragmento` citado no está entre los inyectados en el prompt.
     6. el idioma detectado no es español.
 
@@ -362,7 +363,11 @@ def validar(
                 capsula, palabras, ajustes.capsula_min_palabras, ajustes.capsula_max_palabras
             )
         )
-    elif palabras > ajustes.capsula_max_palabras:
+    elif palabras > max(ajustes.capsula_max_palabras, ajustes.capsula_max_palabras_aceptadas):
+        # Se rechaza recién sobre el tope aceptado, pero el mensaje sigue
+        # pidiendo bajar de `capsula_max_palabras`: es el máximo que el modelo
+        # vio en el prompt, y pedirle «menos de 350» lo dejaría otra vez pegado
+        # al límite de rechazo.
         errores.append(_error_exceso_de_palabras(capsula, palabras, ajustes.capsula_max_palabras))
 
     # --- Actividad exigida (grupo control) -----------------------------------

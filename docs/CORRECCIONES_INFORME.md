@@ -9,7 +9,7 @@
 > la evidencia. Cuando se aplique una corrección al informe, se tacha o se borra
 > acá.
 >
-> Última revisión: 17-oct-2026.
+> Última revisión: 11-nov-2026.
 
 Hay cinco tipos de cambio:
 
@@ -105,7 +105,8 @@ Origen: `PLAN_DESARROLLO.md` §7 y `AVANCE.md` §8.
   objetivo y estado de validación; el perfil sube primero los tipos que
   prefiere (tablas para V). Origen: `rag/retriever.py`.
 - **I4. La validación es más que comprobar la estructura (§15, §18).**
-  - Son seis reglas: esquema, extensión 150–300, título, actividad, **citas
+  - Son seis reglas: esquema, extensión 150–300 (con tolerancia hasta 350,
+    I16), título, actividad, **citas
     que tienen que ser fragmentos realmente inyectados** e idioma español.
   - Cuando una falla, se reinyecta el error en un bucle de reparación con dos
     reintentos.
@@ -134,6 +135,24 @@ Origen: `PLAN_DESARROLLO.md` §7 y `AVANCE.md` §8.
   150–300 cuenta activación, concepto, representación y ejemplo. Una cápsula K
   con 3–5 tarjetas y 3–5 preguntas toma bastante más. Conviene decirlo.
   Origen: `generation/schemas.py::Microcapsula.palabras_contenido`.
+- **I16. El validador acepta hasta 350 palabras como tolerancia (§11.1).** El
+  rango objetivo sigue siendo 150–300 palabras y es lo que se le pide al
+  modelo: el prompt dice «máximo 300» y el objetivo por perfil nunca pasa de
+  270. Lo que cambió el 11-nov-2026 es el tope de rechazo: el validador acepta
+  hasta 350 palabras, una tolerancia de ~17 % sobre el máximo.
+  - **Por qué:** un LLM genera por tokens y no cuenta palabras con exactitud,
+    así que un máximo estricto rechaza cápsulas correctas por una diferencia
+    que el estudiante no percibe.
+  - **Justificación empírica:** en las dos pruebas con usuarios, los fallos de
+    generación se debieron a excesos de 15–20 palabras sobre 300.
+  - **Cómo se reporta:** cada cápsula aceptada entre 301 y 350 palabras queda
+    registrada en `logs/studify.log` con su conteo, para informar con qué
+    frecuencia ocurre.
+
+  El informe debería declarar las dos cifras: 150–300 como rango de diseño y
+  350 como tope de aceptación. Origen: `config.py`
+  (`capsula_max_palabras_aceptadas`); `generation/validator.py`; `AVANCE.md`
+  §5 quadragies.
 
 ### Perfil y datos (§16.4, §17)
 

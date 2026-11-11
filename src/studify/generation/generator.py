@@ -222,6 +222,20 @@ def generar(
 
         if resultado.es_valida:
             assert resultado.capsula is not None  # lo garantiza `es_valida`
+            palabras = resultado.metricas["palabras_contenido"]
+            if palabras > ajustes.capsula_max_palabras:
+                # Para medir en las pruebas con usuarios cuántas cápsulas pasan
+                # gracias a la tolerancia y no por cumplir el máximo pedido.
+                logger.info(
+                    "cápsula aceptada sobre el máximo pedido (intento %d/%d, modelo %s): "
+                    "%d palabras, máximo pedido %d, tope aceptado %d",
+                    intento,
+                    total_intentos,
+                    cliente.modelo,
+                    palabras,
+                    ajustes.capsula_max_palabras,
+                    ajustes.capsula_max_palabras_aceptadas,
+                )
             return ResultadoGeneracion(
                 capsula=resultado.capsula,
                 prompt=prompt,

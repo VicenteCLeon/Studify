@@ -8,6 +8,7 @@ sin costo, que es lo que permite tenerlos en la suite.
 """
 
 import json
+import logging
 from decimal import Decimal
 
 import pytest
@@ -23,8 +24,10 @@ from studify.rag import orchestrator
 from studify.vark.rules import aplicar_reglas
 from studify.vark.scoring import PerfilVark
 from tests.material import (
+    EXPLICACION,
     FRAGMENTOS,
     OBJETIVO,
+    PARRAFO,
     actividad_flashcards_y_quiz,
     capsula_valida,
 )
@@ -205,6 +208,59 @@ def test_repara_una_cita_alucinada():
     assert [f.id_fragmento for f in resultado.capsula.fuentes] == [161]
     # El reintento tiene que saber cuáles sí puede citar.
     assert "161" in cliente.conversaciones[1][3].contenido
+
+
+def capsula_larga(palabras_extra: int) -> str:
+    """La cápsula válida con un párrafo extra de `palabras_extra` palabras."""
+    datos = capsula_valida_k()
+    relleno = f"{PARRAFO} {EXPLICACION}".split()
+    assert palabras_extra <= len(relleno)
+    datos["representacion_adaptativa"].append(
+        {"tipo": "parrafo", "cuerpo": " ".join(relleno[:palabras_extra])}
+    )
+    return json_de(datos)
+
+
+def test_sobre_el_tope_aceptado_dispara_el_reintento_con_el_conteo(caplog):
+    """Sobre 350 se reintenta: el modelo recibe su respuesta, cuántas palabras
+    tiene y que debe volver al máximo pedido (300), y el rechazo queda en el log."""
+    base = generar(prompt_maestro(), cliente=ClienteFalso(VALIDA)).metricas["palabras_contenido"]
+    larga = capsula_larga(351 - base)
+    cliente = ClienteFalso(larga, VALIDA)
+
+    with caplog.at_level(logging.WARNING, logger="studify.generation.generator"):
+        resultado = generar(prompt_maestro(), cliente=cliente)
+
+    assert resultado.intentos == 2
+    segunda = cliente.conversaciones[1]
+    assert segunda[2].rol == "assistant" and segunda[2].contenido == larga
+    assert "tiene 351 palabras y el máximo es 300" in segunda[3].contenido
+    assert any(
+        "cápsula rechazada" in r.getMessage() and "351 palabras" in r.getMessage()
+        for r in caplog.records
+    )
+
+
+def test_entre_el_maximo_pedido_y_el_tope_se_acepta_sin_reintento_y_se_registra(caplog):
+    """La tolerancia no gasta una llamada, pero deja una línea para poder medir
+    cuántas cápsulas pasan gracias a ella en las pruebas con usuarios."""
+    base = generar(prompt_maestro(), cliente=ClienteFalso(VALIDA)).metricas["palabras_contenido"]
+    cliente = ClienteFalso(capsula_larga(320 - base))
+
+    with caplog.at_level(logging.INFO, logger="studify.generation.generator"):
+        resultado = generar(prompt_maestro(), cliente=cliente)
+
+    assert resultado.intentos == 1 and cliente.llamadas == 1
+    assert resultado.metricas["palabras_contenido"] == 320
+    (registro,) = [r for r in caplog.records if "sobre el máximo pedido" in r.getMessage()]
+    assert "320 palabras" in registro.getMessage()
+
+
+def test_una_capsula_dentro_del_maximo_pedido_no_deja_registro(caplog):
+    with caplog.at_level(logging.INFO, logger="studify.generation.generator"):
+        generar(prompt_maestro(), cliente=ClienteFalso(VALIDA))
+
+    assert not caplog.records
 
 
 def test_repara_una_respuesta_truncada():

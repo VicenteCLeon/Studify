@@ -29,7 +29,7 @@ avance ya entregado) y el plan de implementación derivado, [`PLAN_DESARROLLO.md
 |---|---|---|
 | **Fase 1 — Perfil VARK** | Cerrada. 16 ítems → puntajes → vector porcentual → pesos C_* → reglas de la tabla 11.1. | §5, §5 ter |
 | **Fase 2 — Base de conocimiento** | Cerrada. Ingesta de PDF/PPTX con página, curación humana, retriever SQL sin embeddings, etiquetado asistido por LLM y borrado de documentos desde el panel. | §5 septies, §5 septendecies, §5 quatertricies |
-| **Fase 3 — Generación** | Cerrada. Contrato de siete pasos, validador, bucle de reparación y caché por huella. Batería VARK del 03-oct (con `deepseek-chat`): 29/30 cápsulas válidas, 26 a la primera (96,7 %), 0 citas inventadas. | §5 octies, §5 terdecies, §5 quatervicies |
+| **Fase 3 — Generación** | Cerrada. Contrato de siete pasos, validador, bucle de reparación y caché por huella. Batería VARK del 03-oct (con `deepseek-chat`): 29/30 cápsulas válidas, 26 a la primera (96,7 %), 0 citas inventadas. Desde el 11-nov el validador acepta hasta 350 palabras (el prompt sigue pidiendo máximo 300). | §5 octies, §5 terdecies, §5 quatervicies, §5 quadragies |
 | **Fase 4 — Interfaz** | Cerrada y rediseñada el 02-oct: cuestionario, perfil, catálogo, visor y panel del docente con login. | §5 nonies, §5 duovicies |
 | **Grupos del estudio A/B** | Experimental (rol `estudiante`): cuestionario VARK, cápsula adaptada y narración con p_A ≥ 25 %. Control (rol `control`): sin cuestionario, cápsula básica sin adaptación (resumen y `quiz_mc`, caché `control-neutro-v1`) y sin audio. Los dos eligen su grupo al entrar con Google. Métricas del panel y exportación CSV de intentos separadas por grupo. | §5 septtricies, §5 undequadragies |
 | **Acceso Google** | Única forma de entrar para los dos grupos, con elección obligatoria de grupo; vincula el perfil local y recupera el mismo estudiante. Credenciales cargadas en la máquina 1 el 02-nov; falta probarlo con una cuenta real de cada grupo y rotar el secret (O6). | §5 octtricies, §5 undequadragies |
@@ -92,6 +92,7 @@ Lo primero que falta antes del piloto con estudiantes está al inicio de
 | 5 septtricies | 01-nov | Grupo control con perfil general fijo de los 43 encuestados |
 | 5 octtricies | 01-nov | Google OpenID Connect, vinculación y recuperación del perfil (D6) |
 | 5 undequadragies | 04–08-nov | Estudio A/B, Etapas 1 y 2: cápsula básica del control, grupo en el login y datos por grupo |
+| 5 quadragies | 11-nov | El validador acepta hasta 350 palabras; el prompt sigue pidiendo máximo 300 |
 
 ---
 
@@ -2792,6 +2793,73 @@ vistas, sin desactivar guardianes.
   cuenta de cada grupo quedan en `PENDIENTES.md` O6.
 - La única llamada al modelo real fue la del 1c. Las cápsulas básicas del
   control solo se probaron con el cliente falso.
+
+---
+
+## 5 quadragies. Tolerancia de palabras en el validador (11-nov-2026)
+
+En las dos pruebas con usuarios la generación falló algunas veces por la regla
+2: la cápsula superaba las 300 palabras, normalmente por solo 15–20. Un LLM
+genera por tokens y no cuenta palabras con exactitud, así que un máximo
+estricto rechazaba cápsulas correctas y el estudiante veía un error (502)
+después de tres intentos.
+
+### Qué cambió
+
+Se separó el máximo que se le pide al modelo del tope que acepta el validador:
+
+| Ajuste | Valor | Para qué |
+|---|---|---|
+| `capsula_max_palabras` | 300 | Lo que dice el prompt y lo que piden los mensajes de reparación. Sin cambios. |
+| `capsula_max_palabras_aceptadas` | 350 | Nuevo. Sobre este número el validador rechaza. Se fija con `CAPSULA_MAX_PALABRAS_ACEPTADAS`. |
+
+- **`generation/validator.py`:** la regla 2 rechaza recién sobre 350. El
+  mensaje de exceso sigue diciendo «el máximo es 300» y calcula lo que sobra
+  respecto de 300: pedir «menos de 350» dejaría la corrección pegada otra vez
+  al límite de rechazo.
+- **`generation/generator.py`:** cada cápsula aceptada con más de 300 palabras
+  deja una línea `INFO` («cápsula aceptada sobre el máximo pedido») con el
+  conteo, el intento y el modelo. Los rechazos ya quedaban registrados como
+  `WARNING` («cápsula rechazada»), con el conteo dentro del motivo. Las dos
+  frases se buscan en `logs/studify.log` para medir la frecuencia en las
+  próximas pruebas.
+
+### Lo que no se tocó, y por qué
+
+- **Las plantillas del prompt.** El modelo ya apunta por debajo del máximo
+  desde el §5 sedecies (objetivo acotado a 270). Además las plantillas entran
+  en la huella de caché: cambiarlas habría regenerado todas las cápsulas
+  guardadas de los dos grupos en medio de las pruebas.
+- **La huella de caché.** `capsula_max_palabras_aceptadas` no entra en ella.
+  De la configuración solo entran el rango pedido
+  (`capsula_min_palabras`–`capsula_max_palabras`) y el modelo, así que las
+  cápsulas guardadas se siguen sirviendo.
+- **El bucle de reparación.** Siguen siendo dos reintentos con la respuesta
+  anterior a la vista. Ahora solo se gastan en un exceso cuando pasa de 350.
+- **No se recorta la cápsula.** Se evaluó cortar oraciones cuando los
+  reintentos no alcanzan y se descartó: el estudiante nunca recibe un texto
+  truncado por el sistema. Si tras los tres intentos sigue sobre 350, se
+  mantiene el error de siempre.
+- **El conteo.** Toda la generación ya usaba `contar_palabras` (`split()` por
+  espacios en blanco); no hubo que unificar nada.
+
+La diferencia con el cap. 11.1 del informe queda anotada en
+`CORRECCIONES_INFORME.md` I16.
+
+### Verificación
+
+- Con Postgres, `LLM_API_KEY` vacía e ignorando `test_visual.py` y
+  `test_voz.py`: **820 pasan, 2 omitidas, 0 fallan**. `ruff check .` conserva
+  los 40 avisos previos.
+- Tests nuevos en `test_generacion_contrato.py` (260 y 300 se aceptan; 301,
+  320 y 350 se aceptan; 351 se rechaza con el mensaje apuntando a 300; el
+  conteo ignora espacios múltiples y saltos de línea) y en `test_generador.py`
+  (351 dispara el reintento con el conteo; 320 pasa sin reintento y deja el
+  registro; una cápsula dentro de 300 no deja registro).
+
+**Lo que no se verificó:** no se llamó al modelo real ni se corrió la suite
+sin base. Cuántas cápsulas caen entre 301 y 350 se sabrá con el log de las
+próximas pruebas con usuarios.
 
 ---
 
