@@ -114,7 +114,7 @@
 {% macro quiz_multi_form(preguntas, id_capsula) -%}
 {# Las respuestas viajan juntas en `answer` ("0,2,1"), que es lo que espera
    el servidor; app.js las arma en htmx:configRequest a partir de los radios. #}
-<form hx-post="/student/viewer/{{ id_capsula }}/submit" hx-target="#feedback-result" hx-swap="innerHTML"
+<form hx-post="/student/viewer/{{ id_capsula }}/submit" hx-target="#feedback-result" hx-swap="innerHTML show:#feedback-result:top"
       data-multiquiz data-total="{{ preguntas | length }}">
     <input type="hidden" name="answer" value="">
     <ol class="quiz-lista" role="list">
@@ -311,7 +311,7 @@
         {% else %}
         {# Vista del estudiante. #}
         {% if actividad.tipo == 'quiz_mc' %}
-        <form hx-post="/student/viewer/{{ capsula.id_capsula }}/submit" hx-target="#feedback-result" hx-swap="innerHTML">
+        <form hx-post="/student/viewer/{{ capsula.id_capsula }}/submit" hx-target="#feedback-result" hx-swap="innerHTML show:#feedback-result:top">
             <fieldset>
                 <legend class="visually-hidden">{{ actividad.pregunta }}</legend>
                 <div class="choice-group">
@@ -330,7 +330,7 @@
         </form>
 
         {% elif actividad.tipo == 'intentalo_tu' %}
-        <form hx-post="/student/viewer/{{ capsula.id_capsula }}/submit" hx-target="#feedback-result" hx-swap="innerHTML">
+        <form hx-post="/student/viewer/{{ capsula.id_capsula }}/submit" hx-target="#feedback-result" hx-swap="innerHTML show:#feedback-result:top">
             <div class="form-group">
                 <label class="form-label" for="respuesta-{{ uid }}">Tu resolución</label>
                 <textarea class="form-control" id="respuesta-{{ uid }}" name="answer" rows="5"
@@ -345,7 +345,7 @@
 
         {% elif actividad.tipo == 'flashcards' %}
         {{ flashcards(actividad.tarjetas, uid) }}
-        <form hx-post="/student/viewer/{{ capsula.id_capsula }}/submit" hx-target="#feedback-result" hx-swap="innerHTML"
+        <form hx-post="/student/viewer/{{ capsula.id_capsula }}/submit" hx-target="#feedback-result" hx-swap="innerHTML show:#feedback-result:top"
               class="flashcards-completar">
             <input type="hidden" name="answer" value="completado">
             <button type="submit" class="btn btn-primary btn-block">

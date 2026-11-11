@@ -95,14 +95,23 @@
                    que evita que el siguiente use el perfil del anterior. Lleva a
                    una confirmación, porque sin cuenta no hay vuelta atrás. #}
                 {% if con_sesion_estudiante %}
-                <a href="/student/salir" class="btn btn-ghost btn-sm">
+                {# `site-actions-icono`: bajo 485 px se ve solo el ícono (CSS);
+                   aria-label y title conservan el nombre. «Entrar con Google»
+                   no la lleva: sin texto no se entendería qué hace. #}
+                <a href="/student/salir" class="btn btn-ghost btn-sm site-actions-icono" aria-label="Salir" title="Salir">
                     {{ ui.icon("log-out") }}<span>Salir</span>
                 </a>
                 {% endif %}
                 {% if google_disponible %}
-                <a href="/student/login" class="btn btn-ghost btn-sm">
-                    {{ ui.icon("circle-user") }}<span>{{ "Mi cuenta" if google_vinculado else "Entrar con Google" }}</span>
+                {% if google_vinculado %}
+                <a href="/student/login" class="btn btn-ghost btn-sm site-actions-icono" aria-label="Mi cuenta" title="Mi cuenta">
+                    {{ ui.icon("circle-user") }}<span>Mi cuenta</span>
                 </a>
+                {% else %}
+                <a href="/student/login" class="btn btn-ghost btn-sm">
+                    {{ ui.icon("circle-user") }}<span>Entrar con Google</span>
+                </a>
+                {% endif %}
                 {% endif %}
                 {% if es_docente %}
                 <form method="post" action="/teacher/logout" class="nav-form">
@@ -111,7 +120,9 @@
                     </button>
                 </form>
                 {% else %}
-                <a href="/teacher/login" class="btn btn-ghost btn-sm">
+                {# En teléfonos se oculta (CSS): el docente entra por /teacher/login
+                   y la fila del encabezado necesita ese espacio. #}
+                <a href="/teacher/login" class="btn btn-ghost btn-sm site-actions-docente">
                     {{ ui.icon("graduation-cap") }}<span>Soy docente</span>
                 </a>
                 {% endif %}

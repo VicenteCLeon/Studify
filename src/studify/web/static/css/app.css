@@ -878,6 +878,124 @@ hr {
   }
 }
 
+/* Teléfonos: «Soy docente» se oculta (el docente entra por /teacher/login) y
+   las etiquetas no parten línea: un botón en dos líneas era lo que hacía
+   crecer el encabezado. Los 44 px de los botones vienen de .btn-sm (§5.2). */
+@media (max-width: 819px) {
+  .site-actions .site-actions-docente {
+    display: none;
+  }
+
+  .site-header-inner {
+    column-gap: var(--space-3);
+  }
+
+  .site-actions {
+    gap: var(--space-1);
+  }
+
+  .site-actions .btn {
+    white-space: nowrap;
+  }
+
+  /* Altura real del encabezado en --header-h, que usan los sticky (barra del
+     cuestionario, índice de la cápsula) y los scroll-margin. Sin JS no se puede
+     medir, así que la altura se fija por construcción: cada fila tiene un alto
+     conocido (marca 2rem, botones 2.75rem) y --header-h se arma con esas piezas.
+     Por defecto es una fila de 64 px; abajo, los casos con dos filas. */
+  .site-header-inner {
+    height: var(--header-h);
+    min-height: 0;
+    align-content: center;
+    row-gap: var(--space-2);
+  }
+
+  /* Franja de pestañas del docente: una fila más, de 44 px táctiles. */
+  .site-nav-docente a {
+    min-height: 2.75rem;
+  }
+
+  :root:has(.site-nav-docente) {
+    --header-h: calc(2.75rem + var(--space-2) + var(--header-franja));
+  }
+}
+
+:root {
+  /* Franja del docente: enlace de 2.75rem + su padding + el borde superior. */
+  --header-franja: calc(2.75rem + 2 * var(--space-2) + 1px);
+  /* Encabezado en dos filas: marca arriba, acciones abajo. */
+  --header-dos-filas: calc(2 * var(--space-1) + 2rem + var(--space-2) + 2.75rem);
+}
+
+/* Bajo 485 px «Salir» y «Mi cuenta» (`.site-actions-icono`) muestran solo su
+   ícono, en un botón de 44x44; el nombre sigue en aria-label y title. Así, con
+   sesión, el encabezado cabe en una fila de 64 px. */
+@media (max-width: 484px) {
+  .site-actions .site-actions-icono {
+    width: 2.75rem;
+    min-width: 2.75rem;
+    padding: 0;
+  }
+
+  .site-actions .site-actions-icono span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+}
+
+/* «Entrar con Google» conserva su texto y entre 381 y 484 px no siempre cabe
+   junto a la marca. En vez de dejar que la fila se parta sola (con una altura
+   que el CSS no puede conocer), las acciones pasan a una segunda fila:
+   - docente (tema, «Entrar con Google» y «Salir» con texto): hasta 484 px;
+   - estudiante con sesión en una página que no lo identifica (Términos,
+     Privacidad: ahí la cabecera ofrece «Entrar con Google» junto al ícono de
+     «Salir»): hasta 444 px;
+   - «Entrar con Google» sola junto al tema: hasta 394 px (bloque siguiente). */
+@media (min-width: 381px) and (max-width: 484px) {
+  :root:has(.site-actions > .nav-form):has(.site-actions > a[href="/student/login"]) {
+    --header-h: var(--header-dos-filas);
+  }
+
+  .site-header-inner:has(.site-actions > .nav-form):has(.site-actions > a[href="/student/login"]) .site-actions {
+    flex-basis: 100%;
+    justify-content: flex-end;
+  }
+
+  :root:has(.site-actions > .nav-form):has(.site-actions > a[href="/student/login"]):has(.site-nav-docente) {
+    --header-h: calc(var(--header-dos-filas) + var(--space-2) + var(--header-franja));
+  }
+}
+
+@media (min-width: 381px) and (max-width: 444px) {
+  :root:has(.site-actions > .site-actions-icono):has(.site-actions > a[href="/student/login"]:not(.site-actions-icono)) {
+    --header-h: var(--header-dos-filas);
+  }
+
+  .site-header-inner:has(.site-actions > .site-actions-icono):has(.site-actions > a[href="/student/login"]:not(.site-actions-icono)) .site-actions {
+    flex-basis: 100%;
+    justify-content: flex-end;
+  }
+}
+
+@media (min-width: 381px) and (max-width: 394px) {
+  :root:has(.site-actions > a[href="/student/login"]:not(.site-actions-icono)) {
+    --header-h: var(--header-dos-filas);
+  }
+
+  .site-header-inner:has(.site-actions > a[href="/student/login"]:not(.site-actions-icono)) .site-actions {
+    flex-basis: 100%;
+    justify-content: flex-end;
+  }
+
+  :root:has(.site-actions > a[href="/student/login"]:not(.site-actions-icono)):has(.site-nav-docente) {
+    --header-h: calc(var(--header-dos-filas) + var(--space-2) + var(--header-franja));
+  }
+}
+
 
 /* ==========================================================================
    5. COMPONENTES
@@ -1064,6 +1182,20 @@ hr {
   min-width: 2.25rem;
 }
 
+/* En táctil o pantalla angosta, los botones pequeños llegan al objetivo de
+   44 px (encabezado, «Usar esta voz», «Descargar audio», «Estudiar»…). En
+   escritorio con mouse conservan su tamaño. */
+@media (pointer: coarse), (max-width: 819px) {
+  .btn-sm {
+    min-height: 2.75rem;
+  }
+
+  .btn-icon.btn-sm {
+    width: 2.75rem;
+    min-width: 2.75rem;
+  }
+}
+
 
 /* --- 5.3 Tarjetas -------------------------------------------------------- */
 .card {
@@ -1146,6 +1278,16 @@ hr {
 .badge-outline {
   background: transparent;
   box-shadow: inset 0 0 0 1px var(--border-strong);
+}
+
+/* En pantallas angostas un badge largo («asignatura · unidad» en el visor)
+   parte línea en vez de ensanchar la página. */
+@media (max-width: 819px) {
+  .badge {
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: break-word;
+  }
 }
 
 
@@ -1788,6 +1930,12 @@ form.htmx-request button[type="submit"] {
   color: var(--text-muted);
   text-decoration: none;
   --icon-size: 1rem;
+}
+
+@media (pointer: coarse), (max-width: 819px) {
+  .back-link {
+    min-height: 2.75rem;
+  }
 }
 
 .back-link:hover {
@@ -2643,7 +2791,20 @@ html:not(.js) .js-only {
   justify-content: flex-start;
 }
 
-@media (min-width: 820px) {
+/* Mientras la barra inferior es sticky, el navegador deja el campo enfocado
+   («Carrera», en el paso 0) por encima de ella al desplazarse. */
+html:has(body.page-vark) {
+  scroll-padding-bottom: calc(2.75rem + 2 * var(--space-3) + env(safe-area-inset-bottom, 0px) + var(--space-4));
+}
+
+/* La barra deja de ser sticky solo en pantallas anchas y altas: un teléfono en
+   horizontal (844x390) la conserva, o «Siguiente» queda bajo el pliegue en cada
+   pregunta. */
+@media (min-width: 820px) and (min-height: 600px) {
+  html:has(body.page-vark) {
+    scroll-padding-bottom: 0;
+  }
+
   .vark-nav {
     position: static;
     margin-inline: 0;
@@ -2652,7 +2813,9 @@ html:not(.js) .js-only {
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
   }
+}
 
+@media (min-width: 820px) {
   .vark-progress {
     margin-inline: 0;
     padding-inline: 0;
@@ -3097,17 +3260,26 @@ html:not(.js) .js-only {
 
 
 /* --- 6.5 Generando tu cápsula (pantalla de espera) ---------------------- */
+/* Centrada con márgenes automáticos y no con place-items: si la tarjeta no
+   cabe (teléfono en horizontal), queda arriba y la capa se desplaza, en vez de
+   cortarse por los dos lados sin poder verla entera. */
 .generando {
   position: fixed;
   inset: 0;
   z-index: var(--z-overlay);
-  display: grid;
-  place-items: center;
+  display: flex;
+  flex-direction: column;
   padding: var(--space-4);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.generando-card {
+  margin: auto;
 }
 
 .generando-backdrop {
-  position: absolute;
+  position: fixed;
   inset: 0;
   background: color-mix(in srgb, var(--bg) 55%, rgb(10 20 25 / 0.55));
   -webkit-backdrop-filter: blur(10px);
@@ -3411,6 +3583,12 @@ body.is-generando {
   transition: all var(--dur-fast) var(--ease-out);
 }
 
+@media (pointer: coarse), (max-width: 819px) {
+  .capsula-indice a {
+    min-height: 2.75rem;
+  }
+}
+
 .capsula-indice a:hover {
   color: var(--primary-text);
   border-color: var(--primary);
@@ -3620,6 +3798,22 @@ body.is-generando {
   font-size: var(--fs-sm);
 }
 
+/* Pista de desplazamiento: una sombra en el borde del lado que tiene columnas
+   ocultas. Las capas «local» (color de la superficie) viajan con la tabla y
+   tapan la sombra «scroll» cuando ese borde ya está a la vista; si la tabla
+   cabe, no se ve nada. */
+@media (max-width: 819px) {
+  .bloque-tabla .table-container {
+    --sombra-scroll: color-mix(in srgb, var(--text) 18%, transparent);
+    background:
+      linear-gradient(to right, var(--surface) 30%, transparent) left center / 2.5rem 100% no-repeat local,
+      linear-gradient(to left, var(--surface) 30%, transparent) right center / 2.5rem 100% no-repeat local,
+      radial-gradient(farthest-side at 0 50%, var(--sombra-scroll), transparent) left center / 0.875rem 100% no-repeat scroll,
+      radial-gradient(farthest-side at 100% 50%, var(--sombra-scroll), transparent) right center / 0.875rem 100% no-repeat scroll,
+      var(--surface);
+  }
+}
+
 /* Glosario: término y definición como fichas. */
 .glosario {
   display: grid;
@@ -3827,6 +4021,12 @@ body.is-generando {
   margin-top: var(--space-5);
 }
 
+/* Tras responder, HTMX trae el resultado a la vista (hx-swap «show:» en
+   _capsula.html); este margen lo deja bajo el encabezado y el índice sticky. */
+.capsula-feedback {
+  scroll-margin-top: calc(var(--header-h) + 4rem + var(--space-4));
+}
+
 .feedback .icon-lg {
   margin-top: 0;
 }
@@ -3924,9 +4124,13 @@ body.is-generando {
   margin-inline: auto;
 }
 
+/* Las dos caras se apilan en la misma celda de una grilla (no con position:
+   absolute): la tarjeta toma el alto de la cara más larga y el texto nunca se
+   sale. El giro 3D no cambia: depende de backface-visibility, no del
+   posicionamiento. */
 .flashcard {
   position: relative;
-  display: block;
+  display: grid;
   width: 100%;
   min-height: 15rem;
   padding: 0;
@@ -3944,8 +4148,8 @@ body.is-generando {
 }
 
 .flashcard-cara {
-  position: absolute;
-  inset: 0;
+  position: relative;
+  grid-area: 1 / 1;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -4737,6 +4941,14 @@ body.is-generando {
   color: var(--text);
   font-size: var(--fs-sm);
   text-decoration: none;
+}
+
+@media (pointer: coarse), (max-width: 819px) {
+  .legal-toc a {
+    display: flex;
+    align-items: center;
+    min-height: 2.75rem;
+  }
 }
 
 .legal-toc a:hover {

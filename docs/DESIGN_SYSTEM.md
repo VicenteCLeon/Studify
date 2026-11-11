@@ -96,7 +96,18 @@ texto sobre un relleno sólido de marca → `--*-contrast`.
 - Radios: `--radius-sm` 8 · `md` 12 · `lg` 18 · `xl` 24 · `full`. Botones y chips son píldora.
 - Sombras cálidas y sutiles: `--shadow-xs` → `--shadow-lg`.
 - Motion: `--ease-out`, `--ease-spring`, `--dur-fast` (120 ms) · `base` (200) · `slow` (360).
-- Layout: `--container` 1160 px, `--gutter` fluido, `--header-h` y `--tabbar-h` 64 px.
+- Layout: `--container` 1160 px, `--gutter` fluido, `--tabbar-h` 64 px. `--header-h` es la altura
+  real del encabezado y la usan los sticky (barra del cuestionario, índice de la cápsula) y los
+  `scroll-margin`: 64 px en escritorio y, por lo general, también en teléfonos. Bajo 820 px el CSS la
+  fija por construcción, porque sin JS no se puede medir: «Soy docente» se oculta, bajo 485 px «Salir»
+  y «Mi cuenta» quedan solo con su ícono (`.site-actions-icono`, con `aria-label` y `title`) y, cuando
+  aun así no cabe una fila (entre 381 y 484 px, según qué acciones haya; «Entrar con Google» conserva
+  su texto), las acciones pasan a una segunda fila y `--header-h` toma `--header-dos-filas`. La franja
+  del docente suma `--header-franja`. Un elemento sticky nuevo usa `top: var(--header-h)`, nunca 64 px.
+- Áreas táctiles: en `(pointer: coarse), (max-width: 819px)` los controles pequeños llegan a 44 px
+  (`.btn-sm`, `.btn-icon.btn-sm`, chips del índice de la cápsula, `.back-link`, índice de las páginas
+  legales). En escritorio con mouse conservan su tamaño. Un control nuevo de menos de 44 px agrega su
+  regla en ese mismo media query.
 
 ### Modo oscuro
 
