@@ -49,10 +49,13 @@ from studify.generation.schemas import (  # noqa: E402
     Microcapsula,
     contar_palabras,
 )
+from studify.rag import prompts  # noqa: E402
 from studify.rag.orchestrator import (  # noqa: E402
     ACTIVIDAD_POR_DIRECTIVA,
     MARGEN_PALABRAS_OBJETIVO,
     _redondear_palabras,
+    bloque_formato,
+    bloque_perfil,
 )
 from studify.vark.rules import (  # noqa: E402
     UMBRAL_ALTO,
@@ -65,6 +68,25 @@ from studify.web import narracion  # noqa: E402
 
 DIR_BATERIA = RAIZ / "data" / "pruebas_vark"
 DIR_SALIDA = RAIZ / "data" / "adherencia"
+REGISTRO_APP = RAIZ / "logs" / "studify.log"
+
+# Cuentas del equipo que aparecen en la prueba de usuario: un id_estudiante por
+# línea (lo que sigue a «#» es comentario). Es un archivo local, fuera del repo
+# (data/* está en .gitignore), para no versionar datos de personas. Sus cápsulas
+# quedan en detalle.csv con `cuenta_equipo = si` pero fuera de todo agregado.
+ARCHIVO_CUENTAS_EQUIPO = DIR_SALIDA / "cuentas_equipo.txt"
+
+# Brazos de los experimentos H1/H3 (scripts/h1h3/correr_brazo.py) tal como
+# quedan en `resumen.json["comando"]`; rep_A/rep_B son repeticiones de esos brazos.
+BRAZOS_EXPERIMENTALES = {"A", "B", "B_topes", "A_obj", "E", "prefijo"}
+BRAZO_POR_CARPETA = {"rep_A": "A", "rep_B": "B"}
+
+# Modelo de las corridas cuyo resumen.json no lo registra. Fuente documental,
+# no del artefacto: se declara en la columna `modelo_fuente`.
+MODELO_SIN_REGISTRO = {
+    "_1c_K": ("deepseek-flash", "AVANCE.md: verificación 1c del 05-nov (scripts/verificar_1c_k.py)"),
+    "_rep_": ("deepseek-chat", "inferido por fecha: corrida anterior a la migración del 11-oct (AVANCE.md §5.30)"),
+}
 
 # --- Estados -----------------------------------------------------------------
 CUMPLE, NO_CUMPLE, NO_VERIF, NO_APLICA = "cumple", "no_cumple", "no_verificable", "no_aplica"
@@ -111,12 +133,33 @@ def _url_psycopg(url: str) -> str:
     return url.replace("postgresql+psycopg://", "postgresql://", 1)
 
 
-def cargar_usuario() -> tuple[list[dict], list[dict]]:
-    """Cápsulas de las pruebas de usuario, con SELECT en una transacción de solo lectura."""
+def cuentas_equipo() -> set[int]:
+    if not ARCHIVO_CUENTAS_EQUIPO.exists():
+        return set()
+    ids = set()
+    for linea in ARCHIVO_CUENTAS_EQUIPO.read_text(encoding="utf-8").splitlines():
+        valor = linea.split("#", 1)[0].strip()
+        if valor:
+            ids.add(int(valor))
+    return ids
+
+
+def cargar_usuario() -> tuple[list[dict], list[dict], dict[int, dict]]:
+    """Cápsulas de las pruebas de usuario, con SELECT en una transacción de solo lectura.
+
+    Devuelve también el último vector de cada estudiante, para leer el registro
+    de la aplicación (estudiantes con generaciones fallidas y sin cápsula).
+    """
     import psycopg
 
+    sql_vectores = """
+        SELECT DISTINCT ON (id_estudiante) id_estudiante,
+               porcentaje_v, porcentaje_a, porcentaje_r, porcentaje_k
+        FROM diagnostico_vark
+        ORDER BY id_estudiante, fecha_diagnostico DESC, id_diagnostico DESC
+    """
     sql = """
-        SELECT m.id_capsula, m.id_estudiante, e.rol, o.codigo_objetivo,
+        SELECT m.id_capsula, m.id_estudiante, e.rol, o.codigo_objetivo, m.modelo_llm,
                m.contenido_json, m.mini_quiz_json, m.id_config,
                d.porcentaje_v, d.porcentaje_a, d.porcentaje_r, d.porcentaje_k,
                c.recursos_visuales, c.componentes_practicos, c.palabras_texto,
@@ -136,6 +179,8 @@ def cargar_usuario() -> tuple[list[dict], list[dict]]:
             cur.execute(sql)
             cols = [c.name for c in cur.description]
             filas = [dict(zip(cols, f)) for f in cur.fetchall()]
+            cur.execute(sql_vectores)
+            vectores = {f[0]: {"V": f[1], "A": f[2], "R": f[3], "K": f[4]} for f in cur.fetchall()}
         conn.rollback()
     finally:
         conn.close()
@@ -173,20 +218,48 @@ def cargar_usuario() -> tuple[list[dict], list[dict]]:
             "directivas_historicas": None,
             "audio_omitido": False,
             "audio_archivo_bateria": None,
+            "modelo": f["modelo_llm"] or "no registrado",
+            "modelo_fuente": "microcapsula_generada.modelo_llm",
+            "brazo": "produccion",
+            "prompt": None,
         })
-    return capsulas, excluidas
+    return capsulas, excluidas, vectores
 
 
 def cargar_bateria() -> tuple[list[dict], list[dict]]:
     capsulas, excluidas = [], []
     objetivos: dict[str, str] = {}
     codigo_por_tema: dict[str, str] = {}
+    modelos: dict[str, str] = {}
+    brazos: dict[str, str] = {}
     for resumen in sorted(DIR_BATERIA.glob("*/resumen.json")):
         datos = json.loads(resumen.read_text(encoding="utf-8"))
-        obj = datos.get("objetivo") if isinstance(datos, dict) else None
+        if not isinstance(datos, dict):
+            continue
+        corrida = resumen.parent.name
+        obj = datos.get("objetivo")
         if isinstance(obj, dict):
-            objetivos[resumen.parent.name] = obj.get("codigo")
+            objetivos[corrida] = obj.get("codigo")
             codigo_por_tema[obj.get("tema")] = obj.get("codigo")
+        if datos.get("modelo"):
+            modelos[corrida] = datos["modelo"]
+        m = re.search(r"\.py\s+(\S+)", datos.get("comando") or "")
+        if m and m.group(1) in BRAZOS_EXPERIMENTALES | {"base"}:
+            brazos[corrida] = m.group(1)
+
+    def _modelo(corrida: str) -> tuple[str, str]:
+        if corrida in modelos:
+            return modelos[corrida], "resumen.json de la corrida"
+        for clave, (modelo, fuente) in MODELO_SIN_REGISTRO.items():
+            if clave in corrida:
+                return modelo, fuente
+        return "no registrado", ""
+
+    def _brazo(corrida: str) -> str:
+        for sufijo, brazo in BRAZO_POR_CARPETA.items():
+            if corrida.endswith(sufijo):
+                return brazo
+        return brazos.get(corrida, "sin rotulo")
 
     def _objetivo(corrida: str, prompt: Path) -> str:
         """Del resumen de la corrida; si no lo trae, por la línea «Tema:» del prompt guardado."""
@@ -208,9 +281,13 @@ def cargar_bateria() -> tuple[list[dict], list[dict]]:
             detalle = r.get("criterios", {}).get("contrato", {}).get("detalle", "")
             m = re.search(r"tiene (\d+) palabras y el (máximo|mínimo) es (\d+)", detalle)
             corto = (f"{m.group(1)} palabras, {m.group(2)} {m.group(3)}" if m else detalle[:120])
+            pcts = {c: Decimal(str(r["pcts"].get(c, 0))) for c in "VARK"}
+            cfg = aplicar_reglas(PerfilVark(v=pcts["V"], a=pcts["A"], r=pcts["R"], k=pcts["K"]))
             excluidas.append({"id": ident, "origen": "bateria",
                               "motivo": "sin capsula.json: falló el contrato tras agotar los reintentos",
-                              "detalle": corto})
+                              "detalle": f"V{pcts['V']:.0f}-A{pcts['A']:.0f}-R{pcts['R']:.0f}-K{pcts['K']:.0f}"
+                                         f" ({cfg.jerarquia.etiqueta}); {corto}",
+                              "p_R": pcts["R"], "etiqueta": cfg.jerarquia.etiqueta})
             continue
         estado_audio = (r.get("criterios", {}).get("audio") or {}).get("estado")
         wav = res.parent / "audio.wav"
@@ -227,6 +304,11 @@ def cargar_bateria() -> tuple[list[dict], list[dict]]:
             "directivas_historicas": tuple(r.get("config", {}).get("directivas", [])),
             "audio_omitido": estado_audio in (None, "n/a") and not wav.exists(),
             "audio_archivo_bateria": wav.exists(),
+            "modelo": _modelo(corrida)[0],
+            "modelo_fuente": _modelo(corrida)[1],
+            "brazo": _brazo(corrida),
+            "prompt": (res.parent / "prompt.txt").read_text(encoding="utf-8")
+            if (res.parent / "prompt.txt").exists() else "",
         })
     return capsulas, excluidas
 
@@ -285,7 +367,26 @@ def _archivo_narracion(c: dict) -> str:
     return NO_VERIF
 
 
-def evaluar(c: dict) -> dict:
+def _prompt_vigente(c: dict, cfg, palabras_prompt: int) -> str:
+    """¿El prompt guardado contiene, al pie de la letra, las instrucciones que hoy arma el código?
+
+    Compara el mensaje de sistema, la secuencia pedagógica, el bloque de perfil
+    (pesos, extensión, cantidades, tono y una instrucción por directiva) y el
+    bloque de formato que produce `rag/orchestrator.py` para este vector. Solo
+    el material (fragmentos) y el objetivo pueden diferir. Distingue las
+    corridas con el prompt de producción de los brazos experimentales H1/H3 y de
+    las versiones anteriores del prompt, que comparten nombres de directivas.
+    Las cápsulas de usuario no guardan su prompt: no verificable.
+    """
+    if c["prompt"] is None:
+        return NO_VERIF
+    t = c["prompt"]
+    piezas = (prompts.SISTEMA, prompts.SECUENCIA, bloque_perfil(cfg, palabras_objetivo=palabras_prompt),
+              bloque_formato())
+    return "si" if all(pieza.strip() in t for pieza in piezas) else "no"
+
+
+def evaluar(c: dict, equipo: set[int]) -> dict:
     p = {k: Decimal(str(v)) for k, v in c["pcts"].items()}
     perfil = PerfilVark(v=p["V"], a=p["A"], r=p["R"], k=p["K"])
     cfg = aplicar_reglas(perfil)
@@ -350,13 +451,24 @@ def evaluar(c: dict) -> dict:
     cp_entregados = sum(t in BLOQUES_PRACTICOS for t in tipos) + (tipo_act in ACTIVIDADES_PRACTICAS)
 
     hist = c["directivas_historicas"]
+    prompt_vigente = _prompt_vigente(c, cfg, palabras_prompt)
+    es_equipo = c["origen"] == "usuario" and c["id_estudiante"] in equipo
+    if c["origen"] == "usuario":
+        principal = not es_equipo
+    else:
+        principal = prompt_vigente == "si"
     return {
         "id": c["id"],
         "origen": c["origen"],
         "referencia": c["referencia"],
         "objetivo": c["objetivo"],
+        "modelo": c["modelo"],
+        "modelo_fuente": c["modelo_fuente"],
         "id_estudiante": c["id_estudiante"],
+        "cuenta_equipo": "si" if es_equipo else "no",
         "corrida": c["corrida"],
+        "brazo": c["brazo"],
+        "prompt_vigente": prompt_vigente,
         **{f"p_{k}": f"{p[k]:.2f}" for k in "VARK"},
         "clase": _clase(jer),
         "etiqueta": jer.etiqueta,
@@ -383,6 +495,7 @@ def evaluar(c: dict) -> dict:
         "palabras_entregadas": palabras,
         "dif_palabras_reglas": palabras - cfg.palabras_texto,
         "dif_palabras_prompt": palabras - palabras_prompt,
+        "abs_dif_palabras_reglas": abs(palabras - cfg.palabras_texto),
         "tipos_bloque": "|".join(t or "?" for t in tipos),
         "tablas_filasxcols": "|".join(f"{f}x{k}" for f, k in tablas),
         "tipo_actividad": tipo_act,
@@ -391,13 +504,17 @@ def evaluar(c: dict) -> dict:
         "tiene_tabla_o_esquema": "si" if rv_entregados else "no",
         "tiene_analogia": "si" if "analogia" in tipos else "no",
         "tiene_glosario": "si" if "glosario" in tipos else "no",
-        "tiene_practico_k": "si" if ("lista_pasos" in tipos or "ejemplo_resuelto" in tipos
-                                     or tipo_act == "flashcards_y_quiz") else "no",
+        # Elemento característico de K: lista_pasos o flashcards_y_quiz. El
+        # ejemplo_resuelto va aparte porque aparece casi siempre, también con
+        # p_K < 25 (lo pide la regla multimodal y lo inducen los fragmentos), y no
+        # discrimina entre tramos.
+        "tiene_practico_k": "si" if ("lista_pasos" in tipos or tipo_act == "flashcards_y_quiz") else "no",
+        "tiene_ejemplo_resuelto": "si" if "ejemplo_resuelto" in tipos else "no",
         "esquema_vigente_valida": "si" if esquema_ok else "no",
         "directivas_historicas": "" if hist is None else "|".join(hist),
         "directivas_coinciden_con_vigentes": ("" if hist is None
                                               else "si" if tuple(hist) == cfg.directivas else "no"),
-        "en_conjunto_principal": "si" if hist is None or tuple(hist) == cfg.directivas else "no",
+        "en_conjunto_principal": "si" if principal else "no",
     }
 
 
@@ -476,43 +593,48 @@ def _tabla_por_clase(filas) -> list[str]:
 
 def _palabras(filas) -> list[str]:
     out = ["| Clase | n | Objetivo (reglas) medio | Objetivo (prompt) medio | Entregadas medio | "
-           "Dif. media vs reglas | Dif. media vs prompt | Dif. mín / máx vs reglas |",
-           "|---|---:|---:|---:|---:|---:|---:|---:|"]
+           "Dif. media vs reglas | Error absoluto medio vs reglas | Dif. media vs prompt | "
+           "Dif. mín / máx vs reglas |",
+           "|---|---:|---:|---:|---:|---:|---:|---:|---:|"]
     for clase in ("unimodal", "bimodal", "multimodal", "todas"):
         g = filas if clase == "todas" else [f for f in filas if f["clase"] == clase]
         if not g:
             continue
-        m = lambda col: sum(int(f[col]) for f in g) / len(g)  # noqa: E731
         difs = [int(f["dif_palabras_reglas"]) for f in g]
-        out.append(f"| {clase} | {len(g)}{_marca(len(g))} | {m('palabras_objetivo_reglas'):.0f} | "
-                   f"{m('palabras_objetivo_prompt'):.0f} | {m('palabras_entregadas'):.0f} | "
-                   f"{m('dif_palabras_reglas'):+.0f} | {m('dif_palabras_prompt'):+.0f} | "
-                   f"{min(difs):+d} / {max(difs):+d} |")
+        out.append(f"| {clase} | {len(g)}{_marca(len(g))} | {_media(g, 'palabras_objetivo_reglas'):.0f} | "
+                   f"{_media(g, 'palabras_objetivo_prompt'):.0f} | {_media(g, 'palabras_entregadas'):.0f} | "
+                   f"{_media(g, 'dif_palabras_reglas'):+.1f} | {_media(g, 'abs_dif_palabras_reglas'):.1f} | "
+                   f"{_media(g, 'dif_palabras_prompt'):+.1f} | {min(difs):+d} / {max(difs):+d} |")
     return out
 
 
 PRESENCIA = {"V": "tiene_tabla_o_esquema", "A": "tiene_analogia", "R": "tiene_glosario", "K": "tiene_practico_k"}
 NOMBRE_PRESENCIA = {"V": "tabla o esquema", "A": "bloque analogia", "R": "bloque glosario",
-                    "K": "lista_pasos, ejemplo_resuelto o flashcards_y_quiz"}
+                    "K": "lista_pasos o actividad flashcards_y_quiz (sin contar ejemplo_resuelto)"}
 
 
 def _dosis(filas) -> list[str]:
     out = []
     for canal in "VARK":
         dirs = [d for d in DIRECTIVAS if CANAL_DE_DIRECTIVA[d] == canal]
+        extra_k = canal == "K"
         out += [f"**Canal {canal}** — directivas del canal: {', '.join(f'`{d}`' for d in dirs)}; "
-                f"presencia = {NOMBRE_PRESENCIA[canal]}.", "",
+                f"elemento característico = {NOMBRE_PRESENCIA[canal]}.", "",
                 "| Tramo p_" + canal + " | n cápsulas | Directivas del canal exigidas (verificables) | "
-                "Cumplidas | Adherencia % | Presencia del elemento (exigido o no) |",
-                "|---|---:|---:|---:|---:|---:|"]
+                "Cumplidas | Adherencia % | Presencia del elemento característico (exigido o no) |"
+                + (" Presencia de ejemplo_resuelto (no discrimina; aparte) |" if extra_k else ""),
+                "|---|---:|---:|---:|---:|---:|" + ("---:|" if extra_k else "")]
         for tramo in ("<25", "25-40", ">=40"):
             g = [f for f in filas if f[f"tramo_{canal}"] == tramo]
             exig = [(f, d) for f in g for d in dirs if f[f"dir_{d}"] in (CUMPLE, NO_CUMPLE)]
             ok = sum(f[f"dir_{d}"] == CUMPLE for f, d in exig)
             pres = sum(f[PRESENCIA[canal]] == "si" for f in g)
-            out.append(f"| {tramo.replace('>=', '≥').replace('-', '–')} | {len(g)}{_marca(len(g))} | "
-                       f"{len(exig)}{_marca(len(exig))} | {ok} | "
-                       f"{_pct(ok, len(exig))} | {_celda(pres, len(g))} |")
+            fila = (f"| {tramo.replace('>=', '≥').replace('-', '–')} | {len(g)}{_marca(len(g))} | "
+                    f"{len(exig)}{_marca(len(exig))} | {ok} | {_pct(ok, len(exig))} | {_celda(pres, len(g))} |")
+            if extra_k:
+                er = sum(f["tiene_ejemplo_resuelto"] == "si" for f in g)
+                fila += f" {_celda(er, len(g))} |"
+            out.append(fila)
         out.append("")
     return out
 
@@ -531,9 +653,9 @@ def _media(g, col) -> float:
 
 
 def _palabras_por_perfil(filas) -> list[str]:
-    """Palabras entregadas vs. objetivo, por perfil (etiqueta del código), para todas las cápsulas."""
-    out = ["| Perfil (etiqueta) | Clase | n total | Objetivo reglas medio | Objetivo prompt medio | "
-           "Entregadas medio | Dif. media vs reglas | Dif. media vs prompt | n usuario | "
+    """Palabras entregadas vs. objetivo, por perfil (etiqueta del código)."""
+    out = ["| Perfil (etiqueta) | Clase | n total | Objetivo reglas medio | Entregadas medio | "
+           "Dif. media vs reglas | Error absoluto medio vs reglas | Dif. media vs prompt | n usuario | "
            "Dif. usuario vs reglas | n batería | Dif. batería vs reglas |",
            "|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|"]
     perfiles = sorted({(f["etiqueta"], f["clase"]) for f in filas}, key=lambda e: (len(e[0]), e[0]))
@@ -543,8 +665,8 @@ def _palabras_por_perfil(filas) -> list[str]:
         b = [f for f in g if f["origen"] == "bateria"]
         dif = lambda x: f"{_media(x, 'dif_palabras_reglas'):+.1f}" if x else "—"  # noqa: E731
         out.append(f"| {etiqueta} | {clase} | {len(g)}{_marca(len(g))} | "
-                   f"{_media(g, 'palabras_objetivo_reglas'):.0f} | {_media(g, 'palabras_objetivo_prompt'):.0f} | "
-                   f"{_media(g, 'palabras_entregadas'):.0f} | {_media(g, 'dif_palabras_reglas'):+.1f} | "
+                   f"{_media(g, 'palabras_objetivo_reglas'):.0f} | {_media(g, 'palabras_entregadas'):.0f} | "
+                   f"{_media(g, 'dif_palabras_reglas'):+.1f} | {_media(g, 'abs_dif_palabras_reglas'):.1f} | "
                    f"{_media(g, 'dif_palabras_prompt'):+.1f} | {len(u)}{_marca(len(u))} | {dif(u)} | "
                    f"{len(b)}{_marca(len(b))} | {dif(b)} |")
     return out
@@ -570,10 +692,97 @@ def _seccion(titulo: str, g: list[dict], nota: str = "") -> list[str]:
     return L
 
 
-def escribir_resumen(filas: list[dict], excluidas: list[dict], destino: Path) -> None:
+def _modelos_y_objetivos(filas_todas) -> list[str]:
+    cuenta = defaultdict(int)
+    for f in filas_todas:
+        cuenta[(f["origen"], f["cuenta_equipo"], f["en_conjunto_principal"], f["modelo"], f["modelo_fuente"])] += 1
+    out = ["| Origen | Cuenta del equipo | En conjunto principal | Modelo | Fuente del dato | Cápsulas |",
+           "|---|---|---|---|---|---:|"]
+    for (origen, eq, pr, modelo, fuente), n in sorted(cuenta.items()):
+        out.append(f"| {origen} | {eq} | {pr} | {modelo} | {fuente} | {n} |")
+    obj = defaultdict(int)
+    for f in filas_todas:
+        obj[(f["origen"], f["objetivo"])] += 1
+    out += ["", "| Origen | Objetivo de aprendizaje | Cápsulas |", "|---|---|---:|"]
+    for (origen, objetivo), n in sorted(obj.items()):
+        out.append(f"| {origen} | {objetivo} | {n} |")
+    return out
+
+
+def _versiones_bateria(bateria) -> list[str]:
+    cuenta = defaultdict(lambda: [0, 0])
+    for f in bateria:
+        cuenta[f["brazo"]][0 if f["prompt_vigente"] == "si" else 1] += 1
+    out = ["| Brazo / rótulo de la corrida | Prompt idéntico al vigente | Prompt distinto | Total |",
+           "|---|---:|---:|---:|"]
+    for brazo, (si, no) in sorted(cuenta.items()):
+        out.append(f"| {brazo} | {si} | {no} | {si + no} |")
+    return out
+
+
+RE_LOG = re.compile(r"^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\S* (\w+) (\S+): (.*)$")
+
+
+def _registro_app(vectores: dict, equipo: set[int]) -> list[str]:
+    """Lectura del registro de la aplicación (logs/studify.log), sin modificarlo."""
+    L = ["## Registro de la aplicación (prueba de usuario)", ""]
+    if not REGISTRO_APP.exists():
+        return L + ["No hay registro de la aplicación (`logs/studify.log` no existe).", ""]
+    lineas = [m.groups() for m in map(RE_LOG.match, REGISTRO_APP.read_text(encoding="utf-8").splitlines()) if m]
+    if not lineas:
+        return L + ["El registro está vacío.", ""]
+    rechazos = defaultdict(int)
+    motivos = defaultdict(int)
+    agotadas = defaultdict(list)
+    borrados = []
+    for ts, nivel, origen, msg in lineas:
+        m = re.match(r"cápsula rechazada \(intento (\d)/(\d)", msg)
+        if m:
+            rechazos[m.group(1)] += 1
+            motivos["exceso de palabras" if "el máximo es" in msg
+                    else "falta de palabras" if "el mínimo es" in msg else "otro"] += 1
+            continue
+        m = re.match(r"generación agotada para estudiante=(\d+) objetivo=\d+ \(([^)]+)\)", msg)
+        if m:
+            agotadas[int(m.group(1))].append(m.group(2))
+            continue
+        m = re.match(r"estudiante (\d+) eliminó sus datos \((\d+) cápsulas\)", msg)
+        if m:
+            borrados.append((int(m.group(1)), int(m.group(2))))
+    L += [f"Ventana cubierta por el registro: {lineas[0][0]} a {lineas[-1][0]} (hora local). El registro "
+          "**no anota las generaciones exitosas** ni identifica al estudiante en los rechazos por intento, así "
+          "que no hay denominador para calcular una tasa de fallo por perfil; las cifras son conteos.", "",
+          "| Evento | Conteo |", "|---|---:|"]
+    for k in sorted(rechazos):
+        L.append(f"| Rechazo del validador en el intento {k} | {rechazos[k]} |")
+    for k, n in sorted(motivos.items()):
+        L.append(f"| Rechazos por {k} (todos los intentos) | {n} |")
+    L.append(f"| Generaciones agotadas (3 intentos rechazados) | {sum(len(v) for v in agotadas.values())} |")
+    L.append(f"| Estudiantes que eliminaron sus datos | {len(borrados)} "
+             f"(con {sum(n for _, n in borrados)} cápsulas eliminadas) |")
+    L += ["", "| id_estudiante | Cuenta del equipo | Perfil (etiqueta, último diagnóstico) | Generaciones agotadas | "
+          "Objetivos |", "|---|---|---|---:|---|"]
+    for est, objs in sorted(agotadas.items()):
+        v = vectores.get(est)
+        if v is None:
+            etiqueta = "sin diagnóstico en la BD (datos eliminados)"
+        else:
+            p = {k: Decimal(str(x)) for k, x in v.items()}
+            etiqueta = aplicar_reglas(PerfilVark(v=p["V"], a=p["A"], r=p["R"], k=p["K"])).jerarquia.etiqueta
+        L.append(f"| {est} | {'si' if est in equipo else 'no'} | {etiqueta} | {len(objs)} | "
+                 f"{', '.join(sorted(set(objs)))} |")
+    return L + [""]
+
+
+def escribir_resumen(filas_todas: list[dict], excluidas: list[dict], destino: Path,
+                     vectores: dict, equipo: set[int]) -> None:
+    # Las cápsulas de cuentas del equipo quedan en detalle.csv pero fuera de todo agregado.
+    filas = [f for f in filas_todas if f["cuenta_equipo"] == "no"]
+    equipo_filas = [f for f in filas_todas if f["cuenta_equipo"] == "si"]
     usuario = [f for f in filas if f["origen"] == "usuario"]
     bateria = [f for f in filas if f["origen"] == "bateria"]
-    comparables = [f for f in bateria if f["directivas_coinciden_con_vigentes"] == "si"]
+    comparables = [f for f in bateria if f["prompt_vigente"] == "si"]
+    experimentales = [f for f in bateria if f["prompt_vigente"] != "si"]
     principal = [f for f in filas if f["en_conjunto_principal"] == "si"]
     L: list[str] = []
     L += ["# Adherencia de las cápsulas a las directivas VARK vigentes", "",
@@ -584,11 +793,19 @@ def escribir_resumen(filas: list[dict], excluidas: list[dict], destino: Path) ->
           "es distinta de `no_aplica` (la calcula `studify.vark.rules.aplicar_reglas` sobre `p_V..p_K`).",
           "- *Apareció* = filas con `cumple`. El denominador del % (*n*) son las filas `cumple` + "
           "`no_cumple`; las `no_verificable` quedan fuera del %.",
-          "- Filtros: `origen` (usuario / bateria), `en_conjunto_principal` (usuario + batería "
-          "comparable), `clase` (unimodal / bimodal / multimodal, según "
-          "`studify.vark.hierarchy.derivar`), `tramo_<canal>` para la dosis-respuesta.",
+          "- Todos los agregados excluyen las filas con `cuenta_equipo = si`.",
+          "- Filtros: `origen` (usuario / bateria), `prompt_vigente` (batería comparable = `si`), "
+          "`en_conjunto_principal` (usuario sin cuentas del equipo + batería comparable), `clase` "
+          "(unimodal / bimodal / multimodal, según `studify.vark.hierarchy.derivar`), `tramo_<canal>` para "
+          "la dosis-respuesta.",
           "- Recursos visuales y componentes prácticos usan `recursos_visuales_cumple` y "
-          "`componentes_practicos_cumple`; extensión, `dif_palabras_reglas` y `dif_palabras_prompt`.", "",
+          "`componentes_practicos_cumple`; extensión, `dif_palabras_reglas`, `abs_dif_palabras_reglas` y "
+          "`dif_palabras_prompt`.", "",
+          "**Batería comparable.** Una cápsula de la batería es comparable si su `prompt.txt` contiene, al pie "
+          "de la letra, el mensaje de sistema, la secuencia pedagógica, el bloque de perfil y el bloque de "
+          "formato que hoy arma `rag/orchestrator.py` para su vector (`prompt_vigente = si`). Así quedan fuera "
+          "los brazos experimentales H1/H3 (prompts parchados) y las versiones anteriores del prompt, aunque "
+          "compartan los nombres de las directivas.", "",
           "**Clase del perfil.** Se usa la del código (`hierarchy.derivar`): canales activos = los que "
           "quedan a ≤ 10 puntos del máximo; 1 activo = unimodal, 2 = bimodal, ≥ 3 = multimodal. No es lo "
           "mismo que «un canal ≥ 40 %»: la columna `canales_ge40` del CSV permite el corte alternativo. En "
@@ -597,41 +814,60 @@ def escribir_resumen(filas: list[dict], excluidas: list[dict], destino: Path) ->
           "**Muestras pequeñas.** Toda celda con denominador menor que 10 lleva la marca «(n<10)».", "",
           "## Tamaño de muestra", ""] + _n_por_celda(
               [("usuario", usuario), ("batería comparable", comparables), ("total principal", principal),
-               ("batería completa", bateria), ("total completo", filas)]) + [""]
+               ("batería con prompt distinto del vigente", experimentales), ("batería completa", bateria),
+               ("total completo", filas)]) + [""]
+    L += [f"Prueba de usuario: {len(usuario)} cápsulas de {len({f['id_estudiante'] for f in usuario})} "
+          f"estudiantes; se excluyen además {len(equipo_filas)} cápsulas de "
+          f"{len({f['id_estudiante'] for f in equipo_filas})} cuenta(s) del equipo.", ""]
 
-    nota_comp = ("**Conjunto principal de la batería.** Solo las cápsulas cuyas directivas guardadas en "
-                 "`resultado.json` coinciden exactamente con las que hoy calcula `rules.py` "
-                 "(`directivas_coinciden_con_vigentes = si`): recibieron las mismas instrucciones con que se "
-                 "las mide.")
-    nota_bat = ("Secundaria: todas las cápsulas de la batería medidas contra las reglas vigentes, incluidas "
-                "las generadas con directivas anteriores (ver Advertencia 4).")
-    L += _seccion("Prueba de usuario", usuario)
+    L += ["## Modelo y objetivo de aprendizaje", ""] + _modelos_y_objetivos(filas_todas) + [""]
+    L += ["## Versiones del prompt en la batería", "",
+          "Rótulo tomado de `resumen.json[\"comando\"]` (`base` = prompt de producción de la época; `A`, `B`, "
+          "`A_obj`, `E`, `prefijo` = brazos experimentales H1/H3; `sin rotulo` = corridas anteriores al "
+          "05-oct, que no lo registran). La clasificación que usa el análisis es `prompt_vigente`.", ""]
+    L += _versiones_bateria(bateria) + [""]
+
+    nota_comp = ("**Conjunto principal de la batería**: cápsulas con `prompt_vigente = si` (ver arriba).")
+    nota_exp = ("Brazos experimentales y versiones anteriores del prompt (`prompt_vigente = no`). No representan "
+                "al sistema en producción; se muestran para explicar la diferencia con la batería completa.")
+    nota_bat = "Secundaria: todas las cápsulas de la batería, cualquiera sea su prompt."
+    L += _seccion("Prueba de usuario", usuario,
+                  "Sin las cuentas del equipo. Las cápsulas de usuario no guardan su prompt "
+                  "(`prompt_vigente = no_verificable`); se generaron con el código de producción del 08 al 11-nov.")
     L += _seccion("Batería comparable (principal)", comparables, nota_comp)
     L += _seccion("Total principal (usuario + batería comparable)", principal,
                   "Filtro en el CSV: `en_conjunto_principal = si`.")
+    L += _seccion("Batería con prompt distinto del vigente (no comparable)", experimentales, nota_exp)
     L += _seccion("Batería completa (secundaria)", bateria, nota_bat)
     L += _seccion("Total completo (usuario + batería completa)", filas)
 
-    L += ["## Extensión por perfil — todas las cápsulas", "",
-          f"Las {len(filas)} cápsulas evaluadas (usuario + batería completa), agrupadas por la etiqueta de "
-          "`hierarchy.derivar`. Diferencia con signo = entregadas − objetivo (positivo: se pasó). "
+    L += ["## Extensión por perfil — conjunto principal", "",
+          f"Las {len(principal)} cápsulas del conjunto principal, agrupadas por la etiqueta de "
+          "`hierarchy.derivar`. Diferencia con signo = entregadas − objetivo (positivo: se pasó); error "
+          "absoluto medio = media de |entregadas − objetivo|, que no cancela excesos con faltas. "
           "«Objetivo reglas» = `palabras_texto` de `rules.py`; «objetivo prompt» = lo que vio el modelo "
-          "(redondeado a la decena, tope 270). Columnas del CSV: `dif_palabras_reglas`, "
-          "`dif_palabras_prompt`.", ""]
+          "(redondeado a la decena, tope 270).", ""]
+    L += _palabras_por_perfil(principal) + [""]
+    L += ["## Extensión por perfil — todas las cápsulas", "",
+          f"Las {len(filas)} cápsulas evaluadas (usuario sin cuentas del equipo + batería completa).", ""]
     L += _palabras_por_perfil(filas) + [""]
 
     L += ["## Dosis-respuesta", "",
           "Para cada canal, por tramo de su porcentaje: adherencia a las directivas de ese canal donde "
           "fueron exigidas (pares cápsula×directiva verificables) y presencia del elemento característico "
           "del canal en todas las cápsulas del tramo, se haya exigido o no. Bajo 25 % solo se exigen "
-          "directivas del canal por la regla multimodal o por la de respaldo.", ""]
+          "directivas del canal por la regla multimodal o por la de respaldo. Para K el elemento "
+          "característico es `lista_pasos` o la actividad `flashcards_y_quiz`; `ejemplo_resuelto` se informa "
+          "en una columna aparte porque aparece en casi todos los tramos y no discrimina.", ""]
     for titulo, g in (("Prueba de usuario", usuario), ("Batería comparable (principal)", comparables),
                       ("Total principal", principal), ("Batería completa (secundaria)", bateria)):
         L += [f"### {titulo} (n = {len(g)}{_marca(len(g))})", ""] + (_dosis(g) if g else ["Sin cápsulas.", ""])
 
-    hist_distintas = len(bateria) - len(comparables)
+    L += _registro_app(vectores, equipo)
+
     v_bat = sum(f["p_V"] != "0.00" for f in bateria)
     no_valida = [f for f in filas if f["esquema_vigente_valida"] == "no"]
+    excl_b = [e for e in excluidas if e["origen"] == "bateria"]
     L += ["## Advertencias", "",
           f"1. **Muestras pequeñas.** Prueba de usuario: {len(usuario)} cápsulas de "
           f"{len({f['id_estudiante'] for f in usuario})} estudiantes (varias cápsulas por estudiante comparten "
@@ -639,17 +875,13 @@ def escribir_resumen(filas: list[dict], excluidas: list[dict], destino: Path) ->
           "un porcentaje es poco más que anecdótico.",
           f"2. **Batería sesgada en V.** {len(bateria) - v_bat} de {len(bateria)} cápsulas de la batería tienen "
           "p_V = 0: las directivas visuales casi no se ejercitan en ese conjunto.",
-          "3. **Fragmentos rotulados de BD-U3-02.** La batería usa casi solo el objetivo BD-U3-02, cuyos "
+          "3. **Fragmentos rotulados de BD-U3-02.** La batería usa un único objetivo, BD-U3-02, cuyos "
           "fragmentos vienen rotulados por perfil; eso puede inflar la presencia de `analogia` o "
           "`ejemplo_resuelto` (el modelo copia la forma del material, no necesariamente la directiva).",
-          f"4. **Reglas de otra época.** {hist_distintas} de {len(bateria)} cápsulas de la batería se generaron "
-          "con una lista de directivas distinta de la vigente"
-          + (", así que la «Batería comparable» (principal) coincide con la «Batería completa». "
-             if hist_distintas == 0 else
-             "; la sección «Batería comparable» (principal) aísla las que sí recibieron la misma lista. ")
-          + "Coincidir en los nombres de las directivas no garantiza que el texto del prompt fuera el mismo: "
-          "`INSTRUCCION_POR_DIRECTIVA` y el validador cambiaron después de las corridas de octubre (p. ej., el "
-          "validador exige `flashcards_y_quiz` para `actividad_aplicada` desde el 05-nov-2026).",
+          f"4. **Versiones del prompt.** {len(experimentales)} de {len(bateria)} cápsulas de la batería se "
+          "generaron con un prompt distinto del vigente (brazos experimentales H1/H3 o versiones anteriores), "
+          "aunque sus nombres de directivas coincidan con los vigentes. Por eso la batería principal es la "
+          "comparable (`prompt_vigente = si`).",
           "5. **No verificables.** "
           + " ".join(f"`{d}`: {m}" for d, m in NO_VERIFICABLES.items())
           + " `estructura_jerarquica` se verifica solo en su mitad «encabezado en cada bloque»; el orden "
@@ -663,18 +895,37 @@ def escribir_resumen(filas: list[dict], excluidas: list[dict], destino: Path) ->
           f"7. **Esquema vigente.** {len(no_valida)} cápsulas ya no validan contra `Microcapsula` vigente; "
           "se evalúan igual leyendo el JSON crudo y contando palabras con la misma función "
           "(`contar_palabras`).",
-          "8. **Prueba de usuario.** Se toman todas las cápsulas de `microcapsula_generada` con rol "
-          "`estudiante`; el script no distingue cuentas de prueba del equipo, si las hubiera "
-          "(columna `id_estudiante`).", "",
-          f"### Cápsulas excluidas ({len(excluidas)})", ""]
-    if excluidas:
-        motivos = defaultdict(list)
-        for e in excluidas:
-            motivos[(e["origen"], e["motivo"])].append(e)
-        for (origen, motivo), es in sorted(motivos.items()):
-            L.append(f"- {origen} — {motivo}: {len(es)}")
-            L += [f"  - `{e['id']}`" + (f" — {e['detalle']}" if e.get("detalle") else "") for e in es]
-    else:
+          f"8. **Cuentas del equipo.** {len(equipo_filas)} cápsulas de la prueba de usuario pertenecen a "
+          "cuentas del equipo (`cuenta_equipo = si`, lista local en `data/adherencia/cuentas_equipo.txt`) y "
+          "quedan fuera de los agregados. Solo se pudo identificar con certeza la cuenta listada; no se puede "
+          "descartar que otra cuenta sea de un integrante.",
+          f"9. **Supervivencia.** Las {len(excl_b)} corridas de la batería sin cápsula, las generaciones "
+          "agotadas del registro y las cápsulas de estudiantes que eliminaron sus datos no entran al análisis; "
+          "la adherencia se mide solo sobre cápsulas que pasaron el validador.", "",
+          f"### Cápsulas excluidas ({len(excluidas) + len(equipo_filas)})", ""]
+    if excl_b:
+        pr49 = sum(e["p_R"] >= 49 for e in excl_b)
+        pr40 = sum(e["p_R"] >= UMBRAL_ALTO for e in excl_b)
+        por_etiqueta = defaultdict(int)
+        for e in excl_b:
+            por_etiqueta[e["etiqueta"]] += 1
+        exceso = sum("máximo" in e.get("detalle", "") for e in excl_b)
+        falta = sum("mínimo" in e.get("detalle", "") for e in excl_b)
+        L += [f"Batería, sin cápsula: {len(excl_b)} (por exceder el máximo de palabras: {exceso}; por no "
+              f"alcanzar el mínimo: {falta}; otro motivo: {len(excl_b) - exceso - falta}); con p_R ≥ 40: {pr40}; "
+              f"con p_R ≥ 49: {pr49}. Por perfil: "
+              + ", ".join(f"{k} {n}" for k, n in sorted(por_etiqueta.items(), key=lambda kv: (-kv[1], kv[0])))
+              + ".", ""]
+    if equipo_filas:
+        L.append(f"- usuario — cuenta del equipo: {len(equipo_filas)}")
+        L += [f"  - `{f['id']}`" for f in equipo_filas]
+    motivos = defaultdict(list)
+    for e in excluidas:
+        motivos[(e["origen"], e["motivo"])].append(e)
+    for (origen, motivo), es in sorted(motivos.items()):
+        L.append(f"- {origen} — {motivo}: {len(es)}")
+        L += [f"  - `{e['id']}`" + (f" — {e['detalle']}" if e.get("detalle") else "") for e in es]
+    if not excluidas and not equipo_filas:
         L.append("Ninguna.")
     destino.write_text("\n".join(L) + "\n", encoding="utf-8")
 
@@ -728,11 +979,12 @@ def main() -> None:
     args = ap.parse_args()
     sys.stdout.reconfigure(encoding="utf-8")
 
-    usuario, excl_u = cargar_usuario()
+    usuario, excl_u, vectores = cargar_usuario()
+    equipo = cuentas_equipo()
     bateria, excl_b = cargar_bateria()
     capsulas = usuario + bateria
     excluidas = excl_u + excl_b
-    filas = [evaluar(c) for c in capsulas]
+    filas = [evaluar(c, equipo) for c in capsulas]
 
     por_id = {c["id"]: (c, f) for c, f in zip(capsulas, filas)}
     for ident in args.ejemplo:
@@ -747,7 +999,7 @@ def main() -> None:
 
     DIR_SALIDA.mkdir(parents=True, exist_ok=True)
     escribir_csv(filas, DIR_SALIDA / "detalle.csv")
-    escribir_resumen(filas, excluidas, DIR_SALIDA / "resumen.md")
+    escribir_resumen(filas, excluidas, DIR_SALIDA / "resumen.md", vectores, equipo)
     print(f"{len(usuario)} usuario + {len(bateria)} batería = {len(filas)} cápsulas; "
           f"{len(excluidas)} excluidas. Salidas en {DIR_SALIDA.relative_to(RAIZ)}")
 
