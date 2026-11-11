@@ -27,18 +27,18 @@ avance ya entregado) y el plan de implementación derivado, [`PLAN_DESARROLLO.md
 
 | Área | Estado | Dónde |
 |---|---|---|
-| **Fase 1 — Perfil VARK** | Cerrada. 16 ítems → puntajes → vector porcentual → pesos C_* → reglas de la tabla 11.1. | §5, §5 ter |
-| **Fase 2 — Base de conocimiento** | Cerrada. Ingesta de PDF/PPTX con página, curación humana, retriever SQL sin embeddings, etiquetado asistido por LLM y borrado de documentos desde el panel. | §5 septies, §5 septendecies, §5 quatertricies |
-| **Fase 3 — Generación** | Cerrada. Contrato de siete pasos, validador, bucle de reparación y caché por huella. Batería VARK del 03-oct (con `deepseek-chat`): 29/30 cápsulas válidas, 26 a la primera (96,7 %), 0 citas inventadas. Desde el 11-nov el validador acepta hasta 350 palabras (el prompt sigue pidiendo máximo 300). | §5 octies, §5 terdecies, §5 quatervicies, §5 quadragies |
-| **Fase 4 — Interfaz** | Cerrada y rediseñada el 02-oct: cuestionario, perfil, catálogo, visor y panel del docente con login. | §5 nonies, §5 duovicies |
-| **Grupos del estudio A/B** | Experimental (rol `estudiante`): cuestionario VARK, cápsula adaptada y narración con p_A ≥ 25 %. Control (rol `control`): sin cuestionario, cápsula básica sin adaptación (resumen y `quiz_mc`, caché `control-neutro-v1`) y sin audio. Los dos eligen su grupo al entrar con Google. Métricas del panel y exportación CSV de intentos separadas por grupo. | §5 septtricies, §5 undequadragies |
-| **Acceso Google** | Única forma de entrar para los dos grupos, con elección obligatoria de grupo; vincula el perfil local y recupera el mismo estudiante. Credenciales cargadas en la máquina 1 el 02-nov; falta probarlo con una cuenta real de cada grupo y rotar el secret (O6). | §5 octtricies, §5 undequadragies |
-| **Marco legal** | Términos 0.5 y Política 0.7, consentimiento registrado, `/mis-datos` y código bajo AGPL-3.0-or-later. | §5 tervicies, §5 tritricies, §5 undequadragies |
-| **Audio (Fase 6)** | Kokoro y Piper según la preferencia de voz del estudiante, con caché por huella. | §5 duodetricies a §5 duotricies |
-| **Imagen (Fase 6)** | En pausa. El módulo Visual (SVG dibujado a partir de una especificación del LLM) está propuesto, sin integrar a la app. | §5 quatertricies |
+| **Fase 1 — Perfil VARK** | Cerrada. 16 ítems → puntajes → vector porcentual → pesos C_* → reglas de la tabla 11.1. | §5.1, §5.2 |
+| **Fase 2 — Base de conocimiento** | Cerrada. Ingesta de PDF/PPTX con página, curación humana, retriever SQL sin embeddings, etiquetado asistido por LLM y borrado de documentos desde el panel. | §5.5, §5.15, §5.30 |
+| **Fase 3 — Generación** | Cerrada. Contrato de siete pasos, validador, bucle de reparación y caché por huella. Batería VARK del 03-oct (con `deepseek-chat`): 29/30 cápsulas válidas, 26 a la primera (96,7 %), 0 citas inventadas. Desde el 11-nov el validador acepta hasta 350 palabras (el prompt sigue pidiendo máximo 300). | §5.6, §5.11, §5.22, §5.36 |
+| **Fase 4 — Interfaz** | Cerrada y rediseñada el 02-oct: cuestionario, perfil, catálogo, visor y panel del docente con login. | §5.7, §5.20 |
+| **Grupos del estudio A/B** | Experimental (rol `estudiante`): cuestionario VARK, cápsula adaptada y narración con p_A ≥ 25 %. Control (rol `control`): sin cuestionario, cápsula básica sin adaptación (resumen y `quiz_mc`, caché `control-neutro-v1`) y sin audio. Los dos eligen su grupo al entrar con Google. Métricas del panel y exportación CSV de intentos separadas por grupo. | §5.33, §5.35 |
+| **Acceso Google** | Única forma de entrar para los dos grupos, con elección obligatoria de grupo; vincula el perfil local y recupera el mismo estudiante. Credenciales cargadas en la máquina 1 el 02-nov; falta probarlo con una cuenta real de cada grupo y rotar el secret (O6). | §5.34, §5.35 |
+| **Marco legal** | Términos 0.5 y Política 0.7, consentimiento registrado, `/mis-datos` y código bajo AGPL-3.0-or-later. | §5.21, §5.29, §5.35 |
+| **Audio (Fase 6)** | Kokoro y Piper según la preferencia de voz del estudiante, con caché por huella. | §5.26 a §5.28 |
+| **Imagen (Fase 6)** | En pausa. El módulo Visual (SVG dibujado a partir de una especificación del LLM) está propuesto, sin integrar a la app. | §5.30 |
 | **Fase 5 — Evaluación** | Los dos grupos del A/B y sus datos están listos en la app. Faltan la prueba pre/post común, la batería técnica, la validación docente y la TAM. | `PENDIENTES.md` E |
-| **Modelo** | `deepseek-flash` con el razonamiento apagado (`LLM_THINKING=disabled`) desde el 11-oct. | §5 quatertricies |
-| **Suite local** | Con Postgres (Docker del autor): 769 pasan, 2 omitidas, 0 fallan; sin base: 452 pasan, 315 omitidas y 4 fallan (R10). Tests node: 7 + 5 comprobaciones. | §5 undequadragies |
+| **Modelo** | `deepseek-flash` con el razonamiento apagado (`LLM_THINKING=disabled`) desde el 11-oct. | §5.30 |
+| **Suite local** | Con Postgres (Docker del autor): 769 pasan, 2 omitidas, 0 fallan; sin base: 452 pasan, 315 omitidas y 4 fallan (R10). Tests node: 7 + 5 comprobaciones. | §5.35 |
 
 Lo primero que falta antes del piloto con estudiantes está al inicio de
 [`PENDIENTES.md`](PENDIENTES.md).
@@ -48,8 +48,8 @@ Lo primero que falta antes del piloto con estudiantes está al inicio de
 - §2 y §3 son las decisiones de stack y la instalación **tal como quedaron en agosto**. §4 es
   la estructura del repositorio, al día al 08-nov-2026.
 - §5 es la bitácora, en orden: cada sección cuenta qué se hizo, qué se encontró y cómo se
-  verificó. El código cita estas secciones por su nombre («AVANCE.md sección 5 sedecies»), así
-  que no se renumeran.
+  verificó. El código y los demás documentos citan estas secciones por su número (`§5.14`);
+  si se agrega una, va al final con el número siguiente.
 - §6 y §7 son las listas de pendientes de su época, que ya no se actualizan.
 - §8 son las correcciones detectadas en el informe y §9 cómo retomar el trabajo.
 
@@ -57,42 +57,42 @@ Lo primero que falta antes del piloto con estudiantes está al inicio de
 
 | Sección | Fecha | Tema |
 |---|---|---|
-| 5 | 06-ago | Fase 1: modelo de datos y motor VARK |
-| 5 ter | 06-ago | Carga de los 43 diagnósticos reales; las tablas 16.2/16.3 no se reproducen |
-| 5 quinquies | 06-ago | `POST /api/diagnosticos` |
-| 5 sexies | 07-ago | Primera UI mínima |
-| 5 septies | 10-ago | Fase 2: ingesta, curación y retriever |
-| 5 octies | 11-ago | Fase 3: motor de generación, caché y versionado |
-| 5 nonies | 11-ago | Fase 4: UI conectada al motor |
-| 5 decies | 12-ago | Panel de analíticas del docente: tres bugs de fondo |
-| 5 undecies | 13-ago | Rebranding a RepasAi y fondo de marca |
-| 5 duodecies | 14-ago | Alta de objetivos desde el panel |
-| 5 terdecies | 19-ago | Estructura pedagógica de siete pasos |
-| 5 quaterdecies | 24-ago | Verificación de los 16 enunciados VARK |
-| 5 quindecies | 24-ago | Simulador: comparación V/A/R/K |
-| 5 sedecies | 24-ago | Por qué fallaba el perfil R: dos causas |
-| 5 septendecies | 24-ago | Etiquetado asistido por LLM (`tagger.py`) |
-| 5 duodevicies | 26-ago | Login del docente |
-| 5 undevicies | 26-ago | Credencial de fábrica `admin`/`admin123` |
-| 5 vicies | 26-ago | Los tests ensuciaban la base |
-| 5 unvicies | 26-ago | Cierre de `/api/*` del docente |
-| 5 duovicies | 02-oct | Rediseño completo del frontend |
-| 5 tervicies | 02-oct | Marco legal: Términos, Privacidad, consentimiento y derechos |
-| 5 quatervicies | 03-oct | Batería de pruebas VARK de punta a punta |
-| 5 quinvicies | 04-oct | H1 + H3 medidos y no aplicados; H9 |
-| 5 sexvicies | 04-oct | H2: el bucle de reparación ya no repite |
-| 5 septvicies | 04-oct | H5: la API ya no sintetiza audio ni imagen |
-| 5 duodetricies | 05-oct | Motores de voz, Etapa 1 |
-| 5 undetricies | 05-oct | Preferencia de voz, Etapa 2 |
-| 5 duotricies | 05-oct | Caché del audio por huella (H10) |
-| 5 tritricies | 05-oct | Licencia AGPL-3.0-or-later y legal 0.2 |
-| 5 quatertricies | 10–11-oct | Migración a `deepseek-flash`, módulo Visual y borrado de documentos |
-| 5 quintricies | 16–17-oct | Revisión de código y cinco correcciones |
-| 5 sextricies | 24-oct | R2: dos estudiantes en el mismo computador («Salir», «¿Eres tú?») |
-| 5 septtricies | 01-nov | Grupo control con perfil general fijo de los 43 encuestados |
-| 5 octtricies | 01-nov | Google OpenID Connect, vinculación y recuperación del perfil (D6) |
-| 5 undequadragies | 04–08-nov | Estudio A/B, Etapas 1 y 2: cápsula básica del control, grupo en el login y datos por grupo |
-| 5 quadragies | 11-nov | El validador acepta hasta 350 palabras; el prompt sigue pidiendo máximo 300 |
+| 5.1 | 06-ago | Fase 1: modelo de datos y motor VARK |
+| 5.2 | 06-ago | Carga de los 43 diagnósticos reales; las tablas 16.2/16.3 no se reproducen |
+| 5.3 | 06-ago | `POST /api/diagnosticos` |
+| 5.4 | 07-ago | Primera UI mínima |
+| 5.5 | 10-ago | Fase 2: ingesta, curación y retriever |
+| 5.6 | 11-ago | Fase 3: motor de generación, caché y versionado |
+| 5.7 | 11-ago | Fase 4: UI conectada al motor |
+| 5.8 | 12-ago | Panel de analíticas del docente: tres bugs de fondo |
+| 5.9 | 13-ago | Rebranding a RepasAi y fondo de marca |
+| 5.10 | 14-ago | Alta de objetivos desde el panel |
+| 5.11 | 19-ago | Estructura pedagógica de siete pasos |
+| 5.12 | 24-ago | Verificación de los 16 enunciados VARK |
+| 5.13 | 24-ago | Simulador: comparación V/A/R/K |
+| 5.14 | 24-ago | Por qué fallaba el perfil R: dos causas |
+| 5.15 | 24-ago | Etiquetado asistido por LLM (`tagger.py`) |
+| 5.16 | 26-ago | Login del docente |
+| 5.17 | 26-ago | Credencial de fábrica `admin`/`admin123` |
+| 5.18 | 26-ago | Los tests ensuciaban la base |
+| 5.19 | 26-ago | Cierre de `/api/*` del docente |
+| 5.20 | 02-oct | Rediseño completo del frontend |
+| 5.21 | 02-oct | Marco legal: Términos, Privacidad, consentimiento y derechos |
+| 5.22 | 03-oct | Batería de pruebas VARK de punta a punta |
+| 5.23 | 04-oct | H1 + H3 medidos y no aplicados; H9 |
+| 5.24 | 04-oct | H2: el bucle de reparación ya no repite |
+| 5.25 | 04-oct | H5: la API ya no sintetiza audio ni imagen |
+| 5.26 | 05-oct | Motores de voz, Etapa 1 |
+| 5.27 | 05-oct | Preferencia de voz, Etapa 2 |
+| 5.28 | 05-oct | Caché del audio por huella (H10) |
+| 5.29 | 05-oct | Licencia AGPL-3.0-or-later y legal 0.2 |
+| 5.30 | 10–11-oct | Migración a `deepseek-flash`, módulo Visual y borrado de documentos |
+| 5.31 | 16–17-oct | Revisión de código y cinco correcciones |
+| 5.32 | 24-oct | R2: dos estudiantes en el mismo computador («Salir», «¿Eres tú?») |
+| 5.33 | 01-nov | Grupo control con perfil general fijo de los 43 encuestados |
+| 5.34 | 01-nov | Google OpenID Connect, vinculación y recuperación del perfil (D6) |
+| 5.35 | 04–08-nov | Estudio A/B, Etapas 1 y 2: cápsula básica del control, grupo en el login y datos por grupo |
+| 5.36 | 11-nov | El validador acepta hasta 350 palabras; el prompt sigue pidiendo máximo 300 |
 
 ---
 
@@ -111,7 +111,7 @@ Lo primero que falta antes del piloto con estudiantes está al inicio de
 
 ---
 
-## 2 bis. Decisiones tomadas en la Fase 1 (06-ago-2026)
+## 2.1. Decisiones tomadas en la Fase 1 (06-ago-2026)
 
 | Decisión | Alternativa descartada | Motivo |
 |---|---|---|
@@ -164,7 +164,7 @@ Coincide exactamente con las credenciales de `docker-compose.yml` y con `DATABAS
    fuentes institucionales validadas')` → stemming correcto, y
    `@@ plainto_tsquery('spanish', 'fuentes validadas')` → `True`.
 
-### 3 bis. Segundo computador del equipo (06-ago-2026)
+### 3.1. Segundo computador del equipo (06-ago-2026)
 
 El proyecto ya corre en una segunda máquina, en la ruta
 `C:\Users\vleon\Documents\proyectos\SpotCheck\Studify` (la de la sección anterior era
@@ -192,11 +192,11 @@ computador.
 `docs/seminario_titulo.md` el 06-ago-2026 y el enlace de la sección 0 se corrigió en
 consecuencia. No volver a sacarlo del repo.
 
-### 3 ter. Los 43 diagnósticos reales cargados en la Máquina 1 (10-ago-2026)
+### 3.2. Los 43 diagnósticos reales cargados en la Máquina 1 (10-ago-2026)
 
 `data/data_cuestionarios_43.csv` (no versionado — está en `.gitignore`) llegó a esta máquina y se
 cargó con `python scripts/import_vark_csv.py data/data_cuestionarios_43.csv --reset`. El
-`--dry-run` previo reprodujo exactamente los promedios ya documentados en la sección 5 ter
+`--dry-run` previo reprodujo exactamente los promedios ya documentados en la sección 5.2
 (V=5,44 A=7,37 R=7,23 K=7,91), confirmando que es el mismo dataset que en la máquina de Patricio.
 `--reset` solo toca `estudiante` (con CASCADE a diagnóstico/respuestas/configuración) — no afecta
 `objetivo_aprendizaje`, `documento_fuente` ni `fragmento`. Reemplazó 28 diagnósticos que eran
@@ -205,7 +205,7 @@ Verificado: `estudiante`, `diagnostico_vark` y `configuracion_contenido` quedaro
 
 > ⚠️ **Volvió a pasar.** Esta limpieza barrió el resultado pero no la causa: `pytest` siguió
 > sumando estudiantes en cada corrida y al 26-ago-2026 había otra vez **157 diagnósticos** para
-> 43 reales. La fixture que lo cierra de raíz se agregó ese día — ver sección 5 vicies.
+> 43 reales. La fixture que lo cierra de raíz se agregó ese día — ver sección 5.18.
 
 **Distinción importante para no confundir en sesiones futuras:** este CSV son las **respuestas
 del cuestionario VARK** (dato de estudiantes). No es el **catálogo de objetivos de aprendizaje**
@@ -240,12 +240,12 @@ Studify/
 │     ├─ 8010505ef66e_*.py  # Fase 3: huella_generacion + modelo_llm en la cápsula
 │     ├─ 5e11a9cf4a0b_*.py  # tabla interaccion_quiz
 │     ├─ 2fbc7391c0a3_*.py  # numero_intento + actividades abiertas
-│     ├─ aaf2d3de8b4e_*.py  # tabla aceptacion_legal (02-oct, §5 tervicies)
-│     ├─ c3a91f5e7d20_*.py  # estudiante.voz_genero / voz_modo (05-oct, §5 undetricies)
+│     ├─ aaf2d3de8b4e_*.py  # tabla aceptacion_legal (02-oct, §5.21)
+│     ├─ c3a91f5e7d20_*.py  # estudiante.voz_genero / voz_modo (05-oct, §5.27)
 │     ├─ d7e2b9c41a58_*.py  # corrección en el servidor y detalle de cuestionarios (17-oct)
-│     ├─ e5c1a7b39d42_*.py  # estudiante.origen_registro (24-oct, §5 sextricies)
-│     ├─ f6b2c8d40e53_*.py  # estudiante.rol: estudiante | control (01-nov, §5 septtricies)
-│     └─ a7c3d9e51f64_*.py  # identidad Google + tabla intento_google (01-nov, §5 octtricies)
+│     ├─ e5c1a7b39d42_*.py  # estudiante.origen_registro (24-oct, §5.32)
+│     ├─ f6b2c8d40e53_*.py  # estudiante.rol: estudiante | control (01-nov, §5.33)
+│     └─ a7c3d9e51f64_*.py  # identidad Google + tabla intento_google (01-nov, §5.34)
 │                           # ⚠️ en todas, autogenerate quiere borrar el índice GIN
 │                           #   ix_fragmento_contenido_fts: se quita a mano (PENDIENTES.md)
 ├─ src/studify/
@@ -266,10 +266,10 @@ Studify/
 │  │  ├─ chunker.py      # bloques → fragmentos recuperables (fronteras duras)
 │  │  ├─ ingest.py       # persistencia + dedup por SHA-256 + almacén de archivos
 │  │  ├─ curation.py     # validar / descartar / asignar objetivo / editar texto
-│  │  └─ tagger.py       # sugerencia de objetivo/etiqueta por LLM: propone, no decide (§5 septendecies)
+│  │  └─ tagger.py       # sugerencia de objetivo/etiqueta por LLM: propone, no decide (§5.15)
 │  ├─ rag/
 │  │  ├─ retriever.py    # SQL por id_objetivo + FTS español + orden por canal VARK
-│  │  ├─ orchestrator.py # ensamblado del prompt maestro + huella de caché (§5 quintricies)
+│  │  ├─ orchestrator.py # ensamblado del prompt maestro + huella de caché (§5.31)
 │  │  └─ prompts/
 │  │     ├─ maestro.py   # plantillas + directiva VARK → instrucción estructural
 │  │     └─ visual.py    # prompt del módulo Visual; la app todavía no lo usa (PENDIENTES.md X1)
@@ -287,7 +287,7 @@ Studify/
 │  │  └─ routers/
 │  │     ├─ diagnostics.py  # POST /api/diagnosticos, GET /api/diagnosticos/{id}
 │  │     ├─ knowledge.py    # documentos, fragmentos, curación, catálogo, recuperar
-│  │     │                  #   (router_docente: exige credencial, §5 unvicies)
+│  │     │                  #   (router_docente: exige credencial, §5.19)
 │  │     └─ capsules.py     # POST /api/capsulas (caché, ?regenerar, historial), quiz y corrección
 │  ├─ public/animacionCarga.mp4  # video de carga anterior, ya sin uso (licencia: PENDIENTES.md L7)
 │  └─ web/
@@ -345,7 +345,7 @@ Studify/
 
 ---
 
-## 5. Qué se hizo y se verificó en la Fase 1 (06-ago-2026)
+## 5.1. Qué se hizo y se verificó en la Fase 1 (06-ago-2026)
 
 **Modelo de datos — las 8 entidades del cap. 17, migradas y aplicadas.**
 
@@ -393,7 +393,7 @@ Estado de las verificaciones: **41 tests VARK + 2 de salud = 43 passed**, `ruff 
 
 ---
 
-## 5 ter. Carga de los 43 diagnósticos reales (06-ago-2026)
+## 5.2. Carga de los 43 diagnósticos reales (06-ago-2026)
 
 Los 43 registros del Google Forms (`data/data_cuestionarios_43.csv`, no versionado) están
 cargados en Postgres: 43 estudiantes, 43 diagnósticos, **1.202 respuestas individuales**, 43
@@ -451,7 +451,7 @@ multimodal pese a que A y R están a 37 puntos de K. La fila 7 se conserva, pero
 
 ---
 
-## 5 quinquies. `POST /api/diagnosticos` — el flujo completo por HTTP
+## 5.3. `POST /api/diagnosticos` — el flujo completo por HTTP
 
 Con esto la Fase 1 queda cerrada según su criterio de término. Archivos nuevos:
 
@@ -479,7 +479,7 @@ Los tests que tocan la base **se saltan solos si Postgres no está levantado**, 
 
 ---
 
-## 5 sexies. UI Mínima Funcional (07-ago-2026)
+## 5.4. UI Mínima Funcional (07-ago-2026)
 
 Se adelantó el desarrollo de un andamiaje visual para la Fase 4 creando una maqueta UI funcional para interactuar con el motor.
 - **Tecnologías:** FastAPI (servidor), Jinja2 (plantillas renderizadas en servidor), HTMX (interactividad, reemplazo de fragmentos sin SPA) y Vanilla CSS (diseño limpio, premium, sin frameworks pesados).
@@ -489,7 +489,7 @@ Se adelantó el desarrollo de un andamiaje visual para la Fase 4 creando una maq
 
 ---
 
-## 5 septies. Fase 2 — Ingesta, curación y retriever determinista (10-ago-2026)
+## 5.5. Fase 2 — Ingesta, curación y retriever determinista (10-ago-2026)
 
 Cierra el núcleo de la base de conocimiento: entra un PDF/PPTX oficial, sale material curado
 que el retriever puede recuperar de forma determinista y trazable.
@@ -560,12 +560,12 @@ retriever. Mitigarlo pide comparar el texto extraído y no los bytes.
 
 ---
 
-## 5 octies. Fase 3 — Motor de generación (11-ago-2026)
+## 5.6. Fase 3 — Motor de generación (11-ago-2026)
 
 Cierra el motor completo: entra un `(id_estudiante, id_objetivo)` y sale una microcápsula
 validada, en español, con quiz y con fuentes verificables contra el material curado.
 
-> ⚠️ **Leer junto con la sección 5 terdecies (19-ago-2026).** La *forma* de la microcápsula que
+> ⚠️ **Leer junto con la sección 5.11 (19-ago-2026).** La *forma* de la microcápsula que
 > describe esta sección —`contenido[]`, una lista de bloques sueltos— fue reemplazada por la
 > estructura pedagógica de siete pasos que definió la profesora guía. Todo lo demás de esta
 > sección (las seis reglas del validador, el bucle de reparación, la huella de caché, el
@@ -669,11 +669,11 @@ Con la credencial real de DeepSeek y material curricular genuino (objetivo 369),
 (latencia ~5,5 s; resultados en `data/resultados_evaluacion.csv`, fuera del repo). Qwen y GLM
 fallaron por **autorización**, no por calidad. Por eso es más preciso decir que DeepSeek se
 seleccionó por ser **el único candidato que se pudo medir**, no que ganó una comparación de
-tres. Desde el 11-oct-2026 se usa `deepseek-flash` (sección 5 quatertricies).
+tres. Desde el 11-oct-2026 se usa `deepseek-flash` (sección 5.30).
 
 ---
 
-## 5 nonies. Fase 4 — UI mínima funcional conectada al motor (11-ago-2026)
+## 5.7. Fase 4 — UI mínima funcional conectada al motor (11-ago-2026)
 
 Cierra el pendiente n.º 2 de la sección 6: `web/routers/student.py` y `teacher.py` ya no
 tienen `MOCK_FRAGMENTS` ni cápsulas escritas a mano. Cada vista llama al **mismo handler**
@@ -748,7 +748,7 @@ la credencial.
 
 ---
 
-## 5 decies. Panel de analíticas del docente — auditoría y correcciones (12-ago-2026)
+## 5.8. Panel de analíticas del docente — auditoría y correcciones (12-ago-2026)
 
 Antes de esta sesión ya existían cinco vistas nuevas para el docente, construidas sobre el
 motor real: **Historial de cápsulas**, **Cobertura curricular**, **Rendimiento en quizzes**,
@@ -879,13 +879,13 @@ docente) es alcance adicional que no estaba en el plan de 10 semanas original. V
    viva.
 3. **Higiene de repo:** `scripts/reset_db.py` sigue sin confirmación antes de `drop_all`; la
    base de datos está vacía en esta máquina (0 objetivos, 0 diagnósticos, 0 fragmentos, 0
-   cápsulas) pese a lo que las secciones 3 ter/5 quinquies de arriba describen como cargado —
+   cápsulas) pese a lo que las secciones 3.2/5.3 de arriba describen como cargado —
    hay que volver a correr `import_vark_csv.py` y `cargar_objetivos.py` antes de usar el panel
    con datos reales.
 
 ---
 
-## 5 undecies. Rebranding a "RepasAi" y fondo de marca (13-ago-2026)
+## 5.9. Rebranding a "RepasAi" y fondo de marca (13-ago-2026)
 
 Cambios de UI hechos directamente por Vicente (commit `7b34ba3`, fuera de una sesión de
 trabajo asistida) — se documentan acá para que este archivo siga reflejando el estado real de
@@ -895,7 +895,7 @@ la interfaz.
   logo en el header). Es solo el nombre visible en la UI — el paquete Python (`studify`), el
   repositorio, `PLAN_DESARROLLO.md` y el resto de la documentación siguen diciendo "Studify".
   Si el cambio de nombre se vuelve definitivo, falta decidir hasta dónde propagarlo.
-> ⚠️ **Superado en parte el 02-oct-2026** (sección 5 duovicies): la textura ya no es el fondo de
+> ⚠️ **Superado en parte el 02-oct-2026** (sección 5.20): la textura ya no es el fondo de
 > toda la web. Quedó como decoración de la landing, monocroma y teñida según el tema claro/oscuro.
 
 - **Fondo de marca en toda la web:** textura repetible de íconos educativos (libro, lápiz,
@@ -915,7 +915,7 @@ encima.
 
 ---
 
-## 5 duodecies. Alta de objetivos de aprendizaje desde el panel del docente (14-ago-2026)
+## 5.10. Alta de objetivos de aprendizaje desde el panel del docente (14-ago-2026)
 
 Cierra una brecha entre lo que el backend ya podía hacer y lo que la UI ofrecía:
 `POST /api/objetivos` existe desde la Fase 2, pero nunca se conectó a ninguna pantalla — la
@@ -974,7 +974,7 @@ validarlos, porque no aportan contenido y ensuciarían las cápsulas generadas s
 
 ---
 
-## 5 terdecies. Estructura pedagógica de siete pasos (19-ago-2026)
+## 5.11. Estructura pedagógica de siete pasos (19-ago-2026)
 
 La profesora guía revisó el avance y observó que **el informe no define qué estructura tiene
 una microcápsula**. Propuso una, y esta sección la implementa. Es el cambio más profundo desde
@@ -1057,9 +1057,9 @@ Tres puntos quedaron fuera a propósito y conviene tenerlos claros para la próx
 
 ---
 
-## 5 quaterdecies. Verificación de los 16 enunciados VARK (24-ago-2026)
+## 5.12. Verificación de los 16 enunciados VARK (24-ago-2026)
 
-Cierra el pendiente n.º 6 de la sección 6, abierto desde la Fase 4 (sección 5 nonies,
+Cierra el pendiente n.º 6 de la sección 6, abierto desde la Fase 4 (sección 5.7,
 11-ago-2026): `web/textos.py` mostraba los 16 enunciados del cuestionario con un aviso de que
 eran una "redacción equivalente, reconstruida desde las alternativas", y que había que
 reemplazarlos por los originales del CSV antes de aplicarle el instrumento a más estudiantes.
@@ -1100,7 +1100,7 @@ exportación, no una diferencia de contenido.
 
 ---
 
-## 5 quindecies. Simulador: comparación V/A/R/K lado a lado (24-ago-2026)
+## 5.13. Simulador: comparación V/A/R/K lado a lado (24-ago-2026)
 
 Cierra la mitad del pendiente n.º 10 de la sección 6 (queda abierta la otra mitad, "perfiles
 reales de la cohorte") y con ella el criterio de término de la Fase 3 en
@@ -1137,7 +1137,7 @@ abrir cuatro pestañas y acordarse de lo que decía cada una.
 ### Verificación contra el modelo real, no solo tests
 
 Con los 13 tests nuevos en verde (`tests/test_web_simulador.py`, 8→13) se hizo además una
-corrida real contra DeepSeek —igual que en la Fase 3 y en la sección 5 terdecies—, sembrando
+corrida real contra DeepSeek —igual que en la Fase 3 y en la sección 5.11—, sembrando
 un objetivo y un fragmento de prueba y llamando al endpoint sin sustituir el cliente LLM.
 
 **Resultado: 3 de 4 columnas salieron válidas y visiblemente distintas entre sí**, que es
@@ -1167,7 +1167,7 @@ se borraron después: la base quedó exactamente como estaba antes de la corrida
 
 ---
 
-## 5 sedecies. Por qué falla el perfil R: dos causas encontradas y corregidas (24-ago-2026)
+## 5.14. Por qué falla el perfil R: dos causas encontradas y corregidas (24-ago-2026)
 
 Cierra —parcialmente— el pendiente n.º 15 que dejó la sección anterior. No es una corrección
 de un test: es una investigación sobre el motivo de un fallo real contra el modelo, con dos
@@ -1367,7 +1367,7 @@ de las tres corridas nuevas contra el modelo real se borraron al terminar cada u
 
 ---
 
-## 5 septendecies. Etiquetado asistido por LLM — `knowledge/tagger.py` (24-ago-2026)
+## 5.15. Etiquetado asistido por LLM — `knowledge/tagger.py` (24-ago-2026)
 
 Cierra el pendiente n.º 3 de la sección 6. Quedó fuera de la Fase 2 porque entonces no había
 credencial de LLM; desde el 13-ago-2026 sí la hay, así que el único motivo real para no
@@ -1437,7 +1437,7 @@ esta entrega).
 
 ---
 
-## 5 duodevicies. Separación de vistas: login del docente (26-ago-2026)
+## 5.16. Separación de vistas: login del docente (26-ago-2026)
 
 Hasta hoy la aplicación tenía **una sola cara**. La cabecera compartida
 (`base.html`) mostraba las tres pestañas del docente junto a las del estudiante,
@@ -1463,7 +1463,7 @@ infraestructura que nadie va a usar y que además hay que justificar en el
 capítulo de modelo de datos, donde no existe.
 
 Se implementó entonces una credencial única (`TEACHER_USERNAME`/`TEACHER_PASSWORD`,
-con **`admin`/`admin123` como valor de fábrica** — ver sección 5 undevicies) que
+con **`admin`/`admin123` como valor de fábrica** — ver sección 5.17) que
 abre las tres vistas del panel. Si el proyecto llegara a tener varios docentes
 con material propio, el punto de cambio es una sola función
 (`sesion.verificar_credenciales_docente`) y el resto del andamiaje —guardián,
@@ -1516,8 +1516,8 @@ deliberado: si el guardián se rompiera o el login dejara de emitir una cookie
 válida, esa suite se cae entera en vez de seguir verde sobre una puerta que ya
 no cierra.
 
-**327 tests en verde** (308 + 19) al cierre de esta entrega — ver sección 5
-undevicies para los 3 que se agregaron después el mismo día. `ruff check`
+**327 tests en verde** (308 + 19) al cierre de esta entrega — ver sección 5.17
+para los 3 que se agregaron después el mismo día. `ruff check`
 limpio sobre todo lo tocado; la única excepción del repositorio sigue siendo
 `web/textos.py:33`, que es un enunciado literal del instrumento y es anterior y
 ajena a este cambio.
@@ -1534,9 +1534,9 @@ la red».
 
 ---
 
-## 5 undevicies. La credencial del docente pasa a tener valor de fábrica: `admin` / `admin123` (26-ago-2026)
+## 5.17. La credencial del docente pasa a tener valor de fábrica: `admin` / `admin123` (26-ago-2026)
 
-Mismo día, después de la entrega anterior. La sección 5 duodevicies dejó el
+Mismo día, después de la entrega anterior. La sección 5.16 dejó el
 panel **cerrado por defecto**: sin `TEACHER_PASSWORD` en el `.env`, nadie entra,
 ni siquiera el docente. A pedido del equipo se invirtió ese default: ahora el
 panel **abre nada más clonar el repo**, con usuario `admin` y clave `admin123`,
@@ -1581,7 +1581,7 @@ panel del todo si alguna vez hace falta. Lo que cambió es únicamente el
 
 Esto es un **retroceso de seguridad deliberado a cambio de conveniencia**, y
 conviene que quede así de explícito y no envuelto en el lenguaje de la sección
-anterior: la sección 5 duodevicies argumentó "fallar cerrado es mejor que fallar
+anterior: la sección 5.16 argumentó "fallar cerrado es mejor que fallar
 abierto en silencio", y esta sección hace exactamente lo segundo, a pedido
 explícito del equipo, porque en esta etapa (prototipo, sin estudiantes reales
 todavía, iterando rápido en dos máquinas) la fricción de un panel bloqueado por
@@ -1608,7 +1608,7 @@ servidor real con el `.env` de esta máquina tal cual queda tras este cambio
 
 ---
 
-## 5 vicies. Higiene operativa: la base se estaba ensuciando sola (26-ago-2026)
+## 5.18. Higiene operativa: la base se estaba ensuciando sola (26-ago-2026)
 
 Al ir a cerrar los tres pendientes «operativos» de la sección 6 (puntos 7, 8 y 9), **dos de los
 tres describían un estado que ya no era cierto**, y el tercero resultó ser el síntoma de un
@@ -1633,7 +1633,7 @@ crea estudiantes por HTTP **sin ninguna fixture de limpieza** (`test_web_estudia
 hace lo mismo, sí tiene una desde la Fase 4). Cada corrida de `pytest` sumaba una decena de
 estudiantes con sus diagnósticos, respuestas y configuraciones, y no restaba ninguno.
 
-**No era la primera vez.** La sección 3 ter documenta que el 10-ago se barrieron «28
+**No era la primera vez.** La sección 3.2 documenta que el 10-ago se barrieron «28
 diagnósticos que eran ruido de `test_api_diagnosticos.py` (crea diagnósticos y no los limpia)».
 Es decir: el problema estaba **identificado y escrito por su nombre**, y aun así volvió a
 ocurrir, porque entonces se limpió el resultado y no la causa. En dieciséis días volvió a
@@ -1661,7 +1661,7 @@ justamente uno de los números que el informe usa.
    --reset`. `--reset` borra `estudiante` completo y recarga desde el CSV; **no toca**
    `objetivo_aprendizaje`, `documento_fuente` ni `fragmento`, así que el material curado de
    "Diseño de UX" quedó intacto. Se confirmó antes con `--dry-run` que el CSV reproduce los
-   promedios ya documentados en la sección 5 ter (Informática: V=6,30 A=7,87 R=6,22 K=9,61).
+   promedios ya documentados en la sección 5.2 (Informática: V=6,30 A=7,87 R=6,22 K=9,61).
 
 ### Verificación
 
@@ -1669,7 +1669,7 @@ justamente uno de los números que el informe usa.
   una, y los conteos no se movieron ni una fila (141/157/2622 antes del reset, 43/43/1202
   después). Antes de la fixture, cada corrida sumaba ~10 estudiantes.
 - **El estado quedó como lo describe el informe:** 43 estudiantes, 43 diagnósticos, **1.202
-  respuestas** — exactamente el número que la sección 5 ter registró el 06-ago-2026.
+  respuestas** — exactamente el número que la sección 5.2 registró el 06-ago-2026.
 - **El material curado sobrevivió:** 5 objetivos, 3 documentos, 89 fragmentos (40 validados, 48
   pendientes, 1 descartado), sin cambios antes y después.
 - `SESSION_SECRET` fijada en el `.env` de la máquina 1.
@@ -1678,10 +1678,10 @@ justamente uno de los números que el informe usa.
 
 ---
 
-## 5 unvicies. Cierre de `/api/*` y un test que mentía (26-ago-2026)
+## 5.19. Cierre de `/api/*` y un test que mentía (26-ago-2026)
 
-Cierra el pendiente n.º 17, abierto ese mismo día al comprobar que el login de la sección 5
-duodevicies separaba las **vistas** pero no los **endpoints** que esas vistas usan por dentro:
+Cierra el pendiente n.º 17, abierto ese mismo día al comprobar que el login de la sección 5.16
+separaba las **vistas** pero no los **endpoints** que esas vistas usan por dentro:
 `GET /api/documentos` y `GET /api/objetivos` respondían 200 a un cliente anónimo, y
 `POST /api/objetivos`, los `PATCH` de curación y `DELETE /api/documentos/{id}` aceptaban
 escrituras sin credencial. Quien conociera la ruta podía curar material por HTTP sin pasar por
@@ -1725,7 +1725,7 @@ original en `.original_router`. Un `isinstance(r, APIRoute)` sobre `app.routes` 
 rutas reales**.
 
 Eso significa que `test_todas_las_rutas_del_panel_exigen_sesion` —escrito el mismo día en la
-sección 5 duodevicies, y presentado ahí como *la* garantía de que ninguna vista del panel se
+sección 5.16, y presentado ahí como *la* garantía de que ninguna vista del panel se
 quedaría sin guardián— **nunca comprobó nada**: iteraba una lista de dos elementos que no
 incluían ninguna ruta de `/teacher/`, no encontraba desprotegidas y pasaba. Un endpoint nuevo sin
 guardián habría entrado sin que la suite dijera una palabra.
@@ -1769,7 +1769,7 @@ se haga pasar por otro **en la UI**, no que llame a la API con un `id` ajeno.
 
 ---
 
-## 5 duovicies. Rediseño completo del frontend (02-oct-2026)
+## 5.20. Rediseño completo del frontend (02-oct-2026)
 
 La UI de la Fase 4 era funcional pero mínima: un `style.css` de 1.228 líneas con estilos inline
 en los templates, sin modo oscuro, sin íconos (emojis en su lugar), con formularios sin
@@ -1804,7 +1804,7 @@ En todas: header con navegación e íconos, **barra inferior en móvil**, **modo
 | **CSS propio con design tokens** en un solo archivo por capas | Tailwind vía CDN | El CDN de Tailwind compila en el navegador en tiempo de ejecución (no es para producción y produce un destello sin estilos) y llenaría los templates de clases. Los tests y los routers ya dependían de clases semánticas (`alerta-error`, `badge-success`…). |
 | **Sprite SVG local** con un subconjunto de Lucide | Lucide/Phosphor por CDN con JS | Sin JS que reinicializar tras cada swap de HTMX y sin depender de la red. |
 | **El cuestionario se pagina en el cliente, sobre el mismo `<form>`** | Un endpoint por pregunta | No cambia el contrato de `POST /student/vark` ni la calificación; el instrumento sigue siendo el mismo de los 43 diagnósticos. Las alternativas **no** se tiñen por canal: eso filtraría la matriz al navegador (cap. 17.1). |
-| **La textura escolar de la sección 5 undecies queda solo en la landing y el CTA**, como máscara CSS teñida por tema | Mantenerla de fondo en toda la web | Sobre el contenido bajaba la legibilidad y con colores fijos no funcionaba en modo oscuro. Se conserva el motivo de marca, ahora monocromo (`static/img/textura-escolar.svg`). |
+| **La textura escolar de la sección 5.9 queda solo en la landing y el CTA**, como máscara CSS teñida por tema | Mantenerla de fondo en toda la web | Sobre el contenido bajaba la legibilidad y con colores fijos no funcionaba en modo oscuro. Se conserva el motivo de marca, ahora monocromo (`static/img/textura-escolar.svg`). |
 | **Referencias con el texto del fragmento** | Solo documento y página | Es la trazabilidad del cap. 13 a la vista del estudiante. Cuesta una lectura por clave primaria de fragmentos que `validator.py` ya verificó. |
 | **Sin `autoplay` en el audio del perfil auditivo** | Mantenerlo | Un audio que arranca solo interrumpe al lector de pantalla y a quien estudia en un lugar público (WCAG 1.4.2). |
 | **"Intentar de nuevo" solo si falló el modelo (502)** | Ofrecerlo siempre | Sin material o sin credencial, reintentar devuelve el mismo error. |
@@ -1856,7 +1856,7 @@ Solo lo necesario para pasar datos a las vistas; ninguna lógica de dominio:
 
 ---
 
-## 5 tervicies. Marco legal: Términos, Privacidad, consentimiento y derechos (02-oct-2026)
+## 5.21. Marco legal: Términos, Privacidad, consentimiento y derechos (02-oct-2026)
 
 Antes de exponer RepasAi a la cohorte hacía falta informar con transparencia qué pasa con
 los datos y reducir la exposición legal del equipo. Se hizo en seis etapas, cada una con
@@ -1950,7 +1950,7 @@ Ya no queda ningún `[PLACEHOLDER]`; `test_no_quedan_placeholders_sin_completar`
 
 - pytest: **381 en verde**, 40 tests nuevos entre acceso a la API, recursos de terceros,
   documentos, footer, consentimiento y `/mis-datos`. Fallan los **mismos 4** previos de la
-  sección 5 duovicies. `ruff`: 41 errores, los mismos previos.
+  sección 5.20. `ruff`: 41 errores, los mismos previos.
 - Migración aplicada, revertida y vuelta a aplicar; el índice FTS sigue intacto.
 - En Chrome, a 390 y 1280 px y en claro y oscuro:
   - 0 peticiones a terceros y 0 errores de consola;
@@ -1958,7 +1958,7 @@ Ya no queda ningún `[PLACEHOLDER]`; `test_no_quedan_placeholders_sin_completar`
     y `/mis-datos`;
   - en la base, la aceptación quedó en UTC y la eliminación cayó en cascada.
 
-## 5 quatervicies. Batería de pruebas de punta a punta por perfil VARK (03-oct-2026)
+## 5.22. Batería de pruebas de punta a punta por perfil VARK (03-oct-2026)
 
 Hasta ahora la adaptación se había comprobado con cuatro perfiles puros en el simulador.
 Faltaba medir, con criterios objetivos, si el motor responde a **mezclas** de canales y si
@@ -1993,7 +1993,7 @@ válidas (96,7 %), **0 citas inventadas** y US$ 0,05 en total. Por canal:
    `representacion_adaptativa` en un experimento fuera del repo, el glosario apareció en
    4/4 cápsulas.
 2. **H2:** el bucle de reparación vuelve a repetir la respuesta byte a byte (C05, intentos 2
-   y 3 idénticos). La corrección de la sección 5 sedecies no alcanza.
+   y 3 idénticos). La corrección de la sección 5.14 no alcanza.
 3. **H3:** la extensión va al revés del diseño: K +48 palabras sobre el objetivo, R −57.
    Todas las reparaciones son de K por pasar de 300.
 4. **H4:** con 25 ≤ p_K < 40 %, «2 componentes prácticos» sin una directiva concreta se ignora.
@@ -2014,9 +2014,9 @@ válidas (96,7 %), **0 citas inventadas** y US$ 0,05 en total. Por canal:
   reevaluando la corrida guardada con `--informe`, sin volver a llamar al LLM: C06 pasó de
   ❌ a ✅, y está documentada como tal.
 
-## 5 quinvicies. Corrección de H1 + H3: medida y no aplicada; arreglo de H9 (04-oct-2026)
+## 5.23. Corrección de H1 + H3: medida y no aplicada; arreglo de H9 (04-oct-2026)
 
-Primera etapa de correcciones de la batería (sección 5 quatervicies): el glosario que el
+Primera etapa de correcciones de la batería (sección 5.22): el glosario que el
 perfil R nunca recibía (H1) y la extensión que iba al revés del diseño (H3). Se trabajó en
 la rama `fix/etapa1-glosario-extension`, con los criterios C1–C4 y la regla de cierre
 fijados **antes** de ejecutar y medidos contra la corrida guardada (semilla 42) y un
@@ -2056,10 +2056,10 @@ importar** desde el 31-ago. Con `tests/__init__.py` y 4 imports `from tests.mate
 (2 de `test_interaccion_quiz`; 2 de `test_prompt_maestro`, por la etiqueta del perfil en
 el prompt, que es la Etapa 3).
 
-## 5 sexvicies. H2 corregido: el bucle de reparación ya no se queda repitiendo (04-oct-2026)
+## 5.24. H2 corregido: el bucle de reparación ya no se queda repitiendo (04-oct-2026)
 
 Etapa 4 de las correcciones (rama `fix/h2-reparacion`). Era la causa que hizo fallar la
-Etapa 1 (sección 5 quinvicies). Detalle y evidencia en `PRUEBAS_VARK.md`, «Correcciones».
+Etapa 1 (sección 5.23). Detalle y evidencia en `PRUEBAS_VARK.md`, «Correcciones».
 
 ### Diagnóstico
 
@@ -2097,7 +2097,7 @@ el modelo es en la práctica determinista, así que reintentar con la misma entr
 Siguiente paso: volver a medir H1 + H3 (brazo B) sobre este código, con comparaciones
 como promedio de al menos 2 corridas por brazo.
 
-## 5 septvicies. H5 corregido: la API ya no sintetiza audio ni imagen (04-oct-2026)
+## 5.25. H5 corregido: la API ya no sintetiza audio ni imagen (04-oct-2026)
 
 Etapa 2 de las correcciones (rama `fix/h5-audio`). Detalle y evidencia en
 `PRUEBAS_VARK.md`, «Correcciones».
@@ -2146,7 +2146,7 @@ Etapa 2 de las correcciones (rama `fix/h5-audio`). Detalle y evidencia en
 - **Archivos huérfanos:** `data/media/` contiene 1 archivo (`622_audio.wav`, 746.572
   bytes), ignorado por git. Se deja para que el equipo decida.
 
-## 5 duodetricies. Motores de voz del visor, Etapa 1: backend (05-oct-2026)
+## 5.26. Motores de voz del visor, Etapa 1: backend (05-oct-2026)
 
 Rama `feat/audio-motores`. Experimento, decisión, licencias y mediciones en
 `PRUEBAS_VARK.md`, «Motor de voz del visor».
@@ -2200,8 +2200,7 @@ Rama `feat/audio-motores`. Experimento, decisión, licencias y mediciones en
 ### Riesgos y pendientes registrados
 
 - **Licencias GPL-3.0** (piper-tts, phonemizer y espeak-ng) frente a los Términos 0.1, que
-  negaban reutilizar el código. Resuelto el 05-oct-2026 con AGPL-3.0-or-later (sección 5
-  tritricies).
+  negaban reutilizar el código. Resuelto el 05-oct-2026 con AGPL-3.0-or-later (sección 5.29).
 - **CPML** de XTTS: solo uso no comercial.
 - **sharvard parte de la voz lessac**, cuyos datos son solo para investigación.
 - **Créditos de atribución:** propuestos, sin implementar.
@@ -2210,7 +2209,7 @@ Rama `feat/audio-motores`. Experimento, decisión, licencias y mediciones en
 - **Discrepancia de razón de Kokoro** (0,53–0,66 frente a 0,27–0,41): se vuelve a medir
   en la Etapa 3 con 5 corridas y mediana.
 
-## 5 undetricies. Preferencia de voz del estudiante, Etapa 2 (05-oct-2026)
+## 5.27. Preferencia de voz del estudiante, Etapa 2 (05-oct-2026)
 
 Rama `feat/audio-motores`. Detalle en `PRUEBAS_VARK.md`, «Etapa 2».
 
@@ -2255,7 +2254,7 @@ Rama `feat/audio-motores`. Detalle en `PRUEBAS_VARK.md`, «Etapa 2».
 - **Lecturas por materia:** los `codigo_objetivo` existentes siguen `PREFIJO-Ux-NN`, pero
   la API no lo exige; hace falta un archivo común de respaldo.
 
-## 5 duotricies. Audio del visor, Etapa 3 Parte A: caché por huella y H10 (05-oct-2026)
+## 5.28. Audio del visor, Etapa 3 Parte A: caché por huella y H10 (05-oct-2026)
 
 Rama `feat/audio-motores`. Detalle en `PRUEBAS_VARK.md`, «Etapa 3, Parte A».
 
@@ -2299,7 +2298,7 @@ Rama `feat/audio-motores`. Detalle en `PRUEBAS_VARK.md`, «Etapa 3, Parte A».
 - Comparación GPL-3.0 / AGPL-3.0 y textos oficiales listos para `LICENSE`.
 - Revisión de archivos versionados con derechos de terceros.
 
-## 5 tritricies. Licencia AGPL-3.0-or-later y actualización legal 0.2 (05-oct-2026)
+## 5.29. Licencia AGPL-3.0-or-later y actualización legal 0.2 (05-oct-2026)
 
 Decisión de Patricio Hernández Vergara y Vicente Cisternas León: el código de RepasAi es
 software libre bajo **AGPL-3.0-or-later**, © 2026 de ambos. Detalle y verificaciones en
@@ -2340,7 +2339,7 @@ imágenes de prueba, `referencia.wav` y `prueba_entorno.wav`. La tabla con lo qu
 necesita confirmar, una redacción neutra para `referencia.wav` y una sección propuesta
 «Material gráfico y de prueba» para los Términos están en PRUEBAS_VARK.
 
-## 5 quatertricies. Migración a `deepseek-flash`, módulo Visual y borrado de documentos (10–11-oct-2026)
+## 5.30. Migración a `deepseek-flash`, módulo Visual y borrado de documentos (10–11-oct-2026)
 
 ### Migración del modelo (`136e747`, `2876808`)
 
@@ -2374,7 +2373,7 @@ todavía no tiene pantalla (`PENDIENTES.md` R7).
 
 ---
 
-## 5 quintricies. Revisión de código y cinco correcciones (16–17-oct-2026)
+## 5.31. Revisión de código y cinco correcciones (16–17-oct-2026)
 
 El 16-oct se revisó todo `src/`, las migraciones, los tests y la documentación. Los hallazgos
 que siguen abiertos están en [`PENDIENTES.md`](PENDIENTES.md), sección R. El 17-oct se
@@ -2413,7 +2412,7 @@ reunieron en `PENDIENTES.md`.
 
 ---
 
-## 5 sextricies. R2: dos estudiantes en el mismo computador (24-oct-2026)
+## 5.32. R2: dos estudiantes en el mismo computador (24-oct-2026)
 
 **Qué pasaba.** Con una cookie válida, `POST /student/vark` agregaba el diagnóstico **al
 estudiante de la cookie**. En un computador compartido, una segunda persona pisaba el perfil
@@ -2454,7 +2453,7 @@ avisos previos.
 
 ---
 
-## 5 septtricies. Grupo control de la evaluación (01-nov-2026)
+## 5.33. Grupo control de la evaluación (01-nov-2026)
 
 Se agregó el rol `control` a `estudiante`, separado del rol habitual
 `estudiante`. El rol se resuelve en el servidor: el grupo control conserva
@@ -2526,7 +2525,7 @@ El cambio está preparado para un único commit del autor.
 
 ---
 
-## 5 octtricies. Acceso con Google y recuperación del perfil (01-nov-2026, D6)
+## 5.34. Acceso con Google y recuperación del perfil (01-nov-2026, D6)
 
 Se implementó el acceso de estudiantes con Google, sin modificar el acceso
 docente ni el motor de personalización. Queda preparado para un commit del
@@ -2653,10 +2652,10 @@ No se verificó el recorrido visual en un navegador ni con una cuenta Google rea
 
 ---
 
-## 5 undequadragies. Estudio A/B: Etapas 1 y 2 (04–08-nov-2026)
+## 5.35. Estudio A/B: Etapas 1 y 2 (04–08-nov-2026)
 
 El equipo decidió el 04-nov cómo se diferencian los dos grupos del piloto, y
-esa decisión reemplaza el «perfil general fijo» del §5 septtricies:
+esa decisión reemplaza el «perfil general fijo» del §5.33:
 
 - **Experimental** (rol `estudiante`): responde el cuestionario VARK y recibe
   cápsulas adaptadas a su perfil individual, con narración si p_A ≥ 25 %.
@@ -2796,7 +2795,7 @@ vistas, sin desactivar guardianes.
 
 ---
 
-## 5 quadragies. Tolerancia de palabras en el validador (11-nov-2026)
+## 5.36. Tolerancia de palabras en el validador (11-nov-2026)
 
 En las dos pruebas con usuarios la generación falló algunas veces por la regla
 2: la cápsula superaba las 300 palabras, normalmente por solo 15–20. Un LLM
@@ -2827,7 +2826,7 @@ Se separó el máximo que se le pide al modelo del tope que acepta el validador:
 ### Lo que no se tocó, y por qué
 
 - **Las plantillas del prompt.** El modelo ya apunta por debajo del máximo
-  desde el §5 sedecies (objetivo acotado a 270). Además las plantillas entran
+  desde el §5.14 (objetivo acotado a 270). Además las plantillas entran
   en la huella de caché: cambiarlas habría regenerado todas las cápsulas
   guardadas de los dos grupos en medio de las pruebas.
 - **La huella de caché.** `capsula_max_palabras_aceptadas` no entra en ella.
@@ -2885,12 +2884,12 @@ pero **no se ha ejecutado nunca contra un modelo real ni sobre material real**.
    deseable —no bloqueante— una **segunda asignatura**, para que la prueba de diferenciación
    entre perfiles VARK del punto 0 no dependa de un solo dominio.
 2. ~~**Conectar la UI de Patricio a los endpoints reales.**~~ ✅ **Cerrado el 11-ago-2026**
-   (sección 5 nonies). Las cinco vistas del estudiante y el panel del docente llaman a los
+   (sección 5.7). Las cinco vistas del estudiante y el panel del docente llaman a los
    handlers reales; el visor recorre los bloques del contrato por `tipo` y muestra las dos
    formas de actividad. Desde el 19-ago los recorre vía `bloques_legibles()`, que devuelve la
    representación adaptativa seguida del ejemplo.
 3. ~~**`tagger.py` (etiquetado asistido por LLM)**~~ ✅ **Cerrado el 24-ago-2026** — ver
-   sección 5 septendecies. `knowledge/tagger.py` propone objetivo y etiqueta temática por
+   sección 5.15. `knowledge/tagger.py` propone objetivo y etiqueta temática por
    fragmento contra el catálogo activo; la propuesta queda en `metadatos_json`, nunca en
    `Fragmento.id_objetivo`, y la bandeja de revisión la usa solo para preseleccionar el
    `<select>` que el curador confirma con «Validar». Verificado contra DeepSeek real: acertó
@@ -2904,18 +2903,18 @@ pero **no se ha ejecutado nunca contra un modelo real ni sobre material real**.
    informe con los valores recalculados, o aparece la planilla original que explique la
    diferencia. El código ya entrega los números reales; el informe es lo que habría que ajustar.
 6. ~~**Reemplazar los enunciados provisionales de los 16 ítems.**~~ ✅ **Cerrado el
-   24-ago-2026** — ver sección 5 quaterdecies. No hizo falta reemplazar nada: comparados
+   24-ago-2026** — ver sección 5.12. No hizo falta reemplazar nada: comparados
    carácter a carácter contra el encabezado real de `data/data_cuestionarios_43.csv`, los 16
    enunciados de `web/textos.py` ya eran idénticos al instrumento original. El aviso de
    "provisional" describía un riesgo que en los hechos nunca se concretó, y se mantuvo ahí sin
    volver a verificarse. Test de regresión en `tests/test_textos_vark.py`.
-7. 🔶 **Credenciales del `.env`.** Parcialmente cerrado el 26-ago-2026 (sección 5 vicies).
+7. 🔶 **Credenciales del `.env`.** Parcialmente cerrado el 26-ago-2026 (sección 5.18).
    - ~~Fijar `SESSION_SECRET`~~ ✅ **Cerrado en la máquina 1** el 26-ago-2026. Sin ella cada
      reinicio de `uvicorn --reload` cerraba las sesiones y obligaba a responder el
      cuestionario de nuevo a mitad de una demo. **Sigue pendiente en la máquina 2.** Se genera
      con `python -c "import secrets; print(secrets.token_hex(32))"`.
    - **Sigue abierto: cambiar `TEACHER_USERNAME`/`TEACHER_PASSWORD` del valor de fábrica.** El
-     panel del docente abre sin tocar nada desde la sección 5 undevicies: usuario `admin`,
+     panel del docente abre sin tocar nada desde la sección 5.17: usuario `admin`,
      clave `admin123`, valores por defecto en `config.py`. Es deliberado —conveniencia de
      prototipo— pero es una credencial pública y conocida por cualquiera que lea este documento
      o el código. **Antes de exponer el sistema fuera del equipo hay que fijarlas a algo propio
@@ -2928,7 +2927,7 @@ pero **no se ha ejecutado nunca contra un modelo real ni sobre material real**.
    Sigue valiendo para una **máquina nueva**: es una dependencia opcional del `pyproject.toml`
    y `pip install -e ".[dev]"` a secas no la trae.
 9. ~~**Repoblar la base de datos** (estaba vacía).~~ ✅ **Cerrado el 26-ago-2026, pero el
-   problema real era el opuesto** — ver sección 5 vicies. La base no estaba vacía: tenía
+   problema real era el opuesto** — ver sección 5.18. La base no estaba vacía: tenía
    **141 estudiantes y 157 diagnósticos donde los reales son 43**, porque
    `tests/test_api_diagnosticos.py` creaba estudiantes por HTTP y no los borraba, sumando una
    decena en cada corrida de `pytest`. Se arregló **la causa** (fixture de limpieza en ese
@@ -2936,14 +2935,14 @@ pero **no se ha ejecutado nunca contra un modelo real ni sobre material real**.
    resultado (`import_vark_csv.py --reset`, que dejó los 43 reales con sus 1.202 respuestas).
    El material curado no se tocó.
 10. ~~**Simulador VARK: comparación V/A/R/K lado a lado.**~~ ✅ **Cerrado el 24-ago-2026** —
-    ver sección 5 quindecies. `POST /teacher/simulator/compare` genera las cuatro cápsulas
+    ver sección 5.13. `POST /teacher/simulator/compare` genera las cuatro cápsulas
     puras del mismo objetivo y las muestra una junto a otra. **Sigue abierta la otra mitad de
     este punto: perfiles reales de la cohorte.** El simulador solo ofrece perfiles puros
     (100% en un canal); ninguno de los 43 diagnósticos reales tiene ese vector, y el caso
     multimodal —el más frecuente en la cohorte— no se puede simular todavía.
 11. **Historial de cápsulas: mostrar `estado_validacion` y persistir `intentos`/`segundos`
     de la generación.** Convertiría el panel en evidencia viva del bake-off en vez de depender
-    solo de `data/resultados_evaluacion.csv`. Detalle en sección 5 decies.
+    solo de `data/resultados_evaluacion.csv`. Detalle en sección 5.8.
 12. **`scripts/reset_db.py` sin confirmación** antes de `drop_all` + borrar `alembic_version`.
     Es destructivo y de un solo comando; conviene una confirmación explícita antes de que borre
     algo que cueste recuperar en una máquina compartida por el equipo.
@@ -2959,7 +2958,7 @@ pero **no se ha ejecutado nunca contra un modelo real ni sobre material real**.
     la aprobada. Mientras no se cierre, el sistema sigue con recuperación SQL determinista.
 15. 🔶 **El perfil lector-escritor (R) falla la validación con más frecuencia que los otros
     tres — significativamente mejorado, no cerrado del todo.** Investigado a fondo el
-    24-ago-2026 (sección 5 sedecies) hasta encontrar y corregir **dos causas reales, verificadas
+    24-ago-2026 (sección 5.14) hasta encontrar y corregir **dos causas reales, verificadas
     por separado contra DeepSeek real**: (1) el objetivo de palabras de R interpola exactamente
     en el máximo duro del validador, sin margen para la variación normal del modelo — corregido
     en `rag/orchestrator.py`; (2) capturando el texto crudo de cada intento se confirmó que el
@@ -2974,7 +2973,7 @@ pero **no se ha ejecutado nunca contra un modelo real ni sobre material real**.
     tema («Notación O grande») que sigue fallando más que los otros —hipótesis: su explicación
     técnica necesita más palabras y comprimirla sin perder rigor le cuesta más al modelo—, sin
     confirmar todavía con más datos. Detalle completo, con las tres tablas de evidencia
-    antes/después/después-de-lo-otro, en la sección 5 sedecies.
+    antes/después/después-de-lo-otro, en la sección 5.14.
 16. **Generación multimedia local (imagen/audio/video) — planificada, no iniciada.** Agregada
     el 24-ago-2026 a pedido del equipo: `PLAN_DESARROLLO.md` §4 tiene la Fase 6 completa
     (candidatos de modelo por modalidad, riesgos, integración propuesta). Es una **extensión**
@@ -2985,7 +2984,7 @@ pero **no se ha ejecutado nunca contra un modelo real ni sobre material real**.
     modelos candidatos (SDXL-Turbo, Piper TTS) se eligieron pensando en hardware modesto, pero
     sin ese dato confirmado no se puede afirmar que corran razonablemente.
 17. ~~🔶 **`/api/*` sigue abierto, aunque `/teacher/*` ya no.**~~ ✅ **Cerrado el 26-ago-2026** —
-    ver sección 5 unvicies. Los 13 endpoints de curación y analítica pasaron a un
+    ver sección 5.19. Los 13 endpoints de curación y analítica pasaron a un
     `router_docente` con `dependencies=[Depends(auth.requiere_docente_api)]`, que responde
     **401 con `WWW-Authenticate`** (no el 303 del guardián web, que un cliente HTTP seguiría
     hasta entregarle al script un 200 con HTML de login) y acepta tanto la cookie del panel
@@ -2998,7 +2997,7 @@ pero **no se ha ejecutado nunca contra un modelo real ni sobre material real**.
     `GET /api/diagnosticos/{id}`, `GET /api/capsulas/{id}` y `POST /api/capsulas/{id}/quiz`
     quedan accesibles a cualquiera que conozca el `id`: se puede leer el diagnóstico o la
     cápsula de otro estudiante, o responder su quiz. **No es un efecto del cierre de `/api`**
-    (sección 5 unvicies) sino algo que ese trabajo dejó a la vista: el sistema no tiene
+    (sección 5.19) sino algo que ese trabajo dejó a la vista: el sistema no tiene
     autenticación de estudiantes por diseño —el cap. 9 lo identifica por su diagnóstico, no
     por una credencial, y `web/sesion.py` lo dice desde la Fase 4—, así que la cookie firmada
     impide suplantar a alguien **en la UI**, no llamar a la API con un `id` ajeno. Para la
@@ -3043,7 +3042,7 @@ tener que saltar de archivo:
 5. ~~**Regeneración de cápsulas**~~ ✅ **Cerrada en la Fase 3 (11-ago-2026): se versiona.**
    `POST /api/capsulas` devuelve por defecto la cápsula cacheada para la misma huella; con
    `?regenerar=true` genera una versión nueva y conserva la anterior. El motivo está en la
-   sección 5 octies: el bake-off de la Fase 3 y la validación docente de la Fase 5 comparan
+   sección 5.6: el bake-off de la Fase 3 y la validación docente de la Fase 5 comparan
    varias cápsulas del mismo objetivo, y sobrescribir las haría desaparecer.
 
 ---
@@ -3081,7 +3080,7 @@ Estas no bloquean código, pero quedaron identificadas para el informe final (ve
   alternativas.
 - **(Nueva, la más importante)** **Las tablas 16.2 y 16.3 no se reproducen desde el CSV de
   respuestas**, pese a que el dataset es verificablemente el mismo (todos los sociodemográficos
-  del cap. 16.1 calzan). Detalle completo en la sección 5 ter. Hay que decidir con la profesora
+  del cap. 16.1 calzan). Detalle completo en la sección 5.2. Hay que decidir con la profesora
   guía si se corrigen los valores publicados.
 - **(Nueva)** La tabla 17.1 declara `genero VARCHAR(20)`, pero el propio instrumento ofrece la
   alternativa **"No Binario / otra identidad"**, de 27 caracteres, que no cabe. Corregido en el
@@ -3129,7 +3128,7 @@ ruff check .
 ```
 
 ✅ **Verificado end-to-end contra el servidor real** (no solo `TestClient`) el 26-ago-2026, en
-la máquina 1, con el `.env` tal como queda tras las secciones 5 vicies/undevicies: `uvicorn`
+la máquina 1, con el `.env` tal como queda tras las secciones 5.18/5.17: `uvicorn`
 arriba, `GET /health` con `database.reachable: true` y `llm.api_key_configured: true`,
 `GET /` redirigía entonces a `/student/vark` (desde el rediseño del 02-oct es la portada),
 `GET /teacher/curation` sin sesión responde 303 al login,
@@ -3145,7 +3144,7 @@ el puerto real.
 | `DATABASE_URL`, `LLM_API_KEY` | ✅ fijadas | ✅ fijadas |
 | `SESSION_SECRET` | ✅ fijada (26-ago-2026) | ⚠️ pendiente — sin ella cada `--reload` cierra las sesiones de estudiante |
 | `TEACHER_USERNAME` / `TEACHER_PASSWORD` | de fábrica (`admin`/`admin123`) | de fábrica (`admin`/`admin123`) |
-| Datos VARK (`estudiante`, `diagnostico_vark`) | ✅ 43 reales, sin ruido de tests (sección 5 vicies) | sin auditar — puede tener el mismo ruido que se encontró en la máquina 1 |
+| Datos VARK (`estudiante`, `diagnostico_vark`) | ✅ 43 reales, sin ruido de tests (sección 5.18) | sin auditar — puede tener el mismo ruido que se encontró en la máquina 1 |
 
 Esta tabla es del 26-ago-2026. La máquina donde se hizo la revisión del 16-oct (`D:\PUCV\…`) tiene otra base: 1 estudiante, 5 diagnósticos y objetivos de Bases de Datos e Introducción a la Programación. Desde el 11-oct, además, cada `.env` tiene que decir `LLM_MODEL=deepseek-flash`, y cada base tiene que estar en la migración `d7e2b9c41a58` (17-oct).
 

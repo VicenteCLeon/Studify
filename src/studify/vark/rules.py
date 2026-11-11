@@ -25,7 +25,7 @@ Por lo tanto:
   [40, 75]: un perfil puramente lector/escritor pide las 300 palabras, uno
   puramente visual las 150, y el resto queda en proporción. Es el único
   parámetro de este módulo que no está determinado por el informe; aprobado
-  por el equipo el 06-ago-2026 (ver AVANCE.md §2 bis).
+  por el equipo el 06-ago-2026 (ver AVANCE.md §2.1).
 """
 
 from dataclasses import dataclass

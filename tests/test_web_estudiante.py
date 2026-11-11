@@ -45,7 +45,7 @@ def limpiar_estudiantes(db):
     """Borra los estudiantes que cree el test (CASCADE limpia lo demás).
 
     Sin esto cada corrida dejaría diagnósticos sueltos en la base, que es lo que
-    obligó a recargar los 43 reales con `--reset` (ver AVANCE.md §3 ter).
+    obligó a recargar los 43 reales con `--reset` (ver AVANCE.md §3.2).
     """
     creados: list[int] = []
     yield creados

@@ -189,7 +189,7 @@ class ResultadoValidacion:
         intentos disponibles en una cápsula que tenía tres problemas menores.
 
         **La última línea existe por un hallazgo concreto (AVANCE.md, sección
-        5 sedecies, 24-ago-2026):** investigando por qué el perfil R fallaba
+        5.14, 24-ago-2026):** investigando por qué el perfil R fallaba
         más, se capturó el texto crudo de cada intento y los tres eran
         **byte a byte idénticos** — DeepSeek recibía el motivo de rechazo y
         reenviaba exactamente la misma respuesta, sin cambiar una coma.
@@ -274,7 +274,7 @@ def _error_exceso_de_palabras(capsula: Microcapsula, palabras: int, maximo: int)
     """Mensaje de la regla 2 cuando sobran palabras, con un blanco concreto.
 
     Encontrado el 24-ago-2026 investigando por qué el perfil lector-escritor
-    (R) fallaba más que los otros tres (AVANCE.md, sección 5 sedecies): decir
+    (R) fallaba más que los otros tres (AVANCE.md, sección 5.14): decir
     solo «tiene X palabras, el máximo es Y» no le da al modelo ningún lugar
     por dónde empezar a cortar, y en la práctica no cortaba nada. Señalar la
     parte más extensa —normalmente el bloque `glosario` o `concepto_central`

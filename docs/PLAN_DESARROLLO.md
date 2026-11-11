@@ -84,7 +84,7 @@ Studify/
 > antiguo array `contenido` se separó en campos propios (`activacion`, `concepto_central`,
 > `representacion_adaptativa[]`, `ejemplo`), cada uno con su propia regla de validación. El
 > contrato real vive en `generation/schemas.py`; el detalle de la migración y por qué, en
-> `AVANCE.md` sección 5 terdecies.
+> `AVANCE.md` sección 5.11.
 
 Este esquema es el punto de acuerdo entre el motor LLM y la UI. Definirlo **antes** de escribir el generador.
 
@@ -137,7 +137,7 @@ Repo, `docker-compose.yml` con Postgres, esqueleto FastAPI con `/health`, `.env.
 ### Fase 2 — Base de conocimiento e ingesta (24 ago – 04 sep)
 - Catálogo de `objetivo_aprendizaje` (carga manual: es información curricular, no se infiere).
 - `ingest.py`: PDF/PPTX → fragmentos con `pagina_inicio`/`pagina_fin`.
-- ~~`tagger.py`: el LLM **propone** objetivo asociado, etiqueta temática y tipo de fragmento; queda en `estado_validacion = 'pendiente'`.~~ ✅ **Implementado el 24-ago-2026** (`AVANCE.md` sección 5 septendecies). El tipo de fragmento no se re-propone: ya lo resuelve `chunker.py` con más certeza que un LLM leyendo solo texto plano. La propuesta de objetivo/etiqueta se guarda en `metadatos_json`, nunca escribe `Fragmento.id_objetivo` directamente — la bandeja del docente la usa solo para preseleccionar el `<select>` que el curador confirma.
+- ~~`tagger.py`: el LLM **propone** objetivo asociado, etiqueta temática y tipo de fragmento; queda en `estado_validacion = 'pendiente'`.~~ ✅ **Implementado el 24-ago-2026** (`AVANCE.md` sección 5.15). El tipo de fragmento no se re-propone: ya lo resuelve `chunker.py` con más certeza que un LLM leyendo solo texto plano. La propuesta de objetivo/etiqueta se guarda en `metadatos_json`, nunca escribe `Fragmento.id_objetivo` directamente — la bandeja del docente la usa solo para preseleccionar el `<select>` que el curador confirma.
 - `curation.py` + endpoints: aprobar/rechazar/editar. **Ningún fragmento sin validar entra al retriever.**
 - `retriever.py`: SQL determinista filtrando por `id_objetivo` + `estado_validacion='validado'`, con full-text search en español como filtro secundario y ordenamiento por tipo de fragmento según perfil VARK.
 
@@ -156,9 +156,9 @@ Repo, `docker-compose.yml` con Postgres, esqueleto FastAPI con `/health`, `.env.
 **Criterio de término:** `POST /api/capsulas {id_estudiante, id_objetivo}` devuelve una cápsula válida ≥95% de las veces, con quiz y fuentes verificables. Comparar visualmente cuatro cápsulas del mismo objetivo generadas para V, A, R y K: si no se distinguen entre sí, la adaptación no está funcionando y hay que trabajar el prompt.
 
 > **Estado del criterio (24-ago-2026):** la comparación visual **ya existe**
-> (`POST /teacher/simulator/compare`, `AVANCE.md` sección 5 quindecies) y fue la que encontró
+> (`POST /teacher/simulator/compare`, `AVANCE.md` sección 5.13) y fue la que encontró
 > que V, A y K se distinguen entre sí, pero **R fallaba la validación sistemáticamente**. Se
-> investigó a fondo y se corrigieron dos causas reales (sección 5 sedecies): el margen de
+> investigó a fondo y se corrigieron dos causas reales (sección 5.14): el margen de
 > palabras del perfil R contra el máximo del validador, y un mensaje de reparación que no le
 > daba al modelo un blanco concreto para recortar. **El ≥95% del criterio todavía no se
 > cumple** — el agregado medido en las tres rondas de investigación es 6/11 (55%), con dos de
@@ -178,11 +178,11 @@ Jinja + HTMX: cuestionario VARK (16 ítems, selección múltiple y opción de de
 > (`web/routers/teacher.py`, `analytics.html`, `simulator.html`). El código lo etiqueta
 > "Fase 5" en sus docstrings, pero **no es esta fase**: es una herramienta de operación del
 > docente, no la evaluación empírica descrita abajo, que sigue sin empezar. Auditado y
-> corregido con 32 tests nuevos; detalle completo en `AVANCE.md` sección 5 decies. ~~Pendiente
+> corregido con 32 tests nuevos; detalle completo en `AVANCE.md` sección 5.8. ~~Pendiente
 > de esa auditoría, con valor directo para el criterio de término de la Fase 3 de este plan:
 > el simulador todavía no ofrece la comparación V/A/R/K lado a lado que exige el párrafo de
 > "Criterio de término" más abajo.~~ **Implementado el 24-ago-2026**
-> (`POST /teacher/simulator/compare`, `AVANCE.md` sección 5 quindecies) — ver el estado
+> (`POST /teacher/simulator/compare`, `AVANCE.md` sección 5.13) — ver el estado
 > actualizado del criterio de término de la Fase 3, arriba.
 
 - Batería técnica (`eval_runner.py`): 20–30 consultas controladas → fidelidad, exactitud factual, relevancia, trazabilidad; rúbrica 1–5 con doble evaluador.

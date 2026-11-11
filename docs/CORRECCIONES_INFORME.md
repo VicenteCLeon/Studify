@@ -61,7 +61,7 @@ Origen: `PLAN_DESARROLLO.md` §7 y `AVANCE.md` §8.
   decir que se aplican en capas: las 1–5 fijan los elementos de contenido y la
   6–7 la etiqueta de modalidad. **Ojo:** hoy la fila 7 no se aplica como regla
   de contenido en el código; es una decisión pendiente (`PENDIENTES.md` D4).
-  Origen: `AVANCE.md` §2 bis y §8.
+  Origen: `AVANCE.md` §2.1 y §8.
 - **B3. Componentes prácticos: bloques del cuerpo frente a actividad de
   cierre.** Con p_K ≥ 40 % la tabla 11.1 cuenta tres (ejemplo aplicado,
   secuencia paso a paso y actividad «inténtalo tú»), pero la tercera no es un
@@ -75,7 +75,7 @@ Origen: `PLAN_DESARROLLO.md` §7 y `AVANCE.md` §8.
   150–300 pero no cómo repartirlo entre perfiles. El sistema lo interpola
   sobre C_texto dentro de su rango alcanzable [40, 75]; lo aprobó el equipo el
   06-ago-2026. Hay que declararlo como decisión de diseño.
-  Origen: `AVANCE.md` §2 bis; `vark/rules.py`.
+  Origen: `AVANCE.md` §2.1; `vark/rules.py`.
 
 ## C. Datos que no se reproducen
 
@@ -84,7 +84,7 @@ Origen: `PLAN_DESARROLLO.md` §7 y `AVANCE.md` §8.
   sociodemográficos de §16.1 calzan). O se corrige el informe con los valores
   recalculados, o aparece la planilla que explique la diferencia. **Es la más
   importante de esta lista**, y se decide con la profesora (`PENDIENTES.md` D1).
-  Origen: `AVANCE.md` §5 ter.
+  Origen: `AVANCE.md` §5.2.
 
 ## I. Diferencias con la implementación
 
@@ -113,7 +113,7 @@ Origen: `PLAN_DESARROLLO.md` §7 y `AVANCE.md` §8.
   - Hay caché por huella y versionado: la regeneración conserva la versión
     anterior.
 
-  Origen: `generation/validator.py`; `AVANCE.md` §5 octies.
+  Origen: `generation/validator.py`; `AVANCE.md` §5.6.
 - **I5. No hay fragmentos ni proporciones de imagen (§18).** La ingesta solo
   extrae texto (las tablas de PPTX se serializan); las imágenes y diagramas se
   omiten. La cápsula no tiene «proporciones de texto/imagen». El recurso
@@ -126,7 +126,7 @@ Origen: `PLAN_DESARROLLO.md` §7 y `AVANCE.md` §8.
   propuesta de la profesora guía (14-ago-2026): objetivo → activación →
   concepto central → representación adaptativa → ejemplo → pregunta de
   comprobación → retroalimentación. Cada paso es un campo obligatorio del
-  contrato. Origen: `AVANCE.md` §5 terdecies; `generation/schemas.py`.
+  contrato. Origen: `AVANCE.md` §5.11; `generation/schemas.py`.
 - **I7. La actividad de cierre tiene cinco formas**, no solo «pregunta de
   verificación o mini-quiz»: `quiz_mc`, `intentalo_tu`, `flashcards`,
   `quiz_multi` y `flashcards_y_quiz`. Con p_K ≥ 40 % se pide
@@ -152,7 +152,7 @@ Origen: `PLAN_DESARROLLO.md` §7 y `AVANCE.md` §8.
   El informe debería declarar las dos cifras: 150–300 como rango de diseño y
   350 como tope de aceptación. Origen: `config.py`
   (`capsula_max_palabras_aceptadas`); `generation/validator.py`; `AVANCE.md`
-  §5 quadragies.
+  §5.36.
 
 ### Perfil y datos (§16.4, §17)
 
@@ -177,7 +177,7 @@ Origen: `PLAN_DESARROLLO.md` §7 y `AVANCE.md` §8.
   - Notación: `DATETIME` → `TIMESTAMP WITH TIME ZONE`, y los vocabularios
     controlados van con CHECK en vez de ENUM.
 
-  Origen: `AVANCE.md` §2 bis y §8; `db/models.py`; migraciones en `alembic/versions/`.
+  Origen: `AVANCE.md` §2.1 y §8; `db/models.py`; migraciones en `alembic/versions/`.
 
 ### Stack (§7.5, §14)
 
@@ -195,7 +195,7 @@ Origen: `PLAN_DESARROLLO.md` §7 y `AVANCE.md` §8.
   - **Concurrencia:** §14 destaca el «manejo asíncrono nativo» de FastAPI, pero
     los endpoints son síncronos a propósito.
 
-  Origen: `AVANCE.md` §2 y §5 octies; `pyproject.toml`.
+  Origen: `AVANCE.md` §2 y §5.6; `pyproject.toml`.
 
 ### Evaluación (§8)
 
@@ -216,7 +216,7 @@ Origen: `PLAN_DESARROLLO.md` §7 y `AVANCE.md` §8.
   intento, y separado por tipo: «selección única» (% de acierto en `quiz_mc`)
   y «cuestionario» (promedio de preguntas acertadas en los de varias
   preguntas). Son instrumentos distintos y no se promedian juntos.
-  Origen: `AVANCE.md` §5 quintricies.
+  Origen: `AVANCE.md` §5.31.
 
 ## N. Temas nuevos que el informe final tiene que incorporar
 
@@ -229,7 +229,7 @@ Origen: `PLAN_DESARROLLO.md` §7 y `AVANCE.md` §8.
   Origen: `PRUEBAS_VARK.md`.
 - **N2. Narración en audio para el perfil auditivo:** motores locales, la
   preferencia de voz independiente del género y sus licencias.
-  Origen: `AVANCE.md` §5 duodetricies a §5 duotricies.
+  Origen: `AVANCE.md` §5.26 a §5.28.
 - **N3. Por qué no se generan imágenes con difusión:** el texto sale ilegible
   en diagramas educativos. La alternativa es el módulo Visual, un SVG dibujado
   a partir de una especificación del LLM.
@@ -243,9 +243,9 @@ Origen: `PLAN_DESARROLLO.md` §7 y `AVANCE.md` §8.
   - Riesgos abiertos, entre ellos el consentimiento de los 43 diagnósticos de
     Google Forms.
 
-  Origen: `AVANCE.md` §5 tervicies; `PENDIENTES.md` L.
+  Origen: `AVANCE.md` §5.21; `PENDIENTES.md` L.
 - **N5. Licencia del código:** AGPL-3.0-or-later y por qué (componentes GPL en
-  la narración). Origen: `AVANCE.md` §5 tritricies.
+  la narración). Origen: `AVANCE.md` §5.29.
 - **N6. Limitaciones técnicas encontradas** para §8.6:
   - el modelo inventa datos de ejemplo (H6);
   - el glosario de R no aparece (H1);

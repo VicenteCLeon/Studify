@@ -6,7 +6,7 @@
 >
 > **Lo que ya no es cierto:** `style.css` y el video de carga en
 > `catalog.html` los reemplazó el rediseño del 02-oct-2026 (`app.css` y
-> `components/_generando.html`; AVANCE §5 duovicies). La cifra de 163 tests es
+> `components/_generando.html`; AVANCE §5.20). La cifra de 163 tests es
 > de esa fecha. Desde el 17-oct-2026 las `flashcards` se registran sin
 > corrección y los cuestionarios pregunta por pregunta
 > (commit `a922240`).

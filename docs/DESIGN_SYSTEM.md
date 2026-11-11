@@ -2,7 +2,7 @@
 
 Guía de la capa de presentación de la web (`src/studify/web/`). Describe los tokens, los
 componentes y las convenciones que usa toda la UI desde el rediseño del 02-oct-2026
-(`AVANCE.md`, sección 5 duovicies). **Léase antes de tocar un template o el CSS.**
+(`AVANCE.md`, sección 5.20). **Léase antes de tocar un template o el CSS.**
 
 > La marca visible es **RepasAi**. "Studify" sigue siendo el nombre del repo y del paquete.
 

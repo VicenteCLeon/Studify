@@ -45,7 +45,7 @@
 **Estado de la suite al 08-nov-2026**, en `main` después de unir el chunker
 (`3929c0f`), la base de pruebas y el retriever (`eb1d75a`, `396616d`) y los
 logs a archivo (`2f33ca7`). El cierre de la Etapa 2 (`c28df6a`: 769/2/0 y
-452/315/4) está en AVANCE §5 undequadragies, y los estados anteriores en las
+452/315/4) está en AVANCE §5.35, y los estados anteriores en las
 secciones de su fecha.
 
 | Forma | Pasan | Omitidos | Fallan |
@@ -63,7 +63,7 @@ Antes de lanzar la forma «con Postgres», comprobar que el contenedor
 
 Lo que conviene cerrar antes de que la app la usen personas reales. El detalle
 de cada uno está más abajo. Los seis primeros quedaron abiertos al cerrar las
-Etapas 1 y 2 del estudio A/B (08-nov, AVANCE §5 undequadragies); el 7 (R10)
+Etapas 1 y 2 del estudio A/B (08-nov, AVANCE §5.35); el 7 (R10)
 se sumó ese mismo día.
 
 1. **Recorrido manual con Google real, con una cuenta de cada grupo** (O6):
@@ -84,8 +84,7 @@ se sumó ese mismo día.
    lo menor anotado en R10.
 8. **Sesión en computadores compartidos:** fijar `SESION_ESTUDIANTE_HORAS` según
    dónde se use (1–4 en un laboratorio) y dejar cada máquina en la última
-   migración (`a7c3d9e51f64`, O2). R2 ya está corregido (`75c14fa`, AVANCE §5
-   sextricies).
+   migración (`a7c3d9e51f64`, O2). R2 ya está corregido (`75c14fa`, AVANCE §5.32).
 9. **Credenciales en la máquina 2** (O1): la parte de código está hecha el
    27-oct (sin `admin123` de fábrica; fuera de `APP_ENV=dev` no arranca sin un
    `SESSION_SECRET` fuerte). Falta fijar los valores a mano.
@@ -107,7 +106,7 @@ se sumó ese mismo día.
 
 Corregidos el 17-oct: puntos 5 (`b7f769d`), 1 (`a3883ef`), 4 (`6e081fe`),
 6 (`ce30e6d`) y 3 (`a922240`). El 24-oct, el punto 2 (`75c14fa`: R2, dos estudiantes en
-el mismo computador; AVANCE §5 sextricies). El 08-nov, R16: un test del
+el mismo computador; AVANCE §5.32). El 08-nov, R16: un test del
 grupo control fallaba al azar porque buscaba «43» en el HTML entero, que trae
 tokens aleatorios; ahora los textos cortos se buscan con
 `tests/conftest.py::texto_visible`. El detalle de qué cambió está en la
@@ -179,7 +178,7 @@ descripción de cada commit.
   pasar `connect_args={"connect_timeout": …}` al conectar en
   `hay_base_de_datos()` (o en `db/session.py`). Mientras tanto, comprobar que
   Postgres responde antes de correr la suite con base.
-  Origen: AVANCE §5 duodetricies («H11: `test_api_diagnosticos` se cuelga sin
+  Origen: AVANCE §5.26 («H11: `test_api_diagnosticos` se cuelga sin
   Postgres») y R10.
 - **R15. `scripts/eval_runner.py` puede enviar la clave de DeepSeek a otros
   proveedores.** En la línea 104, `api_key = os.environ.get(env_key) or
@@ -348,11 +347,11 @@ descripción de cada commit.
 - **G9. Simulador con perfiles reales de la cohorte.** Solo ofrece perfiles
   puros (100 % en un canal), que no tiene ninguno de los 43 diagnósticos; el
   caso multimodal, el más frecuente, no se puede simular.
-  Origen: AVANCE §6 n.º 10 y §5 decies.
+  Origen: AVANCE §6 n.º 10 y §5.8.
 - **G10. Historial de cápsulas sin `estado_validacion`, `intentos` ni
   `segundos`.** Con esas columnas el panel sería la evidencia viva del
   criterio de término de la Fase 3, sin depender de scripts.
-  Origen: AVANCE §6 n.º 11 y §5 sedecies.
+  Origen: AVANCE §6 n.º 11 y §5.14.
 - **G11. Revisión docente de cápsulas.** `estado_validacion` nunca cambia de
   «generada» y el caché compartido no filtraría las rechazadas. La Fase 5 lo
   necesita (E3). Origen: revisión del 16-oct.
@@ -362,7 +361,7 @@ descripción de cada commit.
 El horizonte del plan terminaba el 09-oct-2026. Origen: `PLAN_DESARROLLO.md` §4, Fase 5.
 
 - **E1. A/B pedagógico.**
-  - ✅ **En la app (Etapas 1 y 2, 04–08-nov, AVANCE §5 undequadragies):** el
+  - ✅ **En la app (Etapas 1 y 2, 04–08-nov, AVANCE §5.35):** el
     experimental recibe la cápsula adaptada a su perfil y el control una
     cápsula básica sin VARK (resumen y `quiz_mc`), sin narración. Los dos
     entran con Google y eligen su grupo en `/student/login`. El panel separa
@@ -389,7 +388,7 @@ El horizonte del plan terminaba el 09-oct-2026. Origen: `PLAN_DESARROLLO.md` §4
 
 ## L. Legal y licencias
 
-Origen: `AVANCE.md` §5 tervicies «Riesgos legales que siguen abiertos» y
+Origen: `AVANCE.md` §5.21 «Riesgos legales que siguen abiertos» y
 `PRUEBAS_VARK.md` «Material de origen no documentado».
 
 - **L1. Los textos legales no tienen revisión profesional**; cada página
@@ -437,7 +436,7 @@ Origen: `AVANCE.md` §5 tervicies «Riesgos legales que siguen abiertos» y
   `d7e2b9c41a58`, 17-oct-2026; ya aplicada en la de la revisión, `D:\PUCV\…`)
   y fijar `LLM_MODEL=deepseek-flash` en el `.env` (desde el 11-oct). Los datos
   VARK de la máquina 2 siguen sin auditar: puede tener el mismo ruido de tests
-  que tuvo la máquina 1. Origen: AVANCE §9 y §5 quatertricies.
+  que tuvo la máquina 1. Origen: AVANCE §9 y §5.30.
   - **Máquina 2, 01-nov:** esquema actualizado a `f6b2c8d40e53` (grupo control),
     previo respaldo. Conserva los 49 estudiantes anteriores; sus datos VARK
     siguen sin auditar. Falta comprobar modelo y credenciales locales (O1).
@@ -445,11 +444,11 @@ Origen: `AVANCE.md` §5 tervicies «Riesgos legales que siguen abiertos» y
   Origen: AVANCE §6 n.º 12.
 - **O4. Los `codigo_objetivo` siguen el patrón `PREFIJO-Ux-NN`, pero la API no
   lo exige**, y falta un archivo común de respaldo con los objetivos de cada
-  materia. Origen: AVANCE §5 undetricies.
+  materia. Origen: AVANCE §5.27.
 - **O5. Kokoro tiene episodios de ~0,6 × la duración del audio** que no se
-  explicaron (la mediana es ~0,19). Origen: AVANCE §5 duotricies.
+  explicaron (la mediana es ~0,19). Origen: AVANCE §5.28.
 - **O6. Activar y probar Google Identity.** El código de D6 está implementado
-  (01-nov, AVANCE §5 octtricies) y la migración `a7c3d9e51f64` está aplicada en
+  (01-nov, AVANCE §5.34) y la migración `a7c3d9e51f64` está aplicada en
   la máquina 2 y, desde el 02-nov, en la máquina 1.
   - ✅ **02-nov-2026, máquina 1:** `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` y
     `GOOGLE_REDIRECT_URI` (`http://127.0.0.1:8000/student/google/callback`)
@@ -494,7 +493,7 @@ Origen: `AVANCE.md` §5 tervicies «Riesgos legales que siguen abiertos» y
 
 - **D1. Tablas 16.2/16.3 del informe:** no se reproducen desde el CSV de los 43
   diagnósticos. O se corrige el informe con los valores recalculados, o
-  aparece la planilla que explique la diferencia. Origen: AVANCE §6 n.º 5 y §5 ter;
+  aparece la planilla que explique la diferencia. Origen: AVANCE §6 n.º 5 y §5.2;
   `CORRECCIONES_INFORME.md` C1.
 - **D2. ¿«Contenido» y «OA» son la misma jerarquía?** Pidió OA secundarios por
   fragmento y a la vez evitar que un fragmento pertenezca a varios contenidos;
@@ -512,8 +511,7 @@ Origen: `AVANCE.md` §5 tervicies «Riesgos legales que siguen abiertos» y
   mantuvo como decisión de diseño; si el cap. 17.2 se lee de forma estricta,
   hay que decidirlo aparte. Origen: H13.
 - **D6. Perfiles históricos sin vinculación y sin sesión válida.** El acceso
-  y la recuperación mediante Google ya están implementados (AVANCE §5
-  octtricies; activación pendiente O6). Los registros del CSV y los perfiles
+  y la recuperación mediante Google ya están implementados (AVANCE §5.34; activación pendiente O6). Los registros del CSV y los perfiles
   locales cuya cookie se perdió no contienen una identidad verificable para
   vincularlos a una cuenta. Acordar cómo tratar esos históricos en el piloto;
   no se emparejan por correo, nombre o sociodemográficos ni se fusionan solos.

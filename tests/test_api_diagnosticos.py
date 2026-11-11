@@ -53,7 +53,7 @@ def limpiar_lo_que_cree_el_test():
     daño no es el espacio, es que `/teacher/analytics` promedia el vector VARK
     de **toda** la tabla `diagnostico_vark`: con más diagnósticos sintéticos que
     reales, los «estilos de aprendizaje del curso» dejan de describir a la
-    cohorte. Ya había pasado antes —`AVANCE.md` §3 ter documenta 28
+    cohorte. Ya había pasado antes —`AVANCE.md` §3.2 documenta 28
     diagnósticos de este mismo archivo barridos el 10-ago— y volvió a pasar
     porque entonces se limpió el resultado y no la causa.
 

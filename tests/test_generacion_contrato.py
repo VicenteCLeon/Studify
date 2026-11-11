@@ -503,7 +503,7 @@ def test_el_error_de_falta_dice_cuanto_agregar_hasta_donde_y_en_que_campos():
 
 
 def test_el_error_de_exceso_senala_cuanto_sobra_y_donde_recortar():
-    """AVANCE.md, sección 5 sedecies (24-ago-2026): capturando el texto crudo
+    """AVANCE.md, sección 5.14 (24-ago-2026): capturando el texto crudo
     de cada reintento se vio que el modelo devolvía la misma respuesta byte a
     byte cuando el único motivo de rechazo era «tiene X palabras, el máximo es
     Y» — sin un blanco concreto, no recortaba nada. El mensaje ahora dice
@@ -807,7 +807,7 @@ def test_el_mensaje_de_reparacion_enumera_todos_los_defectos():
 
 
 def test_el_mensaje_de_reparacion_pide_una_respuesta_distinta():
-    """AVANCE.md, sección 5 sedecies: el hallazgo fue que DeepSeek reenviaba
+    """AVANCE.md, sección 5.14: el hallazgo fue que DeepSeek reenviaba
     la respuesta anterior tal cual, sin cambiar nada, cuando el rechazo era
     por exceso de palabras. El mensaje ahora se lo dice explícitamente."""
     datos = capsula_valida()
